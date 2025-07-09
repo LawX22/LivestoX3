@@ -28,15 +28,11 @@
 
         <p v-if="errorMessage" class="text-sm text-red-600 text-center">{{ errorMessage }}</p>
 
-        <button
-          type="submit"
-          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-        >
+        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
           Sign In
         </button>
       </form>
 
-      <!-- Sign Up Link -->
       <p class="mt-6 text-center text-sm text-gray-600">
         Don’t have an account?
         <router-link to="/signup" class="text-green-600 font-medium hover:underline">
@@ -47,22 +43,25 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { users as defaultUsers } from '../../services/users'
 
 const router = useRouter()
-
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 
 function handleSignIn() {
   const storedUsers = localStorage.getItem('registeredUsers')
-  const users = storedUsers ? JSON.parse(storedUsers) : []
+  const customUsers = storedUsers ? JSON.parse(storedUsers) : []
 
-  const user = users.find((user: any) => user.email === email.value && user.password === password.value)
+  const allUsers = [...defaultUsers, ...customUsers]
+
+  const user = allUsers.find(
+    (u) => u.email === email.value && u.password === password.value
+  )
 
   if (!user) {
     errorMessage.value = 'Invalid email or password.'
@@ -70,6 +69,8 @@ function handleSignIn() {
   }
 
   localStorage.setItem('user', JSON.stringify(user))
-  router.push('/')
+
+  router.push('/dashboard')
 }
 </script>
+

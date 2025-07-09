@@ -39,15 +39,11 @@
 
         <p v-if="errorMessage" class="text-sm text-red-600 text-center">{{ errorMessage }}</p>
 
-        <button
-          type="submit"
-          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-        >
+        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
           Sign Up
         </button>
       </form>
 
-      <!-- Sign In Link -->
       <p class="mt-6 text-center text-sm text-gray-600">
         Already have an account?
         <router-link to="/signin" class="text-green-600 font-medium hover:underline">
@@ -63,7 +59,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -78,7 +73,7 @@ function handleSignUp() {
   const newUser = {
     email: email.value,
     password: password.value,
-    role: 'Buyer',
+    role: 'Buyer' // default role
   }
 
   const storedUsers = localStorage.getItem('registeredUsers')
@@ -92,7 +87,6 @@ function handleSignUp() {
 
   users.push(newUser)
   localStorage.setItem('registeredUsers', JSON.stringify(users))
-
   router.push('/signin')
 }
 </script>
