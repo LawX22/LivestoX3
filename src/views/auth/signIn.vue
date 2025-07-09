@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
     <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
       <h2 class="text-2xl font-bold text-center text-green-600 mb-6">Sign In</h2>
 
@@ -28,7 +28,10 @@
 
         <p v-if="errorMessage" class="text-sm text-red-600 text-center">{{ errorMessage }}</p>
 
-        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+        <button
+          type="submit"
+          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+        >
           Sign In
         </button>
       </form>
@@ -68,9 +71,35 @@ function handleSignIn() {
     return
   }
 
+  // Banned check
+  if (user.role === 'Banned') {
+    const now = new Date()
+    const banLift = user.bannedUntil ? new Date(user.bannedUntil) : null
+
+    if (banLift && now < banLift) {
+      const remaining = Math.ceil((banLift.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      errorMessage.value = `Your account is banned. Try again in ${remaining} day(s).`
+      return
+    } else {
+      // Auto-lift ban
+      user.role = 'Buyer' // or reset to last valid role
+      delete user.bannedUntil
+
+      const updatedUsers = allUsers.map((u) =>
+        u.email === user.email ? user : u
+      )
+
+      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers))
+    }
+  }
+
   localStorage.setItem('user', JSON.stringify(user))
 
-  router.push('/dashboard')
+  // Redirect based on role
+  if (user.role === 'Admin') {
+    router.push('/adminDashboard')
+  } else {
+    router.push('/dashboard')
+  }
 }
 </script>
-

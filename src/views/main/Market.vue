@@ -3,22 +3,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import BuyerMarket from '../../components/Market/BuyerMarket.vue';
-import FarmerMarket from '../../components/Market/FarmerMarket.vue';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import BuyerMarket from '../../components/Market/BuyerMarket.vue'
+import FarmerMarket from '../../components/Market/FarmerMarket.vue'
 
-const marketComponent = ref();
+const router = useRouter()
+const marketComponent = ref()
 
 onMounted(() => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
 
-  if (user.role === 'Buyer') {
-    marketComponent.value = BuyerMarket;
-  } else if (user.role === 'Farmer') {
-    marketComponent.value = FarmerMarket;
-  } else {
-    // Guest defaults to BuyerMarket (in guest mode)
-    marketComponent.value = BuyerMarket;
+  if (!user || !user.role) {
+    // Redirect to login if user is not found
+    router.push('/signin')
+    return
   }
-});
+
+  switch (user.role) {
+    case 'Farmer':
+      marketComponent.value = FarmerMarket
+      break
+    case 'Buyer':
+      marketComponent.value = BuyerMarket
+      break
+    default:
+      marketComponent.value = BuyerMarket 
+  }
+})
 </script>

@@ -2,30 +2,48 @@
   <div class="min-h-screen bg-gray-100">
     <NavBar />
 
-    <div class="p-6 max-w-5xl mx-auto">
-      <!-- Guest Mode Banner (matches forum style) -->
-      <div
-        v-if="!isLoggedIn"
-        class="bg-yellow-100 text-yellow-800 px-4 py-3 rounded mb-6 flex items-center justify-between"
-      >
-        <span>You are viewing as a guest. Sign in to interact with listings.</span>
-        <router-link
-          to="/signin"
-          class="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 transition text-sm"
-        >
-          Sign In
-        </router-link>
-      </div>
-
-      <!-- Market Content -->
-      <h1 class="text-2xl font-bold text-green-600 mb-4">Livestock Market</h1>
+    <div class="p-6 max-w-4xl mx-auto">
+      <h1 class="text-2xl font-bold text-green-600 mb-4">Available Livestock Listings</h1>
       <p class="text-gray-600 mb-6">Browse animals available for purchase.</p>
 
+      <!-- Upgrade Prompt for Buyers -->
+      <div
+        v-if="currentUser?.role !== 'Farmer'"
+        class="mb-6 bg-yellow-100 text-yellow-800 p-4 rounded flex items-center justify-between"
+      >
+        <span>
+          You are currently a <strong>Buyer</strong>. Upgrade to Farmer to post livestock.
+        </span>
+
+        <!-- Show "Pending Approval" or "Request Upgrade" -->
+        <button
+          v-if="hasPendingUpgrade"
+          disabled
+          class="bg-gray-400 text-white px-4 py-1.5 rounded text-sm cursor-not-allowed"
+        >
+          Pending Approval
+        </button>
+        <button
+          v-else
+          @click="goToUpgradeForm"
+          class="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 transition text-sm"
+        >
+          Request Upgrade
+        </button>
+      </div>
+
+      <!-- Filter Section -->
+      <div class="mb-6 flex flex-col sm:flex-row gap-4">
+        <input v-model="filters.name" placeholder="Filter by name" class="input-style w-full sm:w-1/2" />
+        <input v-model="filters.breed" placeholder="Filter by breed" class="input-style w-full sm:w-1/2" />
+      </div>
+
+      <!-- Display Animals -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="animal in animals"
+          v-for="animal in filteredAnimals"
           :key="animal.id"
-          class="bg-white rounded shadow hover:shadow-lg transition p-4"
+          class="bg-white rounded shadow p-4"
         >
           <img
             :src="resolveImage(animal.image)"
@@ -36,14 +54,6 @@
           <p class="text-sm text-gray-500">Breed: {{ animal.breed }}</p>
           <p class="text-sm text-gray-500">Age: {{ animal.age }} years</p>
           <p class="text-green-600 font-bold mt-2">₱{{ animal.price.toLocaleString() }}</p>
-
-          <!-- Action Buttons -->
-          <div v-if="isLoggedIn" class="mt-4">
-            <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-sm">
-              Contact Seller
-            </button>
-          </div>
-          <p v-else class="text-xs text-gray-400 mt-3 italic">Sign in to contact seller</p>
         </div>
       </div>
     </div>
@@ -51,12 +61,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import NavBar from '../../components/NavBar.vue'
-import { Animal, animalList } from '../../services/animalData'
+import { Animal, initialAnimals } from '../../services/animalData'
+import { getCurrentUser } from '../../services/users'
 
+const router = useRouter()
 const animals = ref<Animal[]>([])
-const isLoggedIn = ref(false)
+const filters = ref({ name: '', breed: '' })
+const currentUser = getCurrentUser()
+const hasPendingUpgrade = ref(false)
 
 function resolveImage(imagePath: string): string {
   return imagePath.startsWith('/src/assets/')
@@ -64,12 +79,24 @@ function resolveImage(imagePath: string): string {
     : imagePath
 }
 
+const filteredAnimals = computed(() =>
+  animals.value.filter((animal) => {
+    const matchesName = animal.name.toLowerCase().includes(filters.value.name.toLowerCase())
+    const matchesBreed = animal.breed.toLowerCase().includes(filters.value.breed.toLowerCase())
+    return matchesName && matchesBreed
+  })
+)
+
 onMounted(() => {
   const stored = localStorage.getItem('livestock')
-  const posted = stored ? JSON.parse(stored) : []
-  animals.value = [...animalList, ...posted]
+  animals.value = stored ? JSON.parse(stored) : [...initialAnimals]
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  isLoggedIn.value = !!user.role
+  // Check if user has a pending upgrade request
+  const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
+  hasPendingUpgrade.value = requests.some((r: any) => r.email === currentUser?.email)
 })
+
+function goToUpgradeForm() {
+  router.push('/upgradeForm')
+}
 </script>
