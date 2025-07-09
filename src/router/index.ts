@@ -32,7 +32,7 @@ const routes = [
   { path: '/dashboard', component: Dashboard, name: 'Dashboard' },
   { path: '/market', component: Market, name: 'Market' },
   { path: '/forum', component: Forum, name: 'Forum' },
-  { path: '/YourLivestock', component: YourLivestock, name: 'YourLivestock' },
+  { path: '/yourLivestock', component: YourLivestock, name: 'YourLivestock' },
 ];
 
 // Create Router

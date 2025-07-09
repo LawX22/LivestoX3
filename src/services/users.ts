@@ -8,7 +8,7 @@ export interface User {
 export const users: User[] = [
   { email: 'farmer@gmail.com', password: '123', role: 'Farmer' },
   { email: 'buyer@gmail.com', password: '123', role: 'Buyer' },
-  { email: 'admin@gmail.com', password: '123', role: 'Admin' } 
+  { email: 'admin@gmail.com', password: '123', role: 'Admin' }
 ]
 
 export function getCurrentUser(): User | null {

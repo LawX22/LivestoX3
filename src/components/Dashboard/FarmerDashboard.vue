@@ -4,7 +4,7 @@
     <NavBar />
 
     <!-- Farmer Dashboard Content -->
-    <div class="p-6 max-w-6xl mx-auto">
+    <div class="p-6 max-w-4xl mx-auto">
       <h1 class="text-2xl font-bold text-green-600 mb-4">Farmer Dashboard</h1>
       <p class="text-gray-600 mb-6">Manage and post your livestock for sale.</p>
 
