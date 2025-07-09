@@ -12,14 +12,14 @@
 
       <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <router-link
-          to="/main/LivestockMarket"
+          to="/"
           class="bg-white p-4 rounded shadow hover:bg-green-50 transition cursor-pointer"
         >
           🐄 View Livestock Market
         </router-link>
 
         <router-link
-          to="/main/LivestockForum"
+          to="/"
           class="bg-white p-4 rounded shadow hover:bg-green-50 transition cursor-pointer"
         >
           💬 Join Forum

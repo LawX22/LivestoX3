@@ -23,7 +23,7 @@
         <router-link to="/forum" class="hover:text-green-500 transition">Forum</router-link>
       </li>
       <li>
-        <router-link to="/" class="hover:text-green-500 transition">About Us</router-link>
+        <router-link to="/aboutUs" class="hover:text-green-500 transition">About Us</router-link>
       </li>
     </ul>
 

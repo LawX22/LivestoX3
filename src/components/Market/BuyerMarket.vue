@@ -6,28 +6,30 @@
       <h1 class="text-2xl font-bold text-green-600 mb-4">Available Livestock Listings</h1>
       <p class="text-gray-600 mb-6">Browse animals available for purchase.</p>
 
+      <!-- Guest Mode Notice -->
+      <div v-if="!currentUser?.email"
+        class="bg-yellow-100 text-yellow-800 px-4 py-3 rounded mb-4 flex justify-between items-center">
+        <span>
+          You are viewing the market as a guest. Sign In to view detailed listings, save favorites, or contact sellers.
+        </span>
+        <router-link to="/signin" class="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 text-sm">
+          Sign In
+        </router-link>
+      </div>
+
       <!-- Upgrade Prompt for Buyers -->
-      <div
-        v-if="currentUser?.role !== 'Farmer'"
-        class="mb-6 bg-yellow-100 text-yellow-800 p-4 rounded flex items-center justify-between"
-      >
+      <div v-else-if="currentUser?.role !== 'Farmer'"
+        class="mb-6 bg-yellow-100 text-yellow-800 p-4 rounded flex items-center justify-between">
         <span>
           You are currently a <strong>Buyer</strong>. Upgrade to Farmer to post livestock.
         </span>
 
-        <!-- Show "Pending Approval" or "Request Upgrade" -->
-        <button
-          v-if="hasPendingUpgrade"
-          disabled
-          class="bg-gray-400 text-white px-4 py-1.5 rounded text-sm cursor-not-allowed"
-        >
+        <button v-if="hasPendingUpgrade" disabled
+          class="bg-gray-400 text-white px-4 py-1.5 rounded text-sm cursor-not-allowed">
           Pending Approval
         </button>
-        <button
-          v-else
-          @click="goToUpgradeForm"
-          class="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 transition text-sm"
-        >
+        <button v-else @click="goToUpgradeForm"
+          class="bg-green-600 text-white px-4 py-1.5 rounded hover:bg-green-700 transition text-sm">
           Request Upgrade
         </button>
       </div>
@@ -40,16 +42,8 @@
 
       <!-- Display Animals -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          v-for="animal in filteredAnimals"
-          :key="animal.id"
-          class="bg-white rounded shadow p-4"
-        >
-          <img
-            :src="resolveImage(animal.image)"
-            :alt="animal.name"
-            class="w-full h-40 object-cover rounded mb-3"
-          />
+        <div v-for="animal in filteredAnimals" :key="animal.id" class="bg-white rounded shadow p-4">
+          <img :src="resolveImage(animal.image)" :alt="animal.name" class="w-full h-40 object-cover rounded mb-3" />
           <h2 class="text-lg font-semibold text-gray-800">{{ animal.name }}</h2>
           <p class="text-sm text-gray-500">Breed: {{ animal.breed }}</p>
           <p class="text-sm text-gray-500">Age: {{ animal.age }} years</p>
@@ -91,12 +85,21 @@ onMounted(() => {
   const stored = localStorage.getItem('livestock')
   animals.value = stored ? JSON.parse(stored) : [...initialAnimals]
 
-  // Check if user has a pending upgrade request
   const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-  hasPendingUpgrade.value = requests.some((r: any) => r.email === currentUser?.email)
+  hasPendingUpgrade.value = currentUser?.email
+    ? requests.some((r: any) => r.email === currentUser.email)
+    : false
 })
 
 function goToUpgradeForm() {
   router.push('/upgradeForm')
 }
 </script>
+
+<style scoped>
+.input-style {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+</style>
