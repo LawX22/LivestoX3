@@ -7,6 +7,7 @@ export interface Animal {
   age: number
   price: number
   image: string
+  ownerEmail?: string
 }
 
 export const defaultAnimal: Animal = {
@@ -16,6 +17,7 @@ export const defaultAnimal: Animal = {
   age: 0,
   price: 0,
   image: '',
+  ownerEmail: ''
 }
 
 export const animalList: Animal[] = [
@@ -25,7 +27,7 @@ export const animalList: Animal[] = [
     breed: 'Brahman',
     age: 3,
     price: 30000,
-    image: '/src/assets/Bull.jpg',
+    image: '/src/assets/Bull.jpg'
   },
   {
     id: 2,
@@ -33,7 +35,7 @@ export const animalList: Animal[] = [
     breed: 'Holstein',
     age: 2,
     price: 25000,
-    image: '/src/assets/cow.jpg',
+    image: '/src/assets/cow.jpg'
   },
   {
     id: 3,
@@ -41,8 +43,8 @@ export const animalList: Animal[] = [
     breed: 'Jersey',
     age: 1,
     price: 15000,
-    image: '/src/assets/cow.jpg',
-  },
+    image: '/src/assets/cow.jpg'
+  }
 ]
 
-export const initialAnimals: Animal[] = [animalList[0]]
+export const initialAnimals: Animal[] = [...animalList]

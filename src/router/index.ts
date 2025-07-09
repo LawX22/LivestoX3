@@ -14,6 +14,7 @@ import Market from '../views/main/Market.vue';
 import Forum from '../views/main/Forum.vue';
 import upgradeForm from '../views/auth/upgradeForm.vue';
 import UserManagement from '../views/admin/userManagement.vue';
+import YourLivestock from '../views/main/yourLivestock.vue';
 
 // Define Routes
 const routes = [
@@ -31,6 +32,7 @@ const routes = [
   { path: '/dashboard', component: Dashboard, name: 'Dashboard' },
   { path: '/market', component: Market, name: 'Market' },
   { path: '/forum', component: Forum, name: 'Forum' },
+  { path: '/YourLivestock', component: YourLivestock, name: 'YourLivestock' },
 ];
 
 // Create Router
