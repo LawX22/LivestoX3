@@ -18,6 +18,14 @@
       >
         User Management
       </router-link>
+      
+       <router-link
+        to="/upgradeRequests"
+        class="block px-4 py-2 rounded hover:bg-green-100 text-gray-700"
+        active-class="bg-green-200 font-semibold"
+      >
+        Upgrade Requests
+      </router-link>
 
       <router-link
         to="/admin/livestock"

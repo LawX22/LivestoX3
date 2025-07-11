@@ -1,45 +1,73 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <div class="bg-white p-8 rounded-lg shadow w-full max-w-md">
       <h2 class="text-2xl font-bold text-center text-green-600 mb-6">Create Account</h2>
 
       <form @submit.prevent="handleSignUp" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+            <input v-model="form.firstName" type="text" required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+            <input v-model="form.lastName" type="text" required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input v-model="form.username" type="text" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            v-model="email"
-            type="email"
-            required
-            placeholder="example@gmail.com"
-            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
+          <input v-model="form.email" type="email" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+          <input v-model="form.phoneNumber" type="tel" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+          <select v-model="form.gender" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600">
+            <option disabled value="">Select gender</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            v-model="password"
-            type="password"
-            required
-            placeholder="Enter password"
-            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
+          <input v-model="form.password" type="password" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-          <input
-            v-model="confirmPassword"
-            type="password"
-            required
-            placeholder="Confirm password"
-            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
+          <input v-model="form.confirmPassword" type="password" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+          <input v-model="form.verificationCode" type="text" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600" />
         </div>
 
         <p v-if="errorMessage" class="text-sm text-red-600 text-center">{{ errorMessage }}</p>
 
-        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+        <button type="submit"
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium transition">
           Sign Up
         </button>
       </form>
@@ -57,23 +85,35 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import type { SignUpForm } from '../../services/userFormDetails'
 
 const router = useRouter()
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
+
+const form = ref<SignUpForm>({
+  firstName: '',
+  lastName: '',
+  username: '',
+  email: '',
+  phoneNumber: '',
+  gender: '',
+  password: '',
+  confirmPassword: '',
+  verificationCode: '',
+  createdAt: ''
+})
+
 const errorMessage = ref('')
 
 function handleSignUp() {
-  if (password.value !== confirmPassword.value) {
+  if (form.value.password !== form.value.confirmPassword) {
     errorMessage.value = 'Passwords do not match.'
     return
   }
 
   const newUser = {
-    email: email.value,
-    password: password.value,
-    role: 'Buyer' // default role
+    ...form.value,
+    role: 'Buyer',
+    createdAt: new Date().toISOString()
   }
 
   const storedUsers = localStorage.getItem('registeredUsers')

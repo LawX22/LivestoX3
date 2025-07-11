@@ -8,6 +8,8 @@ export interface SignUpForm {
   password: string
   confirmPassword: string
   verificationCode: string
+  profilePicture?: string
+  createdAt?: string
 }
 
 export const defaultSignUpForm: SignUpForm = {
@@ -19,5 +21,6 @@ export const defaultSignUpForm: SignUpForm = {
   gender: '',
   password: '',
   confirmPassword: '',
-  verificationCode: ''
+  verificationCode: '',
+  createdAt: ''
 }

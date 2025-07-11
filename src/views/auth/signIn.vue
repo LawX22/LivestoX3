@@ -71,7 +71,6 @@ function handleSignIn() {
     return
   }
 
-  // Banned check
   if (user.role === 'Banned') {
     const now = new Date()
     const banLift = user.bannedUntil ? new Date(user.bannedUntil) : null
@@ -81,21 +80,22 @@ function handleSignIn() {
       errorMessage.value = `Your account is banned. Try again in ${remaining} day(s).`
       return
     } else {
-      // Auto-lift ban
-      user.role = 'Buyer' // or reset to last valid role
+      user.role = 'Buyer'
       delete user.bannedUntil
 
       const updatedUsers = allUsers.map((u) =>
         u.email === user.email ? user : u
       )
-
       localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers))
     }
   }
 
-  localStorage.setItem('user', JSON.stringify(user))
+  // ✅ Save login session
+  localStorage.setItem(`user_${user.email}`, JSON.stringify(user)) // unique
+  localStorage.setItem('authEmail', user.email) // current logged in
+  localStorage.setItem('user', JSON.stringify(user)) // for global use (e.g., getCurrentUser())
 
-  // Redirect based on role
+  // ✅ Redirect based on role
   if (user.role === 'Admin') {
     router.push('/adminDashboard')
   } else {
