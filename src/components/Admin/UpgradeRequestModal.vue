@@ -27,76 +27,35 @@
           </button>
         </header>
 
-        <!-- Content: two columns side by side -->
+        <!-- Content -->
         <section class="flex gap-12 text-gray-800 min-h-[60vh] flex-1 overflow-auto">
-
-          <!-- Left: User details -->
+          <!-- User Info -->
           <div class="flex-1 min-w-[320px]">
             <div class="grid grid-cols-2 gap-x-8 gap-y-6">
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Email</p>
-                <p class="text-gray-900 truncate" :title="request.email">{{ request.email ?? '-' }}</p>
-              </div>
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Full Name</p>
-                <p class="text-gray-900">{{ request.fullName ?? '-' }}</p>
-              </div>
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Phone</p>
-                <p class="text-gray-900">{{ request.phone ?? '-' }}</p>
-              </div>
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Farm Name</p>
-                <p class="text-gray-900">{{ request.farmName ?? '-' }}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="font-medium text-gray-700 mb-1">Address</p>
-                <p class="text-gray-900">{{ formattedAddress }}</p>
-              </div>
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Farm Size</p>
-                <p class="text-gray-900">{{ request.farmSize ?? '-' }}</p>
-              </div>
-              <div>
-                <p class="font-medium text-gray-700 mb-1">Livestock Type</p>
-                <p class="text-gray-900">{{ request.livestockType ?? '-' }}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="font-medium text-gray-700 mb-1">Experience</p>
-                <p class="whitespace-pre-line text-gray-900">{{ request.experience ?? '-' }}</p>
-              </div>
-              <div class="col-span-2">
-                <p class="font-medium text-gray-700 mb-1">Description</p>
-                <p class="whitespace-pre-line text-gray-900">{{ request.description ?? '-' }}</p>
-              </div>
+              <div><p class="font-medium text-gray-700 mb-1">Email</p><p class="text-gray-900 truncate">{{ request.email ?? '-' }}</p></div>
+              <div><p class="font-medium text-gray-700 mb-1">Full Name</p><p class="text-gray-900">{{ request.fullName ?? '-' }}</p></div>
+              <div><p class="font-medium text-gray-700 mb-1">Phone</p><p class="text-gray-900">{{ request.phone ?? '-' }}</p></div>
+              <div><p class="font-medium text-gray-700 mb-1">Farm Name</p><p class="text-gray-900">{{ request.farmName ?? '-' }}</p></div>
+              <div class="col-span-2"><p class="font-medium text-gray-700 mb-1">Address</p><p class="text-gray-900">{{ formattedAddress }}</p></div>
+              <div><p class="font-medium text-gray-700 mb-1">Farm Size</p><p class="text-gray-900">{{ request.farmSize ?? '-' }}</p></div>
+              <div><p class="font-medium text-gray-700 mb-1">Livestock Type</p><p class="text-gray-900">{{ request.livestockType ?? '-' }}</p></div>
+              <div class="col-span-2"><p class="font-medium text-gray-700 mb-1">Experience</p><p class="whitespace-pre-line text-gray-900">{{ request.experience ?? '-' }}</p></div>
+              <div class="col-span-2"><p class="font-medium text-gray-700 mb-1">Description</p><p class="whitespace-pre-line text-gray-900">{{ request.description ?? '-' }}</p></div>
             </div>
           </div>
 
-          <!-- Right: Documents -->
+          <!-- Documents -->
           <div class="flex-1 min-w-[320px] overflow-auto max-h-[calc(100vh-14rem)]">
             <p class="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Documents</p>
-
             <div v-if="request.documents?.idDocument" class="mb-6">
               <p class="font-medium mb-2 text-gray-700">ID Document</p>
-              <img
-                :src="request.documents.idDocument"
-                alt="ID Document"
-                class="rounded-lg border border-gray-300 max-w-full max-h-64 object-contain shadow-sm"
-                @error="onImageError"
-              />
+              <img :src="request.documents.idDocument" class="rounded-lg border border-gray-300 max-w-full max-h-64 object-contain shadow-sm" @error="onImageError" />
             </div>
-
             <div v-if="request.documents?.landProof" class="mb-6">
               <p class="font-medium mb-2 text-gray-700">Land Proof</p>
-              <img
-                :src="request.documents.landProof"
-                alt="Land Proof"
-                class="rounded-lg border border-gray-300 max-w-full max-h-64 object-contain shadow-sm"
-                @error="onImageError"
-              />
+              <img :src="request.documents.landProof" class="rounded-lg border border-gray-300 max-w-full max-h-64 object-contain shadow-sm" @error="onImageError" />
             </div>
-
-            <div v-if="request.documents?.farmPhotos && request.documents.farmPhotos.length > 0">
+            <div v-if="request.documents?.farmPhotos?.length">
               <p class="font-medium mb-4 text-gray-700">Farm Photos</p>
               <div class="grid grid-cols-1 gap-4 max-h-[24rem] overflow-auto">
                 <img
@@ -110,15 +69,13 @@
               </div>
             </div>
           </div>
-
         </section>
 
-        <!-- Approve Button fixed at bottom right -->
+        <!-- Footer -->
         <footer class="mt-6 flex justify-end border-t border-gray-200 pt-4">
           <button
-            @click="approve"
+            @click="handleApprove"
             class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded shadow transition"
-            type="button"
           >
             Approve
           </button>
@@ -129,7 +86,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, computed } from 'vue'
 
 interface Documents {
   idDocument?: string
@@ -159,14 +116,15 @@ const props = defineProps<{
   request: UserRequest
 }>()
 
-const emit = defineEmits(['close', 'approve'])
+const emit = defineEmits(['close', 'approved'])
 
 function close() {
   emit('close')
 }
 
-function approve() {
-  emit('approve', props.request)
+function onImageError(e: Event) {
+  const img = e.target as HTMLImageElement
+  img.src = '/fallback-image.png'
 }
 
 const formattedAddress = computed(() => {
@@ -175,14 +133,48 @@ const formattedAddress = computed(() => {
     props.request.barangay,
     props.request.city,
     props.request.province,
-    props.request.region,
+    props.request.region
   ].filter(Boolean)
   return parts.length ? parts.join(', ') : '-'
 })
 
-function onImageError(event: Event) {
-  const img = event.target as HTMLImageElement
-  img.src = '/fallback-image.png' 
+function handleApprove() {
+  const email = props.request.email
+  if (!email) return
+
+  // Save farmer data separately
+  const farmerInfo = {
+    farmName: props.request.farmName,
+    farmSize: props.request.farmSize,
+    livestockType: props.request.livestockType,
+    experience: props.request.experience,
+    description: props.request.description,
+    farmAddress: {
+      street: props.request.street,
+      barangay: props.request.barangay,
+      city: props.request.city,
+      province: props.request.province,
+      region: props.request.region
+    },
+    documents: props.request.documents || {}
+  }
+
+  localStorage.setItem(`farmerData_${email}`, JSON.stringify(farmerInfo))
+
+  // Also update registeredUsers role
+  const rawUsers = localStorage.getItem('registeredUsers')
+  const users = rawUsers ? JSON.parse(rawUsers) : []
+  const updatedUsers = users.map((u: any) => {
+    if (u.email === email) {
+      return { ...u, role: 'Farmer' }
+    }
+    return u
+  })
+
+  localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers))
+
+  emit('approved', props.request)
+  close()
 }
 </script>
 

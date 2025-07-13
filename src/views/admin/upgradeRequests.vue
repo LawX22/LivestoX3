@@ -32,18 +32,19 @@
               >
                 View
               </button>
-              <button
-                @click="approveUpgrade(user)"
-                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-              >
-                Approve
-              </button>
+              <!-- Approve button removed from here -->
             </td>
           </tr>
         </tbody>
       </table>
 
-      <UpgradeRequestModal :visible="showModal" :request="selectedRequest" @close="showModal = false" />
+      <!-- Modal with @approved handler -->
+      <UpgradeRequestModal
+        :visible="showModal"
+        :request="selectedRequest"
+        @close="showModal = false"
+        @approved="handleApproval"
+      />
     </main>
   </div>
 </template>
@@ -79,21 +80,25 @@ onMounted(() => {
   registeredUsers.value = users ? JSON.parse(users) : []
 })
 
-function approveUpgrade(userToUpgrade: User) {
+function viewDetails(user: User) {
+  selectedRequest.value = user
+  showModal.value = true
+}
+
+function handleApproval(userToUpgrade: User) {
+  // Update role
   const updatedUsers = registeredUsers.value.map(u =>
     u.email === userToUpgrade.email ? { ...u, role: 'Farmer' } : u
   )
   localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers))
   registeredUsers.value = updatedUsers
 
+  // Remove from upgradeRequests
   upgradeRequests.value = upgradeRequests.value.filter(u => u.email !== userToUpgrade.email)
   localStorage.setItem(UPGRADE_KEY, JSON.stringify(upgradeRequests.value))
-  showModal.value = false
-}
 
-function viewDetails(user: User) {
-  selectedRequest.value = user
-  showModal.value = true
+  // Close modal
+  showModal.value = false
 }
 
 function formatDate(dateStr?: string): string {
