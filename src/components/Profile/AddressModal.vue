@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { getCurrentUser } from '../../services/users'
+import { getCurrentUser } from '../../services/user'
 
 const props = defineProps<{
   visible: boolean

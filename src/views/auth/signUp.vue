@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { SignUpForm } from '../../services/userFormDetails'
+import type { SignUpForm } from '../../services/user'
 
 const router = useRouter()
 
@@ -104,29 +104,64 @@ const form = ref<SignUpForm>({
 
 const errorMessage = ref('')
 
+// Generate unique 6-digit userId
+function generateUniqueUserId(existingIds: string[]): string {
+  let id: string = ''
+  let isUnique = false
+
+  while (!isUnique) {
+    id = Math.floor(100000 + Math.random() * 900000).toString()
+    isUnique = !existingIds.includes(id)
+  }
+
+  return id
+}
+
+// Generate Facebook-style publicId
+function generatePublicId(firstName: string, lastName: string): string {
+  const base = `${firstName}.${lastName}`.toLowerCase().replace(/\s+/g, '')
+  const random = Math.floor(100 + Math.random() * 900)
+  return `${base}.${random}`
+}
+
+// Handle form submit
 function handleSignUp() {
   if (form.value.password !== form.value.confirmPassword) {
     errorMessage.value = 'Passwords do not match.'
     return
   }
 
+  const userIds = JSON.parse(localStorage.getItem('userIds') || '[]')
+
+  // Check if email already exists among all stored users
+  for (const id of userIds) {
+    const user = JSON.parse(localStorage.getItem(id)!)
+    if (user.email === form.value.email) {
+      errorMessage.value = 'Email already exists.'
+      return
+    }
+  }
+
+  const role = 'Buyer'
+  const userId = generateUniqueUserId(userIds)
+  const publicId = generatePublicId(form.value.firstName, form.value.lastName)
+
   const newUser = {
     ...form.value,
-    role: 'Buyer',
+    userId,
+    publicId,
+    role,
     createdAt: new Date().toISOString()
   }
 
-  const storedUsers = localStorage.getItem('registeredUsers')
-  const users = storedUsers ? JSON.parse(storedUsers) : []
+  // Save new user by userId
+  localStorage.setItem(userId, JSON.stringify(newUser))
 
-  const exists = users.some((user: any) => user.email === newUser.email)
-  if (exists) {
-    errorMessage.value = 'Email already exists.'
-    return
-  }
+  // Update userIds array
+  userIds.push(userId)
+  localStorage.setItem('userIds', JSON.stringify(userIds))
 
-  users.push(newUser)
-  localStorage.setItem('registeredUsers', JSON.stringify(users))
+  // Redirect to sign in page
   router.push('/signin')
 }
 </script>

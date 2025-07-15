@@ -59,7 +59,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from '../../components/NavBar.vue'
 import { Animal, initialAnimals } from '../../services/animalData'
-import { getCurrentUser } from '../../services/users'
+import { getCurrentUser } from '../../services/user'
 
 const router = useRouter()
 const animals = ref<Animal[]>([])

@@ -90,7 +90,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue'
-import { getCurrentUser } from '../../services/users'
+import { getCurrentUser } from '../../services/user'
 import {
   ForumQuestion,
   ForumAnswer,
