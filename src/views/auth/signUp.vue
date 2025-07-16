@@ -104,9 +104,8 @@ const form = ref<SignUpForm>({
 
 const errorMessage = ref('')
 
-// Generate unique 6-digit userId
 function generateUniqueUserId(existingIds: string[]): string {
-  let id: string = ''
+  let id = ''
   let isUnique = false
 
   while (!isUnique) {
@@ -117,14 +116,12 @@ function generateUniqueUserId(existingIds: string[]): string {
   return id
 }
 
-// Generate Facebook-style publicId
 function generatePublicId(firstName: string, lastName: string): string {
   const base = `${firstName}.${lastName}`.toLowerCase().replace(/\s+/g, '')
   const random = Math.floor(100 + Math.random() * 900)
   return `${base}.${random}`
 }
 
-// Handle form submit
 function handleSignUp() {
   if (form.value.password !== form.value.confirmPassword) {
     errorMessage.value = 'Passwords do not match.'
@@ -133,12 +130,14 @@ function handleSignUp() {
 
   const userIds = JSON.parse(localStorage.getItem('userIds') || '[]')
 
-  // Check if email already exists among all stored users
   for (const id of userIds) {
-    const user = JSON.parse(localStorage.getItem(id)!)
-    if (user.email === form.value.email) {
-      errorMessage.value = 'Email already exists.'
-      return
+    const existing = localStorage.getItem(`user_${id}`)
+    if (existing) {
+      const user = JSON.parse(existing)
+      if (user.email === form.value.email) {
+        errorMessage.value = 'Email already exists.'
+        return
+      }
     }
   }
 
@@ -151,17 +150,16 @@ function handleSignUp() {
     userId,
     publicId,
     role,
+    isVerified: false,
+    isBanned: false,
+    verificationStatus: 'pending', // new status
     createdAt: new Date().toISOString()
   }
 
-  // Save new user by userId
-  localStorage.setItem(userId, JSON.stringify(newUser))
-
-  // Update userIds array
+  localStorage.setItem(`user_${userId}`, JSON.stringify(newUser))
   userIds.push(userId)
   localStorage.setItem('userIds', JSON.stringify(userIds))
 
-  // Redirect to sign in page
   router.push('/signin')
 }
 </script>

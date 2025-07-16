@@ -1,3 +1,4 @@
+<!-- userProfile.vue -->
 <template>
   <div class="min-h-screen bg-gray-100">
     <NavBar />
@@ -344,6 +345,7 @@ interface User {
   userId: string
   username: string
   email: string
+  password?: string
   role: string
   createdAt?: string
   firstName?: string
@@ -450,8 +452,18 @@ onMounted(() => {
   loadUserData()
 })
 
-// Check verification status
 const checkVerificationStatus = (userId: string) => {
+  // First check user's isVerified flag
+  const userData = localStorage.getItem(`user_${userId}`)
+  if (userData) {
+    const userObj = JSON.parse(userData) as User
+    if (userObj.isVerified) {
+      verificationStatus.value = 'verified'
+      return
+    }
+  }
+
+  // If not verified, check verification requests
   const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
   const userVerification = verificationRequests.find(req => req.userId === userId)
   
@@ -460,7 +472,11 @@ const checkVerificationStatus = (userId: string) => {
     return
   }
   
-  verificationStatus.value = userVerification.status === 'approved' ? 'verified' : userVerification.status
+  // Update verification status based on request
+  verificationStatus.value = userVerification.status === 'approved' ? 'verified' : 
+                           userVerification.status === 'rejected' ? 'rejected' : 
+                           'pending'
+  
   verificationSubmittedAt.value = userVerification.submittedAt
   verificationRejectionReason.value = userVerification.rejectionReason || null
 }
@@ -481,8 +497,10 @@ const loadUserData = () => {
   }
 
   try {
-    user.value = JSON.parse(userData)
-    editableUser.value = { ...user.value }
+    const parsedUser = JSON.parse(userData)
+    user.value = parsedUser
+    editableUser.value = { ...parsedUser }
+    delete editableUser.value.password
 
     // Check verification status
     checkVerificationStatus(authUserId)
@@ -492,7 +510,7 @@ const loadUserData = () => {
     bannerImage.value = localStorage.getItem(`bannerImage_${authUserId}`)
 
     // Load farmer data if exists
-    if (user.value && user.value.role === 'Farmer') {
+    if (parsedUser.role === 'Farmer') {
       const farmerData = localStorage.getItem(`farmerData_${authUserId}`)
       if (farmerData) {
         const parsedData = JSON.parse(farmerData)
@@ -502,6 +520,7 @@ const loadUserData = () => {
           farmLocation: formatAddress(parsedData.farmAddress || {})
         }
         editableUser.value = { ...user.value }
+        delete editableUser.value.password
       }
     }
 
@@ -549,8 +568,8 @@ const onBannerChange = (event: Event) => {
 // Edit/save profile
 const toggleEdit = () => {
   if (editing.value) {
-    // Reset changes when canceling edit
     editableUser.value = { ...user.value }
+    delete editableUser.value.password
     tempProfileImage.value = null
     tempBannerImage.value = null
   }
@@ -558,17 +577,16 @@ const toggleEdit = () => {
 }
 
 const saveProfile = () => {
-  if (!user.value) return
+  if (!user.value) return;
 
-  const userId = user.value.userId
+  const userId = user.value.userId;
   
-  // Update user data
-  user.value = {
-    userId: editableUser.value.userId ?? user.value.userId,
-    username: editableUser.value.username ?? user.value.username,
-    email: editableUser.value.email ?? user.value.email,
-    role: editableUser.value.role ?? user.value.role,
-    createdAt: editableUser.value.createdAt ?? user.value.createdAt,
+  const originalUserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}') as User;
+  
+  const updatedUser: User = {
+    ...originalUserData,
+    username: editableUser.value.username ?? originalUserData.username,
+    email: editableUser.value.email ?? originalUserData.email,
     firstName: editableUser.value.firstName,
     lastName: editableUser.value.lastName,
     phoneNumber: editableUser.value.phoneNumber,
@@ -579,24 +597,28 @@ const saveProfile = () => {
     livestockType: editableUser.value.livestockType,
     experience: editableUser.value.experience,
     description: editableUser.value.description,
-    isVerified: verificationStatus.value === 'verified'
-  }
-  localStorage.setItem(`user_${userId}`, JSON.stringify(user.value))
+    isVerified: verificationStatus.value === 'verified',
+    userId: originalUserData.userId,
+    password: originalUserData.password,
+    role: originalUserData.role,
+    createdAt: originalUserData.createdAt
+  };
 
-  // Save images if changed
+  user.value = updatedUser;
+  localStorage.setItem(`user_${userId}`, JSON.stringify(updatedUser));
+
   if (tempProfileImage.value) {
-    profileImage.value = tempProfileImage.value
-    localStorage.setItem(`profileImage_${userId}`, profileImage.value)
+    profileImage.value = tempProfileImage.value;
+    localStorage.setItem(`profileImage_${userId}`, profileImage.value);
   }
 
   if (tempBannerImage.value) {
-    bannerImage.value = tempBannerImage.value
-    localStorage.setItem(`bannerImage_${userId}`, bannerImage.value)
+    bannerImage.value = tempBannerImage.value;
+    localStorage.setItem(`bannerImage_${userId}`, bannerImage.value);
   }
 
-  // Save farmer data if applicable
   if (user.value.role === 'Farmer') {
-    const farmAddressParts = user.value.farmLocation?.split(', ') || []
+    const farmAddressParts = user.value.farmLocation?.split(', ') || [];
     const farmData = {
       farmName: user.value.farmName,
       farmSize: user.value.farmSize,
@@ -611,13 +633,13 @@ const saveProfile = () => {
         region: farmAddressParts[4] || '',
       }
     }
-    localStorage.setItem(`farmerData_${userId}`, JSON.stringify(farmData))
+    localStorage.setItem(`farmerData_${userId}`, JSON.stringify(farmData));
   }
 
-  // Reset editing state
-  editing.value = false
-  tempProfileImage.value = null
-  tempBannerImage.value = null
+  editing.value = false;
+  tempProfileImage.value = null;
+  tempBannerImage.value = null;
+  loadUserData();
 }
 
 // Address management
@@ -639,14 +661,11 @@ const handleAddressSave = (addressData: Address) => {
   const userId = user.value.userId
   
   if (selectedIndex.value !== null) {
-    // Update existing address
     addresses.value[selectedIndex.value] = addressData
   } else {
-    // Add new address
     addresses.value.push(addressData)
   }
   
-  // If this is set as default, remove default from others
   if (addressData.isDefault) {
     addresses.value.forEach((addr, index) => {
       if (index !== selectedIndex.value) {
@@ -655,9 +674,7 @@ const handleAddressSave = (addressData: Address) => {
     })
   }
   
-  // Save to localStorage
   localStorage.setItem(`addresses_${userId}`, JSON.stringify(addresses.value))
-  
   closeModal()
 }
 
@@ -667,7 +684,6 @@ const handleAddressDelete = () => {
   const userId = user.value.userId
   addresses.value.splice(selectedIndex.value, 1)
   localStorage.setItem(`addresses_${userId}`, JSON.stringify(addresses.value))
-  
   closeModal()
 }
 
@@ -693,19 +709,12 @@ const handleVerification = (verificationData: VerificationData) => {
     submittedAt: new Date().toISOString()
   }
 
-  // Load existing verification requests
   const existingRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-  
-  // Remove any existing request for this user
   const filteredRequests = existingRequests.filter(req => req.userId !== userId)
-  
-  // Add new request
   filteredRequests.push(verificationRequest)
   
-  // Save to localStorage
   localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
   
-  // Update local verification status
   verificationStatus.value = 'pending'
   verificationSubmittedAt.value = verificationRequest.submittedAt
   verificationRejectionReason.value = null
@@ -722,31 +731,24 @@ const confirmDeleteAccount = () => {
 
   const userId = user.value.userId
 
-  // Remove user data from localStorage
   localStorage.removeItem(`user_${userId}`)
   localStorage.removeItem(`profileImage_${userId}`)
   localStorage.removeItem(`bannerImage_${userId}`)
   localStorage.removeItem(`addresses_${userId}`)
   localStorage.removeItem(`farmerData_${userId}`)
   
-  // Remove verification requests
   const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
   const filteredRequests = verificationRequests.filter((req: VerificationRequest) => req.userId !== userId)
   localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
   
-  // Remove upgrade requests
   const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]') as UpgradeRequest[]
   const filteredUpgrades = upgradeRequests.filter((req: UpgradeRequest) => req.userId !== userId)
   localStorage.setItem('upgradeRequests', JSON.stringify(filteredUpgrades))
   
-  // Clear auth
   localStorage.removeItem('authUserId')
-  
-  // Redirect to signin
   router.push('/signin')
 }
 
-// Navigation
 const goToUpgradeForm = () => {
   if (verificationStatus.value !== 'verified' || upgradePending.value) {
     return

@@ -1,5 +1,3 @@
-// src/services/user.ts
-
 export interface Address {
   fullName: string
   label: string
@@ -14,8 +12,8 @@ export interface Address {
 }
 
 export interface User {
-  userId: string             
-  publicId: string             
+  userId: string
+  publicId: string
   email: string
   password: string
   role: 'Buyer' | 'Farmer' | 'Admin' | 'Banned'
@@ -33,6 +31,8 @@ export interface User {
   experience?: string
   description?: string
   bannedUntil?: string
+  isVerified?: boolean
+  isBanned?: boolean
   addresses?: Address[]
 }
 
@@ -41,7 +41,6 @@ export interface VerificationData {
   frontImage: string
   backImage: string
 }
-
 
 export interface SignUpForm {
   userId?: string
@@ -76,7 +75,7 @@ export const defaultSignUpForm: SignUpForm = {
   createdAt: ''
 }
 
-// Default users for initial seed (example only)
+// Default users
 export const defaultUsers: User[] = [
   {
     userId: '100001',
@@ -89,7 +88,9 @@ export const defaultUsers: User[] = [
     lastName: 'Dela Cruz',
     phoneNumber: '09171234567',
     gender: 'Male',
-    createdAt: '2024-01-01T08:00:00.000Z'
+    createdAt: '2024-01-01T08:00:00.000Z',
+    isVerified: true,
+    isBanned: false
   },
   {
     userId: '100002',
@@ -102,7 +103,9 @@ export const defaultUsers: User[] = [
     lastName: 'Reyes',
     phoneNumber: '09181234567',
     gender: 'Female',
-    createdAt: '2024-01-02T08:00:00.000Z'
+    createdAt: '2024-01-02T08:00:00.000Z',
+    isVerified: true,
+    isBanned: false
   },
   {
     userId: '100003',
@@ -115,7 +118,9 @@ export const defaultUsers: User[] = [
     lastName: 'User',
     phoneNumber: '09991234567',
     gender: 'Other',
-    createdAt: '2024-01-03T08:00:00.000Z'
+    createdAt: '2024-01-03T08:00:00.000Z',
+    isVerified: true,
+    isBanned: false
   }
 ]
 
@@ -130,10 +135,24 @@ export function getCurrentUser(): User | null {
   return user ? JSON.parse(user) : null
 }
 
-// Utility: Seed default users (call once in main.ts or setup)
+// ✅ Seed default users into localStorage
 export function seedDefaultUsers(): void {
-  const storedUsers = localStorage.getItem('registeredUsers')
-  if (!storedUsers) {
-    localStorage.setItem('registeredUsers', JSON.stringify(defaultUsers))
+  const existingUserIds: string[] = JSON.parse(localStorage.getItem('userIds') || '[]')
+  const updatedUserIds = [...existingUserIds]
+
+  for (const user of defaultUsers) {
+    const key = `user_${user.userId}`
+
+    // Only add if not already saved
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key, JSON.stringify(user))
+    }
+
+    // Add userId to userIds list if not present
+    if (!updatedUserIds.includes(user.userId)) {
+      updatedUserIds.push(user.userId)
+    }
   }
+
+  localStorage.setItem('userIds', JSON.stringify(updatedUserIds))
 }

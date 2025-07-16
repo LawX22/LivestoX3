@@ -6,19 +6,32 @@
       <form @submit.prevent="handleSignIn" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input v-model="email" type="email" required placeholder="example@gmail.com"
-            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+          <input
+            v-model="email"
+            type="email"
+            required
+            placeholder="example@gmail.com"
+            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+          />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input v-model="password" type="password" required placeholder="Enter password"
-            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+          <input
+            v-model="password"
+            type="password"
+            required
+            placeholder="Enter password"
+            class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+          />
         </div>
 
         <p v-if="errorMessage" class="text-sm text-red-600 text-center">{{ errorMessage }}</p>
 
-        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+        <button
+          type="submit"
+          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+        >
           Sign In
         </button>
       </form>
@@ -36,8 +49,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { defaultUsers } from '../../services/user'
-import type { User } from '../../services/user'
+import { defaultUsers, type User } from '../../services/user'
 
 const router = useRouter()
 const email = ref('')
@@ -47,46 +59,41 @@ const errorMessage = ref('')
 function handleSignIn() {
   errorMessage.value = ''
 
-  const userIds = JSON.parse(localStorage.getItem('userIds') || '[]')
-  const storedUsers: User[] = []
+  const userIds: string[] = JSON.parse(localStorage.getItem('userIds') || '[]')
+  const localUsers: User[] = userIds
+    .map(id => {
+      const data = localStorage.getItem(`user_${id}`)
+      return data ? JSON.parse(data) : null
+    })
+    .filter(Boolean)
 
-  for (const id of userIds) {
-    const userData = localStorage.getItem(id)
-    if (userData) {
-      storedUsers.push(JSON.parse(userData))
-    }
-  }
+  // Combine default users and local users
+  const users: User[] = [...defaultUsers, ...localUsers]
 
-  const allUsers: User[] = [...defaultUsers, ...storedUsers]
-
-  const user = allUsers.find(
-    (u) => u.email === email.value && u.password === password.value
-  )
+  const user = users.find(u => u.email === email.value && u.password === password.value)
 
   if (!user) {
     errorMessage.value = 'Invalid email or password.'
     return
   }
 
-  if (user.role === 'Banned') {
+  // Check if banned
+  if (user.isBanned) {
     const now = new Date()
-    const banLift = user.bannedUntil ? new Date(user.bannedUntil) : null
+    const banEnd = user.bannedUntil ? new Date(user.bannedUntil) : null
 
-    if (banLift && now < banLift) {
-      const remaining = Math.ceil((banLift.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      errorMessage.value = `Your account is banned. Try again in ${remaining} day(s).`
+    if (banEnd && now < banEnd) {
+      const remainingDays = Math.ceil((banEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      errorMessage.value = `Your account is banned. Try again in ${remainingDays} day(s).`
       return
     } else {
-      user.role = 'Buyer'
-      delete user.bannedUntil
-
-      // Update user in localStorage
-      localStorage.setItem(user.userId, JSON.stringify(user))
+      user.isBanned = false
+      user.bannedUntil = ''
+      localStorage.setItem(`user_${user.userId}`, JSON.stringify(user))
     }
   }
 
-  // Store logged-in user info
-  localStorage.setItem(`user_${user.userId}`, JSON.stringify(user))
+  // Save current session
   localStorage.setItem('authUserId', user.userId)
   localStorage.setItem('user', JSON.stringify(user))
 

@@ -149,8 +149,12 @@ onMounted(() => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   form.value.fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
   form.value.phone = user.phoneNumber || ''
-  const stored = localStorage.getItem(`addresses_${user.email}`)
-  if (stored) addresses.value = JSON.parse(stored)
+  
+  // Use userId instead of email for address storage
+  if (user.userId) {
+    const stored = localStorage.getItem(`addresses_${user.userId}`)
+    if (stored) addresses.value = JSON.parse(stored)
+  }
 })
 
 function applySelectedAddress() {
@@ -194,12 +198,25 @@ function handleMultipleFileUpload(event: Event) {
 
 function handleUpgradeRequest() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
+  if (!user.userId) {
+    console.error('User ID not found')
+    return
+  }
 
-  upgradeRequests.push({
+  // Get existing requests or initialize empty array
+  const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '{}')
+  
+  // Create user-specific requests array if it doesn't exist
+  if (!upgradeRequests[user.userId]) {
+    upgradeRequests[user.userId] = []
+  }
+
+  // Add new request
+  upgradeRequests[user.userId].push({
     ...form.value,
-    email: user.email,
+    userId: user.userId,
     date: new Date().toISOString(),
+    status: 'pending', // Add status field
     documents: {
       idDocument: fileData.value.idDocument,
       landProof: fileData.value.landProof,
@@ -207,6 +224,7 @@ function handleUpgradeRequest() {
     }
   })
 
+  // Save back to localStorage
   localStorage.setItem('upgradeRequests', JSON.stringify(upgradeRequests))
   submitted.value = true
 
