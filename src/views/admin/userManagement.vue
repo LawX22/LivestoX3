@@ -1,3 +1,4 @@
+<!-- userManagement.vue -->
 <template>
   <div class="flex h-screen bg-gray-100">
     <!-- Sidebar -->

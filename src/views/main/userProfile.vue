@@ -320,7 +320,7 @@
     <AddressModal 
       :visible="showAddressModal" 
       :address="selectedAddress" 
-      @close="closeModal" 
+      @close="closeAddressModal" 
       @save="handleAddressSave" 
       @delete="handleAddressDelete" 
     />
@@ -362,16 +362,17 @@ interface User {
 }
 
 interface Address {
-  fullName?: string
-  label?: string
-  phoneNumber?: string
-  street?: string
-  barangay?: string
-  city?: string
-  province?: string
-  region?: string
-  description?: string
-  isDefault?: boolean
+  fullName: string
+  phoneNumber: string
+  region: string
+  province: string
+  city: string
+  barangay: string
+  street: string
+  description: string
+  label: string
+  isDefault: boolean
+  createdAt?: string
 }
 
 interface VerificationData {
@@ -474,8 +475,8 @@ const checkVerificationStatus = (userId: string) => {
   
   // Update verification status based on request
   verificationStatus.value = userVerification.status === 'approved' ? 'verified' : 
-                           userVerification.status === 'rejected' ? 'rejected' : 
-                           'pending'
+                         userVerification.status === 'rejected' ? 'rejected' : 
+                         'pending'
   
   verificationSubmittedAt.value = userVerification.submittedAt
   verificationRejectionReason.value = userVerification.rejectionReason || null
@@ -649,7 +650,7 @@ const openAddressModal = (address: Address | null, index: number | null = null) 
   showAddressModal.value = true
 }
 
-const closeModal = () => {
+const closeAddressModal = () => {
   showAddressModal.value = false
   selectedAddress.value = null
   selectedIndex.value = null
@@ -659,32 +660,45 @@ const handleAddressSave = (addressData: Address) => {
   if (!user.value) return
 
   const userId = user.value.userId
-  
+  let updatedAddresses = [...addresses.value]
+
   if (selectedIndex.value !== null) {
-    addresses.value[selectedIndex.value] = addressData
+    // Update existing address
+    updatedAddresses[selectedIndex.value] = addressData
   } else {
-    addresses.value.push(addressData)
+    // Add new address
+    updatedAddresses.push(addressData)
   }
-  
+
+  // If this address is set as default, ensure no others are default
   if (addressData.isDefault) {
-    addresses.value.forEach((addr, index) => {
-      if (index !== selectedIndex.value) {
-        addr.isDefault = false
-      }
-    })
+    updatedAddresses = updatedAddresses.map(addr => ({
+      ...addr,
+      isDefault: addr === addressData ? true : false
+    }))
   }
+
+  // Save to localStorage
+  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
   
-  localStorage.setItem(`addresses_${userId}`, JSON.stringify(addresses.value))
-  closeModal()
+  // Update local state
+  addresses.value = updatedAddresses
+  closeAddressModal()
 }
 
 const handleAddressDelete = () => {
   if (!user.value || selectedIndex.value === null) return
 
   const userId = user.value.userId
-  addresses.value.splice(selectedIndex.value, 1)
-  localStorage.setItem(`addresses_${userId}`, JSON.stringify(addresses.value))
-  closeModal()
+  const updatedAddresses = [...addresses.value]
+  updatedAddresses.splice(selectedIndex.value, 1)
+
+  // Save to localStorage
+  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
+  
+  // Update local state
+  addresses.value = updatedAddresses
+  closeAddressModal()
 }
 
 // Verification management

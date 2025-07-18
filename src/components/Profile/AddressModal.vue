@@ -1,3 +1,4 @@
+<!-- AddressModal.vue -->
 <template>
   <div
     v-if="visible"
@@ -72,6 +73,7 @@
           <select v-model="label" class="w-full border rounded p-2 text-sm">
             <option value="Home">Home</option>
             <option value="Work">Work</option>
+            <option value="Other">Other</option>
           </select>
         </div>
         <div class="flex items-center gap-2 mt-4 sm:mt-0">
@@ -103,7 +105,7 @@
         </button>
 
         <button
-          @click="save"
+          @click="saveAddress"
           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
         >
           {{ address ? 'Update' : 'Save' }} Address
@@ -117,14 +119,28 @@
 import { ref, watch, onMounted } from 'vue'
 import { getCurrentUser } from '../../services/user'
 
+interface Address {
+  fullName: string
+  phoneNumber: string
+  region: string
+  province: string
+  city: string
+  barangay: string
+  street: string
+  description: string
+  label: string
+  isDefault: boolean
+  createdAt?: string
+}
+
 const props = defineProps<{
   visible: boolean
-  address?: Record<string, any> | null
+  address?: Address | null
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', address: Record<string, any>): void
+  (e: 'save', address: Address): void
   (e: 'delete'): void
 }>()
 
@@ -136,7 +152,7 @@ const city = ref('')
 const barangay = ref('')
 const street = ref('')
 const description = ref('')
-const label = ref<'Home' | 'Work'>('Home')
+const label = ref('Home')
 const isDefault = ref(false)
 
 function resetForm() {
@@ -183,8 +199,13 @@ watch(() => props.visible, (val) => {
   }
 })
 
-function save() {
-  const compiledAddress = {
+function saveAddress() {
+  if (!fullName.value.trim()) {
+    alert('Full name is required')
+    return
+  }
+
+  const compiledAddress: Address = {
     fullName: fullName.value,
     phoneNumber: phoneNumber.value,
     region: region.value,
@@ -195,7 +216,7 @@ function save() {
     description: description.value,
     label: label.value,
     isDefault: isDefault.value,
-    createdAt: new Date().toISOString(),
+    createdAt: props.address?.createdAt || new Date().toISOString()
   }
 
   emit('save', compiledAddress)
@@ -203,6 +224,8 @@ function save() {
 }
 
 function deleteAddress() {
-  emit('delete')
+  if (confirm('Are you sure you want to delete this address?')) {
+    emit('delete')
+  }
 }
 </script>

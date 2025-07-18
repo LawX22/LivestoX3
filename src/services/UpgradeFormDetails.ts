@@ -1,34 +1,33 @@
 export const livestockTypes = [
-  'Cattle',
+  'Poultry (Chickens)',
+  'Swine (Pigs)',
+  'Cattle (Cows)',
   'Goats',
-  'Pigs',
   'Sheep',
-  'Chickens',
   'Ducks',
-  'Carabaos',
   'Turkeys',
+  'Quails',
   'Rabbits',
   'Others'
-]
+] as const
+
+export const farmSizeUnits = [
+  'hectares',
+  'acres',
+  'square meters'
+] as const
 
 export interface UpgradeFormData {
   fullName: string
   phone: string
   farmName: string
-
-  // Farm Address Breakdown
   region: string
   province: string
   city: string
   barangay: string
   street: string
-
   farmSize: string
-  livestockType: string
-  experience: string
+  farmSizeUnit: string
+  livestockTypes: string[]
   description: string
-
-  // Optional metadata
-  email?: string
-  date?: string
 }
