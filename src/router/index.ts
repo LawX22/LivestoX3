@@ -12,6 +12,7 @@ import UpgradeRequests from '../views/admin/upgradeRequests.vue';
 // Main Pages
 import LandingPage from '../views/main/landingPage.vue';
 import Dashboard from '../views/main/Dashboard.vue';
+import Transactions from '../views/main/Transactions.vue';
 import Market from '../views/main/Market.vue';
 import Forum from '../views/main/Forum.vue';
 import upgradeForm from '../views/auth/upgradeForm.vue';
@@ -35,6 +36,7 @@ const routes = [
   // Main Routes
   { path: '/', component: LandingPage, name: 'LandingPage' },
   { path: '/dashboard', component: Dashboard, name: 'Dashboard' },
+  { path: '/transactions', component: Transactions, name: 'Transactions' },
   { path: '/market', component: Market, name: 'Market' },
   { path: '/forum', component: Forum, name: 'Forum' },
   { path: '/yourLivestock', component: YourLivestock, name: 'YourLivestock' },
