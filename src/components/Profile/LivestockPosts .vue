@@ -86,81 +86,72 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 
 interface LivestockPost {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  status: string;
-  images: string[];
-  views: number;
-  createdAt: string;
+  id: string
+  title: string
+  description: string
+  price: number
+  status: string
+  images: string[]
+  views: number
+  createdAt: string
 }
 
-export default defineComponent({
-  name: 'LivestockPostsTab',
-  props: {
-    userId: {
-      type: String,
-      required: true
-    }
-  },
-  setup(props) {
-    const livestockPosts = ref<LivestockPost[]>([]);
+const props = defineProps<{
+  userId: string
+}>()
 
-    const formatDate = (dateString: string): string => {
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    };
+const livestockPosts = ref<LivestockPost[]>([])
 
-    const loadLivestockPosts = () => {
-      // In a real app, you would fetch this from an API
-      const storedPosts = localStorage.getItem(`livestockPosts_${props.userId}`);
-      if (storedPosts) {
-        livestockPosts.value = JSON.parse(storedPosts);
-      } else {
-        // Sample data for demo
-        livestockPosts.value = [
-          {
-            id: '1',
-            title: 'Premium Dairy Goats',
-            description: 'Healthy and productive dairy goats ready for breeding. Raised organically with proper care.',
-            price: 8000,
-            status: 'Available',
-            images: ['https://source.unsplash.com/random/300x200?goat'],
-            views: 124,
-            createdAt: '2023-05-15T10:30:00Z'
-          },
-          {
-            id: '2',
-            title: 'Free Range Chickens',
-            description: 'Organic free-range chickens, perfect for egg production or meat.',
-            price: 350,
-            status: 'Sold',
-            images: ['https://source.unsplash.com/random/300x200?chicken'],
-            views: 89,
-            createdAt: '2023-04-22T14:15:00Z'
-          }
-        ];
-        localStorage.setItem(`livestockPosts_${props.userId}`, JSON.stringify(livestockPosts.value));
-      }
-    };
-
-    onMounted(() => {
-      loadLivestockPosts();
-    });
-
-    return {
-      livestockPosts,
-      formatDate
-    };
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   }
-});
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const loadLivestockPosts = () => {
+  const storedPosts = localStorage.getItem(`livestockPosts_${props.userId}`)
+  if (storedPosts) {
+    livestockPosts.value = JSON.parse(storedPosts)
+  } else {
+    livestockPosts.value = [
+      {
+        id: '1',
+        title: 'Premium Dairy Goats',
+        description:
+          'Healthy and productive dairy goats ready for breeding. Raised organically with proper care.',
+        price: 8000,
+        status: 'Available',
+        images: ['https://source.unsplash.com/random/300x200?goat'],
+        views: 124,
+        createdAt: '2023-05-15T10:30:00Z'
+      },
+      {
+        id: '2',
+        title: 'Free Range Chickens',
+        description:
+          'Organic free-range chickens, perfect for egg production or meat.',
+        price: 350,
+        status: 'Sold',
+        images: ['https://source.unsplash.com/random/300x200?chicken'],
+        views: 89,
+        createdAt: '2023-04-22T14:15:00Z'
+      }
+    ]
+    localStorage.setItem(
+      `livestockPosts_${props.userId}`,
+      JSON.stringify(livestockPosts.value)
+    )
+  }
+}
+
+onMounted(() => {
+  loadLivestockPosts()
+})
 </script>

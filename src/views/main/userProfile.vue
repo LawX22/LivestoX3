@@ -311,8 +311,8 @@
               </div>
 
               <!-- Profile Info Tab -->
-              <ProfileInfoTab v-if="activeTab === 'profile'" :user="user" :editableUser="editableUser"
-                :editing="editing" :verificationStatus="verificationStatus" @save-profile="saveProfile" />
+              <ProfileInfoTab v-if="activeTab === 'profile'" :user="user" v-model:editable-user="editableUser"
+                :editing="editing" :verificationStatus="verificationStatus" @save-profile="saveProfile" :upgradePending="upgradePending" />
 
               <!-- Farm Info Tab -->
               <FarmInfoTab v-if="activeTab === 'farmer'" :user="user" :editableUser="editableUser" :editing="editing"
