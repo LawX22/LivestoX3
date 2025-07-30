@@ -15,6 +15,7 @@ import Dashboard from '../views/main/Dashboard.vue';
 import Transactions from '../views/main/Transactions.vue';
 import Market from '../views/main/Market.vue';
 import Forum from '../views/main/Forum.vue';
+import Messages from '../views/main/Messages.vue';
 import upgradeForm from '../views/auth/upgradeForm.vue';
 import YourLivestock from '../views/main/yourLivestock.vue';
 import UserProfile from '../views/main/userProfile.vue';
@@ -39,6 +40,7 @@ const routes = [
   { path: '/transactions', component: Transactions, name: 'Transactions' },
   { path: '/market', component: Market, name: 'Market' },
   { path: '/forum', component: Forum, name: 'Forum' },
+  { path: '/messages', component: Messages, name: 'Messages' },
   { path: '/yourLivestock', component: YourLivestock, name: 'YourLivestock' },
   { path: '/userProfile', component: UserProfile, name: 'UserProfile' },
 ];
