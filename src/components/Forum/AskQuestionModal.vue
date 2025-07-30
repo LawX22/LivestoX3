@@ -305,11 +305,11 @@ const isFormValid = computed(() => {
   )
 })
 
-function closeModal() {
+const closeModal = () => {
   emits('close')
 }
 
-function handleSubmit() {
+const handleSubmit = () => {
   if (!isFormValid.value) return
   emits('submit', { ...question.value })
   closeModal()
