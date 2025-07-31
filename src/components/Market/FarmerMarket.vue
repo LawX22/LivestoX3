@@ -354,7 +354,7 @@
             </svg>
           </div>
           <h3
-            class="text-xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            class="text-xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">
             No listings found</h3>
           <p class="text-sm text-gray-600 mb-6 text-center max-w-md">We couldn't find any livestock matching your search
             criteria. Try adjusting your filters or search terms.</p>
@@ -372,8 +372,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import NavBar from '../../components/NavBar.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
 
@@ -410,269 +410,249 @@ interface Filters {
   priceRange: string;
 }
 
-export default defineComponent({
-  name: 'FarmerMarket',
-  components: {
-    NavBar,
-    AnimalDetailsModal
-  },
-  data() {
-    return {
-      isModalOpen: false,
-      selectedAnimal: {} as Animal,
-      showToast: false,
-      toastMessage: '',
-      filters: {
-        search: '',
-        type: '',
-        breed: '',
-        location: '',
-        priceRange: ''
-      } as Filters,
-      animals: [
-        {
-          id: 1,
-          type: 'Cattle',
-          breed: 'Angus',
-          weight: 450,
-          quantity: 5,
-          age: '24 months',
-          status: 'Available',
-          price: 45000,
-          deliveryOptions: ['pickup', 'delivery'],
-          images: [
-            'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
-          datePosted: new Date().toISOString(),
-          farmer: {
-            id: 2,
-            name: 'Maria Santos',
-            farmName: 'Santos Ranch',
-            contact: '+63 917 123 4567',
-            address: '456 Ranch Road, Barangay Pasture, Bukidnon',
-            avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-          }
-        },
-        {
-          id: 2,
-          type: 'Pig',
-          breed: 'Large White',
-          weight: 120,
-          quantity: 10,
-          age: '8 months',
-          status: 'Available',
-          price: 12000,
-          deliveryOptions: ['pickup'],
-          images: [
-            'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Healthy pigs ready for market. Fed with organic feed and raised in hygienic conditions. All vaccinations up to date.',
-          datePosted: new Date(Date.now() - 86400000).toISOString(),
-          farmer: {
-            id: 3,
-            name: 'Carlos Reyes',
-            farmName: 'Reyes Swine Farm',
-            contact: '+63 918 765 4321',
-            address: '789 Pig Farm, Barangay Livestock, Batangas',
-            avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
-          }
-        },
-        {
-          id: 3,
-          type: 'Goat',
-          breed: 'Boer',
-          weight: 35,
-          quantity: 3,
-          age: '14 months',
-          status: 'Low Stock',
-          price: 8000,
-          deliveryOptions: ['pickup', 'delivery'],
-          images: [
-            'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Purebred Boer goats, excellent for breeding. High quality genetics with good growth rates. All health certificates available.',
-          datePosted: new Date(Date.now() - 86400000 * 7).toISOString(),
-          farmer: {
-            id: 4,
-            name: 'Lorna Tan',
-            farmName: 'Tan Goat Farm',
-            contact: '+63 919 555 1234',
-            address: '321 Goat Hills, Barangay Grazing, Rizal',
-            avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
-          }
-        },
-        {
-          id: 4,
-          type: 'Chicken',
-          breed: 'Broiler',
-          weight: 2,
-          quantity: 50,
-          age: '6 weeks',
-          status: 'Available',
-          price: 250,
-          deliveryOptions: ['pickup', 'delivery'],
-          images: [
-            'https://images.unsplash.com/photo-1589927986089-35812388d1f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Broiler chickens ready for processing. Raised without antibiotics with proper ventilation and space.',
-          datePosted: new Date(Date.now() - 86400000 * 3).toISOString(),
-          farmer: {
-            id: 5,
-            name: 'Roberto Cruz',
-            farmName: 'Cruz Poultry Farm',
-            contact: '+63 920 123 7890',
-            address: '654 Poultry Avenue, Barangay Fowl, Pampanga',
-            avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
-          }
-        },
-        {
-          id: 5,
-          type: 'Sheep',
-          breed: 'Dorper',
-          weight: 60,
-          quantity: 8,
-          age: '18 months',
-          status: 'Available',
-          price: 15000,
-          deliveryOptions: ['pickup'],
-          images: [
-            'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Dorper sheep known for excellent meat quality and easy maintenance. Suitable for both small and large scale farming.',
-          datePosted: new Date(Date.now() - 86400000 * 10).toISOString(),
-          farmer: {
-            id: 6,
-            name: 'Elena Gonzales',
-            farmName: 'Gonzales Sheep Farm',
-            contact: '+63 921 456 2345',
-            address: '987 Wool Road, Barangay Shepherd, Benguet',
-            avatar: 'https://randomuser.me/api/portraits/women/66.jpg'
-          }
-        },
-        {
-          id: 6,
-          type: 'Duck',
-          breed: 'Pekin',
-          weight: 3.5,
-          quantity: 25,
-          age: '12 weeks',
-          status: 'Available',
-          price: 350,
-          deliveryOptions: ['pickup', 'delivery'],
-          images: [
-            'https://images.unsplash.com/photo-1562790351-d273a961e0e9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          ],
-          description: 'Pekin ducks with excellent meat production qualities. Fast growing and efficient feed converters. Healthy stock available.',
-          datePosted: new Date(Date.now() - 86400000 * 5).toISOString(),
-          farmer: {
-            id: 7,
-            name: 'Antonio Lim',
-            farmName: 'Lim Duck Farm',
-            contact: '+63 922 789 3456',
-            address: '135 Quack Lane, Barangay Waterfowl, Laguna',
-            avatar: 'https://randomuser.me/api/portraits/men/77.jpg'
-          }
-        }
-      ] as Animal[]
-    };
-  },
-  computed: {
-    uniqueTypes(): string[] {
-      const types = new Set(this.animals.map(animal => animal.type));
-      return Array.from(types).sort();
-    },
-    uniqueBreeds(): string[] {
-      const breeds = new Set(this.animals.map(animal => animal.breed));
-      return Array.from(breeds).sort();
-    },
-    uniqueLocations(): string[] {
-      const locations = new Set(this.animals.map(animal => animal.farmer.address.split(', ').slice(-2)[0]));
-      return Array.from(locations).sort();
-    },
-    filteredAnimals(): Animal[] {
-      return this.animals.filter(animal => {
-        const matchesSearch =
-          this.filters.search === '' ||
-          animal.type.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-          animal.breed.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-          animal.description.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-          animal.farmer.farmName.toLowerCase().includes(this.filters.search.toLowerCase());
+const isModalOpen = ref(false);
+const selectedAnimal = ref<Animal | null>(null);
+const showToast = ref(false);
+const toastMessage = ref('');
 
-        const matchesType = this.filters.type === '' || animal.type === this.filters.type;
-        const matchesBreed = this.filters.breed === '' || animal.breed === this.filters.breed;
-        const matchesLocation = this.filters.location === '' || animal.farmer.address.includes(this.filters.location);
-        const matchesPriceRange = this.filters.priceRange === '' || this.checkPriceRange(animal.price, this.filters.priceRange);
+const filters = ref<Filters>({
+  search: '',
+  type: '',
+  breed: '',
+  location: '',
+  priceRange: ''
+});
 
-        return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPriceRange;
-      });
+const animals = ref<Animal[]>([
+  {
+    id: 1,
+    type: 'Cattle',
+    breed: 'Angus',
+    weight: 450,
+    quantity: 5,
+    age: '24 months',
+    status: 'Available',
+    price: 45000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+      'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
+    datePosted: new Date().toISOString(),
+    farmer: {
+      id: 2,
+      name: 'Maria Santos',
+      farmName: 'Santos Ranch',
+      contact: '+63 917 123 4567',
+      address: '456 Ranch Road, Barangay Pasture, Bukidnon',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
     }
   },
-  methods: {
-    openModal(animal: Animal) {
-      this.selectedAnimal = animal;
-      this.isModalOpen = true;
-    },
-    closeModal() {
-      this.isModalOpen = false;
-    },
-    contactFarmer(animal: Animal) {
-      this.showToast = true;
-      this.toastMessage = `Contact information for ${animal.farmer.farmName} has been copied to clipboard: ${animal.farmer.contact}`;
-      navigator.clipboard.writeText(animal.farmer.contact);
-      setTimeout(() => {
-        this.showToast = false;
-      }, 5000);
-    },
-    contactFarmerFromModal(contactInfo: string) {
-      this.showToast = true;
-      this.toastMessage = `Contact information has been copied to clipboard: ${contactInfo}`;
-      navigator.clipboard.writeText(contactInfo);
-      setTimeout(() => {
-        this.showToast = false;
-      }, 5000);
-    },
-    resetFilters() {
-      this.filters = {
-        search: '',
-        type: '',
-        breed: '',
-        location: '',
-        priceRange: ''
-      };
-    },
-    formatDate(dateString: string) {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffInDays === 0) return 'today';
-      if (diffInDays === 1) return 'yesterday';
-      if (diffInDays < 7) return `${diffInDays} days ago`;
-      if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    },
-    getStatusClass(status: string) {
-      switch (status.toLowerCase()) {
-        case 'available':
-          return 'bg-green-100/80 text-green-800';
-        case 'low stock':
-          return 'bg-yellow-100/80 text-yellow-800';
-        case 'sold out':
-          return 'bg-red-100/80 text-red-800';
-        default:
-          return 'bg-gray-100/80 text-gray-800';
-      }
-    },
-    checkPriceRange(price: number, range: string): boolean {
-      if (range === '') return true;
-      const [minStr, maxStr] = range.split('-');
-      const min = Number(minStr.replace('+', ''));
-      const max = maxStr?.includes('+') ? Infinity : Number(maxStr);
-      return price >= min && price <= (isNaN(max) ? Infinity : max);
+  {
+    id: 2,
+    type: 'Pig',
+    breed: 'Large White',
+    weight: 120,
+    quantity: 10,
+    age: '8 months',
+    status: 'Available',
+    price: 12000,
+    deliveryOptions: ['pickup'],
+    images: [
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Healthy pigs ready for market. Fed with organic feed and raised in hygienic conditions. All vaccinations up to date.',
+    datePosted: new Date(Date.now() - 86400000).toISOString(),
+    farmer: {
+      id: 3,
+      name: 'Carlos Reyes',
+      farmName: 'Reyes Swine Farm',
+      contact: '+63 918 765 4321',
+      address: '789 Pig Farm, Barangay Livestock, Batangas',
+      avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
+    }
+  },
+  {
+    id: 3,
+    type: 'Goat',
+    breed: 'Boer',
+    weight: 35,
+    quantity: 3,
+    age: '14 months',
+    status: 'Low Stock',
+    price: 8000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Purebred Boer goats, excellent for breeding. High quality genetics with good growth rates. All health certificates available.',
+    datePosted: new Date(Date.now() - 86400000 * 7).toISOString(),
+    farmer: {
+      id: 4,
+      name: 'Lorna Tan',
+      farmName: 'Tan Goat Farm',
+      contact: '+63 919 555 1234',
+      address: '321 Goat Hills, Barangay Grazing, Rizal',
+      avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
+    }
+  },
+  {
+    id: 4,
+    type: 'Chicken',
+    breed: 'Broiler',
+    weight: 2,
+    quantity: 50,
+    age: '6 weeks',
+    status: 'Available',
+    price: 250,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1589927986089-35812388d1f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Broiler chickens ready for processing. Raised without antibiotics with proper ventilation and space.',
+    datePosted: new Date(Date.now() - 86400000 * 3).toISOString(),
+    farmer: {
+      id: 5,
+      name: 'Roberto Cruz',
+      farmName: 'Cruz Poultry Farm',
+      contact: '+63 920 123 7890',
+      address: '654 Poultry Avenue, Barangay Fowl, Pampanga',
+      avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
+    }
+  },
+  {
+    id: 5,
+    type: 'Sheep',
+    breed: 'Dorper',
+    weight: 60,
+    quantity: 8,
+    age: '18 months',
+    status: 'Available',
+    price: 15000,
+    deliveryOptions: ['pickup'],
+    images: [
+      'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Dorper sheep known for excellent meat quality and easy maintenance. Suitable for both small and large scale farming.',
+    datePosted: new Date(Date.now() - 86400000 * 10).toISOString(),
+    farmer: {
+      id: 6,
+      name: 'Elena Gonzales',
+      farmName: 'Gonzales Sheep Farm',
+      contact: '+63 921 456 2345',
+      address: '987 Wool Road, Barangay Shepherd, Benguet',
+      avatar: 'https://randomuser.me/api/portraits/women/66.jpg'
+    }
+  },
+  {
+    id: 6,
+    type: 'Duck',
+    breed: 'Pekin',
+    weight: 3.5,
+    quantity: 25,
+    age: '12 weeks',
+    status: 'Available',
+    price: 350,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1562790351-d273a961e0e9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Pekin ducks with excellent meat production qualities. Fast growing and efficient feed converters. Healthy stock available.',
+    datePosted: new Date(Date.now() - 86400000 * 5).toISOString(),
+    farmer: {
+      id: 7,
+      name: 'Antonio Lim',
+      farmName: 'Lim Duck Farm',
+      contact: '+63 922 789 3456',
+      address: '135 Quack Lane, Barangay Waterfowl, Laguna',
+      avatar: 'https://randomuser.me/api/portraits/men/77.jpg'
     }
   }
+]);
+
+const uniqueTypes = computed(() => Array.from(new Set(animals.value.map(a => a.type))).sort());
+const uniqueBreeds = computed(() => Array.from(new Set(animals.value.map(a => a.breed))).sort());
+const uniqueLocations = computed(() => Array.from(new Set(animals.value.map(a => a.farmer.address.split(', ').slice(-2)[0]))).sort());
+
+const filteredAnimals = computed(() => {
+  return animals.value.filter(animal => {
+    const matchesSearch =
+      filters.value.search === '' ||
+      animal.type.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.breed.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.description.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.farmer.farmName.toLowerCase().includes(filters.value.search.toLowerCase());
+
+    const matchesType = filters.value.type === '' || animal.type === filters.value.type;
+    const matchesBreed = filters.value.breed === '' || animal.breed === filters.value.breed;
+    const matchesLocation = filters.value.location === '' || animal.farmer.address.includes(filters.value.location);
+    const matchesPriceRange = filters.value.priceRange === '' || checkPriceRange(animal.price, filters.value.priceRange);
+
+    return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPriceRange;
+  });
 });
+
+function openModal(animal: Animal) {
+  selectedAnimal.value = animal;
+  isModalOpen.value = true;
+}
+
+function closeModal() {
+  isModalOpen.value = false;
+}
+
+function contactFarmer(animal: Animal) {
+  showToast.value = true;
+  toastMessage.value = `Contact information for ${animal.farmer.farmName} has been copied to clipboard: ${animal.farmer.contact}`;
+  navigator.clipboard.writeText(animal.farmer.contact);
+  setTimeout(() => showToast.value = false, 5000);
+}
+
+function contactFarmerFromModal(contactInfo: string) {
+  showToast.value = true;
+  toastMessage.value = `Contact information has been copied to clipboard: ${contactInfo}`;
+  navigator.clipboard.writeText(contactInfo);
+  setTimeout(() => showToast.value = false, 5000);
+}
+
+function resetFilters() {
+  filters.value = {
+    search: '',
+    type: '',
+    breed: '',
+    location: '',
+    priceRange: ''
+  };
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffInDays === 0) return 'today';
+  if (diffInDays === 1) return 'yesterday';
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getStatusClass(status: string): string {
+  switch (status.toLowerCase()) {
+    case 'available': return 'bg-green-100/80 text-green-800';
+    case 'low stock': return 'bg-yellow-100/80 text-yellow-800';
+    case 'sold out': return 'bg-red-100/80 text-red-800';
+    default: return 'bg-gray-100/80 text-gray-800';
+  }
+}
+
+function checkPriceRange(price: number, range: string): boolean {
+  if (range === '') return true;
+  const [minStr, maxStr] = range.split('-');
+  const min = Number(minStr.replace('+', ''));
+  const max = maxStr?.includes('+') ? Infinity : Number(maxStr);
+  return price >= min && price <= (isNaN(max) ? Infinity : max);
+}
 </script>
 
 <style scoped>
