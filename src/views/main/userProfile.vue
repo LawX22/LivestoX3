@@ -3,35 +3,23 @@
   <div class="min-h-screen bg-gray-100">
     <NavBar />
 
-    <!-- Banner Section -->
+    <!-- Banner Picture -->
     <div class="relative h-60 bg-gradient-to-r from-gray-300 to-gray-400 bg-center bg-cover" :style="bannerStyle">
       <div class="absolute bottom-[-4rem] left-1/2 transform -translate-x-1/2">
+        
+        <!-- Profile Picture -->
         <div class="relative w-32 h-32">
-          <div
-            class="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200 flex items-center justify-center text-gray-500 text-3xl font-bold object-cover">
-            <img v-if="editing ? tempProfileImage || profileImage : profileImage"
-              :src="editing ? (tempProfileImage || profileImage) : (profileImage || undefined)"
-              class="w-full h-full object-cover" alt="Profile" />
-            <span v-else>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5.121 17.804A11.963 11.963 0 0112 15c2.25 0 4.355.663 6.121 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200 flex items-center justify-center">
+            <template v-if="profileImage">
+              <img :src="profileImage" class="w-full h-full object-cover" alt="Profile" />
+            </template>
+            <template v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A11.963 11.963 0 0112 15c2.25 0 4.355.663 6.121 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-            </span>
+            </template>
           </div>
-          <input type="file" accept="image/*" ref="profileInputRef" class="hidden" @change="onProfileChange" />
-          <button v-if="editing" @click="$refs.profileInputRef.click()"
-            class="absolute bottom-0 right-0 bg-white text-xs px-2 py-0.5 rounded shadow">Change</button>
         </div>
-      </div>
-
-      <div v-if="editing" class="absolute top-4 right-4">
-        <input type="file" accept="image/*" ref="bannerInputRef" class="hidden" @change="onBannerChange" />
-        <button @click="$refs.bannerInputRef.click()"
-          class="bg-white text-sm px-3 py-1 rounded shadow hover:bg-gray-100">
-          Change Banner
-        </button>
       </div>
     </div>
 
@@ -222,20 +210,15 @@ export default {
     const verificationStatus = ref('unverified')
     const verificationSubmittedAt = ref(null)
     const verificationRejectionReason = ref(null)
-    const profileInputRef = ref(null)
-    const bannerInputRef = ref(null)
     const profileImage = ref(null)
     const bannerImage = ref(null)
-    const tempProfileImage = ref(null)
-    const tempBannerImage = ref(null)
     const showAddressModal = ref(false)
     const selectedAddress = ref(null)
     const selectedIndex = ref(null)
     const showVerificationModal = ref(false)
 
     const bannerStyle = computed(() => {
-      const bannerSrc = editing.value ? (tempBannerImage.value || bannerImage.value) : bannerImage.value
-      return bannerSrc ? { backgroundImage: `url('${bannerSrc}')` } : {}
+      return bannerImage.value ? { backgroundImage: `url('${bannerImage.value}')` } : {}
     })
 
     const formatDate = (dateString) => {
@@ -331,32 +314,6 @@ export default {
       }
     }
 
-    const onProfileChange = (event) => {
-      const input = event.target
-      const file = input.files?.[0]
-      if (!file) return
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        tempProfileImage.value = reader.result
-      }
-      reader.readAsDataURL(file)
-      input.value = ''
-    }
-
-    const onBannerChange = (event) => {
-      const input = event.target
-      const file = input.files?.[0]
-      if (!file) return
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        tempBannerImage.value = reader.result
-      }
-      reader.readAsDataURL(file)
-      input.value = ''
-    }
-
     const handleProfileSave = (updatedUser) => {
       if (!user.value) return
 
@@ -380,20 +337,7 @@ export default {
 
       user.value = newUserData
       localStorage.setItem(`user_${userId}`, JSON.stringify(newUserData))
-
-      if (tempProfileImage.value) {
-        profileImage.value = tempProfileImage.value
-        localStorage.setItem(`profileImage_${userId}`, profileImage.value)
-      }
-
-      if (tempBannerImage.value) {
-        bannerImage.value = tempBannerImage.value
-        localStorage.setItem(`bannerImage_${userId}`, bannerImage.value)
-      }
-
       editing.value = false
-      tempProfileImage.value = null
-      tempBannerImage.value = null
       loadUserData()
     }
 
@@ -491,21 +435,15 @@ export default {
       verificationStatus,
       verificationSubmittedAt,
       verificationRejectionReason,
-      profileInputRef,
-      bannerInputRef,
       profileImage,
       bannerImage,
-      tempProfileImage,
-      tempBannerImage,
       showAddressModal,
       selectedAddress,
       selectedIndex,
       showVerificationModal,
-      bannerStyle,
+      bannerStyle,  
       formatDate,
       formatAddress,
-      onProfileChange,
-      onBannerChange,
       handleProfileSave,
       openAddressModal,
       closeAddressModal,
