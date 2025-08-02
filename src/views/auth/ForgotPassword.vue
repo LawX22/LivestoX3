@@ -420,7 +420,7 @@ interface Toast {
 
 const toasts = ref<Toast[]>([])
 
-function addToast(toast: Omit<Toast, 'id'>) {
+const addToast = (toast: Omit<Toast, 'id'>) => {
   const id = Math.random().toString(36).substr(2, 9)
   toasts.value.push({ ...toast, id })
   
@@ -430,7 +430,7 @@ function addToast(toast: Omit<Toast, 'id'>) {
   }, 5000)
 }
 
-function removeToast(id: string) {
+const removeToast = (id: string) => {
   const index = toasts.value.findIndex(toast => toast.id === id)
   if (index > -1) {
     toasts.value.splice(index, 1)
@@ -465,7 +465,7 @@ const passwordMismatch = computed(() => form.value.newPassword !== form.value.co
 const isResetCodeComplete = computed(() => resetCode.value.every(digit => digit !== ''))
 
 // Toast Functions
-function showEmailHelpToast() {
+const showEmailHelpToast = () => {
   addToast({
     type: 'info',
     title: 'Email Help',
@@ -478,7 +478,7 @@ function showEmailHelpToast() {
   })
 }
 
-function showPasswordRequirementsToast() {
+const showPasswordRequirementsToast = () => {
   addToast({
     type: 'info',
     title: 'Password Requirements',
@@ -493,20 +493,20 @@ function showPasswordRequirementsToast() {
 }
 
 // Navigation functions
-function goToPrevStep() {
+const goToPrevStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
   }
 }
 
-function goToNextStep() {
+const goToNextStep = () => {
   if (currentStep.value < 3) {
     currentStep.value++
   }
 }
 
 // Code input handling
-function handleCodeInput(position: number, event: Event) {
+const handleCodeInput = (position: number, event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.value) {
     if (position < 6) {
@@ -516,7 +516,7 @@ function handleCodeInput(position: number, event: Event) {
   }
 }
 
-function handleCodeDelete(position: number, event: KeyboardEvent) {
+const handleCodeDelete = (position: number, event: KeyboardEvent) => {
   if (event.key === 'Backspace' && position > 1 && !resetCode.value[position - 1]) {
     const prevInput = document.querySelector(`input:nth-child(${position - 1})`) as HTMLInputElement
     prevInput?.focus()
@@ -524,7 +524,7 @@ function handleCodeDelete(position: number, event: KeyboardEvent) {
 }
 
 // Step 1: Send reset code
-function sendResetCode() {
+const sendResetCode = () => {
   emailError.value = ''
   
   // Check if email exists in localStorage
@@ -560,7 +560,7 @@ function sendResetCode() {
 }
 
 // Step 2: Verify reset code
-function verifyResetCode() {
+const verifyResetCode = () => {
   codeError.value = ''
   
   if (!isResetCodeComplete.value) {
@@ -587,7 +587,7 @@ function verifyResetCode() {
 }
 
 // Step 3: Reset password
-function resetPassword() {
+const resetPassword = () => {
   passwordError.value = ''
   
   if (passwordMismatch.value) {
@@ -626,7 +626,7 @@ function resetPassword() {
 }
 
 // Resend code function
-function resendCode() {
+const resendCode = () => {
   addToast({
     type: 'info',
     title: 'Code Resent!',
