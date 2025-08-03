@@ -602,201 +602,185 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import { Chart, registerables } from 'chart.js'
 
-export default {
-  components: {
-    NavBar
-  },
-  data() {
-    return {
-      livestockChart: null,
-      revenueChart: null,
-      salesChart: null
-    }
-  },
-  mounted() {
-    // Register all Chart.js components
-    Chart.register(...registerables)
-    
-    // Initialize livestock distribution chart (Doughnut)
-    this.initLivestockChart()
-    
-    // Initialize revenue trends chart (Line)
-    this.initRevenueChart()
-    
-    // Initialize sales volume chart (Bar)
-    this.initSalesChart()
-  },
-  beforeUnmount() {
-    // Clean up charts to prevent memory leaks
-    if (this.livestockChart) {
-      this.livestockChart.destroy()
-    }
-    if (this.revenueChart) {
-      this.revenueChart.destroy()
-    }
-    if (this.salesChart) {
-      this.salesChart.destroy()
-    }
-  },
-  methods: {
-    initLivestockChart() {
-      const ctx = this.$refs.livestockChart.getContext('2d')
-      this.livestockChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
-          datasets: [{
-            data: [35, 25, 20, 10, 10],
-            backgroundColor: [
-              '#10B981', // green
-              '#3B82F6', // blue
-              '#F59E0B', // yellow
-              '#8B5CF6', // purple
-              '#EC4899'  // pink
-            ],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '70%',
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 10,
-                padding: 12,
-                usePointStyle: true,
-                pointStyle: 'circle',
-                font: {
-                  size: 10
-                }
-              }
-            }
-          }
-        }
-      })
+Chart.register(...registerables)
+
+const livestockChart = ref<Chart | null>(null)
+const revenueChart = ref<Chart | null>(null)
+const salesChart = ref<Chart | null>(null)
+
+const livestockChartRef = ref<HTMLCanvasElement | null>(null)
+const revenueChartRef = ref<HTMLCanvasElement | null>(null)
+const salesChartRef = ref<HTMLCanvasElement | null>(null)
+
+const initLivestockChart = () => {
+  if (!livestockChartRef.value) return
+  const ctx = livestockChartRef.value.getContext('2d')
+  if (!ctx) return
+
+  livestockChart.value = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
+      datasets: [{
+        data: [35, 25, 20, 10, 10],
+        backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899'],
+        borderWidth: 0
+      }]
     },
-    initRevenueChart() {
-      const ctx = this.$refs.revenueChart.getContext('2d')
-      this.revenueChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-          datasets: [{
-            label: 'Monthly Revenue',
-            data: [120000, 135000, 145000, 155000, 165000, 175000, 185000],
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.05)',
-            fill: true,
-            tension: 0.3,
-            borderWidth: 2,
-            pointBackgroundColor: '#10B981',
-            pointRadius: 3,
-            pointHoverRadius: 5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return '₱' + context.raw.toLocaleString()
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              beginAtZero: false,
-              ticks: {
-                callback: function(value) {
-                  if (value >= 1000) {
-                    return '₱' + (value / 1000).toFixed(0) + 'k'
-                  }
-                  return '₱' + value
-                },
-                font: {
-                  size: 10
-                }
-              },
-              grid: {
-                drawBorder: false
-              }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 10,
+            padding: 12,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: {
+              size: 10
             }
           }
         }
-      })
-    },
-    initSalesChart() {
-      const ctx = this.$refs.salesChart.getContext('2d')
-      this.salesChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-          datasets: [{
-            label: 'Units Sold',
-            data: [3, 4, 2, 5, 3, 4, 3],
-            backgroundColor: '#3B82F6',
-            borderRadius: 4,
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0,
-                font: {
-                  size: 10
-                }
-              },
-              grid: {
-                drawBorder: false
-              }
-            }
-          }
-        }
-      })
+      }
     }
-  }
+  })
 }
+
+const initRevenueChart = () => {
+  if (!revenueChartRef.value) return
+  const ctx = revenueChartRef.value.getContext('2d')
+  if (!ctx) return
+
+  revenueChart.value = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      datasets: [{
+        label: 'Monthly Revenue',
+        data: [120000, 135000, 145000, 155000, 165000, 175000, 185000],
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2,
+        pointBackgroundColor: '#10B981',
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => '₱' + context.raw.toLocaleString()
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        },
+        y: {
+          beginAtZero: false,
+          ticks: {
+            callback: (value: number) => {
+              return value >= 1000 ? `₱${(value / 1000).toFixed(0)}k` : `₱${value}`
+            },
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            drawBorder: false
+          }
+        }
+      }
+    }
+  })
+}
+
+const initSalesChart = () => {
+  if (!salesChartRef.value) return
+  const ctx = salesChartRef.value.getContext('2d')
+  if (!ctx) return
+
+  salesChart.value = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      datasets: [{
+        label: 'Units Sold',
+        data: [3, 4, 2, 5, 3, 4, 3],
+        backgroundColor: '#3B82F6',
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            drawBorder: false
+          }
+        }
+      }
+    }
+  })
+}
+
+onMounted(() => {
+  initLivestockChart()
+  initRevenueChart()
+  initSalesChart()
+})
+
+onBeforeUnmount(() => {
+  livestockChart.value?.destroy()
+  revenueChart.value?.destroy()
+  salesChart.value?.destroy()
+})
 </script>

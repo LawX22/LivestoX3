@@ -599,193 +599,189 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import { Chart, registerables } from 'chart.js'
 
-export default {
-  components: {
-    NavBar
-  },
-  data() {
-    return {
-      priceChart: null,
-      availabilityChart: null
-    }
-  },
-  mounted() {
-    // Register all Chart.js components
-    Chart.register(...registerables)
-    
-    // Initialize price trends chart (Line)
-    this.initPriceChart()
-    
-    // Initialize availability chart (Bar)
-    this.initAvailabilityChart()
-  },
-  beforeUnmount() {
-    // Clean up charts to prevent memory leaks
-    if (this.priceChart) {
-      this.priceChart.destroy()
-    }
-    if (this.availabilityChart) {
-      this.availabilityChart.destroy()
-    }
-  },
-  methods: {
-    initPriceChart() {
-      const ctx = this.$refs.priceChart.getContext('2d')
-      this.priceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-          datasets: [
-            {
-              label: 'Cattle',
-              data: [42000, 45000, 43000, 47000, 46000, 48000, 45000],
-              borderColor: '#3B82F6',
-              backgroundColor: 'rgba(59, 130, 246, 0.05)',
-              fill: false,
-              tension: 0.3,
-              borderWidth: 2,
-              pointBackgroundColor: '#3B82F6',
-              pointRadius: 2
-            },
-            {
-              label: 'Pigs',
-              data: [12000, 13000, 12500, 14000, 13500, 13800, 13500],
-              borderColor: '#10B981',
-              backgroundColor: 'rgba(16, 185, 129, 0.05)',
-              fill: false,
-              tension: 0.3,
-              borderWidth: 2,
-              pointBackgroundColor: '#10B981',
-              pointRadius: 2
-            },
-            {
-              label: 'Goats',
-              data: [8000, 8500, 8200, 9000, 8800, 9200, 8800],
-              borderColor: '#F59E0B',
-              backgroundColor: 'rgba(245, 158, 11, 0.05)',
-              fill: false,
-              tension: 0.3,
-              borderWidth: 2,
-              pointBackgroundColor: '#F59E0B',
-              pointRadius: 2
-            }
-          ]
+const priceChart = ref<Chart | null>(null)
+const availabilityChart = ref<Chart | null>(null)
+const priceChartRef = ref<HTMLCanvasElement | null>(null)
+const availabilityChartRef = ref<HTMLCanvasElement | null>(null)
+
+const initPriceChart = () => {
+  if (!priceChartRef.value) return
+
+  const ctx = priceChartRef.value.getContext('2d')
+  if (!ctx) return
+
+  priceChart.value = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      datasets: [
+        {
+          label: 'Cattle',
+          data: [42000, 45000, 43000, 47000, 46000, 48000, 45000],
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.05)',
+          fill: false,
+          tension: 0.3,
+          borderWidth: 2,
+          pointBackgroundColor: '#3B82F6',
+          pointRadius: 2
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 10,
-                padding: 12,
-                usePointStyle: true,
-                pointStyle: 'circle',
-                font: {
-                  size: 10
-                }
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.dataset.label + ': ₱' + context.raw.toLocaleString()
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              beginAtZero: false,
-              ticks: {
-                callback: function(value) {
-                  if (value >= 1000) {
-                    return '₱' + (value / 1000).toFixed(0) + 'k'
-                  }
-                  return '₱' + value
-                },
-                font: {
-                  size: 10
-                }
-              },
-              grid: {
-                drawBorder: false
-              }
-            }
-          }
+        {
+          label: 'Pigs',
+          data: [12000, 13000, 12500, 14000, 13500, 13800, 13500],
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.05)',
+          fill: false,
+          tension: 0.3,
+          borderWidth: 2,
+          pointBackgroundColor: '#10B981',
+          pointRadius: 2
+        },
+        {
+          label: 'Goats',
+          data: [8000, 8500, 8200, 9000, 8800, 9200, 8800],
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.05)',
+          fill: false,
+          tension: 0.3,
+          borderWidth: 2,
+          pointBackgroundColor: '#F59E0B',
+          pointRadius: 2
         }
-      })
+      ]
     },
-    initAvailabilityChart() {
-      const ctx = this.$refs.availabilityChart.getContext('2d')
-      this.availabilityChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
-          datasets: [{
-            label: 'Available',
-            data: [234, 156, 198, 87, 445],
-            backgroundColor: [
-              '#3B82F6',
-              '#10B981', 
-              '#F59E0B',
-              '#8B5CF6',
-              '#EC4899'
-            ],
-            borderRadius: 4,
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 10,
+            padding: 12,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: {
+              size: 10
             }
-          },
-          scales: {
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0,
-                font: {
-                  size: 10
-                }
-              },
-              grid: {
-                drawBorder: false
-              }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ₱' + context.raw.toLocaleString()
             }
           }
         }
-      })
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        },
+        y: {
+          beginAtZero: false,
+          ticks: {
+            callback: function(value) {
+              if (typeof value === 'number' && value >= 1000) {
+                return '₱' + (value / 1000).toFixed(0) + 'k'
+              }
+              return '₱' + value
+            },
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            drawBorder: false
+          }
+        }
+      }
     }
-  }
+  })
 }
+
+const initAvailabilityChart = () => {
+  if (!availabilityChartRef.value) return
+
+  const ctx = availabilityChartRef.value.getContext('2d')
+  if (!ctx) return
+
+  availabilityChart.value = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
+      datasets: [
+        {
+          label: 'Available',
+          data: [234, 156, 198, 87, 445],
+          backgroundColor: [
+            '#3B82F6',
+            '#10B981',
+            '#F59E0B',
+            '#8B5CF6',
+            '#EC4899'
+          ],
+          borderRadius: 4,
+          borderWidth: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            drawBorder: false
+          }
+        }
+      }
+    }
+  })
+}
+
+onMounted(() => {
+  Chart.register(...registerables)
+  initPriceChart()
+  initAvailabilityChart()
+})
+
+onBeforeUnmount(() => {
+  if (priceChart.value) priceChart.value.destroy()
+  if (availabilityChart.value) availabilityChart.value.destroy()
+})
 </script>
