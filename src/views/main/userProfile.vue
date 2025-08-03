@@ -579,7 +579,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from '../../components/NavBar.vue'
@@ -635,363 +635,308 @@ interface VerificationRequest {
   submittedAt: string;
   rejectionReason?: string;
 }
+const router = useRouter()
 
-export default {
-  components: {
-    NavBar,
-    AddressModal,
-    VerificationModal,
-    ProfileInfoTab,
-    FarmInfoTab,
-    LivestockPostsTab,
-    ReviewsRatingsTab
-  },
+const user = ref<User | null>(null)
+const editableUser = ref<Partial<User>>({})
+const editing = ref(false)
+const upgradePending = ref(false)
+const addresses = ref<Address[]>([])
+const activeTab = ref<'profile' | 'farmer' | 'livestock' | 'reviews'>('profile')
+const verificationStatus = ref<VerificationStatus>('unverified')
+const verificationSubmittedAt = ref<string | null>(null)
+const verificationRejectionReason = ref<string | null>(null)
+const profileImage = ref<string | null>(null)
+const bannerImage = ref<string | null>(null)
+const showAddressModal = ref(false)
+const selectedAddress = ref<Address | null>(null)
+const selectedIndex = ref<number | null>(null)
+const showVerificationModal = ref(false)
+const bannerInput = ref<HTMLInputElement | null>(null)
+const profileInput = ref<HTMLInputElement | null>(null)
 
-  setup() {
-    const router = useRouter()
-
-    const user = ref<User | null>(null)
-    const editableUser = ref<Partial<User>>({})
-    const editing = ref(false)
-    const upgradePending = ref(false)
-    const addresses = ref<Address[]>([])
-    const activeTab = ref<'profile' | 'farmer' | 'livestock' | 'reviews'>('profile')
-    const verificationStatus = ref<VerificationStatus>('unverified')
-    const verificationSubmittedAt = ref<string | null>(null)
-    const verificationRejectionReason = ref<string | null>(null)
-    const profileImage = ref<string | null>(null)
-    const bannerImage = ref<string | null>(null)
-    const showAddressModal = ref(false)
-    const selectedAddress = ref<Address | null>(null)
-    const selectedIndex = ref<number | null>(null)
-    const showVerificationModal = ref(false)
-    const bannerInput = ref<HTMLInputElement | null>(null)
-    const profileInput = ref<HTMLInputElement | null>(null)
-
-    const bannerStyle = computed(() => {
-      return bannerImage.value
-        ? {
-          backgroundImage: `url('${bannerImage.value}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }
-        : {}
-    })
-
-    const formatDate = (dateString: string | null | undefined): string => {
-      if (!dateString) return '—'
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }
-      return new Date(dateString).toLocaleDateString(undefined, options)
+const bannerStyle = computed(() => {
+  return bannerImage.value
+    ? {
+      backgroundImage: `url('${bannerImage.value}')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
     }
+    : {}
+})
 
-    const formatAddress = (addr: Address): string => {
-      const parts = [addr.street, addr.barangay, addr.city, addr.province, addr.region].filter(Boolean)
-      return parts.length ? parts.join(', ') : 'No location specified'
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '—'
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const formatAddress = (addr: Address): string => {
+  const parts = [addr.street, addr.barangay, addr.city, addr.province, addr.region].filter(Boolean)
+  return parts.length ? parts.join(', ') : 'No location specified'
+}
+
+const toggleEdit = (): void => {
+  if (editing.value) {
+    editableUser.value = { ...user.value } as Partial<User>
+  }
+  editing.value = !editing.value
+}
+
+const saveProfile = (): void => {
+  if (editableUser.value) {
+    handleProfileSave(editableUser.value)
+  }
+  editing.value = false
+}
+
+const goToUpgradeForm = (): void => {
+  if (verificationStatus.value !== 'verified' || upgradePending.value) return
+  router.push('/upgradeForm')
+}
+
+const triggerBannerUpload = (): void => {
+  bannerInput.value?.click()
+}
+
+const triggerProfileUpload = (): void => {
+  profileInput.value?.click()
+}
+
+const handleBannerUpload = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file && user.value) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const imageData = e.target?.result as string
+      bannerImage.value = imageData
+      localStorage.setItem(`bannerImage_${user.value?.userId}`, imageData)
     }
+    reader.readAsDataURL(file)
+  }
+  target.value = ''
+}
 
-    const toggleEdit = (): void => {
-      if (editing.value) {
-        editableUser.value = { ...user.value } as Partial<User>
-      }
-      editing.value = !editing.value
+const handleProfileUpload = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file && user.value) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const imageData = e.target?.result as string
+      profileImage.value = imageData
+      localStorage.setItem(`profileImage_${user.value?.userId}`, imageData)
     }
+    reader.readAsDataURL(file)
+  }
+  target.value = ''
+}
 
-    const saveProfile = (): void => {
-      if (editableUser.value) {
-        handleProfileSave(editableUser.value)
-      }
-      editing.value = false
-    }
-
-    const goToUpgradeForm = (): void => {
-      if (verificationStatus.value !== 'verified' || upgradePending.value) return
-      router.push('/upgradeForm')
-    }
-
-    const triggerBannerUpload = (): void => {
-      bannerInput.value?.click()
-    }
-
-    const triggerProfileUpload = (): void => {
-      profileInput.value?.click()
-    }
-
-    const handleBannerUpload = (event: Event): void => {
-      const target = event.target as HTMLInputElement
-      const file = target.files?.[0]
-      if (file && user.value) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const imageData = e.target?.result as string
-          bannerImage.value = imageData
-          localStorage.setItem(`bannerImage_${user.value?.userId}`, imageData)
-        }
-        reader.readAsDataURL(file)
-      }
-      target.value = ''
-    }
-
-    const handleProfileUpload = (event: Event): void => {
-      const target = event.target as HTMLInputElement
-      const file = target.files?.[0]
-      if (file && user.value) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const imageData = e.target?.result as string
-          profileImage.value = imageData
-          localStorage.setItem(`profileImage_${user.value?.userId}`, imageData)
-        }
-        reader.readAsDataURL(file)
-      }
-      target.value = ''
-    }
-
-    const checkVerificationStatus = (userId: string): void => {
-      const userData = localStorage.getItem(`user_${userId}`)
-      if (userData) {
-        const userObj = JSON.parse(userData) as User
-        if (userObj.isVerified) {
-          verificationStatus.value = 'verified'
-          return
-        }
-      }
-
-      const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-      const userVerification = verificationRequests.find(req => req.userId === userId)
-
-      if (!userVerification) {
-        verificationStatus.value = 'unverified'
-        return
-      }
-
-      verificationStatus.value = userVerification.status
-      verificationSubmittedAt.value = userVerification.submittedAt
-      verificationRejectionReason.value = userVerification.rejectionReason || null
-    }
-
-    const loadUserData = (): void => {
-      const authUserId = localStorage.getItem('authUserId')
-      if (!authUserId) return
-
-      const userData = localStorage.getItem(`user_${authUserId}`)
-      if (!userData) return
-
-      try {
-        const parsedUser = JSON.parse(userData) as User
-        user.value = parsedUser
-        editableUser.value = { ...parsedUser }
-        delete editableUser.value.password
-
-        checkVerificationStatus(authUserId)
-
-        profileImage.value = localStorage.getItem(`profileImage_${authUserId}`)
-        bannerImage.value = localStorage.getItem(`bannerImage_${authUserId}`)
-
-        if (parsedUser.role === 'Farmer') {
-          const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-          const approvedRequest = upgradeRequests.find((req: any) =>
-            req.userId === authUserId && req.status === 'approved'
-          )
-
-          if (approvedRequest) {
-            user.value = {
-              ...user.value,
-              farmName: approvedRequest.farmDetails.farmName,
-              farmSize: approvedRequest.farmDetails.farmSize,
-              farmSizeUnit: approvedRequest.farmDetails.farmSizeUnit,
-              livestockTypes: approvedRequest.farmDetails.livestockTypes,
-              description: approvedRequest.farmDetails.description,
-              farmAddress: approvedRequest.farmAddress
-            } as User
-            editableUser.value = { ...user.value }
-            delete editableUser.value.password
-          }
-        }
-
-        const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-        upgradePending.value = upgradeRequests.some((req: any) =>
-          req.userId === authUserId && req.status === 'pending'
-        )
-
-        const storedAddresses = localStorage.getItem(`addresses_${authUserId}`)
-        if (storedAddresses) {
-          addresses.value = JSON.parse(storedAddresses) as Address[]
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error)
-      }
-    }
-
-    const handleProfileSave = (updatedUser: Partial<User>): void => {
-      if (!user.value) return
-
-      const userId = user.value.userId
-      const originalUserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}') as User
-
-      const newUserData: User = {
-        ...originalUserData,
-        username: updatedUser.username || originalUserData.username,
-        email: updatedUser.email || originalUserData.email,
-        firstName: updatedUser.firstName || originalUserData.firstName,
-        lastName: updatedUser.lastName || originalUserData.lastName,
-        phoneNumber: updatedUser.phoneNumber || originalUserData.phoneNumber,
-        gender: updatedUser.gender || originalUserData.gender,
-        isVerified: verificationStatus.value === 'verified',
-        userId: originalUserData.userId,
-        password: originalUserData.password,
-        role: originalUserData.role,
-        createdAt: originalUserData.createdAt
-      }
-
-      user.value = newUserData
-      localStorage.setItem(`user_${userId}`, JSON.stringify(newUserData))
-      editing.value = false
-      loadUserData()
-    }
-
-    const openAddressModal = (address: Address | null, index: number | null = null): void => {
-      selectedAddress.value = address ? { ...address } : null
-      selectedIndex.value = index
-      showAddressModal.value = true
-    }
-
-    const closeAddressModal = (): void => {
-      showAddressModal.value = false
-      selectedAddress.value = null
-      selectedIndex.value = null
-    }
-
-    const handleAddressSave = (addressData: Address): void => {
-      if (!user.value) return
-
-      const userId = user.value.userId
-      let updatedAddresses = [...addresses.value]
-
-      if (selectedIndex.value !== null) {
-        updatedAddresses[selectedIndex.value] = addressData
-      } else {
-        updatedAddresses.push(addressData)
-      }
-
-      if (addressData.isDefault) {
-        updatedAddresses = updatedAddresses.map(addr => ({
-          ...addr,
-          isDefault: addr === addressData
-        }))
-      }
-
-      localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
-      addresses.value = updatedAddresses
-      closeAddressModal()
-    }
-
-    const handleAddressDelete = (): void => {
-      if (!user.value || selectedIndex.value === null) return
-
-      const userId = user.value.userId
-      const updatedAddresses = [...addresses.value]
-      updatedAddresses.splice(selectedIndex.value, 1)
-
-      localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
-      addresses.value = updatedAddresses
-      closeAddressModal()
-    }
-
-    const openVerificationModal = (): void => {
-      showVerificationModal.value = true
-    }
-
-    const closeVerificationModal = (): void => {
-      showVerificationModal.value = false
-    }
-
-    const handleVerification = (verificationData: { idType: string; frontImage: string; backImage: string }): void => {
-      if (!user.value) return
-
-      const userId = user.value.userId
-      const verificationRequest: VerificationRequest = {
-        userId,
-        idType: verificationData.idType,
-        frontImage: verificationData.frontImage,
-        backImage: verificationData.backImage,
-        status: 'pending',
-        submittedAt: new Date().toISOString()
-      }
-
-      const existingRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-      const filteredRequests = existingRequests.filter(req => req.userId !== userId)
-      filteredRequests.push(verificationRequest)
-
-      localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
-      verificationStatus.value = 'pending'
-      verificationSubmittedAt.value = verificationRequest.submittedAt
-      verificationRejectionReason.value = null
-      closeVerificationModal()
-    }
-
-    const removeProfile = (): void => {
-      profileImage.value = null
-      if (user.value) {
-        localStorage.removeItem(`profileImage_${user.value.userId}`)
-      }
-    }
-
-    const removeBanner = (): void => {
-      bannerImage.value = null
-      if (user.value) {
-        localStorage.removeItem(`bannerImage_${user.value.userId}`)
-      }
-    }
-
-    onMounted(() => {
-      loadUserData()
-    })
-
-    return {
-      user,
-      editableUser,
-      editing,
-      upgradePending,
-      addresses,
-      activeTab,
-      verificationStatus,
-      verificationSubmittedAt,
-      verificationRejectionReason,
-      profileImage,
-      bannerImage,
-      showAddressModal,
-      selectedAddress,
-      selectedIndex,
-      showVerificationModal,
-      bannerInput,
-      profileInput,
-      bannerStyle,
-      formatDate,
-      formatAddress,
-      toggleEdit,
-      saveProfile,
-      goToUpgradeForm,
-      triggerBannerUpload,
-      triggerProfileUpload,
-      handleBannerUpload,
-      handleProfileUpload,
-      handleProfileSave,
-      openAddressModal,
-      closeAddressModal,
-      handleAddressSave,
-      handleAddressDelete,
-      openVerificationModal,
-      closeVerificationModal,
-      handleVerification,
-      removeProfile,
-      removeBanner
+const checkVerificationStatus = (userId: string): void => {
+  const userData = localStorage.getItem(`user_${userId}`)
+  if (userData) {
+    const userObj = JSON.parse(userData) as User
+    if (userObj.isVerified) {
+      verificationStatus.value = 'verified'
+      return
     }
   }
+
+  const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
+  const userVerification = verificationRequests.find(req => req.userId === userId)
+
+  if (!userVerification) {
+    verificationStatus.value = 'unverified'
+    return
+  }
+
+  verificationStatus.value = userVerification.status
+  verificationSubmittedAt.value = userVerification.submittedAt
+  verificationRejectionReason.value = userVerification.rejectionReason || null
 }
+
+const loadUserData = (): void => {
+  const authUserId = localStorage.getItem('authUserId')
+  if (!authUserId) return
+
+  const userData = localStorage.getItem(`user_${authUserId}`)
+  if (!userData) return
+
+  try {
+    const parsedUser = JSON.parse(userData) as User
+    user.value = parsedUser
+    editableUser.value = { ...parsedUser }
+    delete editableUser.value.password
+
+    checkVerificationStatus(authUserId)
+
+    profileImage.value = localStorage.getItem(`profileImage_${authUserId}`)
+    bannerImage.value = localStorage.getItem(`bannerImage_${authUserId}`)
+
+    if (parsedUser.role === 'Farmer') {
+      const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
+      const approvedRequest = upgradeRequests.find((req: any) =>
+        req.userId === authUserId && req.status === 'approved'
+      )
+
+      if (approvedRequest) {
+        user.value = {
+          ...user.value,
+          farmName: approvedRequest.farmDetails.farmName,
+          farmSize: approvedRequest.farmDetails.farmSize,
+          farmSizeUnit: approvedRequest.farmDetails.farmSizeUnit,
+          livestockTypes: approvedRequest.farmDetails.livestockTypes,
+          description: approvedRequest.farmDetails.description,
+          farmAddress: approvedRequest.farmAddress
+        } as User
+        editableUser.value = { ...user.value }
+        delete editableUser.value.password
+      }
+    }
+
+    const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
+    upgradePending.value = upgradeRequests.some((req: any) =>
+      req.userId === authUserId && req.status === 'pending'
+    )
+
+    const storedAddresses = localStorage.getItem(`addresses_${authUserId}`)
+    if (storedAddresses) {
+      addresses.value = JSON.parse(storedAddresses) as Address[]
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error)
+  }
+}
+
+const handleProfileSave = (updatedUser: Partial<User>): void => {
+  if (!user.value) return
+
+  const userId = user.value.userId
+  const originalUserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}') as User
+
+  const newUserData: User = {
+    ...originalUserData,
+    username: updatedUser.username || originalUserData.username,
+    email: updatedUser.email || originalUserData.email,
+    firstName: updatedUser.firstName || originalUserData.firstName,
+    lastName: updatedUser.lastName || originalUserData.lastName,
+    phoneNumber: updatedUser.phoneNumber || originalUserData.phoneNumber,
+    gender: updatedUser.gender || originalUserData.gender,
+    isVerified: verificationStatus.value === 'verified',
+    userId: originalUserData.userId,
+    password: originalUserData.password,
+    role: originalUserData.role,
+    createdAt: originalUserData.createdAt
+  }
+
+  user.value = newUserData
+  localStorage.setItem(`user_${userId}`, JSON.stringify(newUserData))
+  editing.value = false
+  loadUserData()
+}
+
+const openAddressModal = (address: Address | null, index: number | null = null): void => {
+  selectedAddress.value = address ? { ...address } : null
+  selectedIndex.value = index
+  showAddressModal.value = true
+}
+
+const closeAddressModal = (): void => {
+  showAddressModal.value = false
+  selectedAddress.value = null
+  selectedIndex.value = null
+}
+
+const handleAddressSave = (addressData: Address): void => {
+  if (!user.value) return
+
+  const userId = user.value.userId
+  let updatedAddresses = [...addresses.value]
+
+  if (selectedIndex.value !== null) {
+    updatedAddresses[selectedIndex.value] = addressData
+  } else {
+    updatedAddresses.push(addressData)
+  }
+
+  if (addressData.isDefault) {
+    updatedAddresses = updatedAddresses.map(addr => ({
+      ...addr,
+      isDefault: addr === addressData
+    }))
+  }
+
+  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
+  addresses.value = updatedAddresses
+  closeAddressModal()
+}
+
+const handleAddressDelete = (): void => {
+  if (!user.value || selectedIndex.value === null) return
+
+  const userId = user.value.userId
+  const updatedAddresses = [...addresses.value]
+  updatedAddresses.splice(selectedIndex.value, 1)
+
+  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
+  addresses.value = updatedAddresses
+  closeAddressModal()
+}
+
+const openVerificationModal = (): void => {
+  showVerificationModal.value = true
+}
+
+const closeVerificationModal = (): void => {
+  showVerificationModal.value = false
+}
+
+const handleVerification = (verificationData: { idType: string; frontImage: string; backImage: string }): void => {
+  if (!user.value) return
+
+  const userId = user.value.userId
+  const verificationRequest: VerificationRequest = {
+    userId,
+    idType: verificationData.idType,
+    frontImage: verificationData.frontImage,
+    backImage: verificationData.backImage,
+    status: 'pending',
+    submittedAt: new Date().toISOString()
+  }
+
+  const existingRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
+  const filteredRequests = existingRequests.filter(req => req.userId !== userId)
+  filteredRequests.push(verificationRequest)
+
+  localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
+  verificationStatus.value = 'pending'
+  verificationSubmittedAt.value = verificationRequest.submittedAt
+  verificationRejectionReason.value = null
+  closeVerificationModal()
+}
+
+const removeProfile = (): void => {
+  profileImage.value = null
+  if (user.value) {
+    localStorage.removeItem(`profileImage_${user.value.userId}`)
+  }
+}
+
+const removeBanner = (): void => {
+  bannerImage.value = null
+  if (user.value) {
+    localStorage.removeItem(`bannerImage_${user.value.userId}`)
+  }
+}
+
+onMounted(() => {
+  loadUserData()
+})
 </script>

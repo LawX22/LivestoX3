@@ -698,7 +698,7 @@ const filteredQuestions = computed(() => {
   return questions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 
-function handlePostQuestion(question: ForumQuestion) {
+const handlePostQuestion = (question: ForumQuestion) => {
   if (!currentUser || currentUser.role !== 'Farmer') return
 
   const newQuestion: ForumQuestion = {
@@ -716,13 +716,13 @@ function handlePostQuestion(question: ForumQuestion) {
   showModal.value = false
 }
 
-function canAnswer(q: ForumQuestion) {
+const canAnswer = (q: ForumQuestion) => {
   if (!currentUser) return false
   if (currentUser.role === 'Buyer' && q.visibility === 'farmers') return false
   return true
 }
 
-function submitAnswer(q: ForumQuestion) {
+const submitAnswer = (q: ForumQuestion) => {
   if (!currentUser || !q.tempAnswer?.trim()) return
 
   const answer: ForumAnswer = {
@@ -735,11 +735,11 @@ function submitAnswer(q: ForumQuestion) {
   q.tempAnswer = ''
 }
 
-function toggleBookmark(q: ForumQuestion) {
+const toggleBookmark = (q: ForumQuestion) => {
   q.isBookmarked = !q.isBookmarked
 }
 
-function formatDate(dateStr: string) {
+const formatDate = (dateStr: string) => {
   const date = new Date(dateStr)
   return date.toLocaleString('en-PH', {
     year: 'numeric',
