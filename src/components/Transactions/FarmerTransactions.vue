@@ -348,189 +348,185 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-import NavBar from '../../components/NavBar.vue';
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
+import NavBar from '../../components/NavBar.vue'
 
 interface Livestock {
-  id: number;
-  type: string;
-  breed: string;
-  description: string;
-  image: string;
+  id: number
+  type: string
+  breed: string
+  description: string
+  image: string
 }
 
 interface Buyer {
-  id: number;
-  name: string;
-  contact: string;
-  address: string;
-  avatar: string;
+  id: number
+  name: string
+  contact: string
+  address: string
+  avatar: string
 }
 
 interface Transaction {
-  id: string;
-  livestock: Livestock;
-  buyer: Buyer;
-  date: string;
-  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed';
-  amount: number;
-  paymentMethod: string;
-  deliveryMethod: string;
-  message?: string;
+  id: string
+  livestock: Livestock
+  buyer: Buyer
+  date: string
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  message?: string
 }
 
-export default defineComponent({
-  name: 'FarmerTransactions',
-  components: {
-    NavBar
-  },
-  data() {
-    return {
-      activeTab: 'all',
-      selectedTransaction: null as Transaction | null,
-      tabs: [
-        { id: 'all', name: 'All Transactions', count: 12 },
-        { id: 'pending', name: 'Pending', count: 5 },
-        { id: 'accepted', name: 'Accepted', count: 3 },
-        { id: 'completed', name: 'Completed', count: 4 }
-      ],
-      transactions: [
-        {
-          id: 'TXN-78901',
-          livestock: {
-            id: 1,
-            type: 'Cattle',
-            breed: 'Angus',
-            description: 'Healthy Angus cattle, vaccinated and dewormed',
-            image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          },
-          buyer: {
-            id: 101,
-            name: 'Juan Dela Cruz',
-            contact: '+63 917 123 4567',
-            address: '123 Main St, Quezon City',
-            avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-          },
-          date: new Date(Date.now() - 86400000 * 2).toISOString(),
-          status: 'Pending',
-          amount: 45000,
-          paymentMethod: 'Bank Transfer',
-          deliveryMethod: 'Pickup',
-          message: 'I would like to visit your farm to see the cattle before finalizing the purchase.'
-        },
-        {
-          id: 'TXN-78902',
-          livestock: {
-            id: 2,
-            type: 'Pig',
-            breed: 'Large White',
-            description: 'Healthy pigs ready for market',
-            image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          },
-          buyer: {
-            id: 102,
-            name: 'Maria Santos',
-            contact: '+63 918 765 4321',
-            address: '456 Farm Road, Bulacan',
-            avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-          },
-          date: new Date(Date.now() - 86400000 * 5).toISOString(),
-          status: 'Accepted',
-          amount: 12000,
-          paymentMethod: 'Cash on Delivery',
-          deliveryMethod: 'Delivery',
-          message: 'Need 10 pigs for my restaurant. Can you deliver next week?'
-        },
-        {
-          id: 'TXN-78903',
-          livestock: {
-            id: 3,
-            type: 'Goat',
-            breed: 'Boer',
-            description: 'Purebred Boer goats, excellent for breeding',
-            image: 'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          },
-          buyer: {
-            id: 103,
-            name: 'Carlos Reyes',
-            contact: '+63 919 555 1234',
-            address: '789 Hillside, Rizal',
-            avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
-          },
-          date: new Date(Date.now() - 86400000 * 10).toISOString(),
-          status: 'Completed',
-          amount: 24000,
-          paymentMethod: 'GCash',
-          deliveryMethod: 'Pickup',
-          message: 'Looking for quality breeding goats. Please contact me.'
-        },
-        {
-          id: 'TXN-78905',
-          livestock: {
-            id: 5,
-            type: 'Sheep',
-            breed: 'Dorper',
-            description: 'Dorper sheep known for excellent meat quality',
-            image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-          },
-          buyer: {
-            id: 105,
-            name: 'Roberto Cruz',
-            contact: '+63 921 456 2345',
-            address: '654 Wool St, Benguet',
-            avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
-          },
-          date: new Date(Date.now() - 86400000 * 7).toISOString(),
-          status: 'Rejected',
-          amount: 30000,
-          paymentMethod: 'Cash on Delivery',
-          deliveryMethod: 'Pickup',
-          message: 'Interested in your sheep but the price is too high. Can you lower it?'
-        }
-      ] as Transaction[]
-    }
-  },
-  computed: {
-    filteredTransactions(): Transaction[] {
-      if (this.activeTab === 'all') return this.transactions;
-      return this.transactions.filter(t => 
-        this.activeTab === 'pending' ? t.status === 'Pending' :
-        this.activeTab === 'accepted' ? t.status === 'Accepted' :
-        this.activeTab === 'completed' ? t.status === 'Completed' : 
-        true
-      );
-    }
-  },
-  methods: {
-    viewDetails(transaction: Transaction): void {
-      this.selectedTransaction = transaction;
+const activeTab = ref<'all' | 'pending' | 'accepted' | 'completed'>('all')
+const selectedTransaction = ref<Transaction | null>(null)
+
+const tabs = [
+  { id: 'all', name: 'All Transactions', count: 12 },
+  { id: 'pending', name: 'Pending', count: 5 },
+  { id: 'accepted', name: 'Accepted', count: 3 },
+  { id: 'completed', name: 'Completed', count: 4 }
+]
+
+const transactions = ref<Transaction[]>([
+  {
+    id: 'TXN-78901',
+    livestock: {
+      id: 1,
+      type: 'Cattle',
+      breed: 'Angus',
+      description: 'Healthy Angus cattle, vaccinated and dewormed',
+      image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
     },
-    updateStatus(id: string, status: 'Accepted' | 'Rejected'): void {
-      const transaction = this.transactions.find(t => t.id === id);
-      if (transaction) {
-        transaction.status = status;
-        this.selectedTransaction = null;
-      }
+    buyer: {
+      id: 101,
+      name: 'Juan Dela Cruz',
+      contact: '+63 917 123 4567',
+      address: '123 Main St, Quezon City',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
     },
-    formatDate(dateString: string): string {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    status: 'Pending',
+    amount: 45000,
+    paymentMethod: 'Bank Transfer',
+    deliveryMethod: 'Pickup',
+    message: 'I would like to visit your farm to see the cattle before finalizing the purchase.'
+  },
+  {
+    id: 'TXN-78902',
+    livestock: {
+      id: 2,
+      type: 'Pig',
+      breed: 'Large White',
+      description: 'Healthy pigs ready for market',
+      image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
     },
-    getStatusClass(status: string): string {
-      switch (status) {
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800';
-        case 'Accepted':
-          return 'bg-blue-100 text-blue-800';
-        case 'Completed':
-          return 'bg-green-100 text-green-800';
-        case 'Rejected':
-          return 'bg-red-100 text-red-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    }
+    buyer: {
+      id: 102,
+      name: 'Maria Santos',
+      contact: '+63 918 765 4321',
+      address: '456 Farm Road, Bulacan',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 5).toISOString(),
+    status: 'Accepted',
+    amount: 12000,
+    paymentMethod: 'Cash on Delivery',
+    deliveryMethod: 'Delivery',
+    message: 'Need 10 pigs for my restaurant. Can you deliver next week?'
+  },
+  {
+    id: 'TXN-78903',
+    livestock: {
+      id: 3,
+      type: 'Goat',
+      breed: 'Boer',
+      description: 'Purebred Boer goats, excellent for breeding',
+      image: 'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    buyer: {
+      id: 103,
+      name: 'Carlos Reyes',
+      contact: '+63 919 555 1234',
+      address: '789 Hillside, Rizal',
+      avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 10).toISOString(),
+    status: 'Completed',
+    amount: 24000,
+    paymentMethod: 'GCash',
+    deliveryMethod: 'Pickup',
+    message: 'Looking for quality breeding goats. Please contact me.'
+  },
+  {
+    id: 'TXN-78905',
+    livestock: {
+      id: 5,
+      type: 'Sheep',
+      breed: 'Dorper',
+      description: 'Dorper sheep known for excellent meat quality',
+      image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    buyer: {
+      id: 105,
+      name: 'Roberto Cruz',
+      contact: '+63 921 456 2345',
+      address: '654 Wool St, Benguet',
+      avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 7).toISOString(),
+    status: 'Rejected',
+    amount: 30000,
+    paymentMethod: 'Cash on Delivery',
+    deliveryMethod: 'Pickup',
+    message: 'Interested in your sheep but the price is too high. Can you lower it?'
   }
-});
+])
+
+const filteredTransactions = computed(() => {
+  if (activeTab.value === 'all') return transactions.value
+  return transactions.value.filter(t =>
+    activeTab.value === 'pending'
+      ? t.status === 'Pending'
+      : activeTab.value === 'accepted'
+        ? t.status === 'Accepted'
+        : activeTab.value === 'completed'
+          ? t.status === 'Completed'
+          : true
+  )
+})
+
+const viewDetails = (transaction: Transaction): void => {
+  selectedTransaction.value = transaction
+}
+
+const updateStatus = (id: string, status: 'Accepted' | 'Rejected'): void => {
+  const transaction = transactions.value.find(t => t.id === id)
+  if (transaction) {
+    transaction.status = status
+    selectedTransaction.value = null
+  }
+}
+
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const getStatusClass = (status: string): string => {
+  switch (status) {
+    case 'Pending':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'Accepted':
+      return 'bg-blue-100 text-blue-800'
+    case 'Completed':
+      return 'bg-green-100 text-green-800'
+    case 'Rejected':
+      return 'bg-red-100 text-red-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
 </script>
