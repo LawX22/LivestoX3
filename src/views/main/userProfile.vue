@@ -1,7 +1,7 @@
 <!-- userProfile.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
-    <!-- Sticky NavBar from old design -->
+    <!-- Sticky NavBar  -->
     <div class="fixed top-0 left-0 right-0 z-50">
       <NavBar />
     </div>
