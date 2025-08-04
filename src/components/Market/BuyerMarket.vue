@@ -1,15 +1,15 @@
 <!-- BuyerMarket.vue -->
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-green-100 flex flex-col">
     <!-- NavBar -->
     <NavBar />
 
     <!-- Header Section -->
-    <div class="p-4 md:p-6 border-b border-gray-200 bg-white">
+    <div class="p-4 md:p-6 bg-gradient-to-r from-green-600 to-emerald-700 text-white">
       <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-green-800">Livestock Marketplace</h1>
-          <p class="text-gray-500 mt-1">Browse livestock listings from farmers</p>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent">Livestock Marketplace</h1>
+          <p class="text-green-100 mt-1">Browse livestock listings from farmers</p>
         </div>
       </div>
     </div>
@@ -17,39 +17,80 @@
     <!-- Guest Mode Notice and Upgrade Prompt -->
     <div class="px-4 md:px-6 pt-4">
       <!-- Guest Mode Notice -->
-      <div v-if="!currentUser?.email" class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <span class="text-sm sm:text-base">
-          You are viewing the market as a guest. Sign In to view detailed listings, save favorites, or contact sellers.
-        </span>
-        <router-link to="/signin" class="whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+      <div v-if="!currentUser?.email" class="bg-gradient-to-r from-yellow-50 to-amber-50 text-amber-800 p-4 rounded-xl mb-4 flex flex-col sm:flex-row justify-between items-center gap-3 border border-amber-200">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-amber-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm sm:text-base">
+            You are viewing as a guest. Sign In to view listings, save favorites, or contact sellers.
+          </span>
+        </div>
+        <router-link to="/signin" class="whitespace-nowrap bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md">
           Sign In
         </router-link>
       </div>
 
       <!-- Upgrade Prompt for Buyers -->
-      <div v-else-if="currentUser?.role !== 'Farmer'" class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <span class="text-sm sm:text-base">
-          You are currently a <strong>Buyer</strong>. Upgrade to Farmer to post livestock.
-        </span>
-        <button 
-          v-if="hasPendingUpgrade" 
-          disabled
-          class="whitespace-nowrap bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
-        >
-          Pending Approval
-        </button>
-        <button 
-          v-else 
-          @click="goToUpgradeForm"
-          class="whitespace-nowrap bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          Request Upgrade
-        </button>
+      <div v-else-if="currentUser?.role !== 'Farmer'" class="bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 p-4 rounded-xl mb-4 flex flex-col sm:flex-row justify-between items-center gap-3 border border-blue-200">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm sm:text-base">
+            You are currently a <strong>Buyer</strong>. Upgrade to Farmer to post livestock.
+          </span>
+        </div>
+        
+        <!-- Account Not Verified -->
+        <div v-if="!currentUser?.isVerified" class="flex flex-col items-center">
+          <div class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold mb-2 flex items-center">
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            Account not verified
+          </div>
+          <button 
+            disabled
+            class="whitespace-nowrap bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed flex items-center"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Verify to Upgrade
+          </button>
+        </div>
+        
+        <!-- Pending Upgrade -->
+        <div v-else-if="hasPendingUpgrade" class="flex items-center">
+          <button 
+            disabled
+            class="whitespace-nowrap bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed flex items-center"
+          >
+            <svg class="w-4 h-4 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+            </svg>
+            Pending Approval
+          </button>
+        </div>
+        
+        <!-- Can Upgrade -->
+        <div v-else>
+          <button 
+            @click="goToUpgradeForm"
+            class="whitespace-nowrap bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md flex items-center"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Request Upgrade
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Compact Filters Section -->
-    <div class="p-3 border-b border-gray-200 bg-white">
+    <div class="p-3 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
       <div class="flex flex-col gap-3">
         <!-- Search Bar -->
         <div class="w-full">
@@ -62,7 +103,7 @@
             <input
               v-model="filters.search"
               type="text"
-              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 text-sm"
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-sm shadow-sm"
               placeholder="Search listings..."
             />
           </div>
@@ -73,7 +114,7 @@
           <div class="min-w-[120px]">
             <select 
               v-model="filters.type"
-              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 rounded-lg border bg-white"
+              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-lg border bg-white shadow-sm"
             >
               <option value="">All Types</option>
               <option v-for="type in uniqueTypes" :key="type" :value="type">{{ type }}</option>
@@ -84,7 +125,7 @@
           <div class="min-w-[120px]">
             <select 
               v-model="filters.breed"
-              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 rounded-lg border bg-white"
+              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-lg border bg-white shadow-sm"
             >
               <option value="">All Breeds</option>
               <option v-for="breed in uniqueBreeds" :key="breed" :value="breed">{{ breed }}</option>
@@ -95,7 +136,7 @@
           <div class="min-w-[120px]">
             <select 
               v-model="filters.location"
-              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 rounded-lg border bg-white"
+              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-lg border bg-white shadow-sm"
             >
               <option value="">All Locations</option>
               <option v-for="location in uniqueLocations" :key="location" :value="location">{{ location }}</option>
@@ -106,7 +147,7 @@
           <div class="min-w-[120px]">
             <select 
               v-model="filters.priceRange"
-              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 rounded-lg border bg-white"
+              class="w-full pl-3 pr-8 py-2 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-lg border bg-white shadow-sm"
             >
               <option value="">All Prices</option>
               <option value="0-5000">Below ₱5,000</option>
@@ -120,7 +161,7 @@
           <!-- Reset Button -->
           <button 
             @click="resetFilters"
-            class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+            class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 shadow-sm"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -139,7 +180,7 @@
           <div 
             v-for="animal in filteredAnimals"
             :key="animal.id"
-            class="rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg hover:border-green-300 transition-all bg-white flex flex-col h-full group"
+            class="rounded-xl overflow-hidden shadow-lg hover:shadow-xl border border-gray-200 hover:border-green-300 transition-all bg-white/80 backdrop-blur-sm flex flex-col h-full group"
           >
             <!-- Image with status badge -->
             <div class="relative h-48">
@@ -154,7 +195,19 @@
                   {{ animal.status }}
                 </span>
               </div>
-              <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div class="absolute bottom-3 left-3">
+                <div class="flex items-center">
+                  <img 
+                    :src="animal.farmer.avatar" 
+                    :alt="animal.farmer.name"
+                    class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                  />
+                  <div class="ml-2">
+                    <p class="text-xs font-semibold text-white drop-shadow-md">{{ animal.farmer.farmName }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- Main card content -->
@@ -168,19 +221,6 @@
                 <div class="text-right">
                   <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Price</p>
                   <p class="font-bold text-lg text-gray-900">₱{{ animal.price.toLocaleString() }}</p>
-                </div>
-              </div>
-              
-              <!-- Farmer info -->
-              <div class="flex items-center gap-2 mb-3">
-                <img 
-                  :src="animal.farmer.avatar" 
-                  :alt="animal.farmer.name"
-                  class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                />
-                <div>
-                  <p class="text-sm font-medium text-gray-800">{{ animal.farmer.farmName }}</p>
-                  <p class="text-xs text-gray-500">{{ animal.farmer.address }}</p>
                 </div>
               </div>
               
@@ -231,7 +271,7 @@
               <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                 <button 
                   @click.stop="openModal(animal)"
-                  class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
+                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -241,7 +281,7 @@
                 </button>
                 <button 
                   @click.stop="contactFarmer(animal)"
-                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
+                  class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -255,17 +295,19 @@
 
         <!-- Empty State -->
         <div v-else class="flex flex-col items-center justify-center py-12">
-          <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 mb-1">No listings found</h3>
-          <p class="text-sm text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
-          <button 
-            @click="resetFilters"
-            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Reset Filters
-          </button>
+          <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl border border-gray-200 max-w-md text-center">
+            <svg class="w-16 h-16 text-gray-400 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">No listings found</h3>
+            <p class="text-sm text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
+            <button 
+              @click="resetFilters"
+              class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md"
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -510,13 +552,13 @@ export default defineComponent({
     const getStatusClass = (status: string) => {
       switch (status) {
         case 'Available':
-          return 'bg-green-100 text-green-800';
+          return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800';
         case 'Low Stock':
-          return 'bg-yellow-100 text-yellow-800';
+          return 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800';
         case 'Out of Stock':
-          return 'bg-red-100 text-red-800';
+          return 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800';
         default:
-          return 'bg-gray-100 text-gray-800';
+          return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800';
       }
     };
 
@@ -552,3 +594,32 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+/* Smooth transitions */
+.card-transition {
+  transition: all 0.3s ease;
+}
+
+/* Enhance glass effect */
+.backdrop-blur-sm {
+  backdrop-filter: blur(6px);
+}
+
+/* Add subtle shadow depth */
+.shadow-depth {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Hover effects */
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Gradient text */
+.gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+</style>
