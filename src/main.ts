@@ -1,17 +1,18 @@
-import { createApp } from 'vue';
+import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import router from './router';
-import App from './App.vue';
-import PrimeVue from 'primevue/config';
-import ToastService from 'primevue/toastservice';
-import './assets/css/style.css'
+import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
+
+import App from './App.vue'
+import router from './router'
+import './style.css'
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+app.use(PrimeVue)
+app.use(ToastService)
 
 
-const pinia = createPinia();
-const app = createApp(App);
-app.use(router);
-app.use(PrimeVue);
-app.use(ToastService);
-
-app.use(pinia);
-app.mount('#app');
+app.mount('#app')

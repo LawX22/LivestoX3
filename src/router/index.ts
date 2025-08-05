@@ -1,10 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
 
 // Auth Pages
 import signIn from '../views/auth/signIn.vue';
 import signUp from '../views/auth/signUp.vue';
-import upgradeForm from '../views/auth/upgradeForm.vue';
-import forgotPassword from '../views/auth/ForgotPassword.vue';
 
 // Admin Pages
 import adminDashboard from '../views/admin/adminDashboard.vue';
@@ -18,13 +16,12 @@ import Transactions from '../views/main/Transactions.vue';
 import Market from '../views/main/Market.vue';
 import Forum from '../views/main/Forum.vue';
 import Messages from '../views/main/Messages.vue';
+import upgradeForm from '../views/auth/upgradeForm.vue';
 import YourLivestock from '../views/main/yourLivestock.vue';
 import UserProfile from '../views/main/userProfile.vue';
 
 // utility
 import DesignSystemGuide from '../views/utility/DesignSystemGuide.vue';
-
-
 
 // Define Routes
 const routes = [
@@ -33,7 +30,6 @@ const routes = [
   { path: '/signUp', component: signUp, name: 'SignUp' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
-  { path: '/forgotPassword', component: forgotPassword, name: 'forgotPassword' },
 
   // Admin Routes
   { path: '/adminDashboard', component: adminDashboard, name: 'adminDashboard' },
@@ -52,18 +48,14 @@ const routes = [
 
   // Utility Routes
   { path: '/DesignSystemGuide', component: DesignSystemGuide, name: 'DesignSystemGuide' },
-
-
 ];
 
-// Create Router
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior() {
-
     return { top: 0 }
   }
-});
+})
 
-export default router;
+export default router
