@@ -163,7 +163,7 @@
   </aside>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -210,11 +210,11 @@ const navItems = [
   }
 ]
 
-function toggleMinimize() {
+const toggleMinimize = () => {
   isMinimized.value = !isMinimized.value
 }
 
-function logout() {
+const logout = () => {
   localStorage.removeItem('user')
   router.push('/')
 }

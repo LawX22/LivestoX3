@@ -247,81 +247,60 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue'
 
 type User = {
-  userId?: string;
-  role?: string;
-  farmName?: string;
-  farmSize?: string;
-  farmSizeUnit?: string;
-  livestockTypes?: string | string[];
-  description?: string;
+  userId?: string
+  role?: string
+  farmName?: string
+  farmSize?: string
+  farmSizeUnit?: string
+  livestockTypes?: string | string[]
+  description?: string
   farmAddress?: {
-    region?: string;
-    province?: string;
-    city?: string;
-    barangay?: string;
-    street?: string;
-  };
-};
+    region?: string
+    province?: string
+    city?: string
+    barangay?: string
+    street?: string
+  }
+}
 
-type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified';
+type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified'
 
-export default defineComponent({
-  name: 'FarmInfoTab',
-  props: {
-    user: {
-      type: Object as PropType<User>,
-      default: null,
-    },
-    editableUser: {
-      type: Object as PropType<User>,
-      required: true,
-    },
-    editing: {
-      type: Boolean,
-      default: false,
-    },
-    verificationStatus: {
-      type: String as PropType<VerificationStatus>,
-      default: 'unverified',
-    },
-    upgradePending: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['save-profile', 'upgrade'],
-  setup(props, { emit }) {
-    const showSuccessMessage = ref(false);
+const props = defineProps<{
+  user: User | null
+  editing: boolean
+  verificationStatus: VerificationStatus
+  upgradePending: boolean
+}>()
 
-    const formatLivestockTypes = (types: string | string[] | undefined): string => {
-      if (!types) return 'Not specified';
-      if (Array.isArray(types)) return types.join(', ');
-      return types;
-    };
+const emit = defineEmits<{
+  (e: 'save-profile'): void
+  (e: 'upgrade'): void
+}>()
 
-    const saveProfile = () => {
-      emit('save-profile');
-      showSuccessMessage.value = true;
-      setTimeout(() => {
-        showSuccessMessage.value = false;
-      }, 3000);
-    };
+const editableUser = defineModel<User>('editableUser', { required: true })
 
-    const goToUpgradeForm = () => {
-      if (props.verificationStatus !== 'verified' || props.upgradePending) return;
-      emit('upgrade');
-    };
+const showSuccessMessage = ref(false)
 
-    return {
-      showSuccessMessage,
-      formatLivestockTypes,
-      saveProfile,
-      goToUpgradeForm,
-    };
-  },
-});
+const formatLivestockTypes = (types: string | string[] | undefined): string => {
+  if (!types) return 'Not specified'
+  if (Array.isArray(types)) return types.join(', ')
+  return types
+}
+
+const saveProfile = () => {
+  emit('save-profile')
+  showSuccessMessage.value = true
+  setTimeout(() => {
+    showSuccessMessage.value = false
+  }, 3000)
+}
+
+const goToUpgradeForm = () => {
+  if (props.verificationStatus !== 'verified' || props.upgradePending) return
+  emit('upgrade')
+}
 </script>

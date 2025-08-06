@@ -344,55 +344,50 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-import NavBar from '../../components/NavBar.vue';
+<script setup lang="ts">
+import NavBar from '../../components/NavBar.vue'
+import { ref, computed } from 'vue'
 
 interface Livestock {
-  id: number;
-  type: string;
-  breed: string;
-  description: string;
-  image: string;
+  id: number
+  type: string
+  breed: string
+  description: string
+  image: string
 }
 
 interface Seller {
-  id: number;
-  name: string;
-  contact: string;
-  address: string;
-  farmName: string;
-  avatar: string;
+  id: number
+  name: string
+  contact: string
+  address: string
+  farmName: string
+  avatar: string
 }
 
 interface Transaction {
-  id: string;
-  livestock: Livestock;
-  seller: Seller;
-  date: string;
-  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed';
-  amount: number;
-  paymentMethod: string;
-  deliveryMethod: string;
-  message?: string;
+  id: string
+  livestock: Livestock
+  seller: Seller
+  date: string
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  message?: string
 }
 
-export default defineComponent({
-  name: 'BuyerTransactions',
-  components: {
-    NavBar
-  },
-  data() {
-    return {
-      activeTab: 'all',
-      selectedTransaction: null as Transaction | null,
-      tabs: [
-        { id: 'all', name: 'All Transactions', count: 12 },
-        { id: 'pending', name: 'Pending', count: 5 },
-        { id: 'accepted', name: 'Accepted', count: 3 },
-        { id: 'completed', name: 'Completed', count: 4 }
-      ],
-      transactions: [
+const activeTab = ref<'all' | 'pending' | 'accepted' | 'completed'>('all')
+const selectedTransaction = ref<Transaction | null>(null)
+
+const tabs = [
+  { id: 'all', name: 'All Transactions', count: 12 },
+  { id: 'pending', name: 'Pending', count: 5 },
+  { id: 'accepted', name: 'Accepted', count: 3 },
+  { id: 'completed', name: 'Completed', count: 4 }
+]
+
+const transactions = ref<Transaction[]>([
         {
           id: 'TXN-78901',
           livestock: {
@@ -513,61 +508,55 @@ export default defineComponent({
           deliveryMethod: 'Delivery',
           message: 'Looking for breeding stock for my new farm.'
         }
-      ] as Transaction[]
-    }
-  },
-  computed: {
-    filteredTransactions(): Transaction[] {
-      if (this.activeTab === 'all') return this.transactions;
-      return this.transactions.filter(t => 
-        this.activeTab === 'pending' ? t.status === 'Pending' :
-        this.activeTab === 'accepted' ? t.status === 'Accepted' :
-        this.activeTab === 'completed' ? t.status === 'Completed' : 
-        true
-      );
-    }
-  },
-  methods: {
-    viewDetails(transaction: Transaction): void {
-      this.selectedTransaction = transaction;
-    },
-    cancelTransaction(id: string): void {
-      const transaction = this.transactions.find(t => t.id === id);
-      if (transaction) {
-        transaction.status = 'Rejected';
-        this.selectedTransaction = null;
-      }
-    },
-    markAsCompleted(id: string): void {
-      const transaction = this.transactions.find(t => t.id === id);
-      if (transaction) {
-        transaction.status = 'Completed';
-        this.selectedTransaction = null;
-      }
-    },
-    contactSeller(seller: Seller): void {
-      // In a real app, this would open a chat or email to the seller
-      alert(`Contacting seller: ${seller.name} at ${seller.contact}`);
-      this.selectedTransaction = null;
-    },
-    formatDate(dateString: string): string {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    },
-    getStatusClass(status: string): string {
-      switch (status) {
-        case 'Pending':
-          return 'bg-yellow-100 text-yellow-800';
-        case 'Accepted':
-          return 'bg-blue-100 text-blue-800';
-        case 'Completed':
-          return 'bg-green-100 text-green-800';
-        case 'Rejected':
-          return 'bg-red-100 text-red-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    }
+      ])
+
+const filteredTransactions = computed((): Transaction[] => {
+  if (activeTab.value === 'all') return transactions.value
+  return transactions.value.filter(t => 
+    activeTab.value === 'pending' ? t.status === 'Pending' :
+    activeTab.value === 'accepted' ? t.status === 'Accepted' :
+    activeTab.value === 'completed' ? t.status === 'Completed' :
+    true
+  )
+})
+
+const viewDetails = (transaction: Transaction): void => {
+  selectedTransaction.value = transaction
+}
+
+const cancelTransaction = (id: string): void => {
+  const transaction = transactions.value.find(t => t.id === id)
+  if (transaction) {
+    transaction.status = 'Rejected'
+    selectedTransaction.value = null
   }
-});
+}
+
+const markAsCompleted = (id: string): void => {
+  const transaction = transactions.value.find(t => t.id === id)
+  if (transaction) {
+    transaction.status = 'Completed'
+    selectedTransaction.value = null
+  }
+}
+
+const contactSeller = (seller: Seller): void => {
+  alert(`Contacting seller: ${seller.name} at ${seller.contact}`)
+  selectedTransaction.value = null
+}
+
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const getStatusClass = (status: string): string => {
+  switch (status) {
+    case 'Pending': return 'bg-yellow-100 text-yellow-800'
+    case 'Accepted': return 'bg-blue-100 text-blue-800'
+    case 'Completed': return 'bg-green-100 text-green-800'
+    case 'Rejected': return 'bg-red-100 text-red-800'
+    default: return 'bg-gray-100 text-gray-800'
+  }
+}
 </script>

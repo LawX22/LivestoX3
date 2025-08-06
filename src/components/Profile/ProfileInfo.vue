@@ -307,74 +307,52 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue'
 
 type User = {
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  role?: string;
-  gender?: string;
-  createdAt?: string | Date;
-};
+  username?: string
+  email?: string
+  firstName?: string
+  lastName?: string
+  phoneNumber?: string
+  role?: string
+  gender?: string
+  createdAt?: string | Date
+}
 
-type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified';
+type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified'
 
-export default defineComponent({
-  name: 'ProfileInfo',
-  props: {
-    user: {
-      type: Object as PropType<User>,
-      default: null,
-    },
-    editableUser: {
-      type: Object as PropType<User>,
-      required: true,
-    },
-    editing: {
-      type: Boolean,
-      default: false,
-    },
-    verificationStatus: {
-      type: String as PropType<VerificationStatus>,
-      default: 'unverified',
-    },
-    upgradePending: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['save-profile'],
-  setup(_props, { emit }) {
-    const showSuccessMessage = ref(false);
+defineProps<{
+  user: User | null
+  editing: boolean
+  verificationStatus: VerificationStatus
+  upgradePending: boolean
+}>()
 
-    const formatDate = (dateString?: string | Date): string => {
-      if (!dateString) return '—';
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    };
+const editableUser = defineModel<User>('editableUser', { required: true })
 
-    // Handle save profile with success message
-    const handleSaveProfile = () => {
-      emit('save-profile');
-      showSuccessMessage.value = true;
-      setTimeout(() => {
-        showSuccessMessage.value = false;
-      }, 3000);
-    };
+defineEmits<{
+  (e: 'save-profile'): void
+}>()
 
-    return {
-      formatDate,
-      showSuccessMessage,
-      handleSaveProfile,
-    };
-  },
-});
+const showSuccessMessage = ref(false)
+
+const formatDate = (dateString?: string | Date): string => {
+  if (!dateString) return '—'
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+// const handleSaveProfile = () => {
+//   emit('save-profile')
+//   showSuccessMessage.value = true
+//   setTimeout(() => {
+//     showSuccessMessage.value = false
+//   }, 3000)
+// }
 </script>

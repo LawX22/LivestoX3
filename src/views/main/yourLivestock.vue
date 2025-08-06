@@ -772,12 +772,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import LivestockFormModal from '../../components/Market/LivestockFormModal.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
-// import AuctionFormModal from '../../components/Market/AuctionFormModal.vue';
-// import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
 
 interface Farmer {
   id: number;
@@ -835,474 +833,424 @@ interface Filters {
   endDate: string;
 }
 
-export default defineComponent({
-  name: 'LivestockInventory',
-  components: {
-    LivestockFormModal,
+const viewMode = ref<'table' | 'card'>('table');
+const activeTab = ref<'listings' | 'auctions'>('listings');
+const showDropdown = ref(false);
+const isModalOpen = ref(false);
+const isFormModalOpen = ref(false);
+const isAuctionModalOpen = ref(false);
+const isAuctionFormModalOpen = ref(false);
+const isEditMode = ref(false);
+const isAuctionEditMode = ref(false);
 
+const selectedAnimal = ref<Animal>({} as Animal);
+const selectedAuction = ref<Auction>({} as Auction);
+const currentAnimalForEdit = ref<Animal | null>(null);
+const currentAuctionForEdit = ref<Auction | null>(null);
+
+const currentFarmer: Farmer = {
+  id: 1,
+  name: 'Juan Dela Cruz',
+  farmName: 'Dela Cruz Farm',
+  contact: '+63 912 345 6789',
+  address: '123 Farm Road, Barangay Agriculture, Nueva Ecija',
+  avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+};
+
+const animals = ref<Animal[]>([
+  {
+    id: 1,
+    type: 'Cattle',
+    breed: 'Angus',
+    weight: 450,
+    quantity: 5,
+    age: '24 months',
+    status: 'Available',
+    price: 45000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+      'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
+    datePosted: new Date().toISOString(),
+    farmer: currentFarmer
   },
-  data() {
-    // Current farmer data - in a real app, this would come from auth/user store
-    const currentFarmer: Farmer = {
+  {
+    id: 2,
+    type: 'Pig',
+    breed: 'Duroc',
+    weight: 120,
+    quantity: 10,
+    age: '8 months',
+    status: 'Available',
+    price: 12000,
+    deliveryOptions: ['pickup'],
+    images: [
+      'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Premium Duroc pigs, excellent for breeding or meat production. Raised in hygienic conditions with proper nutrition.',
+    datePosted: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    farmer: currentFarmer
+  },
+  {
+    id: 3,
+    type: 'Goat',
+    breed: 'Boer',
+    weight: 45,
+    quantity: 2,
+    age: '12 months',
+    status: 'Low Stock',
+    price: 8000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1551649001-7a2485554199?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Purebred Boer goats, excellent for meat production. Healthy and well-cared for animals.',
+    datePosted: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+    farmer: currentFarmer
+  },
+  {
+    id: 4,
+    type: 'Chicken',
+    breed: 'Native',
+    weight: 1.5,
+    quantity: 0,
+    age: '6 months',
+    status: 'Out of Stock',
+    price: 250,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1589927986089-35812388d1f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Free-range native chickens, raised organically without antibiotics or hormones.',
+    datePosted: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
+    farmer: currentFarmer
+  }
+]);
+
+// Sample auctions data
+const auctions = ref<Auction[]>([
+  {
+    id: 1,
+    animal: animals.value[0], // Angus cattle
+    startingPrice: 40000,
+    currentBid: {
       id: 1,
-      name: 'Juan Dela Cruz',
-      farmName: 'Dela Cruz Farm',
-      contact: '+63 912 345 6789',
-      address: '123 Farm Road, Barangay Agriculture, Nueva Ecija',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-    };
+      amount: 42500,
+      bidderName: 'Maria Santos',
+      bidderId: 2,
+      date: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
+    },
+    bidCount: 3,
+    startDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    endDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
+    status: 'Active',
+    description: 'Premium Angus cattle auction. Bidding ends in 24 hours.',
+    createdBy: currentFarmer
+  },
+  {
+    id: 2,
+    animal: animals.value[1], // Duroc pigs
+    startingPrice: 10000,
+    currentBid: null,
+    bidCount: 0,
+    startDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
+    endDate: new Date(Date.now() + 172800000).toISOString(), // 2 days from now
+    status: 'Upcoming',
+    description: 'Duroc piglets auction. Starts soon!',
+    createdBy: currentFarmer
+  },
+  {
+    id: 3,
+    animal: animals.value[2], // Boer goats
+    startingPrice: 7000,
+    currentBid: {
+      id: 2,
+      amount: 7500,
+      bidderName: 'Carlos Reyes',
+      bidderId: 3,
+      date: new Date(Date.now() - 7200000).toISOString() // 2 hours ago
+    },
+    bidCount: 2,
+    startDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    endDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    status: 'Completed',
+    description: 'Boer goat auction - now closed',
+    createdBy: currentFarmer
+  }
+]);
 
-    // Sample animals data
-    const animals: Animal[] = [
-      {
-        id: 1,
-        type: 'Cattle',
-        breed: 'Angus',
-        weight: 450,
-        quantity: 5,
-        age: '24 months',
-        status: 'Available',
-        price: 45000,
-        deliveryOptions: ['pickup', 'delivery'],
-        images: [
-          'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-          'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
-        datePosted: new Date().toISOString(),
-        farmer: currentFarmer
-      },
-      {
-        id: 2,
-        type: 'Pig',
-        breed: 'Duroc',
-        weight: 120,
-        quantity: 10,
-        age: '8 months',
-        status: 'Available',
-        price: 12000,
-        deliveryOptions: ['pickup'],
-        images: [
-          'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Premium Duroc pigs, excellent for breeding or meat production. Raised in hygienic conditions with proper nutrition.',
-        datePosted: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-        farmer: currentFarmer
-      },
-      {
-        id: 3,
-        type: 'Goat',
-        breed: 'Boer',
-        weight: 45,
-        quantity: 2,
-        age: '12 months',
-        status: 'Low Stock',
-        price: 8000,
-        deliveryOptions: ['pickup', 'delivery'],
-        images: [
-          'https://images.unsplash.com/photo-1551649001-7a2485554199?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Purebred Boer goats, excellent for meat production. Healthy and well-cared for animals.',
-        datePosted: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-        farmer: currentFarmer
-      },
-      {
-        id: 4,
-        type: 'Chicken',
-        breed: 'Native',
-        weight: 1.5,
-        quantity: 0,
-        age: '6 months',
-        status: 'Out of Stock',
-        price: 250,
-        deliveryOptions: ['pickup', 'delivery'],
-        images: [
-          'https://images.unsplash.com/photo-1589927986089-35812388d1f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Free-range native chickens, raised organically without antibiotics or hormones.',
-        datePosted: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
-        farmer: currentFarmer
+const filters = ref<Filters>({
+  search: '',
+  type: '',
+  breed: '',
+  status: '',
+  dateRange: '',
+  startDate: '',
+  endDate: ''
+});
+
+const farmerAnimals = computed(() => animals.value.filter(animal => animal.farmer.id === currentFarmer.id));
+const farmerAuctions = computed(() => auctions.value.filter(auction => auction.createdBy.id === currentFarmer.id));
+
+const uniqueTypes = computed(() => [...new Set(farmerAnimals.value.map(a => a.type))].sort());
+const uniqueBreeds = computed(() => [...new Set(farmerAnimals.value.map(a => a.breed))].sort());
+
+const filteredAnimals = computed(() => {
+  return farmerAnimals.value.filter(animal => {
+    const f = filters.value;
+    const matchesSearch = !f.search || animal.type.toLowerCase().includes(f.search.toLowerCase()) || animal.breed.toLowerCase().includes(f.search.toLowerCase()) || animal.description.toLowerCase().includes(f.search.toLowerCase());
+    const matchesType = !f.type || animal.type === f.type;
+    const matchesBreed = !f.breed || animal.breed === f.breed;
+    const matchesStatus = !f.status || animal.status === f.status;
+    let matchesDate = true;
+
+    if (f.dateRange) {
+      const now = new Date();
+      const datePosted = new Date(animal.datePosted);
+      if (f.dateRange === 'today') {
+        matchesDate = datePosted.toDateString() === now.toDateString();
+      } else if (f.dateRange === 'week') {
+        const start = new Date(now.setDate(now.getDate() - now.getDay()));
+        matchesDate = datePosted >= start;
+      } else if (f.dateRange === 'month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        matchesDate = datePosted >= start;
+      } else if (f.dateRange === 'year') {
+        const start = new Date(now.getFullYear(), 0, 1);
+        matchesDate = datePosted >= start;
+      } else if (f.dateRange === 'custom' && f.startDate && f.endDate) {
+        const start = new Date(f.startDate);
+        const end = new Date(f.endDate);
+        matchesDate = datePosted >= start && datePosted <= end;
       }
-    ];
+    }
 
-    // Sample auctions data
-    const auctions: Auction[] = [
-      {
-        id: 1,
-        animal: animals[0], // Angus cattle
-        startingPrice: 40000,
-        currentBid: {
-          id: 1,
-          amount: 42500,
-          bidderName: 'Maria Santos',
-          bidderId: 2,
-          date: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
-        },
-        bidCount: 3,
-        startDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-        endDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
-        status: 'Active',
-        description: 'Premium Angus cattle auction. Bidding ends in 24 hours.',
-        createdBy: currentFarmer
-      },
-      {
-        id: 2,
-        animal: animals[1], // Duroc pigs
-        startingPrice: 10000,
+    return matchesSearch && matchesType && matchesBreed && matchesStatus && matchesDate;
+  });
+});
+
+const filteredAuctions = computed(() => {
+  return farmerAuctions.value.filter(auction => {
+    const f = filters.value;
+    const matchesSearch = !f.search || auction.animal.type.toLowerCase().includes(f.search.toLowerCase()) || auction.animal.breed.toLowerCase().includes(f.search.toLowerCase()) || auction.description.toLowerCase().includes(f.search.toLowerCase());
+    const matchesStatus = !f.status || auction.status === f.status;
+    let matchesDate = true;
+
+    if (f.dateRange) {
+      const now = new Date();
+      const endDate = new Date(auction.endDate);
+      if (f.dateRange === 'today') {
+        matchesDate = endDate.toDateString() === now.toDateString();
+      } else if (f.dateRange === 'week') {
+        const start = new Date(now.setDate(now.getDate() - now.getDay()));
+        matchesDate = endDate >= start;
+      } else if (f.dateRange === 'month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        matchesDate = endDate >= start;
+      } else if (f.dateRange === 'year') {
+        const start = new Date(now.getFullYear(), 0, 1);
+        matchesDate = endDate >= start;
+      } else if (f.dateRange === 'custom' && f.startDate && f.endDate) {
+        const start = new Date(f.startDate);
+        const end = new Date(f.endDate);
+        matchesDate = endDate >= start && endDate <= end;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+});
+const toggleView = (): void => {
+  viewMode.value = viewMode.value === 'table' ? 'card' : 'table';
+}
+
+const openModal = (animal: Animal): void => {
+  selectedAnimal.value = animal;
+  isModalOpen.value = true;
+}
+
+const closeModal = (): void => {
+  isModalOpen.value = false;
+}
+
+const editAnimalFromModal = (): void => {
+  currentAnimalForEdit.value = selectedAnimal.value;
+  isEditMode.value = true;
+  isModalOpen.value = false;
+  isFormModalOpen.value = true;
+}
+
+const openAddModal = (): void => {
+  currentAnimalForEdit.value = null;
+  isEditMode.value = false;
+  isFormModalOpen.value = true;
+  showDropdown.value = false;
+}
+
+const closeFormModal = (): void => {
+  isFormModalOpen.value = false;
+}
+
+const editAnimal = (animal: Animal): void => {
+  currentAnimalForEdit.value = animal;
+  isEditMode.value = true;
+  isFormModalOpen.value = true;
+  showDropdown.value = false;
+}
+
+const handleFormSubmit = (animalData: Animal): void => {
+  if (isEditMode.value && currentAnimalForEdit.value) {
+    const index = animals.value.findIndex(a => a.id === currentAnimalForEdit.value?.id);
+    if (index !== -1) {
+      animals.value[index] = { ...animalData, id: currentAnimalForEdit.value.id };
+    }
+  } else {
+    const newId = Math.max(...animals.value.map(a => a.id)) + 1;
+    animals.value.push({
+      ...animalData,
+      id: newId,
+      farmer: currentFarmer.value,
+      datePosted: new Date().toISOString()
+    });
+  }
+  closeFormModal();
+}
+
+const deleteAnimal = (animalId: number): void => {
+  animals.value = animals.value.filter(animal => animal.id !== animalId);
+  closeModal();
+}
+
+const openAuctionModal = (): void => {
+  currentAuctionForEdit.value = null;
+  isAuctionEditMode.value = false;
+  isAuctionFormModalOpen.value = true;
+  showDropdown.value = false;
+}
+
+const closeAuctionFormModal = (): void => {
+  isAuctionFormModalOpen.value = false;
+}
+
+const openAuctionDetails = (auction: Auction): void => {
+  selectedAuction.value = auction;
+  isAuctionModalOpen.value = true;
+}
+
+const closeAuctionModal = (): void => {
+  isAuctionModalOpen.value = false;
+}
+
+const editAuctionFromModal = (): void => {
+  currentAuctionForEdit.value = selectedAuction.value;
+  isAuctionEditMode.value = true;
+  isAuctionModalOpen.value = false;
+  isAuctionFormModalOpen.value = true;
+}
+
+const editAuction = (auction: Auction): void => {
+  currentAuctionForEdit.value = auction;
+  isAuctionEditMode.value = true;
+  isAuctionFormModalOpen.value = true;
+}
+
+const handleAuctionFormSubmit = (auctionData: any): void => {
+  if (isAuctionEditMode.value && currentAuctionForEdit.value) {
+    const index = auctions.value.findIndex(a => a.id === currentAuctionForEdit.value?.id);
+    if (index !== -1) {
+      const animal = animals.value.find(a => a.id === auctionData.animalId);
+      if (animal) {
+        auctions.value[index] = {
+          ...auctions.value[index],
+          ...auctionData,
+          animal,
+          currentBid: auctions.value[index].currentBid
+        };
+      }
+    }
+  } else {
+    const newId = Math.max(...auctions.value.map(a => a.id)) + 1;
+    const animal = animals.value.find(a => a.id === auctionData.animalId);
+    if (animal) {
+      auctions.value.push({
+        id: newId,
+        animal,
+        startingPrice: auctionData.startingPrice,
         currentBid: null,
         bidCount: 0,
-        startDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
-        endDate: new Date(Date.now() + 172800000).toISOString(), // 2 days from now
-        status: 'Upcoming',
-        description: 'Duroc piglets auction. Starts soon!',
-        createdBy: currentFarmer
-      },
-      {
-        id: 3,
-        animal: animals[2], // Boer goats
-        startingPrice: 7000,
-        currentBid: {
-          id: 2,
-          amount: 7500,
-          bidderName: 'Carlos Reyes',
-          bidderId: 3,
-          date: new Date(Date.now() - 7200000).toISOString() // 2 hours ago
-        },
-        bidCount: 2,
-        startDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-        endDate: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        status: 'Completed',
-        description: 'Boer goat auction - now closed',
-        createdBy: currentFarmer
-      }
-    ];
-
-    return {
-      viewMode: 'table' as 'table' | 'card',
-      activeTab: 'listings' as 'listings' | 'auctions',
-      showDropdown: false,
-      isModalOpen: false,
-      isFormModalOpen: false,
-      isAuctionModalOpen: false,
-      isAuctionFormModalOpen: false,
-      isEditMode: false,
-      isAuctionEditMode: false,
-      selectedAnimal: {} as Animal,
-      selectedAuction: {} as Auction,
-      currentAnimalForEdit: null as Animal | null,
-      currentAuctionForEdit: null as Auction | null,
-      currentFarmer,
-      animals,
-      auctions,
-      filters: {
-        search: '',
-        type: '',
-        breed: '',
-        status: '',
-        dateRange: '',
-        startDate: '',
-        endDate: ''
-      } as Filters
-    }
-  },
-  computed: {
-    // Only show animals belonging to the current farmer
-    farmerAnimals(): Animal[] {
-      return this.animals.filter(animal => animal.farmer.id === this.currentFarmer.id);
-    },
-    // Only show auctions created by the current farmer
-    farmerAuctions(): Auction[] {
-      return this.auctions.filter(auction => auction.createdBy.id === this.currentFarmer.id);
-    },
-    // Get unique types for filter dropdown
-    uniqueTypes(): string[] {
-      const types = new Set(this.farmerAnimals.map(animal => animal.type));
-      return Array.from(types).sort();
-    },
-    // Get unique breeds for filter dropdown
-    uniqueBreeds(): string[] {
-      const breeds = new Set(this.farmerAnimals.map(animal => animal.breed));
-      return Array.from(breeds).sort();
-    },
-    // Filter animals based on current filters
-    filteredAnimals(): Animal[] {
-      return this.farmerAnimals.filter(animal => {
-        // Search filter
-        const matchesSearch = !this.filters.search || 
-          animal.type.toLowerCase().includes(this.filters.search.toLowerCase()) || 
-          animal.breed.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-          animal.description.toLowerCase().includes(this.filters.search.toLowerCase());
-        
-        // Type filter
-        const matchesType = !this.filters.type || animal.type === this.filters.type;
-        
-        // Breed filter
-        const matchesBreed = !this.filters.breed || animal.breed === this.filters.breed;
-        
-        // Status filter
-        const matchesStatus = !this.filters.status || animal.status === this.filters.status;
-        
-        // Date range filter
-        let matchesDate = true;
-        if (this.filters.dateRange) {
-          const now = new Date();
-          const animalDate = new Date(animal.datePosted);
-          
-          if (this.filters.dateRange === 'today') {
-            matchesDate = animalDate.toDateString() === now.toDateString();
-          } else if (this.filters.dateRange === 'week') {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            matchesDate = animalDate >= startOfWeek;
-          } else if (this.filters.dateRange === 'month') {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            matchesDate = animalDate >= startOfMonth;
-          } else if (this.filters.dateRange === 'year') {
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            matchesDate = animalDate >= startOfYear;
-          } else if (this.filters.dateRange === 'custom' && this.filters.startDate && this.filters.endDate) {
-            const startDate = new Date(this.filters.startDate);
-            const endDate = new Date(this.filters.endDate);
-            matchesDate = animalDate >= startDate && animalDate <= endDate;
-          }
-        }
-        
-        return matchesSearch && matchesType && matchesBreed && matchesStatus && matchesDate;
+        startDate: auctionData.startDate,
+        endDate: auctionData.endDate,
+        status: new Date(auctionData.startDate) > new Date() ? 'Upcoming' : 'Active',
+        description: auctionData.description,
+        createdBy: currentFarmer.value
       });
-    },
-    // Filter auctions based on current filters
-    filteredAuctions(): Auction[] {
-      return this.farmerAuctions.filter(auction => {
-        // Search filter
-        const matchesSearch = !this.filters.search || 
-          auction.animal.type.toLowerCase().includes(this.filters.search.toLowerCase()) || 
-          auction.animal.breed.toLowerCase().includes(this.filters.search.toLowerCase()) ||
-          auction.description.toLowerCase().includes(this.filters.search.toLowerCase());
-        
-        // Status filter
-        const matchesStatus = !this.filters.status || auction.status === this.filters.status;
-        
-        // Date range filter (based on end date for auctions)
-        let matchesDate = true;
-        if (this.filters.dateRange) {
-          const now = new Date();
-          const auctionDate = new Date(auction.endDate);
-          
-          if (this.filters.dateRange === 'today') {
-            matchesDate = auctionDate.toDateString() === now.toDateString();
-          } else if (this.filters.dateRange === 'week') {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            matchesDate = auctionDate >= startOfWeek;
-          } else if (this.filters.dateRange === 'month') {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            matchesDate = auctionDate >= startOfMonth;
-          } else if (this.filters.dateRange === 'year') {
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            matchesDate = auctionDate >= startOfYear;
-          } else if (this.filters.dateRange === 'custom' && this.filters.startDate && this.filters.endDate) {
-            const startDate = new Date(this.filters.startDate);
-            const endDate = new Date(this.filters.endDate);
-            matchesDate = auctionDate >= startDate && auctionDate <= endDate;
-          }
-        }
-        
-        return matchesSearch && matchesStatus && matchesDate;
-      });
-    }
-  },
-  methods: {
-    toggleView(): void {
-      this.viewMode = this.viewMode === 'table' ? 'card' : 'table';
-    },
-    openModal(animal: Animal): void {
-      this.selectedAnimal = animal;
-      this.isModalOpen = true;
-    },
-    closeModal(): void {
-      this.isModalOpen = false;
-    },
-    editAnimalFromModal(): void {
-      this.currentAnimalForEdit = this.selectedAnimal;
-      this.isEditMode = true;
-      this.isModalOpen = false;
-      this.isFormModalOpen = true;
-    },
-    openAddModal(): void {
-      this.currentAnimalForEdit = null;
-      this.isEditMode = false;
-      this.isFormModalOpen = true;
-      this.showDropdown = false;
-    },
-    closeFormModal(): void {
-      this.isFormModalOpen = false;
-    },
-    editAnimal(animal: Animal): void {
-      this.currentAnimalForEdit = animal;
-      this.isEditMode = true;
-      this.isFormModalOpen = true;
-      this.showDropdown = false;
-    },
-    handleFormSubmit(animalData: Animal): void {
-      if (this.isEditMode && this.currentAnimalForEdit) {
-        // Update existing animal
-        const index = this.animals.findIndex(a => a.id === this.currentAnimalForEdit?.id);
-        if (index !== -1) {
-          this.animals[index] = { ...animalData, id: this.currentAnimalForEdit.id };
-        }
-      } else {
-        // Add new animal
-        const newId = Math.max(...this.animals.map(a => a.id)) + 1;
-        this.animals.push({
-          ...animalData,
-          id: newId,
-          farmer: this.currentFarmer,
-          datePosted: new Date().toISOString()
-        });
-      }
-      this.closeFormModal();
-    },
-    deleteAnimal(animalId: number): void {
-      this.animals = this.animals.filter(animal => animal.id !== animalId);
-      this.closeModal();
-    },
-    // Auction methods
-    openAuctionModal(): void {
-      this.currentAuctionForEdit = null;
-      this.isAuctionEditMode = false;
-      this.isAuctionFormModalOpen = true;
-      this.showDropdown = false;
-    },
-    closeAuctionFormModal(): void {
-      this.isAuctionFormModalOpen = false;
-    },
-    openAuctionDetails(auction: Auction): void {
-      this.selectedAuction = auction;
-      this.isAuctionModalOpen = true;
-    },
-    closeAuctionModal(): void {
-      this.isAuctionModalOpen = false;
-    },
-    editAuctionFromModal(): void {
-      this.currentAuctionForEdit = this.selectedAuction;
-      this.isAuctionEditMode = true;
-      this.isAuctionModalOpen = false;
-      this.isAuctionFormModalOpen = true;
-    },
-    editAuction(auction: Auction): void {
-      this.currentAuctionForEdit = auction;
-      this.isAuctionEditMode = true;
-      this.isAuctionFormModalOpen = true;
-    },
-    handleAuctionFormSubmit(auctionData: any): void {
-      if (this.isAuctionEditMode && this.currentAuctionForEdit) {
-        // Update existing auction
-        const index = this.auctions.findIndex(a => a.id === this.currentAuctionForEdit?.id);
-        if (index !== -1) {
-          // Find the animal object from animals array
-          const animal = this.animals.find(a => a.id === auctionData.animalId);
-          if (animal) {
-            this.auctions[index] = { 
-              ...this.auctions[index],
-              ...auctionData,
-              animal,
-              currentBid: this.auctions[index].currentBid // Preserve current bid
-            };
-          }
-        }
-      } else {
-        // Add new auction
-        const newId = Math.max(...this.auctions.map(a => a.id)) + 1;
-        const animal = this.animals.find(a => a.id === auctionData.animalId);
-        
-        if (animal) {
-          this.auctions.push({
-            id: newId,
-            animal,
-            startingPrice: auctionData.startingPrice,
-            currentBid: null,
-            bidCount: 0,
-            startDate: auctionData.startDate,
-            endDate: auctionData.endDate,
-            status: new Date(auctionData.startDate) > new Date() ? 'Upcoming' : 'Active',
-            description: auctionData.description,
-            createdBy: this.currentFarmer
-          });
-        }
-      }
-      this.closeAuctionFormModal();
-    },
-    cancelAuction(auctionId: number): void {
-      const index = this.auctions.findIndex(a => a.id === auctionId);
-      if (index !== -1) {
-        this.auctions[index].status = 'Cancelled';
-      }
-    },
-    // Helper methods
-    resetFilters(): void {
-      this.filters = {
-        search: '',
-        type: '',
-        breed: '',
-        status: '',
-        dateRange: '',
-        startDate: '',
-        endDate: ''
-      };
-    },
-    getStatusClass(status: string): string {
-      switch (status) {
-        case 'Available':
-          return 'bg-green-100 text-green-800';
-        case 'Low Stock':
-          return 'bg-yellow-100 text-yellow-800';
-        case 'Out of Stock':
-          return 'bg-red-100 text-red-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    },
-    getAuctionStatusClass(status: string): string {
-      switch (status) {
-        case 'Active':
-          return 'bg-blue-100 text-blue-800';
-        case 'Upcoming':
-          return 'bg-purple-100 text-purple-800';
-        case 'Completed':
-          return 'bg-green-100 text-green-800';
-        case 'Cancelled':
-          return 'bg-red-100 text-red-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    },
-    formatDate(dateString: string): string {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    },
-    formatTimeLeft(endDateString: string): string {
-      const endDate = new Date(endDateString);
-      const now = new Date();
-      const diffMs = endDate.getTime() - now.getTime();
-      
-      if (diffMs <= 0) return 'Ended';
-      
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const diffHrs = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      if (diffDays > 0) {
-        return `${diffDays}d ${diffHrs}h`;
-      } else if (diffHrs > 0) {
-        return `${diffHrs}h ${diffMins}m`;
-      } else {
-        return `${diffMins}m`;
-      }
-    },
-    isEndingSoon(endDateString: string): boolean {
-      const endDate = new Date(endDateString);
-      const now = new Date();
-      const diffHours = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-      return diffHours > 0 && diffHours <= 24; // Ending in next 24 hours
     }
   }
-});
+  closeAuctionFormModal();
+}
+
+const cancelAuction = (auctionId: number): void => {
+  const index = auctions.value.findIndex(a => a.id === auctionId);
+  if (index !== -1) {
+    auctions.value[index].status = 'Cancelled';
+  }
+}
+
+const resetFilters = (): void => {
+  filters.value = {
+    search: '',
+    type: '',
+    breed: '',
+    status: '',
+    dateRange: '',
+    startDate: '',
+    endDate: ''
+  };
+}
+
+const getStatusClass = (status: string): string => {
+  switch (status) {
+    case 'Available': return 'bg-green-100 text-green-800';
+    case 'Low Stock': return 'bg-yellow-100 text-yellow-800';
+    case 'Out of Stock': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+const getAuctionStatusClass = (status: string): string => {
+  switch (status) {
+    case 'Active': return 'bg-blue-100 text-blue-800';
+    case 'Upcoming': return 'bg-purple-100 text-purple-800';
+    case 'Completed': return 'bg-green-100 text-green-800';
+    case 'Cancelled': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+const formatTimeLeft = (endDateString: string): string => {
+  const endDate = new Date(endDateString);
+  const now = new Date();
+  const diffMs = endDate.getTime() - now.getTime();
+  if (diffMs <= 0) return 'Ended';
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHrs = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  if (diffDays > 0) return `${diffDays}d ${diffHrs}h`;
+  else if (diffHrs > 0) return `${diffHrs}h ${diffMins}m`;
+  else return `${diffMins}m`;
+}
+
+const isEndingSoon = (endDateString: string): boolean => {
+  const endDate = new Date(endDateString);
+  const now = new Date();
+  const diffHours = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  return diffHours > 0 && diffHours <= 24;
+}
 </script>

@@ -35,7 +35,7 @@
                 </div>
                 <button 
                   v-if="animal.images.length > 1"
-                  @click="prevImage"
+                  @click="() => prevImage(animal.images)"
                   class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -44,7 +44,7 @@
                 </button>
                 <button 
                   v-if="animal.images.length > 1"
-                  @click="nextImage"
+                  @click="() => nextImage(animal.images)"
                   class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -193,8 +193,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { getCurrentUser } from '../../services/user';
 
 interface Farmer {
@@ -221,57 +221,52 @@ interface Animal {
   farmer: Farmer;
 }
 
-export default defineComponent({
-  name: 'AnimalDetailsModal',
-  props: {
-    animal: {
-      type: Object as () => Animal,
-      required: true
-    }
-  },
-  data() {
-    return {
-      currentImageIndex: 0,
-      currentUser: getCurrentUser()
-    }
-  },
-  computed: {
-    isFarmer(): boolean {
-      return this.currentUser?.role === 'Farmer';
-    }
-  },
-  methods: {
-    formatDate(dateString: string): string {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    },
-    nextImage(): void {
-      if (this.currentImageIndex < this.animal.images.length - 1) {
-        this.currentImageIndex++;
-      } else {
-        this.currentImageIndex = 0;
-      }
-    },
-    prevImage(): void {
-      if (this.currentImageIndex > 0) {
-        this.currentImageIndex--;
-      } else {
-        this.currentImageIndex = this.animal.images.length - 1;
-      }
-    },
-    getStatusClass(status: string): string {
-      switch (status.toLowerCase()) {
-        case 'available':
-          return 'bg-green-100 text-green-800';
-        case 'sold':
-          return 'bg-red-100 text-red-800';
-        case 'reserved':
-          return 'bg-yellow-100 text-yellow-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    }
-  },
-  emits: ['close', 'edit', 'delete']
-});
+defineProps<{
+  animal: Animal;
+}>();
+
+defineEmits<{
+  (e: 'close'): void;
+  (e: 'edit', animal: Animal): void;
+  (e: 'delete'): void;
+}>();
+
+const currentImageIndex = ref(0);
+const currentUser = getCurrentUser();
+
+const isFarmer = computed(() => currentUser?.role === 'Farmer');
+
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+const nextImage = (images: string[]) => {
+  if (currentImageIndex.value < images.length - 1) {
+    currentImageIndex.value++;
+  } else {
+    currentImageIndex.value = 0;
+  }
+}
+
+const prevImage = (images: string[]) => {
+  if (currentImageIndex.value > 0) {
+    currentImageIndex.value--;
+  } else {
+    currentImageIndex.value = images.length - 1;
+  }
+}
+
+const getStatusClass = (status: string): string => {
+  switch (status.toLowerCase()) {
+    case 'available':
+      return 'bg-green-100 text-green-800';
+    case 'sold':
+      return 'bg-red-100 text-red-800';
+    case 'reserved':
+      return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
 </script>

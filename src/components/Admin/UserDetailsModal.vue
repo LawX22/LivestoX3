@@ -365,8 +365,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, ref, onMounted } from 'vue';
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue';
 
 interface VerificationRequest {
   idType: string;
@@ -407,199 +407,170 @@ interface Address {
   description?: string;
 }
 
-export default defineComponent({
-  name: 'UserDetailsModal',
-  props: {
-    visible: {
-      type: Boolean,
-      required: true
-    },
-    user: {
-      type: Object as PropType<User>,
-      required: true
-    },
-    isAdmin: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['close', 'approve', 'reject', 'update-user', 'ban', 'unban'],
-  setup(props, { emit }) {
-    const defaultAvatar = '/src/assets/default.png';
-    const verificationRequest = ref<VerificationRequest | null>(null);
-    const showRejectionModal = ref(false);
-    const rejectionReason = ref('');
-    const addresses = ref<Address[]>([]);
+const props = defineProps<{
+  visible: boolean;
+  user: User;
+  isAdmin?: boolean;
+}>();
 
-    const loadVerificationData = () => {
-      try {
-        const storedRaw = localStorage.getItem(`user_${props.user.userId}`);
-        const stored: User = storedRaw ? JSON.parse(storedRaw) : props.user;
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'approve', userId: string): void;
+  (e: 'reject', payload: { userId: string; reason: string }): void;
+  (e: 'update-user', updatedUser: User & { verificationStatus: string; isVerified: boolean; submittedId: boolean }): void;
+  (e: 'ban', userId: string): void;
+  (e: 'unban', userId: string): void;
+}>();
 
-        if (stored?.verification) {
-          verificationRequest.value = stored.verification;
-          emit('update-user', {
-            ...stored,
-            verificationStatus: stored.verification.status || 'unverified',
-            isVerified: stored.verification.status === 'approved',
-            submittedId: !!stored.verification
-          });
-        } else {
-          verificationRequest.value = null;
-        }
-      } catch (error) {
-        console.error('Error loading verification data:', error);
-        verificationRequest.value = null;
-      }
-    };
+const defaultAvatar = '/src/assets/default.png';
+const verificationRequest = ref<VerificationRequest | null>(null);
+const showRejectionModal = ref(false);
+const rejectionReason = ref('');
+const addresses = ref<Address[]>([]);
 
-    const loadAddresses = () => {
-      try {
-        const storedAddresses = localStorage.getItem(`addresses_${props.user.userId}`);
-        addresses.value = storedAddresses ? JSON.parse(storedAddresses) : [];
-      } catch (error) {
-        console.error('Error loading addresses:', error);
-        addresses.value = [];
-      }
-    };
+const loadVerificationData = () => {
+  try {
+    const storedRaw = localStorage.getItem(`user_${props.user.userId}`);
+    const stored: User = storedRaw ? JSON.parse(storedRaw) : props.user;
 
-    onMounted(() => {
-      loadVerificationData();
-      loadAddresses();
-    });
-
-    const fullName = computed(() => {
-      return props.user.fullName || `${props.user.firstName || ''} ${props.user.lastName || ''}`.trim() || 'No name provided';
-    });
-
-    const computedProfilePicture = computed(() => {
-      const storedProfileImage = localStorage.getItem(`profileImage_${props.user.userId}`);
-      return storedProfileImage || props.user.profilePicture || defaultAvatar;
-    });
-
-    const verificationStatus = computed(() => {
-      if (props.user.isVerified) return 'verified';
-      if (verificationRequest.value?.status === 'pending') return 'pending';
-      if (verificationRequest.value?.status === 'rejected') return 'rejected';
-      return 'unverified';
-    });
-
-    const handleImageError = (event: Event) => {
-      const img = event.target as HTMLImageElement;
-      img.src = defaultAvatar;
-    };
-
-    const formatDate = (dateString?: string) => {
-      if (!dateString) return 'N/A';
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    };
-
-    const formattedDate = (dateString: string) => {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    };
-
-    const formatIdType = (idType: string) => {
-      const types: Record<string, string> = {
-        passport: 'Passport',
-        driver_license: 'Driver License',
-        national_id: 'National ID',
-        voter_id: 'Voter ID',
-        other: 'Other ID'
-      };
-      return types[idType] || idType;
-    };
-
-    const getVerificationStatusText = (status: string) => {
-      const statusMap: Record<string, string> = {
-        verified: 'Verified',
-        pending: 'Pending Review',
-        rejected: 'Rejected',
-        unverified: 'Not Verified'
-      };
-      return statusMap[status] || status;
-    };
-
-    const openDocument = (url: string) => {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    };
-
-    const approveVerification = () => {
-      emit('approve', props.user.userId);
-      close();
-    };
-
-    const rejectVerification = () => {
-      showRejectionModal.value = true;
-    };
-
-    const confirmRejection = () => {
-      if (!rejectionReason.value) return;
-      emit('reject', {
-        userId: props.user.userId,
-        reason: rejectionReason.value
-      });
-      showRejectionModal.value = false;
-      rejectionReason.value = '';
-      close();
-    };
-
-    const resetVerification = () => {
+    if (stored?.verification) {
+      verificationRequest.value = stored.verification;
       emit('update-user', {
-        ...props.user,
-        verificationStatus: 'unverified',
-        isVerified: false,
-        submittedId: false
+        ...stored,
+        verificationStatus: stored.verification.status || 'unverified',
+        isVerified: stored.verification.status === 'approved',
+        submittedId: !!stored.verification
       });
+    } else {
       verificationRequest.value = null;
-    };
-
-    const banUser = () => {
-      emit('ban', props.user.userId);
-      close();
-    };
-
-    const unbanUser = () => {
-      emit('unban', props.user.userId);
-      close();
-    };
-
-    const close = () => {
-      emit('close');
-    };
-
-    return {
-      defaultAvatar,
-      fullName,
-      computedProfilePicture,
-      verificationStatus,
-      verificationRequest,
-      showRejectionModal,
-      rejectionReason,
-      addresses,
-      handleImageError,
-      formatDate,
-      formattedDate,
-      formatIdType,
-      getVerificationStatusText,
-      openDocument,
-      approveVerification,
-      rejectVerification,
-      confirmRejection,
-      resetVerification,
-      banUser,
-      unbanUser,
-      close
-    };
+    }
+  } catch (error) {
+    console.error('Error loading verification data:', error);
+    verificationRequest.value = null;
   }
+};
+
+const loadAddresses = () => {
+  try {
+    const storedAddresses = localStorage.getItem(`addresses_${props.user.userId}`);
+    addresses.value = storedAddresses ? JSON.parse(storedAddresses) : [];
+  } catch (error) {
+    console.error('Error loading addresses:', error);
+    addresses.value = [];
+  }
+};
+
+onMounted(() => {
+  loadVerificationData();
+  loadAddresses();
 });
+
+const fullName = computed(() => {
+  return props.user.fullName || `${props.user.firstName || ''} ${props.user.lastName || ''}`.trim() || 'No name provided';
+});
+
+const computedProfilePicture = computed(() => {
+  const storedProfileImage = localStorage.getItem(`profileImage_${props.user.userId}`);
+  return storedProfileImage || props.user.profilePicture || defaultAvatar;
+});
+
+const verificationStatus = computed(() => {
+  if (props.user.isVerified) return 'verified';
+  if (verificationRequest.value?.status === 'pending') return 'pending';
+  if (verificationRequest.value?.status === 'rejected') return 'rejected';
+  return 'unverified';
+});
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = defaultAvatar;
+};
+
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const formattedDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const formatIdType = (idType: string) => {
+  const types: Record<string, string> = {
+    passport: 'Passport',
+    driver_license: 'Driver License',
+    national_id: 'National ID',
+    voter_id: 'Voter ID',
+    other: 'Other ID'
+  };
+  return types[idType] || idType;
+};
+
+const getVerificationStatusText = (status: string) => {
+  const statusMap: Record<string, string> = {
+    verified: 'Verified',
+    pending: 'Pending Review',
+    rejected: 'Rejected',
+    unverified: 'Not Verified'
+  };
+  return statusMap[status] || status;
+};
+
+const openDocument = (url: string) => {
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+const approveVerification = () => {
+  emit('approve', props.user.userId);
+  close();
+};
+
+const rejectVerification = () => {
+  showRejectionModal.value = true;
+};
+
+const confirmRejection = () => {
+  if (!rejectionReason.value) return;
+  emit('reject', {
+    userId: props.user.userId,
+    reason: rejectionReason.value
+  });
+  showRejectionModal.value = false;
+  rejectionReason.value = '';
+  close();
+};
+
+const resetVerification = () => {
+  emit('update-user', {
+    ...props.user,
+    verificationStatus: 'unverified',
+    isVerified: false,
+    submittedId: false
+  });
+  verificationRequest.value = null;
+};
+
+const banUser = () => {
+  emit('ban', props.user.userId);
+  close();
+};
+
+const unbanUser = () => {
+  emit('unban', props.user.userId);
+  close();
+};
+
+const close = () => {
+  emit('close');
+};
 </script>

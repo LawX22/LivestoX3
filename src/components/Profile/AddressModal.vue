@@ -273,7 +273,7 @@
   </transition>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { getCurrentUser } from '../../services/user'
 
@@ -291,142 +291,120 @@ interface Address {
   createdAt?: string
 }
 
-export default {
-  props: {
-    visible: {
-      type: Boolean,
-      required: true
-    },
-    address: {
-      type: Object as () => Address | null,
-      default: null
-    }
-  },
+const props = defineProps<{
+  visible: boolean
+  address: Address | null
+}>()
 
-  emits: ['close', 'save', 'delete'],
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'save', payload: Address): void
+  (e: 'delete'): void
+}>()
 
-  setup(props, { emit }) {
-    const fullName = ref('')
-    const phoneNumber = ref('')
-    const region = ref('')
-    const province = ref('')
-    const city = ref('')
-    const barangay = ref('')
-    const street = ref('')
-    const description = ref('')
-    const label = ref('Home')
-    const isDefault = ref(false)
+const fullName = ref('')
+const phoneNumber = ref('')
+const region = ref('')
+const province = ref('')
+const city = ref('')
+const barangay = ref('')
+const street = ref('')
+const description = ref('')
+const label = ref('Home')
+const isDefault = ref(false)
 
-    // Store original overflow value
-    const originalOverflow = ref('')
+const originalOverflow = ref('')
 
-    function lockBodyScroll() {
-      originalOverflow.value = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-    }
+const lockBodyScroll = () => {
+  originalOverflow.value = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+}
 
-    function unlockBodyScroll() {
-      document.body.style.overflow = originalOverflow.value
-    }
+const unlockBodyScroll = () => {
+  document.body.style.overflow = originalOverflow.value
+}
 
-    function resetForm() {
-      region.value = ''
-      province.value = ''
-      city.value = ''
-      barangay.value = ''
-      street.value = ''
-      description.value = ''
-      label.value = 'Home'
-      isDefault.value = false
-    }
+const resetForm = () => {
+  region.value = ''
+  province.value = ''
+  city.value = ''
+  barangay.value = ''
+  street.value = ''
+  description.value = ''
+  label.value = 'Home'
+  isDefault.value = false
+}
 
-    onMounted(() => {
-      const user = getCurrentUser()
-      if (user) {
-        fullName.value = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
-        phoneNumber.value = user.phoneNumber ?? ''
-      }
-    })
+onMounted(() => {
+  const user = getCurrentUser()
+  if (user) {
+    fullName.value = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+    phoneNumber.value = user.phoneNumber ?? ''
+  }
+})
 
-    watch(
-      () => props.visible,
-      (visible) => {
-        if (visible) {
-          lockBodyScroll()
-        } else {
-          unlockBodyScroll()
-          resetForm()
-        }
-      }
-    )
-
-    watch(
-      () => props.address,
-      (addr) => {
-        if (addr) {
-          region.value = addr.region || ''
-          province.value = addr.province || ''
-          city.value = addr.city || ''
-          barangay.value = addr.barangay || ''
-          street.value = addr.street || ''
-          description.value = addr.description || ''
-          label.value = addr.label || 'Home'
-          isDefault.value = addr.isDefault || false
-        } else {
-          resetForm()
-        }
-      },
-      { immediate: true }
-    )
-
-    onBeforeUnmount(() => {
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) {
+      lockBodyScroll()
+    } else {
       unlockBodyScroll()
-    })
-
-    function saveAddress() {
-      if (!fullName.value.trim()) {
-        alert('Full name is required')
-        return
-      }
-
-      const compiledAddress: Address = {
-        fullName: fullName.value,
-        phoneNumber: phoneNumber.value,
-        region: region.value,
-        province: province.value,
-        city: city.value,
-        barangay: barangay.value,
-        street: street.value,
-        description: description.value,
-        label: label.value,
-        isDefault: isDefault.value,
-        createdAt: props.address?.createdAt || new Date().toISOString()
-      }
-
-      emit('save', compiledAddress)
       resetForm()
     }
+  }
+)
 
-    function deleteAddress() {
-      if (confirm('Are you sure you want to delete this address?')) {
-        emit('delete')
-      }
+watch(
+  () => props.address,
+  (addr) => {
+    if (addr) {
+      region.value = addr.region || ''
+      province.value = addr.province || ''
+      city.value = addr.city || ''
+      barangay.value = addr.barangay || ''
+      street.value = addr.street || ''
+      description.value = addr.description || ''
+      label.value = addr.label || 'Home'
+      isDefault.value = addr.isDefault || false
+    } else {
+      resetForm()
     }
+  },
+  { immediate: true }
+)
 
-    return {
-      fullName,
-      phoneNumber,
-      region,
-      province,
-      city,
-      barangay,
-      street,
-      description,
-      label,
-      isDefault,
-      saveAddress,
-      deleteAddress
-    }
+onBeforeUnmount(() => {
+  unlockBodyScroll()
+})
+
+const saveAddress = () => {
+  if (!fullName.value.trim()) {
+    alert('Full name is required')
+    return
+  }
+
+  const compiledAddress: Address = {
+    fullName: fullName.value,
+    phoneNumber: phoneNumber.value,
+    region: region.value,
+    province: province.value,
+    city: city.value,
+    barangay: barangay.value,
+    street: street.value,
+    description: description.value,
+    label: label.value,
+    isDefault: isDefault.value,
+    createdAt: props.address?.createdAt || new Date().toISOString()
+  }
+
+  emit('save', compiledAddress)
+  resetForm()
+}
+
+const deleteAddress = () => {
+  if (confirm('Are you sure you want to delete this address?')) {
+    emit('delete')
   }
 }
 </script>

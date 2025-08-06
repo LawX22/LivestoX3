@@ -463,7 +463,7 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
 });
 
-function toggleDropdown() {
+const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
   // Close other dropdowns when opening this one
   if (showDropdown.value) {
@@ -472,7 +472,7 @@ function toggleDropdown() {
   }
 }
 
-function toggleNotificationDropdown() {
+const toggleNotificationDropdown = () => {
   showNotificationDropdown.value = !showNotificationDropdown.value;
   // Close other dropdowns when opening this one
   if (showNotificationDropdown.value) {
@@ -481,7 +481,7 @@ function toggleNotificationDropdown() {
   }
 }
 
-function toggleMessageDropdown() {
+const toggleMessageDropdown = () => {
   showMessageDropdown.value = !showMessageDropdown.value;
   // Close other dropdowns when opening this one
   if (showMessageDropdown.value) {
@@ -490,19 +490,19 @@ function toggleMessageDropdown() {
   }
 }
 
-function closeDropdown() {
+const closeDropdown = () => {
   showDropdown.value = false;
 }
 
-function closeNotificationDropdown() {
+const closeNotificationDropdown = () => {
   showNotificationDropdown.value = false;
 }
 
-function closeMessageDropdown() {
+const closeMessageDropdown = () => {
   showMessageDropdown.value = false;
 }
 
-function handleClickOutside(event: MouseEvent) {
+const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as Node;
 
   // Close dropdown if clicked outside
@@ -521,7 +521,7 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
-function markAsRead(type: "notification" | "message", id: number) {
+const markAsRead = (type: "notification" | "message", id: number) => {
   if (type === "notification") {
     // In a real app, you would mark the notification as read via API
     console.log(`Marking notification ${id} as read`);
@@ -535,14 +535,14 @@ function markAsRead(type: "notification" | "message", id: number) {
   }
 }
 
-function logout() {
+const logout = () => {
   localStorage.removeItem("user");
   user.value = null;
   showDropdown.value = false;
   router.push("/");
 }
 
-function getInitials(firstName: string, lastName: string) {
+const getInitials = (firstName: string, lastName: string) => {
   return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
 }
 </script> 

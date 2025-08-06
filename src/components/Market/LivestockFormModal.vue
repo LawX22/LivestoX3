@@ -224,8 +224,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 
 interface AnimalFormData {
   id?: number;
@@ -241,102 +241,97 @@ interface AnimalFormData {
   description: string;
 }
 
-export default defineComponent({
-  name: 'LivestockFormModal',
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: true
-    },
-    isEditMode: {
-      type: Boolean,
-      default: false
-    },
-    currentAnimal: {
-      type: Object as PropType<AnimalFormData | null>,
-      default: null
-    }
-  },
-  data() {
-    return {
-      formData: {
-        type: '',
-        breed: '',
-        weight: '',
-        quantity: '',
-        age: '',
-        status: 'Available',
-        price: '',
-        deliveryOptions: ['pickup'],
-        images: [],
-        description: ''
-      } as AnimalFormData
-    };
-  },
-  watch: {
-    isOpen(newVal) {
-      if (newVal && this.currentAnimal) {
-        this.formData = {
-          ...this.currentAnimal,
-          weight: this.currentAnimal.weight.toString(),
-          quantity: this.currentAnimal.quantity.toString(),
-          price: this.currentAnimal.price.toString()
-        };
-      } else if (newVal) {
-        this.resetForm();
-      }
-    }
-  },
-  methods: {
-    resetForm() {
-      this.formData = {
-        type: '',
-        breed: '',
-        weight: '',
-        quantity: '',
-        age: '',
-        status: 'Available',
-        price: '',
-        deliveryOptions: ['pickup'],
-        images: [],
-        description: ''
+const props = defineProps<{
+  isOpen: boolean;
+  isEditMode?: boolean;
+  currentAnimal: AnimalFormData | null;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'submit', data: AnimalFormData & { datePosted: string }): void;
+}>();
+
+const formData = ref<AnimalFormData>({
+  type: '',
+  breed: '',
+  weight: '',
+  quantity: '',
+  age: '',
+  status: 'Available',
+  price: '',
+  deliveryOptions: ['pickup'],
+  images: [],
+  description: ''
+});
+
+const resetForm = () => {
+  formData.value = {
+    type: '',
+    breed: '',
+    weight: '',
+    quantity: '',
+    age: '',
+    status: 'Available',
+    price: '',
+    deliveryOptions: ['pickup'],
+    images: [],
+    description: ''
+  };
+}
+
+watch(
+  () => props.isOpen,
+  (newVal) => {
+    if (newVal && props.currentAnimal) {
+      formData.value = {
+        ...props.currentAnimal,
+        weight: props.currentAnimal.weight.toString(),
+        quantity: props.currentAnimal.quantity.toString(),
+        price: props.currentAnimal.price.toString()
       };
-    },
-    closeModal() {
-      this.$emit('close');
-    },
-    handleSubmit() {
-      const submittedData = {
-        ...this.formData,
-        weight: Number(this.formData.weight),
-        quantity: Number(this.formData.quantity),
-        price: Number(this.formData.price),
-        datePosted: new Date().toISOString()
-      };
-      
-      this.$emit('submit', submittedData);
-      this.closeModal();
-    },
-    handleImageUpload(event: Event) {
-      const input = event.target as HTMLInputElement;
-      if (input.files && input.files.length) {
-        const files = Array.from(input.files);
-        const remainingSlots = 5 - this.formData.images.length;
-        
-        files.slice(0, remainingSlots).forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            if (e.target?.result) {
-              this.formData.images.push(e.target.result as string);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-    },
-    removeImage(index: number) {
-      this.formData.images.splice(index, 1);
+    } else if (newVal) {
+      resetForm();
     }
   }
-});
+);
+
+const closeModal = () => {
+  emit('close');
+}
+
+const handleSubmit = () => {
+  const submittedData = {
+    ...formData.value,
+    weight: Number(formData.value.weight),
+    quantity: Number(formData.value.quantity),
+    price: Number(formData.value.price),
+    datePosted: new Date().toISOString()
+  };
+
+  emit('submit', submittedData);
+  closeModal();
+}
+
+const handleImageUpload = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length) {
+    const files = Array.from(input.files);
+    const remainingSlots = 5 - formData.value.images.length;
+
+    files.slice(0, remainingSlots).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          formData.value.images.push(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
+const removeImage = (index: number) => {
+  formData.value.images.splice(index, 1);
+}
 </script>

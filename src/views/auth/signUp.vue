@@ -233,7 +233,7 @@
           <div class="max-w-md mx-auto w-full">
             <div class="mb-5 text-center">
               <h2
-                class="text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                class="text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">
                 Create Account
               </h2>
               <p class="text-gray-600 text-base">Join our growing community of farmers and buyers</p>
@@ -557,12 +557,12 @@ interface Toast {
 
 const toasts = ref<Toast[]>([])
 
-function addToast(toast: Omit<Toast, 'id'>) {
+const addToast = (toast: Omit<Toast, 'id'>) => {
   const id = Math.random().toString(36).substr(2, 9)
   toasts.value.push({ ...toast, id })
 }
 
-function removeToast(id: string) {
+const removeToast = (id: string) => {
   const index = toasts.value.findIndex(toast => toast.id === id)
   if (index > -1) {
     toasts.value.splice(index, 1)
@@ -601,7 +601,7 @@ const passwordMismatch = computed(() => form.value.password !== form.value.confi
 const isVerificationCodeComplete = computed(() => verificationCode.value.every(digit => digit !== ''))
 
 // Toast Functions
-function showPhoneToast() {
+const showPhoneToast = () => {
   addToast({
     type: 'info',
     title: 'Philippine Phone Number Format',
@@ -614,7 +614,7 @@ function showPhoneToast() {
   })
 }
 
-function showEmailVerificationToast() {
+const showEmailVerificationToast = () => {
   addToast({
     type: 'warning',
     title: 'Email Verification Required',
@@ -622,7 +622,7 @@ function showEmailVerificationToast() {
   })
 }
 
-function showPasswordRequirementsToast() {
+const showPasswordRequirementsToast = () => {
   addToast({
     type: 'info',
     title: 'Password Requirements',
@@ -636,7 +636,7 @@ function showPasswordRequirementsToast() {
   })
 }
 
-function showEmailHelpToast() {
+const showEmailHelpToast = () => {
   addToast({
     type: 'info',
     title: 'Email Verification Help',
@@ -651,7 +651,7 @@ function showEmailHelpToast() {
 }
 
 // Phone number validation for Philippines (11 digits total: +63 + 10 digits)
-function validatePhoneNumber() {
+const validatePhoneNumber = () => {
   // Remove any non-digit characters
   form.value.phoneNumber = form.value.phoneNumber.replace(/\D/g, '')
 
@@ -670,7 +670,7 @@ function validatePhoneNumber() {
   }
 }
 
-function handleCodeInput(position: number, event: Event) {
+const handleCodeInput = (position: number, event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.value) {
     if (position < 6) {
@@ -680,26 +680,26 @@ function handleCodeInput(position: number, event: Event) {
   }
 }
 
-function handleCodeDelete(position: number, event: KeyboardEvent) {
+const handleCodeDelete = (position: number, event: KeyboardEvent) => {
   if (event.key === 'Backspace' && position > 1 && !verificationCode.value[position - 1]) {
     const prevInput = document.querySelector(`input:nth-child(${position - 1})`) as HTMLInputElement
     prevInput?.focus()
   }
 }
 
-function goToNextStep() {
+const goToNextStep = () => {
   if (currentStep.value < 3) {
     currentStep.value++
   }
 }
 
-function goToPrevStep() {
+const goToPrevStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
   }
 }
 
-function sendVerificationCode() {
+const sendVerificationCode = () => {
   if (passwordMismatch.value || !isPasswordValid.value || !form.value.phoneNumber || phoneError.value) return
 
   // Validate phone number is complete
@@ -721,7 +721,7 @@ function sendVerificationCode() {
 }
 
 
-function generateUniqueUserId(existingIds: string[]): string {
+const generateUniqueUserId = (existingIds: string[]): string => {
   let id = ''
   let isUnique = false
 
@@ -733,13 +733,13 @@ function generateUniqueUserId(existingIds: string[]): string {
   return id
 }
 
-function generatePublicId(firstName: string, lastName: string): string {
+const generatePublicId = (firstName: string, lastName: string): string => {
   const base = `${firstName}.${lastName}`.toLowerCase().replace(/\s+/g, '')
   const random = Math.floor(100 + Math.random() * 900)
   return `${base}.${random}`
 }
 
-function handleSignUp() {
+const handleSignUp = () => {
   if (!isVerificationCodeComplete.value) {
     verificationError.value = 'Please enter the complete 6-digit verification code'
     return

@@ -316,8 +316,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, ref, onMounted } from 'vue';
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue';
 
 interface FarmDetails {
   farmName?: string;
@@ -365,196 +365,176 @@ interface UserData {
   role?: string;
 }
 
-export default defineComponent({
-  name: 'UpgradeRequestModal',
-  props: {
-    visible: {
-      type: Boolean,
-      required: true
-    },
-    request: {
-      type: Object as PropType<UpgradeRequest>,
-      required: true
+const props = defineProps<{
+  visible: boolean;
+  request: UpgradeRequest;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'approved', updatedRequest: UpgradeRequest): void;
+  (e: 'rejected', updatedRequest: UpgradeRequest): void;
+}>();
+
+const userData = ref<UserData | null>(null);
+const defaultAvatar = '/src/assets/default.png';
+
+// Load user data from localStorage
+const loadUserData = () => {
+  try {
+    const userKey = `user_${props.request.userId}`;
+    const storedUser = localStorage.getItem(userKey);
+    if (storedUser) {
+      userData.value = JSON.parse(storedUser);
     }
-  },
-  emits: ['close', 'approved', 'rejected'],
-  setup(props, { emit }) {
-    const userData = ref<UserData | null>(null);
-    const defaultAvatar = '/src/assets/default.png';
 
-    // Load user data from localStorage
-    const loadUserData = () => {
-      try {
-        const userKey = `user_${props.request.userId}`;
-        const storedUser = localStorage.getItem(userKey);
-        if (storedUser) {
-          userData.value = JSON.parse(storedUser);
-        }
-        
-        // Also check for profile image separately
-        const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
-        if (profileImage) {
-          if (!userData.value) {
-            userData.value = { userId: props.request.userId } as UserData;
-          }
-          userData.value.profilePicture = profileImage;
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error);
+    // Also check for profile image separately
+    const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
+    if (profileImage) {
+      if (!userData.value) {
+        userData.value = { userId: props.request.userId } as UserData;
       }
-    };
-
-    onMounted(() => {
-      loadUserData();
-    });
-
-    const fullName = computed(() => {
-      if (props.request.fullName) return props.request.fullName;
-      if (userData.value?.fullName) return userData.value.fullName;
-      const first = props.request.firstName || userData.value?.firstName || '';
-      const last = props.request.lastName || userData.value?.lastName || '';
-      return `${first} ${last}`.trim() || 'No name provided';
-    });
-
-    const userEmail = computed(() => {
-      return props.request.email || userData.value?.email || 'No email provided';
-    });
-
-    const userPhone = computed(() => {
-      // First try to get from userData
-      if (userData.value?.phone) return userData.value.phone;
-      
-      // Then try to get from localStorage directly
-      const phone = localStorage.getItem(`phone_${props.request.userId}`);
-      if (phone) return phone;
-      
-      return 'No phone provided';
-    });
-
-    const userProfileImage = computed(() => {
-      // First try to get from userData
-      if (userData.value?.profilePicture) return userData.value.profilePicture;
-      
-      // Then try to get from localStorage directly
-      const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
-      if (profileImage) return profileImage;
-      
-      // Fallback to default avatar
-      return defaultAvatar;
-    });
-
-    const formattedAddress = computed(() => {
-      const addr = props.request.farmAddress;
-      if (!addr) return 'No address provided';
-      
-      const parts = [
-        addr.street,
-        addr.barangay,
-        addr.city,
-        addr.province,
-        addr.region
-      ].filter(Boolean);
-      
-      return parts.join(', ') || 'No address provided';
-    });
-
-    const formattedDate = computed(() => {
-      if (!props.request.date) return '';
-      const date = new Date(props.request.date);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    });
-
-    const handleImageError = (event: Event) => {
-      const img = event.target as HTMLImageElement;
-      img.src = defaultAvatar;
-    };
-
-    const openDocument = (url: string) => {
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
-    };
-
-    const close = () => {
-      emit('close');
-    };
-
-    const handleApprove = () => {
-      try {
-        const userKey = `user_${props.request.userId}`;
-        const storedUser = localStorage.getItem(userKey);
-
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          user.role = 'Farmer';
-          localStorage.setItem(userKey, JSON.stringify(user));
-        }
-
-        const updatedRequest: UpgradeRequest = {
-          ...props.request,
-          status: 'approved'
-        };
-
-        updateRequestInStorage(updatedRequest);
-
-        emit('approved', updatedRequest);
-        close();
-      } catch (error) {
-        console.error('Error approving upgrade request:', error);
-      }
-    };
-
-    const handleReject = () => {
-      try {
-        const updatedRequest: UpgradeRequest = {
-          ...props.request,
-          status: 'rejected'
-        };
-
-        updateRequestInStorage(updatedRequest);
-
-        emit('rejected', updatedRequest);
-        close();
-      } catch (error) {
-        console.error('Error rejecting upgrade request:', error);
-      }
-    };
-
-    const updateRequestInStorage = (updatedRequest: UpgradeRequest) => {
-      try {
-        const existingRequestsRaw = localStorage.getItem('upgradeRequests');
-        const requests: UpgradeRequest[] = existingRequestsRaw ? JSON.parse(existingRequestsRaw) : [];
-
-        const updatedRequests = requests.map((req: UpgradeRequest) =>
-          req.userId === updatedRequest.userId ? updatedRequest : req
-        );
-
-        localStorage.setItem('upgradeRequests', JSON.stringify(updatedRequests));
-      } catch (error) {
-        console.error('Error updating request in storage:', error);
-      }
-    };
-
-    return {
-      userData,
-      fullName,
-      userEmail,
-      userPhone,
-      userProfileImage,
-      formattedAddress,
-      formattedDate,
-      handleImageError,
-      openDocument,
-      close,
-      handleApprove,
-      handleReject
-    };
+      userData.value.profilePicture = profileImage;
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
   }
+};
+
+onMounted(() => {
+  loadUserData();
 });
+
+const fullName = computed(() => {
+  if (props.request.fullName) return props.request.fullName;
+  if (userData.value?.fullName) return userData.value.fullName;
+  const first = props.request.firstName || userData.value?.firstName || '';
+  const last = props.request.lastName || userData.value?.lastName || '';
+  return `${first} ${last}`.trim() || 'No name provided';
+});
+
+const userEmail = computed(() => {
+  return props.request.email || userData.value?.email || 'No email provided';
+});
+
+const userPhone = computed(() => {
+  // First try to get from userData
+  if (userData.value?.phone) return userData.value.phone;
+
+  // Then try to get from localStorage directly
+  const phone = localStorage.getItem(`phone_${props.request.userId}`);
+  if (phone) return phone;
+
+  return 'No phone provided';
+});
+
+const userProfileImage = computed(() => {
+  // First try to get from userData
+  if (userData.value?.profilePicture) return userData.value.profilePicture;
+
+  // Then try to get from localStorage directly
+  const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
+  if (profileImage) return profileImage;
+
+  // Fallback to default avatar
+  return defaultAvatar;
+});
+
+const formattedAddress = computed(() => {
+  const addr = props.request.farmAddress;
+  if (!addr) return 'No address provided';
+
+  const parts = [
+    addr.street,
+    addr.barangay,
+    addr.city,
+    addr.province,
+    addr.region
+  ].filter(Boolean);
+
+  return parts.join(', ') || 'No address provided';
+});
+
+const formattedDate = computed(() => {
+  if (!props.request.date) return '';
+  const date = new Date(props.request.date);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+});
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = defaultAvatar;
+};
+
+const openDocument = (url: string) => {
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
+
+const close = () => {
+  emit('close');
+};
+
+const handleApprove = () => {
+  try {
+    const userKey = `user_${props.request.userId}`;
+    const storedUser = localStorage.getItem(userKey);
+
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      user.role = 'Farmer';
+      localStorage.setItem(userKey, JSON.stringify(user));
+    }
+
+    const updatedRequest: UpgradeRequest = {
+      ...props.request,
+      status: 'approved'
+    };
+
+    updateRequestInStorage(updatedRequest);
+
+    emit('approved', updatedRequest);
+    close();
+  } catch (error) {
+    console.error('Error approving upgrade request:', error);
+  }
+};
+
+const handleReject = () => {
+  try {
+    const updatedRequest: UpgradeRequest = {
+      ...props.request,
+      status: 'rejected'
+    };
+
+    updateRequestInStorage(updatedRequest);
+
+    emit('rejected', updatedRequest);
+    close();
+  } catch (error) {
+    console.error('Error rejecting upgrade request:', error);
+  }
+};
+
+const updateRequestInStorage = (updatedRequest: UpgradeRequest) => {
+  try {
+    const existingRequestsRaw = localStorage.getItem('upgradeRequests');
+    const requests: UpgradeRequest[] = existingRequestsRaw ? JSON.parse(existingRequestsRaw) : [];
+
+    const updatedRequests = requests.map((req: UpgradeRequest) =>
+      req.userId === updatedRequest.userId ? updatedRequest : req
+    );
+
+    localStorage.setItem('upgradeRequests', JSON.stringify(updatedRequests));
+  } catch (error) {
+    console.error('Error updating request in storage:', error);
+  }
+};
 </script>

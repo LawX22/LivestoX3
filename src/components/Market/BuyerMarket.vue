@@ -323,8 +323,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed, ref, onMounted } from 'vue';
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from '../../components/NavBar.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
@@ -362,237 +362,207 @@ interface Filters {
   location: string;
   priceRange: string;
 }
+const router = useRouter();
+const currentUser = getCurrentUser();
+const hasPendingUpgrade = ref(false);
 
-export default defineComponent({
-  name: 'BuyerMarket',
-  components: {
-    NavBar,
-    AnimalDetailsModal
+const isModalOpen = ref(false);
+const selectedAnimal = ref({} as Animal);
+const filters = ref({
+  search: '',
+  type: '',
+  breed: '',
+  location: '',
+  priceRange: ''
+} as Filters);
+
+const animals = ref<Animal[]>([
+  {
+    id: 1,
+    type: 'Cattle',
+    breed: 'Angus',
+    weight: 450,
+    quantity: 5,
+    age: '24 months',
+    status: 'Available',
+    price: 45000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+      'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
+    datePosted: new Date().toISOString(),
+    farmer: {
+      id: 2,
+      name: 'Maria Santos',
+      farmName: 'Santos Ranch',
+      contact: '+63 917 123 4567',
+      address: '456 Ranch Road, Barangay Pasture, Bukidnon',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+    }
   },
-  setup() {
-    const router = useRouter();
-    const currentUser = getCurrentUser();
-    const hasPendingUpgrade = ref(false);
-
-    const isModalOpen = ref(false);
-    const selectedAnimal = ref({} as Animal);
-    const filters = ref({
-      search: '',
-      type: '',
-      breed: '',
-      location: '',
-      priceRange: ''
-    } as Filters);
-
-    const animals = ref<Animal[]>([
-      {
-        id: 1,
-        type: 'Cattle',
-        breed: 'Angus',
-        weight: 450,
-        quantity: 5,
-        age: '24 months',
-        status: 'Available',
-        price: 45000,
-        deliveryOptions: ['pickup', 'delivery'],
-        images: [
-          'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-          'https://images.unsplash.com/photo-1545468866-336d9336a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed. Excellent breeding stock with documented lineage.',
-        datePosted: new Date().toISOString(),
-        farmer: {
-          id: 2,
-          name: 'Maria Santos',
-          farmName: 'Santos Ranch',
-          contact: '+63 917 123 4567',
-          address: '456 Ranch Road, Barangay Pasture, Bukidnon',
-          avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-        }
-      },
-      {
-        id: 2,
-        type: 'Pig',
-        breed: 'Large White',
-        weight: 120,
-        quantity: 10,
-        age: '8 months',
-        status: 'Available',
-        price: 12000,
-        deliveryOptions: ['pickup'],
-        images: [
-          'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Healthy pigs ready for market. Fed with organic feed and raised in hygienic conditions. All vaccinations up to date.',
-        datePosted: new Date(Date.now() - 86400000).toISOString(),
-        farmer: {
-          id: 3,
-          name: 'Carlos Reyes',
-          farmName: 'Reyes Swine Farm',
-          contact: '+63 918 765 4321',
-          address: '789 Pig Farm, Barangay Livestock, Batangas',
-          avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
-        }
-      },
-      {
-        id: 3,
-        type: 'Goat',
-        breed: 'Boer',
-        weight: 35,
-        quantity: 3,
-        age: '14 months',
-        status: 'Low Stock',
-        price: 8000,
-        deliveryOptions: ['pickup', 'delivery'],
-        images: [
-          'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        ],
-        description: 'Purebred Boer goats, excellent for breeding. High quality genetics with good growth rates. All health certificates available.',
-        datePosted: new Date(Date.now() - 86400000 * 7).toISOString(),
-        farmer: {
-          id: 4,
-          name: 'Lorna Tan',
-          farmName: 'Tan Goat Farm',
-          contact: '+63 919 555 1234',
-          address: '321 Goat Hills, Barangay Grazing, Rizal',
-          avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
-        }
-      }
-    ]);
-
-    const uniqueTypes = computed(() => {
-      const types = new Set(animals.value.map(animal => animal.type));
-      return Array.from(types).sort();
-    });
-
-    const uniqueBreeds = computed(() => {
-      const breeds = new Set(animals.value.map(animal => animal.breed));
-      return Array.from(breeds).sort();
-    });
-
-    const uniqueLocations = computed(() => {
-      const locations = new Set(animals.value.map(animal => animal.farmer.address.split(', ').slice(-2)[0]));
-      return Array.from(locations).sort();
-    });
-
-    const filteredAnimals = computed(() => {
-      return animals.value.filter(animal => {
-        const matchesSearch = 
-          filters.value.search === '' ||
-          animal.type.toLowerCase().includes(filters.value.search.toLowerCase()) ||
-          animal.breed.toLowerCase().includes(filters.value.search.toLowerCase()) ||
-          animal.description.toLowerCase().includes(filters.value.search.toLowerCase()) ||
-          animal.farmer.farmName.toLowerCase().includes(filters.value.search.toLowerCase());
-        
-        const matchesType = 
-          filters.value.type === '' || 
-          animal.type === filters.value.type;
-        
-        const matchesBreed = 
-          filters.value.breed === '' || 
-          animal.breed === filters.value.breed;
-        
-        const matchesLocation = 
-          filters.value.location === '' || 
-          animal.farmer.address.includes(filters.value.location);
-        
-        let matchesPrice = true;
-        if (filters.value.priceRange) {
-          const [min, max] = filters.value.priceRange.split('-');
-          if (max) {
-            matchesPrice = animal.price >= parseInt(min) && animal.price <= parseInt(max);
-          } else {
-            matchesPrice = animal.price >= parseInt(min.replace('+', ''));
-          }
-        }
-        
-        return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPrice;
-      });
-    });
-
-    onMounted(() => {
-      const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]');
-      hasPendingUpgrade.value = currentUser?.email
-        ? requests.some((r: any) => r.email === currentUser.email)
-        : false;
-    });
-
-    const openModal = (animal: Animal) => {
-      selectedAnimal.value = animal;
-      isModalOpen.value = true;
-    };
-
-    const closeModal = () => {
-      isModalOpen.value = false;
-    };
-
-    const contactFarmer = (animal: Animal) => {
-      if (!currentUser?.email) {
-        router.push('/signin');
-        return;
-      }
-      alert(`Contacting ${animal.farmer.name} at ${animal.farmer.contact}`);
-    };
-
-    const contactFarmerFromModal = () => {
-      contactFarmer(selectedAnimal.value);
-      closeModal();
-    };
-
-    const resetFilters = () => {
-      filters.value = {
-        search: '',
-        type: '',
-        breed: '',
-        location: '',
-        priceRange: ''
-      };
-    };
-
-    const getStatusClass = (status: string) => {
-      switch (status) {
-        case 'Available':
-          return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800';
-        case 'Low Stock':
-          return 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800';
-        case 'Out of Stock':
-          return 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800';
-        default:
-          return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800';
-      }
-    };
-
-    const formatDate = (dateString: string) => {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    };
-
-    const goToUpgradeForm = () => {
-      router.push('/upgradeForm');
-    };
-
-    return {
-      currentUser,
-      hasPendingUpgrade,
-      isModalOpen,
-      selectedAnimal,
-      filters,
-      animals,
-      uniqueTypes,
-      uniqueBreeds,
-      uniqueLocations,
-      filteredAnimals,
-      openModal,
-      closeModal,
-      contactFarmer,
-      contactFarmerFromModal,
-      resetFilters,
-      getStatusClass,
-      formatDate,
-      goToUpgradeForm
-    };
+  {
+    id: 2,
+    type: 'Pig',
+    breed: 'Large White',
+    weight: 120,
+    quantity: 10,
+    age: '8 months',
+    status: 'Available',
+    price: 12000,
+    deliveryOptions: ['pickup'],
+    images: [
+      'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Healthy pigs ready for market. Fed with organic feed and raised in hygienic conditions. All vaccinations up to date.',
+    datePosted: new Date(Date.now() - 86400000).toISOString(),
+    farmer: {
+      id: 3,
+      name: 'Carlos Reyes',
+      farmName: 'Reyes Swine Farm',
+      contact: '+63 918 765 4321',
+      address: '789 Pig Farm, Barangay Livestock, Batangas',
+      avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
+    }
+  },
+  {
+    id: 3,
+    type: 'Goat',
+    breed: 'Boer',
+    weight: 35,
+    quantity: 3,
+    age: '14 months',
+    status: 'Low Stock',
+    price: 8000,
+    deliveryOptions: ['pickup', 'delivery'],
+    images: [
+      'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: 'Purebred Boer goats, excellent for breeding. High quality genetics with good growth rates. All health certificates available.',
+    datePosted: new Date(Date.now() - 86400000 * 7).toISOString(),
+    farmer: {
+      id: 4,
+      name: 'Lorna Tan',
+      farmName: 'Tan Goat Farm',
+      contact: '+63 919 555 1234',
+      address: '321 Goat Hills, Barangay Grazing, Rizal',
+      avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
+    }
   }
+]);
+
+const uniqueTypes = computed(() => {
+  const types = new Set(animals.value.map(animal => animal.type));
+  return Array.from(types).sort();
 });
+
+const uniqueBreeds = computed(() => {
+  const breeds = new Set(animals.value.map(animal => animal.breed));
+  return Array.from(breeds).sort();
+});
+
+const uniqueLocations = computed(() => {
+  const locations = new Set(animals.value.map(animal => animal.farmer.address.split(', ').slice(-2)[0]));
+  return Array.from(locations).sort();
+});
+
+const filteredAnimals = computed(() => {
+  return animals.value.filter(animal => {
+    const matchesSearch =
+      filters.value.search === '' ||
+      animal.type.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.breed.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.description.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+      animal.farmer.farmName.toLowerCase().includes(filters.value.search.toLowerCase());
+
+    const matchesType =
+      filters.value.type === '' ||
+      animal.type === filters.value.type;
+
+    const matchesBreed =
+      filters.value.breed === '' ||
+      animal.breed === filters.value.breed;
+
+    const matchesLocation =
+      filters.value.location === '' ||
+      animal.farmer.address.includes(filters.value.location);
+
+    let matchesPrice = true;
+    if (filters.value.priceRange) {
+      const [min, max] = filters.value.priceRange.split('-');
+      if (max) {
+        matchesPrice = animal.price >= parseInt(min) && animal.price <= parseInt(max);
+      } else {
+        matchesPrice = animal.price >= parseInt(min.replace('+', ''));
+      }
+    }
+
+    return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPrice;
+  });
+});
+
+onMounted(() => {
+  const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]');
+  hasPendingUpgrade.value = currentUser?.email
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? requests.some((r: any) => r.email === currentUser.email)
+    : false;
+});
+
+const openModal = (animal: Animal) => {
+  selectedAnimal.value = animal;
+  isModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+const contactFarmer = (animal: Animal) => {
+  if (!currentUser?.email) {
+    router.push('/signin');
+    return;
+  }
+  alert(`Contacting ${animal.farmer.name} at ${animal.farmer.contact}`);
+};
+
+const contactFarmerFromModal = () => {
+  contactFarmer(selectedAnimal.value);
+  closeModal();
+};
+
+const resetFilters = () => {
+  filters.value = {
+    search: '',
+    type: '',
+    breed: '',
+    location: '',
+    priceRange: ''
+  };
+};
+
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case 'Available':
+      return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800';
+    case 'Low Stock':
+      return 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800';
+    case 'Out of Stock':
+      return 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800';
+    default:
+      return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800';
+  }
+};
+
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+const goToUpgradeForm = () => {
+  router.push('/upgradeForm');
+};
 </script>
 
 <style scoped>

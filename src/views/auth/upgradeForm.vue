@@ -377,7 +377,7 @@ onMounted(() => {
   loadUserAddresses()
 })
 
-function loadUserData() {
+const loadUserData = () => {
   const authUserId = localStorage.getItem('authUserId')
   if (!authUserId) return
 
@@ -389,7 +389,7 @@ function loadUserData() {
   }
 }
 
-function loadUserAddresses() {
+const loadUserAddresses = () => {
   const authUserId = localStorage.getItem('authUserId')
   if (!authUserId) return
 
@@ -399,18 +399,18 @@ function loadUserAddresses() {
   }
 }
 
-function addLivestockType() {
+const addLivestockType = () => {
   if (selectedLivestock.value && !form.value.livestockTypes.includes(selectedLivestock.value)) {
     form.value.livestockTypes.push(selectedLivestock.value)
     selectedLivestock.value = ''
   }
 }
 
-function removeLivestockType(index: number) {
+const removeLivestockType = (index: number) => {
   form.value.livestockTypes.splice(index, 1)
 }
 
-function applySelectedAddress() {
+const applySelectedAddress = () => {
   const index = selectedAddressIndex.value
   if (index >= 0 && userAddresses.value[index]) {
     const selected = userAddresses.value[index]
@@ -429,7 +429,7 @@ function applySelectedAddress() {
   }
 }
 
-function handleFileUpload(event: Event, field: 'businessPermit') {
+const handleFileUpload = (event: Event, field: 'businessPermit') => {
   const input = event.target as HTMLInputElement
   if (input.files && input.files[0]) {
     const file = input.files[0]
@@ -450,7 +450,7 @@ function handleFileUpload(event: Event, field: 'businessPermit') {
   }
 }
 
-function handleMultipleFileUpload(event: Event) {
+const handleMultipleFileUpload = (event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.files && input.files.length > 0) {
     Array.from(input.files).forEach(file => {
@@ -466,11 +466,11 @@ function handleMultipleFileUpload(event: Event) {
   }
 }
 
-function removeFarmPhoto(index: number) {
+const removeFarmPhoto = (index: number) => {
   fileData.value.farmPhotos.splice(index, 1)
 }
 
-async function handleUpgradeRequest() {
+const handleUpgradeRequest = async () => {
   if (isSubmitting.value) return
 
   isSubmitting.value = true

@@ -249,7 +249,7 @@
           <div class="max-w-md mx-auto w-full">
             <div class="mb-5 text-center">
               <h2
-                class="text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                class="text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">
                 Welcome Back
               </h2>
               <p class="text-gray-600 text-base">Please enter your credentials to continue</p>
@@ -396,7 +396,7 @@ interface Toast {
 
 const toasts = ref<Toast[]>([])
 
-function addToast(toast: Omit<Toast, 'id'>) {
+const addToast = (toast: Omit<Toast, 'id'>) => {
   const id = Math.random().toString(36).substr(2, 9)
   toasts.value.push({ ...toast, id })
 
@@ -406,7 +406,7 @@ function addToast(toast: Omit<Toast, 'id'>) {
   }, 5000)
 }
 
-function removeToast(id: string) {
+const removeToast = (id: string) => {
   const index = toasts.value.findIndex(toast => toast.id === id)
   if (index > -1) {
     toasts.value.splice(index, 1)
@@ -448,7 +448,7 @@ const carouselImages = ref([
 let autoSlideInterval: NodeJS.Timeout | null = null
 
 // Toast Functions
-function showEmailHelpToast() {
+const showEmailHelpToast = () => {
   addToast({
     type: 'info',
     title: 'Email Sign In Help',
@@ -461,7 +461,7 @@ function showEmailHelpToast() {
   })
 }
 
-function showPasswordHelpToast() {
+const showPasswordHelpToast = () => {
   addToast({
     type: 'info',
     title: 'Password Help',
@@ -476,21 +476,21 @@ function showPasswordHelpToast() {
 }
 
 // Carousel functions
-function nextSlide() {
+const nextSlide = () => {
   currentSlide.value = (currentSlide.value + 1) % carouselImages.value.length
 }
 
-function previousSlide() {
+const previousSlide = () => {
   currentSlide.value = currentSlide.value === 0 ? carouselImages.value.length - 1 : currentSlide.value - 1
 }
 
-function startAutoSlide() {
+const startAutoSlide = () => {
   autoSlideInterval = setInterval(() => {
     nextSlide()
   }, 4000) // Change slide every 4 seconds
 }
 
-function stopAutoSlide() {
+const stopAutoSlide = () => {
   if (autoSlideInterval) {
     clearInterval(autoSlideInterval)
     autoSlideInterval = null
@@ -506,7 +506,7 @@ onUnmounted(() => {
 })
 
 // Sign in function
-function handleSignIn() {
+const handleSignIn = () => {
   isLoading.value = true
 
   // Simulate loading delay

@@ -145,7 +145,7 @@
                         ×
                       </button>
                     </div>
-                    <input ref="frontInputRef" type="file" accept="image/*" @change="onFrontImageChange" class="hidden">
+                    <input ref="frontInputRef" type="file" accept="image/*" class="hidden">
                   </div>
                   <button @click="triggerFrontInput" class="mt-2 w-full text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg py-2 hover:from-blue-600 hover:to-indigo-600 transition-all duration-300">
                     {{ frontImagePreview ? 'Change Photo' : 'Upload Photo' }}
@@ -180,7 +180,7 @@
                         ×
                       </button>
                     </div>
-                    <input ref="backInputRef" type="file" accept="image/*" @change="onBackImageChange" class="hidden">
+                    <input ref="backInputRef" type="file" accept="image/*" class="hidden">
                   </div>
                   <button @click="triggerBackInput" class="mt-2 w-full text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg py-2 hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
                     {{ backImagePreview ? 'Change Photo' : 'Upload Photo' }}
@@ -266,8 +266,8 @@
   </transition>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, computed, watch, onBeforeUnmount, defineProps, defineEmits } from 'vue';
 
 type IDType = 
   | 'drivers_license'
@@ -301,195 +301,174 @@ interface VerificationRecord {
 interface UserData {
   verificationStatus?: 'pending' | 'verified' | 'unverified';
   verification?: VerificationRecord;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-export default defineComponent({
-  name: 'VerificationModal',
-  props: {
-    visible: {
-      type: Boolean,
-      required: true
-    }
-  },
-  emits: ['close', 'verify'],
-  data() {
-    return {
-      formData: {
-        idType: '',
-        frontImage: '',
-        backImage: ''
-      } as FormData,
-      frontImagePreview: null as string | null,
-      backImagePreview: null as string | null,
-      isSubmitting: false,
-      errorMessage: '',
-      successMessage: '',
-      originalOverflow: ''
-    };
-  },
-  computed: {
-    canSubmit(): boolean {
-      return (
-        !!this.formData.idType &&
-        !!this.formData.frontImage &&
-        !!this.formData.backImage
-      );
-    }
-  },
-  watch: {
-    visible(visible: boolean) {
-      if (visible) {
-        this.lockBodyScroll();
-        this.resetForm();
-      } else {
-        this.unlockBodyScroll();
-      }
-    }
-  },
-  beforeUnmount() {
-    this.unlockBodyScroll();
-  },
-  methods: {
-    lockBodyScroll(): void {
-      this.originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-    },
-    unlockBodyScroll(): void {
-      document.body.style.overflow = this.originalOverflow;
-    },
-    resetForm(): void {
-      this.formData = {
-        idType: '',
-        frontImage: '',
-        backImage: ''
-      };
-      this.frontImagePreview = null;
-      this.backImagePreview = null;
-      this.errorMessage = '';
-      this.successMessage = '';
-      this.isSubmitting = false;
-    },
-    closeModal(): void {
-      if (!this.isSubmitting) {
-        this.unlockBodyScroll();
-        this.$emit('close');
-      }
-    },
-    triggerFrontInput(): void {
-      (this.$refs.frontInputRef as HTMLInputElement)?.click();
-    },
-    triggerBackInput(): void {
-      (this.$refs.backInputRef as HTMLInputElement)?.click();
-    },
-    onFrontImageChange(event: Event): void {
-      const input = event.target as HTMLInputElement;
-      const file = input.files?.[0];
-      
-      if (!file) return;
-      
-      if (file.size > 10 * 1024 * 1024 || !file.type.startsWith('image/')) {
-        this.errorMessage = 'Please select a valid image file under 10MB';
-        return;
-      }
+const props = defineProps<{ visible: boolean }>();
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'verify', data: FormData): void;
+}>();
 
-      this.errorMessage = '';
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.formData.frontImage = reader.result as string;
-        this.frontImagePreview = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-      input.value = '';
-    },
-    onBackImageChange(event: Event): void {
-      const input = event.target as HTMLInputElement;
-      const file = input.files?.[0];
-      
-      if (!file) return;
-      
-      if (file.size > 10 * 1024 * 1024 || !file.type.startsWith('image/')) {
-        this.errorMessage = 'Please select a valid image file under 10MB';
-        return;
-      }
+const formData = ref<FormData>({
+  idType: '',
+  frontImage: '',
+  backImage: ''
+});
 
-      this.errorMessage = '';
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.formData.backImage = reader.result as string;
-        this.backImagePreview = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-      input.value = '';
-    },
-    removeFrontImage(): void {
-      this.formData.frontImage = '';
-      this.frontImagePreview = null;
-    },
-    removeBackImage(): void {
-      this.formData.backImage = '';
-      this.backImagePreview = null;
-    },
-    getCurrentUserId(): string {
-      const userId = localStorage.getItem('authUserId');
-      if (!userId) throw new Error('No user is logged in.');
-      return userId;
-    },
-    async submitVerification(): Promise<void> {
-      if (!this.canSubmit) return;
+const frontImagePreview = ref<string | null>(null);
+const backImagePreview = ref<string | null>(null);
+const isSubmitting = ref(false);
+const errorMessage = ref('');
+const successMessage = ref('');
+const originalOverflow = ref('');
 
-      this.isSubmitting = true;
-      this.errorMessage = '';
-      this.successMessage = '';
+const frontInputRef = ref<HTMLInputElement | null>(null);
+const backInputRef = ref<HTMLInputElement | null>(null);
 
-      try {
-        const userId = this.getCurrentUserId();
-        const userData: UserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}');
-        
-        // Create verification record
-        const verificationRecord: VerificationRecord = {
-          idType: this.formData.idType as IDType,
-          frontImage: this.formData.frontImage,
-          backImage: this.formData.backImage,
-          status: 'pending',
-          submittedAt: new Date().toISOString()
-        };
+const canSubmit = computed(() =>
+  !!formData.value.idType &&
+  !!formData.value.frontImage &&
+  !!formData.value.backImage
+);
 
-        // Update user data
-        userData.verificationStatus = 'pending';
-        userData.verification = verificationRecord;
-        localStorage.setItem(`user_${userId}`, JSON.stringify(userData));
-
-        // Add to verification queue (for admin)
-        const verificationQueue = JSON.parse(localStorage.getItem('verificationQueue') || '[]') as Array<{
-          userId: string;
-          idType: IDType;
-          frontImage: string;
-          backImage: string;
-          status: 'pending' | 'approved' | 'rejected';
-          submittedAt: string;
-        }>;
-        
-        verificationQueue.push({
-          userId,
-          ...verificationRecord
-        });
-        localStorage.setItem('verificationQueue', JSON.stringify(verificationQueue));
-
-        this.successMessage = 'Verification submitted successfully!';
-        this.$emit('verify', this.formData);
-
-        setTimeout(() => {
-          if (this.visible) this.closeModal();
-        }, 2000);
-
-      } catch (err) {
-        console.error('Verification error:', err);
-        this.errorMessage = err instanceof Error ? err.message : 'Failed to submit verification. Please try again.';
-      } finally {
-        this.isSubmitting = false;
-      }
-    }
+watch(() => props.visible, (visible) => {
+  if (visible) {
+    lockBodyScroll();
+    resetForm();
+  } else {
+    unlockBodyScroll();
   }
 });
+
+onBeforeUnmount(() => {
+  unlockBodyScroll();
+});
+
+const lockBodyScroll = () => {
+  originalOverflow.value = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+}
+
+const unlockBodyScroll= () => {
+  document.body.style.overflow = originalOverflow.value;
+}
+
+const resetForm = () => {
+  formData.value = {
+    idType: '',
+    frontImage: '',
+    backImage: ''
+  };
+  frontImagePreview.value = null;
+  backImagePreview.value = null;
+  errorMessage.value = '';
+  successMessage.value = '';
+  isSubmitting.value = false;
+}
+
+const closeModal = () => {
+  if (!isSubmitting.value) {
+    unlockBodyScroll();
+    emit('close');
+  }
+}
+
+const triggerFrontInput = () => {
+  frontInputRef.value?.click();
+}
+
+const triggerBackInput = () => {
+  backInputRef.value?.click();
+}
+
+// const handleImageChange = (
+//   event: Event,
+//   type: 'front' | 'back'
+// ) => {
+//   const input = event.target as HTMLInputElement;
+//   const file = input.files?.[0];
+
+//   if (!file) return;
+
+//   if (file.size > 10 * 1024 * 1024 || !file.type.startsWith('image/')) {
+//     errorMessage.value = 'Please select a valid image file under 10MB';
+//     return;
+//   }
+
+//   errorMessage.value = '';
+//   const reader = new FileReader();
+//   reader.onload = () => {
+//     if (type === 'front') {
+//       formData.value.frontImage = reader.result as string;
+//       frontImagePreview.value = reader.result as string;
+//     } else {
+//       formData.value.backImage = reader.result as string;
+//       backImagePreview.value = reader.result as string;
+//     }
+//   };
+//   reader.readAsDataURL(file);
+//   input.value = '';
+// }
+
+const removeFrontImage = () => {
+  formData.value.frontImage = '';
+  frontImagePreview.value = null;
+}
+
+const removeBackImage = () => {
+  formData.value.backImage = '';
+  backImagePreview.value = null;
+}
+
+const getCurrentUserId = (): string => {
+  const userId = localStorage.getItem('authUserId');
+  if (!userId) throw new Error('No user is logged in.');
+  return userId;
+}
+
+const submitVerification = async () => {
+  if (!canSubmit.value) return;
+
+  isSubmitting.value = true;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  try {
+    const userId = getCurrentUserId();
+    const userData: UserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}');
+
+    const verificationRecord: VerificationRecord = {
+      idType: formData.value.idType,
+      frontImage: formData.value.frontImage,
+      backImage: formData.value.backImage,
+      status: 'pending',
+      submittedAt: new Date().toISOString()
+    };
+
+    userData.verificationStatus = 'pending';
+    userData.verification = verificationRecord;
+    localStorage.setItem(`user_${userId}`, JSON.stringify(userData));
+
+    const verificationQueue = JSON.parse(localStorage.getItem('verificationQueue') || '[]') as VerificationRecord[] & { userId: string }[];
+    verificationQueue.push({
+      userId,
+      ...verificationRecord
+    });
+    localStorage.setItem('verificationQueue', JSON.stringify(verificationQueue));
+
+    successMessage.value = 'Verification submitted successfully!';
+    emit('verify', formData.value);
+
+    setTimeout(() => {
+      if (props.visible) closeModal();
+    }, 2000);
+
+  } catch (err) {
+    console.error('Verification error:', err);
+    errorMessage.value = err instanceof Error ? err.message : 'Failed to submit verification. Please try again.';
+  } finally {
+    isSubmitting.value = false;
+  }
+}
 </script>

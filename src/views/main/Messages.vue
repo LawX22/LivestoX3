@@ -174,8 +174,8 @@
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted, nextTick } from 'vue';
+<script setup lang="ts">
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 
 interface User {
@@ -209,248 +209,223 @@ interface Conversation {
     lastMessage?: Message;
     unreadCount: number;
 }
+const router = useRouter();
+const currentUser = ref<User>({
+    id: 'user1',
+    name: 'John Doe',
+    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    role: 'buyer',
+});
 
-export default defineComponent({
-    name: 'MessageComponent',
-    setup() {
-        const router = useRouter();
-        const currentUser = ref<User>({
-            id: 'user1',
-            name: 'John Doe',
-            avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-            role: 'buyer',
-        });
-
-        const conversations = ref<Conversation[]>([
+const conversations = ref<Conversation[]>([
+    {
+        id: 'conv1',
+        participants: [
+            currentUser.value,
             {
-                id: 'conv1',
-                participants: [
-                    currentUser.value,
-                    {
-                        id: 'user2',
-                        name: 'Sarah Farmer',
-                        avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-                        role: 'farmer',
-                    },
-                ],
-                listing: {
-                    id: 'listing1',
-                    name: 'Organic Free-Range Eggs',
-                    description: 'Fresh organic eggs from free-range chickens. Collected daily.',
-                    price: 4.99,
-                    quantity: 50,
-                    images: ['https://via.placeholder.com/150'],
-                },
-                lastMessage: {
-                    id: 'msg3',
-                    content: 'Yes, I can deliver on Friday morning. Does that work for you?',
-                    senderId: 'user2',
-                    createdAt: '2023-05-15T10:30:00Z',
-                    read: false,
-                },
-                unreadCount: 0,
+                id: 'user2',
+                name: 'Sarah Farmer',
+                avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+                role: 'farmer',
             },
-            {
-                id: 'conv2',
-                participants: [
-                    currentUser.value,
-                    {
-                        id: 'user3',
-                        name: 'Mike Johnson',
-                        avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-                        role: 'farmer',
-                    },
-                ],
-                listing: {
-                    id: 'listing2',
-                    name: 'Grass-Fed Beef (1/4 Cow)',
-                    description: 'Premium grass-fed beef, processed and packaged.',
-                    price: 899.99,
-                    quantity: 4,
-                    images: ['https://via.placeholder.com/150'],
-                },
-                lastMessage: {
-                    id: 'msg5',
-                    content: 'The beef will be ready next week. When would you like to pick it up?',
-                    senderId: 'user3',
-                    createdAt: '2023-05-14T16:45:00Z',
-                    read: true,
-                },
-                unreadCount: 2,
-            },
-            {
-                id: 'conv3',
-                participants: [
-                    currentUser.value,
-                    {
-                        id: 'user4',
-                        name: 'Emma Wilson',
-                        avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
-                        role: 'farmer',
-                    },
-                ],
-                lastMessage: {
-                    id: 'msg7',
-                    content: 'Hi! I saw your inquiry about fresh milk. How much are you looking for?',
-                    senderId: 'user4',
-                    createdAt: '2023-05-12T09:15:00Z',
-                    read: true,
-                },
-                unreadCount: 0,
-            },
-        ]);
-
-        const selectedConversation = ref<Conversation | null>(null);
-        const messages = ref<Message[]>([]);
-        const newMessage = ref('');
-        const searchTerm = ref('');
-        const loadingMessages = ref(false);
-        const messagesContainer = ref<HTMLElement | null>(null);
-
-        const filteredConversations = computed(() => {
-            if (!searchTerm.value) return conversations.value;
-            return conversations.value.filter(conv => {
-                const otherUser = getOtherUser(conv);
-                return (
-                    otherUser.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-                    (conv.listing?.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ?? false)
-                );
-            });
-        });
-
-        function getOtherUser(conversation: Conversation): User {
-            return conversation.participants.find(user => user.id !== currentUser.value.id)!;
-        }
-
-        function formatDate(dateString?: string): string {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            const now = new Date();
-
-            if (date.toDateString() === now.toDateString()) {
-                return formatTime(dateString);
-            }
-
-            if (date.getFullYear() === now.getFullYear()) {
-                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            }
-
-            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-        }
-
-        function formatTime(dateString: string): string {
-            const date = new Date(dateString);
-            return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function selectConversation(conversation: Conversation) {
-            selectedConversation.value = conversation;
-            loadMessages(conversation.id);
-            // Mark as read
-            conversation.unreadCount = 0;
-        }
-
-        async function loadMessages(_conversationId: string) {
-            loadingMessages.value = true;
-            // Simulate API call
-            setTimeout(() => {
-                messages.value = [
-                    {
-                        id: 'msg1',
-                        content: 'Hi there! I saw your listing for organic eggs. Are they still available?',
-                        senderId: currentUser.value.id,
-                        createdAt: '2023-05-15T09:15:00Z',
-                        read: true,
-                    },
-                    {
-                        id: 'msg2',
-                        content: 'Hello! Yes, we still have plenty available. How many dozen are you interested in?',
-                        senderId: 'user2',
-                        createdAt: '2023-05-15T09:30:00Z',
-                        read: true,
-                    },
-                    {
-                        id: 'msg3',
-                        content: 'Yes, I can deliver on Friday morning. Does that work for you?',
-                        senderId: 'user2',
-                        createdAt: '2023-05-15T10:30:00Z',
-                        read: true,
-                    },
-                ];
-                loadingMessages.value = false;
-                scrollToBottom();
-            }, 500);
-        }
-
-        function sendMessage() {
-            if (!newMessage.value.trim() || !selectedConversation.value) return;
-
-            const message: Message = {
-                id: `msg${Date.now()}`,
-                content: newMessage.value,
-                senderId: currentUser.value.id,
-                createdAt: new Date().toISOString(),
-                read: false,
-            };
-
-            messages.value.push(message);
-
-            // Update last message in conversation
-            const conv = conversations.value.find(c => c.id === selectedConversation.value?.id);
-            if (conv) {
-                conv.lastMessage = message;
-                // Move to top of list
-                conversations.value = [
-                    conv,
-                    ...conversations.value.filter(c => c.id !== conv.id),
-                ];
-            }
-
-            newMessage.value = '';
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            nextTick(() => {
-                if (messagesContainer.value) {
-                    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-                }
-            });
-        }
-
-        function handleScroll() {
-            // Implement infinite scroll if needed
-        }
-
-        function viewListing(listing: Listing) {
-            router.push(`/listings/${listing.id}`);
-        }
-
-        // Auto-select first conversation (for demo purposes)
-        onMounted(() => {
-            if (conversations.value.length > 0) {
-                selectConversation(conversations.value[0]);
-            }
-        });
-
-        return {
-            currentUser,
-            conversations,
-            selectedConversation,
-            messages,
-            newMessage,
-            searchTerm,
-            loadingMessages,
-            messagesContainer,
-            filteredConversations,
-            getOtherUser,
-            formatDate,
-            formatTime,
-            selectConversation,
-            sendMessage,
-            handleScroll,
-            viewListing,
-        };
+        ],
+        listing: {
+            id: 'listing1',
+            name: 'Organic Free-Range Eggs',
+            description: 'Fresh organic eggs from free-range chickens. Collected daily.',
+            price: 4.99,
+            quantity: 50,
+            images: ['https://via.placeholder.com/150'],
+        },
+        lastMessage: {
+            id: 'msg3',
+            content: 'Yes, I can deliver on Friday morning. Does that work for you?',
+            senderId: 'user2',
+            createdAt: '2023-05-15T10:30:00Z',
+            read: false,
+        },
+        unreadCount: 0,
     },
+    {
+        id: 'conv2',
+        participants: [
+            currentUser.value,
+            {
+                id: 'user3',
+                name: 'Mike Johnson',
+                avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+                role: 'farmer',
+            },
+        ],
+        listing: {
+            id: 'listing2',
+            name: 'Grass-Fed Beef (1/4 Cow)',
+            description: 'Premium grass-fed beef, processed and packaged.',
+            price: 899.99,
+            quantity: 4,
+            images: ['https://via.placeholder.com/150'],
+        },
+        lastMessage: {
+            id: 'msg5',
+            content: 'The beef will be ready next week. When would you like to pick it up?',
+            senderId: 'user3',
+            createdAt: '2023-05-14T16:45:00Z',
+            read: true,
+        },
+        unreadCount: 2,
+    },
+    {
+        id: 'conv3',
+        participants: [
+            currentUser.value,
+            {
+                id: 'user4',
+                name: 'Emma Wilson',
+                avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
+                role: 'farmer',
+            },
+        ],
+        lastMessage: {
+            id: 'msg7',
+            content: 'Hi! I saw your inquiry about fresh milk. How much are you looking for?',
+            senderId: 'user4',
+            createdAt: '2023-05-12T09:15:00Z',
+            read: true,
+        },
+        unreadCount: 0,
+    },
+]);
+
+const selectedConversation = ref<Conversation | null>(null);
+const messages = ref<Message[]>([]);
+const newMessage = ref('');
+const searchTerm = ref('');
+const loadingMessages = ref(false);
+const messagesContainer = ref<HTMLElement | null>(null);
+
+const filteredConversations = computed(() => {
+    if (!searchTerm.value) return conversations.value;
+    return conversations.value.filter(conv => {
+        const otherUser = getOtherUser(conv);
+        return (
+            otherUser.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+            (conv.listing?.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ?? false)
+        );
+    });
+});
+
+const getOtherUser = (conversation: Conversation): User => {
+    return conversation.participants.find(user => user.id !== currentUser.value.id)!;
+}
+
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+
+    if (date.toDateString() === now.toDateString()) {
+        return formatTime(dateString);
+    }
+
+    if (date.getFullYear() === now.getFullYear()) {
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+const formatTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+const selectConversation = (conversation: Conversation) => {
+    selectedConversation.value = conversation;
+    loadMessages(conversation.id);
+    // Mark as read
+    conversation.unreadCount = 0;
+}
+
+const loadMessages = async (_conversationId: string) => {
+    loadingMessages.value = true;
+    // Simulate API call
+    setTimeout(() => {
+        messages.value = [
+            {
+                id: 'msg1',
+                content: 'Hi there! I saw your listing for organic eggs. Are they still available?',
+                senderId: currentUser.value.id,
+                createdAt: '2023-05-15T09:15:00Z',
+                read: true,
+            },
+            {
+                id: 'msg2',
+                content: 'Hello! Yes, we still have plenty available. How many dozen are you interested in?',
+                senderId: 'user2',
+                createdAt: '2023-05-15T09:30:00Z',
+                read: true,
+            },
+            {
+                id: 'msg3',
+                content: 'Yes, I can deliver on Friday morning. Does that work for you?',
+                senderId: 'user2',
+                createdAt: '2023-05-15T10:30:00Z',
+                read: true,
+            },
+        ];
+        loadingMessages.value = false;
+        scrollToBottom();
+    }, 500);
+}
+
+const sendMessage = () => {
+    if (!newMessage.value.trim() || !selectedConversation.value) return;
+
+    const message: Message = {
+        id: `msg${Date.now()}`,
+        content: newMessage.value,
+        senderId: currentUser.value.id,
+        createdAt: new Date().toISOString(),
+        read: false,
+    };
+
+    messages.value.push(message);
+
+    // Update last message in conversation
+    const conv = conversations.value.find(c => c.id === selectedConversation.value?.id);
+    if (conv) {
+        conv.lastMessage = message;
+        // Move to top of list
+        conversations.value = [
+            conv,
+            ...conversations.value.filter(c => c.id !== conv.id),
+        ];
+    }
+
+    newMessage.value = '';
+    scrollToBottom();
+}
+
+const scrollToBottom = () => {
+    nextTick(() => {
+        if (messagesContainer.value) {
+            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+    });
+}
+
+const handleScroll = () => {
+    // Implement infinite scroll if needed
+}
+
+const viewListing = (listing: Listing) => {
+    router.push(`/listings/${listing.id}`);
+}
+
+// Auto-select first conversation (for demo purposes)
+onMounted(() => {
+    if (conversations.value.length > 0) {
+        selectConversation(conversations.value[0]);
+    }
 });
 </script>

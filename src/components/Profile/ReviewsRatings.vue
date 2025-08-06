@@ -143,7 +143,7 @@
             </div>
           </div>
           <button 
-            v-else="userRole === 'Farmer'" 
+            v-else-if="userRole === 'Farmer'" 
             class="text-sm text-green-600 hover:text-green-700 font-medium mt-2"
             @click="openResponseModal(review)"
           >
@@ -251,147 +251,120 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 
 interface Review {
-  id: string;
-  rating: number;
-  comment: string;
-  date: string;
-  images: string[];
-  response?: string;
+  id: string
+  rating: number
+  comment: string
+  date: string
+  images: string[]
+  response?: string
   reviewer: {
-    name: string;
-    avatar: string;
-  };
-  livestock?: string;
+    name: string
+    avatar: string
+  }
+  livestock?: string
 }
 
-export default defineComponent({
-  name: 'ReviewsRatingsTab',
-  props: {
-    userId: {
-      type: String,
-      required: true
-    },
-    userRole: {
-      type: String,
-      required: true
-    }
-  },
-  setup(_props) {
-    const reviews = ref<Review[]>([]);
-    const currentPage = ref(1);
-    const reviewsPerPage = 5;
-    const showResponseModal = ref(false);
-    const responseText = ref('');
-    const selectedReview = ref<Review | null>(null);
-    const showImageModal = ref(false);
-    const selectedImage = ref('');
+defineProps<{
+  userId: string
+  userRole: string
+}>()
 
-    const ratingDistribution = [180, 45, 12, 6, 4];
-    const totalReviews = computed(() => ratingDistribution.reduce((a, b) => a + b, 0));
+const reviews = ref<Review[]>([])
+const currentPage = ref(1)
+const reviewsPerPage = 5
+const showResponseModal = ref(false)
+const responseText = ref('')
+const selectedReview = ref<Review | null>(null)
+const showImageModal = ref(false)
+const selectedImage = ref('')
 
-    const ratingFactors = [
-      { name: 'Livestock Quality', rating: 4.8 },
-      { name: 'Communication', rating: 4.9 },
-      { name: 'Delivery', rating: 4.5 },
-      { name: 'Value for Money', rating: 4.7 }
-    ];
+const ratingDistribution = [180, 45, 12, 6, 4]
+const ratingFactors = [
+  { name: 'Livestock Quality', rating: 4.8 },
+  { name: 'Communication', rating: 4.9 },
+  { name: 'Delivery', rating: 4.5 },
+  { name: 'Value for Money', rating: 4.7 }
+]
 
-    const formatDate = (dateString: string): string => {
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    };
+const totalReviews = computed(() => ratingDistribution.reduce((a, b) => a + b, 0))
+const totalPages = computed(() => Math.ceil(reviews.value.length / reviewsPerPage))
+// const paginatedReviews = computed(() => {
+//   const start = (currentPage.value - 1) * reviewsPerPage
+//   const end = start + reviewsPerPage
+//   return reviews.value.slice(start, end)
+// })
 
-    const loadReviews = () => {
-      reviews.value = [
-        {
-          id: '1',
-          rating: 5,
-          comment: 'The goats arrived in perfect health and were exactly as described. The seller was very helpful throughout the process. Highly recommend!',
-          date: '2023-06-15T10:30:00Z',
-          images: [
-            'https://source.unsplash.com/random/300x200?goat,1',
-            'https://source.unsplash.com/random/300x200?goat,2'
-          ],
-          livestock: 'Premium Dairy Goats',
-          reviewer: {
-            name: 'Juan Dela Cruz',
-            avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-          },
-          response: 'Thank you for your kind words, Juan! We take pride in raising healthy livestock and are glad you\'re satisfied.'
-        },
-        {
-          id: '2',
-          rating: 4,
-          comment: 'Good quality chickens, though delivery took a bit longer than expected. Overall happy with the purchase.',
-          date: '2023-05-22T14:15:00Z',
-          images: [],
-          livestock: 'Free Range Chickens',
-          reviewer: {
-            name: 'Maria Santos',
-            avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-          }
-        }
-      ];
-    };
-
-    const openResponseModal = (review: Review) => {
-      selectedReview.value = review;
-      responseText.value = '';
-      showResponseModal.value = true;
-    };
-
-    const submitResponse = () => {
-      if (selectedReview.value && responseText.value.trim()) {
-        const reviewIndex = reviews.value.findIndex(r => r.id === selectedReview.value?.id);
-        if (reviewIndex !== -1) {
-          reviews.value[reviewIndex].response = responseText.value;
-          // In a real app, save this to backend
-        }
-        showResponseModal.value = false;
-      }
-    };
-
-    const openImageModal = (image: string) => {
-      selectedImage.value = image;
-      showImageModal.value = true;
-    };
-
-    const totalPages = computed(() => Math.ceil(reviews.value.length / reviewsPerPage));
-    const paginatedReviews = computed(() => {
-      const start = (currentPage.value - 1) * reviewsPerPage;
-      const end = start + reviewsPerPage;
-      return reviews.value.slice(start, end);
-    });
-
-    onMounted(() => {
-      loadReviews();
-    });
-
-    return {
-      reviews: paginatedReviews,
-      ratingDistribution,
-      totalReviews,
-      ratingFactors,
-      currentPage,
-      totalPages,
-      showResponseModal,
-      responseText,
-      selectedReview,
-      showImageModal,
-      selectedImage,
-      formatDate,
-      openResponseModal,
-      submitResponse,
-      openImageModal
-    };
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   }
-});
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const loadReviews = () => {
+  reviews.value = [
+    {
+      id: '1',
+      rating: 5,
+      comment:
+        'The goats arrived in perfect health and were exactly as described. The seller was very helpful throughout the process. Highly recommend!',
+      date: '2023-06-15T10:30:00Z',
+      images: [
+        'https://source.unsplash.com/random/300x200?goat,1',
+        'https://source.unsplash.com/random/300x200?goat,2'
+      ],
+      livestock: 'Premium Dairy Goats',
+      reviewer: {
+        name: 'Juan Dela Cruz',
+        avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+      },
+      response:
+        "Thank you for your kind words, Juan! We take pride in raising healthy livestock and are glad you're satisfied."
+    },
+    {
+      id: '2',
+      rating: 4,
+      comment:
+        'Good quality chickens, though delivery took a bit longer than expected. Overall happy with the purchase.',
+      date: '2023-05-22T14:15:00Z',
+      images: [],
+      livestock: 'Free Range Chickens',
+      reviewer: {
+        name: 'Maria Santos',
+        avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+      }
+    }
+  ]
+}
+
+const openResponseModal = (review: Review) => {
+  selectedReview.value = review
+  responseText.value = ''
+  showResponseModal.value = true
+}
+
+const submitResponse = () => {
+  if (selectedReview.value && responseText.value.trim()) {
+    const index = reviews.value.findIndex((r) => r.id === selectedReview.value?.id)
+    if (index !== -1) {
+      reviews.value[index].response = responseText.value
+    }
+    showResponseModal.value = false
+  }
+}
+
+const openImageModal = (image: string) => {
+  selectedImage.value = image
+  showImageModal.value = true
+}
+
+onMounted(() => {
+  loadReviews()
+})
 </script>
