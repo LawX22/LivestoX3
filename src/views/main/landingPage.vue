@@ -26,7 +26,7 @@
           Sign In
         </button>
         <button class="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition">
-          Sign Up
+          Fuck up
         </button>
       </div>
     </section>
