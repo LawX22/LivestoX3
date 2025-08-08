@@ -91,7 +91,7 @@
           <!-- Colors & Gradients Tab -->
           <div v-if="activeTab === 'colors'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Color Palette</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Color Palette</h2>
               
               <!-- Primary Colors -->
               <div class="mb-6">
@@ -140,7 +140,7 @@
           <!-- Typography Tab -->
           <div v-if="activeTab === 'typography'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Typography System</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Typography System</h2>
               
               <!-- Headings -->
               <div class="mb-8">
@@ -183,7 +183,7 @@
           <!-- Buttons & Forms Tab -->
           <div v-if="activeTab === 'buttons'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Interactive Elements</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Interactive Elements</h2>
               
               <!-- Buttons -->
               <div class="mb-8">
@@ -252,7 +252,7 @@
           <!-- Cards & Layouts Tab -->
           <div v-if="activeTab === 'cards'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Card Designs</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Card Designs</h2>
               
               <!-- Basic Cards -->
               <div class="mb-8">
@@ -425,7 +425,7 @@
           <!-- Tables Tab -->
           <div v-if="activeTab === 'tables'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Table Designs</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Table Designs</h2>
               
               <!-- Basic Table -->
               <div class="mb-8">
@@ -728,7 +728,7 @@
           <!-- Animations Tab -->
           <div v-if="activeTab === 'animations'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Animations & Effects</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Animations & Effects</h2>
               
               <!-- Animation Examples -->
               <div class="mb-8">
@@ -808,7 +808,7 @@
           <!-- Components Tab -->
           <div v-if="activeTab === 'components'" class="space-y-8">
             <div>
-              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Complex Components</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Complex Components</h2>
               
               <!-- Progress Indicator -->
               <div class="mb-8">
