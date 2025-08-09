@@ -494,13 +494,14 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import UserDetailsModal from '../../components/Admin/UserDetailsModal.vue'
+import type { User } from '@/services/user' // import your User interface
 
-const registeredUsers = ref([])
-const selectedUser = ref(null)
+const registeredUsers = ref<User[]>([])
+const selectedUser = ref<User | null>(null)
 const showModal = ref(false)
 const searchQuery = ref('')
-const statusFilter = ref('all')
-const roleFilter = ref('all')
+const statusFilter = ref<'all' | 'verified' | 'unverified' | 'banned' | 'pending' | 'rejected'>('all')
+const roleFilter = ref<'all' | 'Admin' | 'Farmer' | 'Buyer'>('all')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const defaultAvatar = '/default-avatar.png'
@@ -621,11 +622,11 @@ const loadUsers = () => {
   }
 }
 
-const formatDate = (d: string | number | Date) => {
+const formatDate = (d?: string | number | Date) => {
   if (!d) return ''
   try {
     return new Date(d).toLocaleDateString()
-  } catch (error) {
+  } catch {
     return ''
   }
 }
@@ -634,7 +635,7 @@ const formatRelativeTime = (dateString: string | number | Date) => {
   if (!dateString) return ''
   const date = new Date(dateString)
   const now = new Date()
-  const diffInDays = Math.floor((date - now) / (1000 * 60 * 60 * 24))
+  const diffInDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
   if (diffInDays > 0) {
     return `for ${diffInDays} day${diffInDays !== 1 ? 's' : ''}`
@@ -645,10 +646,10 @@ const formatRelativeTime = (dateString: string | number | Date) => {
   }
 }
 
-const formatLastActive = (date: string | number | Date) => {
+const formatLastActive = (date?: string | number | Date) => {
   if (!date) return 'Never'
   const now = new Date()
-  const diffInMinutes = Math.floor((now - new Date(date)) / (1000 * 60))
+  const diffInMinutes = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60))
 
   if (diffInMinutes < 1) return 'Just now'
   if (diffInMinutes < 60) return `${diffInMinutes}m ago`
@@ -686,7 +687,7 @@ const statusBadgeClass = (u) => {
   }
 }
 
-const getStatusLabel = (u: never) => {
+const getStatusLabel = (u: User) => {
   if (u.isBanned) return 'Banned'
   if (u.verificationStatus === 'pending') return 'Pending'
   if (u.verificationStatus === 'rejected') return 'Rejected'
@@ -694,13 +695,13 @@ const getStatusLabel = (u: never) => {
   return 'Unverified'
 }
 
-const viewUserDetails = (u: null) => {
-  selectedUser.value = u
+const viewUserDetails = (user: User) => {
+  selectedUser.value = user
   showModal.value = true
 }
 
-const editUser = (u: null) => {
-  selectedUser.value = u
+const editUser = (user: User) => {
+  selectedUser.value = user
   showModal.value = true
 }
 
@@ -737,7 +738,7 @@ const unbanUser = (u: any) => {
   }
 }
 
-const handleVerificationApproval = (userId: any) => {
+const handleVerificationApproval = (userId: string): void => {
   const user = registeredUsers.value.find((u) => u.userId === userId)
   if (user) {
     updateUser({
@@ -777,7 +778,7 @@ const handleUserUpdate = (updatedUser: any) => {
 const updateUser = (u) => {
   try {
     const existingData = localStorage.getItem(`user_${u.userId}`)
-    let existingUser = existingData ? JSON.parse(existingData) : {}
+    const existingUser = existingData ? JSON.parse(existingData) : {}
 
     const updatedUser = {
       ...existingUser,
@@ -819,7 +820,7 @@ const exportToCSV = () => {
     formatLastActive(user.lastActive),
   ])
 
-  let csvContent =
+  const csvContent =
     'data:text/csv;charset=utf-8,' +
     headers.join(',') +
     '\n' +
