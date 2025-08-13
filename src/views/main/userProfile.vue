@@ -580,7 +580,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from '../../components/NavBar.vue'
 import AddressModal from '../../components/Profile/AddressModal.vue'
@@ -655,15 +655,15 @@ const showVerificationModal = ref(false)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const profileInput = ref<HTMLInputElement | null>(null)
 
-const bannerStyle = computed(() => {
-  return bannerImage.value
-    ? {
-      backgroundImage: `url('${bannerImage.value}')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }
-    : {}
-})
+// const bannerStyle = computed(() => {
+//   return bannerImage.value
+//     ? {
+//       backgroundImage: `url('${bannerImage.value}')`,
+//       backgroundSize: 'cover',
+//       backgroundPosition: 'center'
+//     }
+//     : {}
+// })
 
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '—'
@@ -922,19 +922,19 @@ const handleVerification = (verificationData: { idType: string; frontImage: stri
   closeVerificationModal()
 }
 
-const removeProfile = (): void => {
-  profileImage.value = null
-  if (user.value) {
-    localStorage.removeItem(`profileImage_${user.value.userId}`)
-  }
-}
+// const removeProfile = (): void => {
+//   profileImage.value = null
+//   if (user.value) {
+//     localStorage.removeItem(`profileImage_${user.value.userId}`)
+//   }
+// }
 
-const removeBanner = (): void => {
-  bannerImage.value = null
-  if (user.value) {
-    localStorage.removeItem(`bannerImage_${user.value.userId}`)
-  }
-}
+// const removeBanner = (): void => {
+//   bannerImage.value = null
+//   if (user.value) {
+//     localStorage.removeItem(`bannerImage_${user.value.userId}`)
+//   }
+// }
 
 onMounted(() => {
   loadUserData()

@@ -341,7 +341,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { livestockTypes, farmSizeUnits } from '../../services/upgradeFormDetails'
+import { livestockTypes, farmSizeUnits } from '../../services/UpgradeFormDetails'
 
 const router = useRouter()
 const submitted = ref(false)

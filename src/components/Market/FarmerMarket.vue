@@ -321,20 +321,7 @@
                   Previous
                 </button>
 
-                <!-- Page Numbers -->
-                <div class="flex items-center gap-1">
-                  <template v-for="page in visiblePages" :key="page">
-                    <button v-if="page !== '...'" @click="goToPage(page)" :class="[
-                      'px-3 py-2 text-sm font-semibold rounded-lg transition-colors duration-200',
-                      page === currentPage
-                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-sm'
-                        : 'bg-white/90 text-gray-700 hover:bg-green-50 hover:text-green-700 border border-white/40 shadow-sm'
-                    ]">
-                      {{ page }}
-                    </button>
-                    <span v-else class="px-2 text-gray-500">...</span>
-                  </template>
-                </div>
+                
 
                 <!-- Next Page -->
                 <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages" :class="[
@@ -720,33 +707,7 @@ const paginatedAnimals = computed(() => {
   return filteredAnimals.value.slice(start, end);
 });
 
-// Optimized visible pages computation
-const visiblePages = computed(() => {
-  const pages = [];
-  const total = totalPages.value;
-  const current = currentPage.value;
 
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i);
-    }
-  } else {
-    pages.push(1);
-    if (current > 4) pages.push('...');
-    
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    
-    for (let i = start; i <= end; i++) {
-      if (i !== 1 && i !== total) pages.push(i);
-    }
-    
-    if (current < total - 3) pages.push('...');
-    if (total > 1) pages.push(total);
-  }
-
-  return pages;
-});
 
 // Debounced filter watcher for better performance
 watch([filters, sortBy], () => {
