@@ -22,7 +22,10 @@ export interface User {
   lastName: string
   phoneNumber: string
   gender: 'Male' | 'Female' | 'Other'
-  createdAt: string
+    createdAt?: string | Date
+    lastActive?: string | Date
+    verificationStatus?: 'unverified' | 'pending' | 'approved' | 'rejected'
+    verification?: VerificationInfo
   profilePicture?: string
   farmName?: string
   farmLocation?: string
@@ -34,6 +37,13 @@ export interface User {
   isVerified?: boolean
   isBanned?: boolean
   addresses?: Address[]
+}
+
+interface VerificationInfo {
+  status?: 'unverified' | 'pending' | 'approved' | 'rejected'
+  approvedAt?: string
+  rejectedAt?: string
+  reason?: string
 }
 
 export interface VerificationData {
