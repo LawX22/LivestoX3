@@ -169,7 +169,7 @@
                     <h3 class="text-lg font-semibold text-white">Featured Livestock</h3>
                     <p class="mt-1 text-xs text-blue-100">Premium listings from verified farmers</p>
                   </div>
-                  <router-link to="/market" class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                  <router-link to="/marketplace" class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
                     Browse All
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -554,7 +554,7 @@
               </div>
               <div class="p-6">
                 <div class="grid grid-cols-2 gap-4">
-                  <router-link to="/market" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  <router-link to="/marketplace" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                     <div class="p-2 bg-blue-100 rounded-full text-blue-600 mb-2">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
