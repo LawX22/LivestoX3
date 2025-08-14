@@ -79,7 +79,7 @@
 
       <!-- Common links for all users -->
       <li>
-        <router-link to="/market"
+        <router-link to="/marketplace"
           class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
           active-class="text-green-600 [&_.underline]:scale-x-100">
           <div class="flex items-center gap-1.5 px-1 py-1.5">

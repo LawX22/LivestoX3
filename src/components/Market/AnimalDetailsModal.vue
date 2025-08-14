@@ -1,169 +1,343 @@
 <!-- AnimalDetailsModal.vue -->
 <template>
-  <div 
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    @click.self="$emit('close')"
-  >
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-        <h2 class="text-xl font-bold text-green-800">Animal Details</h2>
-        <button 
-          @click="$emit('close')"
-          class="text-gray-400 hover:text-gray-500 focus:outline-none"
-        >
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="overflow-y-auto flex-1">
-        <div class="p-6">
-          <div class="flex flex-col md:flex-row gap-6">
-            <!-- Animal Images Gallery -->
-            <div class="w-full md:w-2/5 space-y-4">
-              <div class="relative rounded-lg overflow-hidden bg-gray-100">
-                <img
-                  :src="animal.images[currentImageIndex]"
-                  alt="Main animal image"
-                  class="w-full h-64 object-cover rounded-lg shadow hover:shadow-md transition-shadow"
-                />
-                <div class="absolute top-2 left-2">
-                  <span :class="`px-2 py-1 text-white text-xs font-bold rounded ${getStatusClass(animal.status)}`">
-                    {{ animal.status.toUpperCase() }}
-                  </span>
-                </div>
-                <button 
-                  v-if="animal.images.length > 1"
-                  @click="() => prevImage(animal.images)"
-                  class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <button 
-                  v-if="animal.images.length > 1"
-                  @click="() => nextImage(animal.images)"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                  </svg>
-                </button>
+  <!-- Full Screen Modal Overlay -->
+  <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
+    <!-- Full Screen Modal Container -->
+    <div class="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 overflow-hidden">
+      
+      <!-- Simplified Header with Title Only -->
+      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white relative overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+          <div class="absolute top-0 left-0 w-full h-full">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#grid)" />
+            </svg>
+          </div>
+        </div>
+        
+        <div class="relative p-3 md:p-4">
+          <div class="flex justify-between items-center">
+            <!-- Title Section -->
+            <div class="flex items-center gap-3">
+              <!-- Animal Icon -->
+              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center border border-white/30 shadow-lg backdrop-blur-sm">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 47.48 47.48 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.092 1.209-.138 2.43-.138 3.662s.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7c2.441.062 4.883.062 7.324 0a4.006 4.006 0 0 0 3.7-3.7c.092-1.209.138-2.43.138-3.662ZM15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" opacity="0.3" />
+                  <path d="M12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
+                </svg>
               </div>
-              <div class="grid grid-cols-3 gap-2">
-                <div 
-                  v-for="(img, index) in animal.images" 
-                  :key="index"
-                  class="aspect-square"
-                >
-                  <img 
-                    :src="img" 
-                    @click="currentImageIndex = index"
-                    :class="`h-full w-full object-cover rounded cursor-pointer border-2 ${currentImageIndex === index ? 'border-green-500' : 'border-transparent hover:border-gray-300'}`"
-                  />
-                </div>
+              
+              <div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight">Animal Details</h1>
+                <p class="text-emerald-100 text-xs font-medium opacity-90">Complete information and specifications</p>
               </div>
             </div>
             
-            <!-- Animal Details Section -->
-            <div class="w-full md:w-3/5">
-              <div class="space-y-4">
-                <div>
-                  <h3 class="text-lg font-semibold text-gray-800">{{ animal.type }} - {{ animal.breed }}</h3>
-                  <p class="text-sm text-gray-500 mt-1">Posted on {{ formatDate(animal.datePosted) }}</p>
-                </div>
+            <!-- Close Button -->
+            <button 
+              @click="$emit('close')" 
+              class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/30 hover:border-white/50 shadow-lg backdrop-blur-sm group"
+            >
+              <svg class="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-xs font-medium text-gray-500">Weight</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ animal.weight }} kg</p>
-                  </div>
-                  <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-xs font-medium text-gray-500">Quantity Available</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ animal.quantity }}</p>
-                  </div>
-                  <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-xs font-medium text-gray-500">Age</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ animal.age || 'N/A' }}</p>
-                  </div>
-                  <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-xs font-medium text-gray-500">Price</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ animal.price ? `₱${animal.price.toLocaleString()}` : 'Negotiable' }}</p>
-                  </div>
-                </div>
+      <!-- Main Content -->
+      <div class="h-[calc(100vh-100px)] overflow-y-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-3 md:p-4 min-h-full">
+          
+          <!-- Left Column - Images and Gallery -->
+          <div class="space-y-4">
+            
+            <!-- Main Image Display - Enhanced -->
+            <div class="relative h-64 md:h-72 lg:h-[60vh] rounded-xl overflow-hidden shadow-xl bg-gradient-to-br from-gray-100 to-gray-200">
+              <img 
+                :src="animal.images[currentImageIndex]" 
+                :alt="`${animal.type} - Image ${currentImageIndex + 1}`"
+                class="w-full h-full object-cover transition-all duration-700 hover:scale-105"
+                loading="lazy"
+              />
+              
+              <!-- Enhanced Gradient Overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10"></div>
 
-                <div class="bg-gray-50 p-3 rounded-lg">
-                  <p class="text-xs font-medium text-gray-500">Status</p>
-                  <div class="mt-1 flex items-center">
-                    <span :class="`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(animal.status)}`">
-                      {{ animal.status }}
-                    </span>
-                  </div>
-                </div>
+              <!-- Navigation Arrows (if multiple images) -->
+              <div v-if="animal.images.length > 1" class="absolute inset-0 flex items-center justify-between px-3 z-20">
+                <button 
+                  @click="previousImage"
+                  class="w-10 h-10 bg-white/95 hover:bg-white text-gray-800 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 backdrop-blur-sm"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button 
+                  @click="nextImage"
+                  class="w-10 h-10 bg-white/95 hover:bg-white text-gray-800 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 backdrop-blur-sm"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
 
-                <div class="bg-gray-50 p-3 rounded-lg">
-                  <p class="text-xs font-medium text-gray-500">Delivery Options</p>
-                  <div class="mt-1">
-                    <span v-if="animal.deliveryOptions.includes('pickup')" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                      <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-blue-400" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                      </svg>
-                      Pick Up
-                    </span>
-                    <span v-if="animal.deliveryOptions.includes('delivery')" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                      </svg>
-                      Delivery
-                    </span>
-                  </div>
-                </div>
+              <!-- Image Counter -->
+              <div v-if="animal.images.length > 1" class="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
+                {{ currentImageIndex + 1 }} / {{ animal.images.length }}
+              </div>
 
-                <div>
-                  <p class="text-sm font-medium text-gray-700 mb-2">Description</p>
-                  <p class="text-sm text-gray-600 whitespace-pre-line">{{ animal.description }}</p>
+              <!-- Status Badge -->
+              <div class="absolute top-3 left-3">
+                <span :class="`px-2 py-1 text-xs font-bold rounded-lg shadow-lg backdrop-blur-sm ${getStatusClass(animal.status)}`">
+                  {{ animal.status }}
+                </span>
+              </div>
+
+              <!-- Thumbnail Preview at Bottom Center -->
+              <div v-if="animal.images.length > 1" class="absolute bottom-4 left-0 right-0 flex justify-center">
+                <div class="flex gap-2 overflow-x-auto pb-1 max-w-[90%] mx-auto">
+                  <button
+                    v-for="(image, index) in animal.images"
+                    :key="index"
+                    @click="currentImageIndex = index"
+                    :class="`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      currentImageIndex === index 
+                        ? 'border-emerald-500 ring-2 ring-emerald-200 shadow-lg transform scale-110' 
+                        : 'border-white/50 hover:border-emerald-300 hover:shadow-md'
+                    }`"
+                  >
+                    <img :src="image" :alt="`Thumbnail ${index + 1}`" class="w-full h-full object-cover" />
+                  </button>
                 </div>
               </div>
+            </div>
+
+            <!-- Price Section - Enhanced Design -->
+            <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl p-4 text-white shadow-xl relative overflow-hidden">
+              <!-- Background decoration -->
+              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
               
-              <!-- Farmer Information Section -->
-              <div class="mt-6 border-t pt-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">Seller Information</h3>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                  <div class="flex items-center space-x-3 mb-3">
-                    <div class="flex-shrink-0">
-                      <img 
-                        :src="animal.farmer.avatar" 
-                        alt="Farmer" 
-                        class="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
+              <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
                     </div>
-                    <div>
-                      <p class="text-sm font-semibold text-gray-900">{{ animal.farmer.name }}</p>
-                      <p class="text-xs text-gray-500">{{ animal.farmer.farmName }}</p>
+                    <span class="text-white/80 text-sm font-medium">Price</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-white/70 text-xs">
+                    <span>{{ animal.quantity }} available</span>
+                  </div>
+                </div>
+                <div class="text-3xl md:text-4xl font-bold mb-1">₱{{ animal.price.toLocaleString() }}</div>
+                <div class="text-emerald-100 text-sm font-medium">{{ animal.type }} - {{ animal.breed }}</div>
+              </div>
+            </div>
+
+            <!-- Compact Stats Grid -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-white rounded-xl p-3 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="text-center">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                  </div>
+                  <p class="text-lg font-bold text-gray-800">{{ animal.weight }}kg</p>
+                  <p class="text-xs text-gray-600 font-medium">Weight</p>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-3 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="text-center">
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p class="text-lg font-bold text-gray-800">{{ animal.age }}</p>
+                  <p class="text-xs text-gray-600 font-medium">Age</p>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-3 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                <div class="text-center">
+                  <div class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <p class="text-lg font-bold text-gray-800">{{ animal.gender }}</p>
+                  <p class="text-xs text-gray-600 font-medium">Gender</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Location & Time Info -->
+            <div class="flex items-center gap-3 flex-wrap">
+              <div class="flex items-center gap-2 text-gray-600 bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+                <span class="font-medium">{{ animal.location }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-600 bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-medium">{{ getDaysListed(animal.datePosted) }} days ago</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - Compact Details -->
+          <div class="space-y-4">
+            
+            <!-- Compact Description -->
+            <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+              <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                Description
+              </h3>
+              <p class="text-gray-700 text-sm leading-relaxed">{{ animal.description }}</p>
+            </div>
+
+            <!-- Compact Health Status -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 shadow-md border border-green-200">
+              <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                Health Status
+              </h3>
+              <div class="flex flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span class="text-green-800 font-semibold text-sm">Healthy & Vaccinated</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span class="text-blue-800 font-semibold text-sm">Vet Certified</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Delivery Options -->
+            <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100">
+              <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                Delivery Options
+              </h3>
+              <div class="flex flex-wrap gap-2">
+                <span 
+                  v-for="option in animal.deliveryOptions" 
+                  :key="option"
+                  class="px-3 py-2 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 text-sm rounded-lg capitalize font-semibold border border-emerald-200 flex items-center gap-2 hover:shadow-md transition-all duration-300"
+                >
+                  <svg v-if="option === 'pickup'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  {{ option }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Compact Farmer Information -->
+            <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+              <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                Farmer Information
+              </h3>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-200 shadow-md">
+                  <img :src="animal.farmer.avatar" :alt="animal.farmer.name" class="w-full h-full object-cover" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-base font-bold text-gray-800 mb-1 truncate">{{ animal.farmer.farmName || animal.farmer.name }}</h4>
+                  <p v-if="animal.farmer.farmName" class="text-gray-600 mb-1 text-sm truncate">{{ animal.farmer.name }}</p>
+                  <div class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span class="text-sm truncate">{{ animal.farmer.address }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enhanced Compact Contact Actions -->
+            <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl p-4 text-white shadow-xl relative overflow-hidden">
+              <!-- Background decorations -->
+              <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
+              
+              <div class="relative">
+                <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                  <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  Contact Information
+                </h3>
+                
+                <div class="space-y-3">
+                  <div class="bg-white/20 rounded-xl p-3 border border-white/30 backdrop-blur-sm">
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium text-sm">Phone Number</span>
+                      <span class="font-bold text-base">{{ animal.farmer.contact }}</span>
                     </div>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <p class="text-xs font-medium text-gray-500">Contact Number</p>
-                      <p class="text-sm text-gray-900">{{ animal.farmer.contact }}</p>
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-gray-500">Verification Status</p>
-                      <div class="flex items-center">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Verified
-                        </span>
-                        <svg class="ml-1 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="md:col-span-2">
-                      <p class="text-xs font-medium text-gray-500">Farm Address</p>
-                      <p class="text-sm text-gray-900">{{ animal.farmer.address }}</p>
-                    </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <button 
+                      @click="contactFarmer"
+                      class="px-4 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-semibold transition-all duration-300 border border-white/30 hover:border-white/50 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm group text-sm"
+                    >
+                      <svg class="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      Message
+                    </button>
+                    <button 
+                      @click="callFarmer"
+                      class="px-4 py-3 bg-white text-emerald-600 hover:bg-gray-50 rounded-xl font-semibold transition-all duration-300 border border-white flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 group text-sm"
+                    >
+                      <svg class="w-4 h-4 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                      Call Now
+                    </button>
                   </div>
                 </div>
               </div>
@@ -171,35 +345,17 @@
           </div>
         </div>
       </div>
-
-      <!-- Footer with action buttons -->
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
-        <button 
-          v-if="isFarmer"
-          @click="$emit('delete')"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mr-3"
-        >
-          Delete Listing
-        </button>
-        <button 
-          v-if="isFarmer"
-          @click="$emit('edit', animal)"
-          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mr-3"
-        >
-          Edit Details
-        </button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { getCurrentUser } from '../../services/user';
+import { ref } from 'vue';
 
 interface Farmer {
+  id: number;
   name: string;
-  farmName: string;
+  farmName?: string;
   contact: string;
   address: string;
   avatar: string;
@@ -212,6 +368,7 @@ interface Animal {
   weight: number;
   quantity: number;
   age: string;
+  gender: string;
   status: string;
   price: number;
   deliveryOptions: string[];
@@ -219,54 +376,72 @@ interface Animal {
   description: string;
   datePosted: string;
   farmer: Farmer;
+  location: string;
 }
 
-defineProps<{
+// Props
+const props = defineProps<{
   animal: Animal;
 }>();
 
-defineEmits<{
-  (e: 'close'): void;
-  (e: 'edit', animal: Animal): void;
-  (e: 'delete'): void;
+// Emits
+const emit = defineEmits<{
+  close: [];
 }>();
 
+// State
 const currentImageIndex = ref(0);
-const currentUser = getCurrentUser();
 
-const isFarmer = computed(() => currentUser?.role === 'Farmer');
+// Methods
+const nextImage = () => {
+  currentImageIndex.value = (currentImageIndex.value + 1) % props.animal.images.length;
+};
 
-const formatDate = (dateString: string): string => {
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString(undefined, options);
-}
+const previousImage = () => {
+  currentImageIndex.value = currentImageIndex.value === 0 
+    ? props.animal.images.length - 1 
+    : currentImageIndex.value - 1;
+};
 
-const nextImage = (images: string[]) => {
-  if (currentImageIndex.value < images.length - 1) {
-    currentImageIndex.value++;
-  } else {
-    currentImageIndex.value = 0;
-  }
-}
-
-const prevImage = (images: string[]) => {
-  if (currentImageIndex.value > 0) {
-    currentImageIndex.value--;
-  } else {
-    currentImageIndex.value = images.length - 1;
-  }
-}
-
-const getStatusClass = (status: string): string => {
-  switch (status.toLowerCase()) {
-    case 'available':
-      return 'bg-green-100 text-green-800';
-    case 'sold':
-      return 'bg-red-100 text-red-800';
-    case 'reserved':
-      return 'bg-yellow-100 text-yellow-800';
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case 'Available':
+      return 'bg-green-100 text-green-800 border-green-300';
+    case 'Low Stock':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    case 'Out of Stock':
+      return 'bg-red-100 text-red-800 border-red-300';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 border-gray-300';
   }
-}
+};
+
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+const getDaysListed = (dateString: string) => {
+  const now = new Date();
+  const posted = new Date(dateString);
+  const diffTime = Math.abs(now.getTime() - posted.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+const contactFarmer = () => {
+  // Copy contact info to clipboard
+  navigator.clipboard.writeText(props.animal.farmer.contact);
+  // You can add a toast notification here
+  emit('close');
+};
+
+const callFarmer = () => {
+  // Open phone dialer
+  window.open(`tel:${props.animal.farmer.contact}`, '_self');
+};
 </script>
