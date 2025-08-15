@@ -6,7 +6,8 @@
       <div class="absolute top-20 left-10 w-16 h-16 bg-green-300 rounded-full opacity-30 animate-bounce"></div>
       <div class="absolute top-32 right-16 w-12 h-12 bg-emerald-300 rounded-full opacity-40 animate-pulse"></div>
       <div class="absolute bottom-24 left-24 w-20 h-20 bg-teal-300 rounded-full opacity-25 animate-ping"></div>
-      <div class="absolute top-1/2 right-8 w-10 h-10 bg-green-400 rounded-full opacity-35 animate-bounce" style="animation-delay: 1s"></div>
+      <div class="absolute top-1/2 right-8 w-10 h-10 bg-green-400 rounded-full opacity-35 animate-bounce"
+        style="animation-delay: 1s"></div>
     </div>
 
     <!-- Background Pattern -->
@@ -22,216 +23,212 @@
     </div>
 
     <!-- Main Container -->
-    <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-w-7xl mx-auto border border-white/30 h-[calc(100vh-2rem)] flex">
-      <!-- Sidebar with conversations -->
-      <div class="w-80 border-r border-gray-200/50 bg-white/95 backdrop-blur-sm flex flex-col">
-        <!-- Sidebar Header -->
-        <div class="p-6 border-b border-gray-200/50 bg-gradient-to-r from-green-600/5 to-emerald-600/5">
-          <!-- Enhanced Return Button -->
-          <div class="flex items-center mb-6">
-            <button 
-              @click="goBack"
-              class="group relative mr-4 p-3 text-gray-600 hover:text-white bg-white hover:bg-gradient-to-r hover:from-green-600 hover:to-emerald-600 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 border border-gray-200 hover:border-transparent"
-            >
-              <svg class="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    <div
+      class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-w-7xl mx-auto border border-white/30 h-[calc(100vh-2rem)] flex">
+      <!-- Sidebar with filters - Wider and collapsible -->
+      <div :class="filtersCollapsed ? 'w-20' : 'w-64'"
+        class="border-r border-gray-200/50 bg-white/95 backdrop-blur-sm flex flex-col transition-all duration-300 overflow-visible">
+        <!-- Filters Section -->
+        <div class="p-4 border-b border-gray-200/50 bg-gradient-to-b from-green-600/5 to-emerald-600/5">
+          <!-- Toggle Button -->
+          <div class="flex items-center justify-center mb-4">
+            <button @click="toggleFiltersCollapsed"
+              class="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+              <svg v-if="filtersCollapsed" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-            </button>
-            
-            <!-- Logo and Title -->
-            <div class="flex items-center">
-              <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                </svg>
-              </div>
-              <div>
-                <h2 class="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  Messages
-                </h2>
-                <p class="text-xs text-gray-500 font-medium">{{ filteredConversations.length }} conversations</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Enhanced Search Input -->
-          <div class="relative mb-6">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </div>
-            <input 
-              v-model="searchTerm" 
-              type="text" 
-              placeholder="Search conversations..."
-              class="w-full pl-10 pr-4 py-3.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-300 bg-white/90 hover:border-gray-300 hover:bg-white placeholder-gray-500"
-            />
-            <!-- Clear search button -->
-            <button 
-              v-if="searchTerm"
-              @click="searchTerm = ''"
-              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
-            >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          <!-- Enhanced Filters Section -->
-          <div class="space-y-3">
-            <!-- Filter Header -->
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-gray-700 flex items-center">
-                <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"></path>
-                </svg>
-                Filters
-              </h3>
-              <!-- Clear all filters -->
-              <button 
-                v-if="activeFilters.length > 0"
-                @click="activeFilters = []"
-                class="text-xs text-gray-500 hover:text-red-600 font-medium transition-colors duration-200"
-              >
-                Clear all
-              </button>
-            </div>
-
-            <!-- Filter Buttons Grid -->
-            <div class="grid grid-cols-2 gap-2">
-              <button 
-                v-for="filter in filters"
-                :key="filter.key"
-                @click="toggleFilter(filter.key)"
-                class="group relative flex items-center justify-center px-3 py-3 text-xs font-semibold rounded-xl transition-all duration-300 border-2 hover:scale-105 transform"
-                :class="activeFilters.includes(filter.key) 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-transparent shadow-lg shadow-green-500/25' 
-                  : 'bg-white/80 text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'"
-              >
+          <!-- Vertical Filter Buttons -->
+          <div class="space-y-4">
+            <div v-for="filter in filters" :key="filter.key" class="relative group">
+              <button @click="toggleFilter(filter.key)"
+                class="flex items-center justify-center w-full p-3 text-xs font-semibold rounded-xl transition-all duration-300 border-2 hover:scale-105 transform"
+                :class="[
+                  activeFilters.includes(filter.key)
+                    ? 'bg-gradient-to-b from-green-500 to-emerald-600 text-white border-transparent shadow-lg shadow-green-500/25'
+                    : 'bg-white/80 text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800',
+                  filtersCollapsed ? 'flex-col' : 'px-4'
+                ]">
                 <!-- Filter Icon -->
-                <div class="flex flex-col items-center space-y-1">
-                  <div class="p-1.5 rounded-lg transition-all duration-300"
-                       :class="activeFilters.includes(filter.key) 
-                         ? 'bg-white/20' 
-                         : 'bg-gray-100 group-hover:bg-gray-200'">
-                    <svg class="w-3.5 h-3.5 transition-colors duration-300" 
-                         :fill="filter.icon.fill" 
-                         :stroke="filter.icon.stroke" 
-                         viewBox="0 0 24 24">
-                      <path v-bind="filter.icon.pathProps" :d="filter.icon.path"></path>
-                    </svg>
-                  </div>
-                  <span class="text-[10px] leading-tight">{{ filter.label }}</span>
+                <div class="p-1.5 rounded-lg transition-all duration-300" :class="activeFilters.includes(filter.key)
+                  ? 'bg-white/20'
+                  : 'bg-gray-100 group-hover:bg-gray-200'">
+                  <svg class="w-4 h-4 transition-colors duration-300" :fill="filter.icon.fill"
+                    :stroke="filter.icon.stroke" viewBox="0 0 24 24">
+                    <path v-bind="filter.icon.pathProps" :d="filter.icon.path"></path>
+                  </svg>
                 </div>
 
+                <!-- Label - Hidden when collapsed -->
+                <span v-if="!filtersCollapsed" class="ml-2 text-center">
+                  {{ filter.label }}
+                </span>
+
                 <!-- Active indicator -->
-                <div v-if="activeFilters.includes(filter.key)" 
-                     class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white shadow-sm animate-pulse">
+                <div v-if="activeFilters.includes(filter.key)"
+                  class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white shadow-sm animate-pulse">
                 </div>
 
                 <!-- Count badge -->
-                <div v-if="getFilterCount(filter.key) > 0" 
-                     class="absolute -top-1 -left-1 bg-gray-800 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center"
-                     :class="activeFilters.includes(filter.key) ? 'bg-white text-green-600' : 'bg-gray-800 text-white'">
+                <div v-if="getFilterCount(filter.key) > 0"
+                  class="absolute -top-1 -left-1 bg-gray-800 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center"
+                  :class="activeFilters.includes(filter.key) ? 'bg-white text-green-600' : 'bg-gray-800 text-white'">
                   {{ getFilterCount(filter.key) }}
                 </div>
               </button>
-            </div>
 
-            <!-- Active Filters Summary -->
-            <div v-if="activeFilters.length > 0" class="mt-3 p-3 bg-green-50 rounded-xl border border-green-200">
-              <div class="flex items-center justify-between">
-                <div class="flex flex-wrap gap-1">
-                  <span 
-                    v-for="filterKey in activeFilters" 
-                    :key="filterKey"
-                    class="inline-flex items-center px-2 py-1 text-[10px] font-medium bg-green-100 text-green-800 rounded-full"
-                  >
-                    {{ filters.find(f => f.key === filterKey)?.label }}
-                    <button 
-                      @click="toggleFilter(filterKey)"
-                      class="ml-1 hover:text-green-900 transition-colors duration-200"
-                    >
-                      <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                    </button>
-                  </span>
-                </div>
-                <span class="text-[10px] text-green-600 font-semibold">
-                  {{ filteredConversations.length }} result{{ filteredConversations.length !== 1 ? 's' : '' }}
-                </span>
+              <!-- Tooltip for collapsed state -->
+              <div v-if="filtersCollapsed" class="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                {{ filter.label }}
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Reset Button - Always visible -->
+        <div v-if="activeFilters.length > 0" class="mt-auto p-3 border-t border-green-200 bg-green-50">
+          <div class="relative group">
+            <button @click="activeFilters = []"
+              class="w-full flex items-center justify-center gap-2 p-2 text-xs font-semibold text-green-700 rounded-lg bg-green-100 hover:bg-green-200 transition-colors duration-200"
+              :class="filtersCollapsed ? 'flex-col' : ''">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span v-if="!filtersCollapsed">Reset Filters</span>
+            </button>
+            
+            <!-- Tooltip for reset button -->
+            <div v-if="filtersCollapsed" class="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              Reset Filters
+            </div>
+          </div>
+
+          <div class="mt-2 text-center">
+            <span class="text-xs text-green-600 font-semibold">
+              {{ filteredConversations.length }} {{ filteredConversations.length === 1 ? 'conversation' :
+                'conversations' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="w-80 border-r border-gray-200/50 bg-white/95 backdrop-blur-sm flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="p-5 border-b border-gray-200/50 bg-gradient-to-r from-green-50 to-emerald-50">
+          <!-- Top Row -->
+          <div class="flex items-center justify-between mb-5">
+            <!-- Back Button -->
+            <button @click="goBack"
+              class="group p-2.5 text-gray-600 hover:text-white bg-white hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 border border-gray-200 hover:border-transparent">
+              <svg class="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform duration-300" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+
+            <!-- Center Section: Icon + Title -->
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-700">
+                  Conversations
+                </h2>
+                <p class="text-xs text-gray-500">
+                  {{ filteredConversations.length }} conversations
+                </p>
+              </div>
+            </div>
+
+            <!-- Spacer for symmetry -->
+            <div class="w-10"></div>
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <input v-model="searchTerm" type="text" placeholder="Search conversations..."
+              class="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white hover:border-gray-400 placeholder-gray-500" />
+
+            <!-- Clear Search Button -->
+            <button v-if="searchTerm" @click="searchTerm = ''"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <!-- Conversations List -->
         <div class="flex-1 overflow-y-auto">
-          <div 
-            v-for="conversation in filteredConversations" 
-            :key="conversation.id"
+          <div v-for="conversation in filteredConversations" :key="conversation.id"
             @click="selectConversation(conversation)"
             class="p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 cursor-pointer transition-all duration-300 group"
-            :class="{ 
+            :class="{
               'bg-gradient-to-r from-green-100 to-emerald-100 border-green-200': selectedConversation?.id === conversation.id,
-              'bg-white': selectedConversation?.id !== conversation.id 
-            }"
-          >
+              'bg-white': selectedConversation?.id !== conversation.id
+            }">
             <div class="flex items-center">
               <div class="relative">
-                <router-link 
-                  :to="`/userProfile/${getOtherUser(conversation).id}`" 
-                  @click.stop
-                  class="block"
-                >
-                  <img 
-                    :src="getOtherUser(conversation).avatar || 'https://via.placeholder.com/40'" 
-                    alt="Profile"
-                    class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" 
-                  />
+                <router-link :to="`/userProfile/${getOtherUser(conversation).id}`" @click.stop class="block">
+                  <img :src="getOtherUser(conversation).avatar || 'https://via.placeholder.com/40'" alt="Profile"
+                    class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
                 </router-link>
                 <!-- Online Status -->
-                <div v-if="conversation.isOnline" class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
-                <div v-else class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full"></div>
-                
+                <div v-if="conversation.isOnline"
+                  class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                <div v-else class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full">
+                </div>
+
                 <!-- Unread Badge -->
-                <span 
-                  v-if="conversation.unreadCount > 0"
-                  class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-lg animate-pulse"
-                >
+                <span v-if="conversation.unreadCount > 0"
+                  class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-lg animate-pulse">
                   {{ conversation.unreadCount }}
                 </span>
               </div>
-              
+
               <div class="ml-4 flex-1 min-w-0">
                 <div class="flex justify-between items-start mb-1">
-                  <router-link 
-                    :to="`/userProfile/${getOtherUser(conversation).id}`" 
-                    @click.stop
-                    class="font-semibold text-gray-800 truncate group-hover:text-green-700 transition-colors duration-200"
-                  >
+                  <router-link :to="`/userProfile/${getOtherUser(conversation).id}`" @click.stop
+                    class="font-semibold text-gray-800 truncate group-hover:text-green-700 transition-colors duration-200">
                     {{ getOtherUser(conversation).name }}
                   </router-link>
                   <span class="text-xs text-gray-500 ml-2 flex-shrink-0">
                     {{ formatDate(conversation.lastMessage?.createdAt) }}
                   </span>
                 </div>
-                
+
                 <p class="text-sm text-gray-600 truncate mb-1 group-hover:text-gray-700">
                   {{ conversation.lastMessage?.content || 'No messages yet' }}
                 </p>
-                
+
                 <div class="flex items-center justify-between">
                   <p v-if="conversation.listing" class="text-xs font-medium text-green-600 truncate">
                     RE: {{ conversation.listing.name }}
                   </p>
                   <div class="flex items-center space-x-1">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" 
-                          :class="getOtherUser(conversation).role === 'farmer' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                      :class="getOtherUser(conversation).role === 'farmer' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'">
                       {{ getOtherUser(conversation).role === 'farmer' ? 'Farmer' : 'Buyer' }}
                     </span>
                   </div>
@@ -239,11 +236,13 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Empty State -->
           <div v-if="filteredConversations.length === 0" class="p-8 text-center">
             <svg class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+              </path>
             </svg>
             <p class="text-gray-500 text-sm">No conversations found</p>
             <p class="text-gray-400 text-xs mt-1">Try adjusting your filters or search terms</p>
@@ -254,22 +253,14 @@
       <!-- Main Chat Area -->
       <div class="flex-1 flex flex-col bg-gradient-to-br from-gray-50/50 to-white/50">
         <!-- Chat Header -->
-        <div 
-          v-if="selectedConversation"
-          class="p-6 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm"
-        >
+        <div v-if="selectedConversation" class="p-6 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
           <div class="flex items-center justify-between">
-            <router-link 
-              :to="`/userProfile/${getOtherUser(selectedConversation).id}`"
-              class="flex items-center group"
-            >
+            <router-link :to="`/userProfile/${getOtherUser(selectedConversation).id}`" class="flex items-center group">
               <div class="relative">
-                <img 
-                  :src="getOtherUser(selectedConversation).avatar || 'https://via.placeholder.com/40'"
-                  alt="Profile" 
-                  class="w-12 h-12 rounded-full object-cover border-2 border-green-200 shadow-sm" 
-                />
-                <div v-if="selectedConversation.isOnline" class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                <img :src="getOtherUser(selectedConversation).avatar || 'https://via.placeholder.com/40'" alt="Profile"
+                  class="w-12 h-12 rounded-full object-cover border-2 border-green-200 shadow-sm" />
+                <div v-if="selectedConversation.isOnline"
+                  class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
               </div>
               <div class="ml-4">
                 <h3 class="font-bold text-gray-800 text-lg group-hover:text-green-700 transition-colors duration-200">
@@ -277,28 +268,29 @@
                 </h3>
                 <p class="text-sm text-gray-600 flex items-center">
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mr-2"
-                        :class="getOtherUser(selectedConversation).role === 'farmer' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'">
+                    :class="getOtherUser(selectedConversation).role === 'farmer' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'">
                     {{ getOtherUser(selectedConversation).role === 'farmer' ? 'Farmer' : 'Buyer' }}
                   </span>
                   {{ selectedConversation.isOnline ? 'Online now' : 'Last seen recently' }}
                 </p>
               </div>
             </router-link>
-            
+
             <div class="flex items-center space-x-3">
-              <button 
-                v-if="selectedConversation.listing" 
-                @click="viewListing(selectedConversation.listing)"
-                class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-sm flex items-center"
-              >
+              <button v-if="selectedConversation.listing" @click="viewListing(selectedConversation.listing)"
+                class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-sm flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
                 View Listing
               </button>
-              <button class="p-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-all duration-200">
+              <button
+                class="p-2 text-gray-500 hover:text-gray-700 rounded-xl hover:bg-gray-100 transition-all duration-200">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                  </path>
                 </svg>
               </button>
             </div>
@@ -306,16 +298,11 @@
         </div>
 
         <!-- Listing Details Card -->
-        <div 
-          v-if="selectedConversation?.listing" 
-          class="mx-6 mt-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/50 p-4 shadow-sm"
-        >
+        <div v-if="selectedConversation?.listing"
+          class="mx-6 mt-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/50 p-4 shadow-sm">
           <div class="flex items-center">
-            <img 
-              :src="selectedConversation.listing.images[0] || 'https://via.placeholder.com/80'" 
-              alt="Listing"
-              class="w-16 h-16 rounded-lg object-cover border border-gray-200" 
-            />
+            <img :src="selectedConversation.listing.images[0] || 'https://via.placeholder.com/80'" alt="Listing"
+              class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
             <div class="ml-4 flex-1">
               <h4 class="font-semibold text-gray-800 mb-1">
                 {{ selectedConversation.listing.name }}
@@ -336,17 +323,16 @@
         </div>
 
         <!-- Messages Area -->
-        <div 
-          ref="messagesContainer" 
-          class="flex-1 p-6 overflow-y-auto"
-          @scroll="handleScroll"
-        >
+        <div ref="messagesContainer" class="flex-1 p-6 overflow-y-auto" @scroll="handleScroll">
           <!-- Empty State -->
           <div v-if="!selectedConversation" class="h-full flex items-center justify-center">
             <div class="text-center">
-              <div class="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div
+                class="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                  </path>
                 </svg>
               </div>
               <h3 class="text-lg font-semibold text-gray-800 mb-2">
@@ -377,26 +363,17 @@
                 'flex-row-reverse space-x-reverse': message.senderId === currentUser.id,
               }">
                 <!-- Avatar for other users -->
-                <router-link 
-                  v-if="message.senderId !== currentUser.id"
-                  :to="`/userProfile/${getOtherUser(selectedConversation).id}`"
-                  class="block"
-                >
-                  <img 
-                    :src="getOtherUser(selectedConversation).avatar"
-                    class="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    alt="Avatar"
-                  />
+                <router-link v-if="message.senderId !== currentUser.id"
+                  :to="`/userProfile/${getOtherUser(selectedConversation).id}`" class="block">
+                  <img :src="getOtherUser(selectedConversation).avatar"
+                    class="w-8 h-8 rounded-full object-cover border border-gray-200" alt="Avatar" />
                 </router-link>
-                
+
                 <!-- Message Bubble -->
-                <div 
-                  class="rounded-2xl px-4 py-3 shadow-sm relative group"
-                  :class="{
-                    'bg-gradient-to-r from-green-500 to-emerald-600 text-white': message.senderId === currentUser.id,
-                    'bg-white border border-gray-200 text-gray-800': message.senderId !== currentUser.id,
-                  }"
-                >
+                <div class="rounded-2xl px-4 py-3 shadow-sm relative group" :class="{
+                  'bg-gradient-to-r from-green-500 to-emerald-600 text-white': message.senderId === currentUser.id,
+                  'bg-white border border-gray-200 text-gray-800': message.senderId !== currentUser.id,
+                }">
                   <p class="text-sm leading-relaxed">{{ message.content }}</p>
                   <p class="text-xs mt-2 opacity-70" :class="{
                     'text-green-100': message.senderId === currentUser.id,
@@ -404,14 +381,14 @@
                   }">
                     {{ formatTime(message.createdAt) }}
                   </p>
-                  
+
                   <!-- Message Status -->
-                  <div 
-                    v-if="message.senderId === currentUser.id"
-                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center"
-                  >
+                  <div v-if="message.senderId === currentUser.id"
+                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
                     <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
                     </svg>
                   </div>
                 </div>
@@ -421,42 +398,37 @@
         </div>
 
         <!-- Message Input -->
-        <div 
-          v-if="selectedConversation" 
-          class="p-6 border-t border-gray-200/50 bg-white/80 backdrop-blur-sm"
-        >
+        <div v-if="selectedConversation" class="p-6 border-t border-gray-200/50 bg-white/80 backdrop-blur-sm">
           <div class="flex items-end space-x-3">
-            <button class="p-3 text-gray-500 hover:text-green-600 rounded-xl hover:bg-green-50 transition-all duration-200">
+            <button
+              class="p-3 text-gray-500 hover:text-green-600 rounded-xl hover:bg-green-50 transition-all duration-200">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                </path>
               </svg>
             </button>
-            
+
             <div class="flex-1 relative">
-              <textarea
-                v-model="newMessage" 
-                @keydown.enter.exact.prevent="sendMessage"
-                @keydown.enter.shift.exact="newMessage += '\n'"
-                placeholder="Type your message... (Shift+Enter for new line)"
-                rows="1"
+              <textarea v-model="newMessage" @keydown.enter.exact.prevent="sendMessage"
+                @keydown.enter.shift.except="newMessage += '\n'"
+                placeholder="Type your message... (Shift+Enter for new line)" rows="1"
                 class="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white/90 hover:border-gray-300 resize-none"
-                style="min-height: 48px; max-height: 120px;"
-              ></textarea>
+                style="min-height: 48px; max-height: 120px;"></textarea>
             </div>
-            
-            <button 
-              @click="sendMessage"
-              :disabled="!newMessage.trim()"
-              class="p-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 transition-all duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+
+            <button @click="sendMessage" :disabled="!newMessage.trim()"
+              class="p-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 transition-all duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
               </svg>
             </button>
           </div>
-          
+
           <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-            <span>{{ getOtherUser(selectedConversation).name }} is {{ selectedConversation.isOnline ? 'online' : 'offline' }}</span>
+            <span>{{ getOtherUser(selectedConversation).name }} is {{ selectedConversation.isOnline ? 'online' :
+              'offline' }}</span>
             <span>Press Enter to send, Shift+Enter for new line</span>
           </div>
         </div>
@@ -644,6 +616,8 @@ const activeFilters = ref<string[]>([]);
 const loadingMessages = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
 const isNearTop = ref(false);
+// Set filtersCollapsed to true by default
+const filtersCollapsed = ref(true);
 
 const filters = ref<Filter[]>([
   {
@@ -685,6 +659,10 @@ const filters = ref<Filter[]>([
   }
 ]);
 
+const toggleFiltersCollapsed = () => {
+  filtersCollapsed.value = !filtersCollapsed.value;
+};
+
 const getOtherUser = (conversation: Conversation): User => {
   return conversation.users.find(user => user.id !== currentUser.value.id) as User;
 };
@@ -692,16 +670,16 @@ const getOtherUser = (conversation: Conversation): User => {
 const filteredConversations = computed(() => {
   return conversations.value.filter(conv => {
     const otherUser = getOtherUser(conv);
-    const matchesSearch = searchTerm.value 
+    const matchesSearch = searchTerm.value
       ? (
         otherUser.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
         conv.lastMessage?.content.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
         conv.listing?.name.toLowerCase().includes(searchTerm.value.toLowerCase())
       ) : true;
 
-    const matchesFilters = activeFilters.value.length === 0 || 
+    const matchesFilters = activeFilters.value.length === 0 ||
       activeFilters.value.some(filter => {
-        switch(filter) {
+        switch (filter) {
           case 'unread': return conv.unreadCount > 0;
           case 'farmers': return otherUser.role === 'farmer';
           case 'buyers': return otherUser.role === 'buyer';
@@ -717,7 +695,7 @@ const filteredConversations = computed(() => {
 const getFilterCount = (filterKey: string): number => {
   return conversations.value.filter(conv => {
     const otherUser = getOtherUser(conv);
-    switch(filterKey) {
+    switch (filterKey) {
       case 'unread': return conv.unreadCount > 0;
       case 'farmers': return otherUser.role === 'farmer';
       case 'buyers': return otherUser.role === 'buyer';

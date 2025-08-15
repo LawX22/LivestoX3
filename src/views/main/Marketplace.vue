@@ -147,146 +147,146 @@
             </div>
 
             <!-- Sticky Search & Active Filters -->
-<div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
-  <!-- Search -->
-  <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
-    <div class="relative">
-      <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50" placeholder="Search..." />
-      <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-        <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
-    </div>
-  </div>
+            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
+              <!-- Search -->
+              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
+                <div class="relative">
+                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50" placeholder="Search..." />
+                  <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                    <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
 
-  <!-- Active Filters -->
-  <div v-if="hasActiveFilters" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
-    <div class="flex flex-wrap gap-1">
-      <span v-if="filters.search" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
-        "{{ filters.search }}"
-      </span>
-      <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
-      <span v-for="breed in filters.breeds" :key="breed" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ breed }}</span>
-      <span v-for="location in filters.locations" :key="location" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ location }}</span>
-      <span v-for="priceRange in filters.priceRanges" :key="priceRange" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ formatPriceRange(priceRange) }}</span>
-      <span v-for="gender in filters.genders" :key="gender" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ gender }}</span>
-    </div>
-  </div>
-</div>
+              <!-- Active Filters -->
+              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
+                <div class="flex flex-wrap gap-1">
+                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
+                    "{{ filters.search }}"
+                  </span>
+                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
+                  <span v-for="breed in filters.breeds" :key="breed" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ breed }}</span>
+                  <span v-for="location in filters.locations" :key="location" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ location }}</span>
+                  <span v-for="priceRange in filters.priceRanges" :key="priceRange" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ formatPriceRange(priceRange) }}</span>
+                  <span v-for="gender in filters.genders" :key="gender" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ gender }}</span>
+                </div>
+              </div>
+            </div>
 
-<!-- Scrollable Filters Area -->
-<div class="flex-1 overflow-y-auto p-3">
-  <!-- Compact Filter Group -->
-  <div class="space-y-3">
-    <!-- Animal Type Checkboxes -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-      <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Animal Type
-      </h3>
-      <div class="space-y-1 max-h-32 overflow-y-auto">
-        <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-          <input 
-            type="checkbox" 
-            :value="type" 
-            v-model="filters.types" 
-            class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-          >
-          <span class="truncate">{{ type }}</span>
-        </label>
-      </div>
-    </div>
+            <!-- Scrollable Filters Area -->
+            <div class="flex-1 overflow-y-auto p-3">
+              <!-- Compact Filter Group -->
+              <div class="space-y-3">
+                <!-- Animal Type Checkboxes -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    Animal Type
+                  </h3>
+                  <div class="space-y-1 max-h-32 overflow-y-auto">
+                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        :value="type" 
+                        v-model="filters.types" 
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      >
+                      <span class="truncate">{{ type }}</span>
+                    </label>
+                  </div>
+                </div>
 
-    <!-- Breed Checkboxes -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-      <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        Breed
-      </h3>
-      <div class="space-y-1 max-h-32 overflow-y-auto">
-        <label v-for="breed in uniqueBreeds" :key="breed" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-          <input 
-            type="checkbox" 
-            :value="breed" 
-            v-model="filters.breeds" 
-            class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-          >
-          <span class="truncate">{{ breed }}</span>
-        </label>
-      </div>
-    </div>
+                <!-- Breed Checkboxes -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Breed
+                  </h3>
+                  <div class="space-y-1 max-h-32 overflow-y-auto">
+                    <label v-for="breed in uniqueBreeds" :key="breed" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        :value="breed" 
+                        v-model="filters.breeds" 
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      >
+                      <span class="truncate">{{ breed }}</span>
+                    </label>
+                  </div>
+                </div>
 
-    <!-- Location Dropdown -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-      <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        Location
-      </h3>
-      <div class="relative">
-        <select v-model="filters.locations" multiple class="w-full text-xs border border-green-200 rounded-md bg-green-50/30 p-1.5 focus:ring-2 focus:ring-green-500/50 h-24 overflow-y-auto">
-          <option v-for="location in uniqueLocations" :key="location" :value="location" class="p-1 hover:bg-green-100 rounded text-xs">
-            {{ location }}
-          </option>
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-          <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-    </div>
+                <!-- Location Dropdown -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Location
+                  </h3>
+                  <div class="relative">
+                    <select v-model="filters.locations" multiple class="w-full text-xs border border-green-200 rounded-md bg-green-50/30 p-1.5 focus:ring-2 focus:ring-green-500/50 h-24 overflow-y-auto">
+                      <option v-for="location in uniqueLocations" :key="location" :value="location" class="p-1 hover:bg-green-100 rounded text-xs">
+                        {{ location }}
+                      </option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
 
-    <!-- Price Range Checkboxes -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-      <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Price Range
-      </h3>
-      <div class="space-y-1">
-        <label v-for="(range, index) in priceRanges" :key="index" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-          <input 
-            type="checkbox" 
-            :value="range.value" 
-            v-model="filters.priceRanges" 
-            class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-          >
-          <span class="truncate">{{ range.label }}</span>
-        </label>
-      </div>
-    </div>
+                <!-- Price Range Checkboxes -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Price Range
+                  </h3>
+                  <div class="space-y-1">
+                    <label v-for="(range, index) in priceRanges" :key="index" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        :value="range.value" 
+                        v-model="filters.priceRanges" 
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      >
+                      <span class="truncate">{{ range.label }}</span>
+                    </label>
+                  </div>
+                </div>
 
-    <!-- Gender Checkboxes -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-      <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-        <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-        Gender
-      </h3>
-      <div class="space-y-1">
-        <label v-for="gender in genders" :key="gender" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-          <input 
-            type="checkbox" 
-            :value="gender" 
-            v-model="filters.genders" 
-            class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-          >
-          <span class="truncate">{{ gender }}</span>
-        </label>
-      </div>
-    </div>
-  </div>
-</div>
+                <!-- Gender Checkboxes -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Gender
+                  </h3>
+                  <div class="space-y-1">
+                    <label v-for="gender in genders" :key="gender" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        :value="gender" 
+                        v-model="filters.genders" 
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                      >
+                      <span class="truncate">{{ gender }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -475,7 +475,7 @@
                   </div>
 
                   <!-- Enhanced Action Button -->
-                  <button @click.stop="contactFarmer(animal)" class="w-full px-2 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold rounded-md transition-all flex items-center justify-center gap-1 shadow hover:shadow-md border border-blue-500/20">
+                  <button @click.stop="openContactModal(animal)" class="w-full px-2 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold rounded-md transition-all flex items-center justify-center gap-1 shadow hover:shadow-md border border-blue-500/20">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -510,11 +510,20 @@
 
     <!-- Animal Details Modal -->
     <AnimalDetailsModal 
-        v-if="isModalOpen && selectedAnimal" 
-        :animal="selectedAnimal"
-        @close="closeModal"
-        @contact="contactFarmerFromModal"
-      />
+      v-if="isModalOpen && selectedAnimal" 
+      :animal="selectedAnimal"
+      @close="closeModal"
+      @contact="contactFarmerFromModal"
+    />
+
+    <!-- Contact Farmer Modal -->
+    <ContactFarmerModal 
+      v-if="isContactModalOpen && selectedAnimalForContact" 
+      :animal="selectedAnimalForContact"
+      :currentUser="currentUser"
+      @close="closeContactModal"
+      @send="sendMessage"
+    />
 
     <!-- Enhanced Success Toast -->
     <div v-if="showToast" class="fixed top-4 right-4 z-50">
@@ -547,7 +556,17 @@ import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from '../../components/NavBar.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
-import { getCurrentUser } from '../../services/user';
+import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
+import { getCurrentUser} from '../../services/user';
+
+interface ServiceUser {
+  email?: string;
+  name?: string;
+  displayName?: string;
+  role?: string;
+  isVerified?: boolean;
+  [key: string]: any;
+}
 
 interface Farmer {
   id: number;
@@ -591,13 +610,24 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
-const currentUser = getCurrentUser();
+// Ensure currentUser has a 'name' property for ContactFarmerModal compatibility
+const rawUser = getCurrentUser() as ServiceUser | null;
+const currentUser = rawUser
+  ? {
+      ...rawUser,
+      name: rawUser.name || rawUser.displayName || rawUser.email || 'User',
+      email: rawUser.email || ''
+    }
+  : null;
 const hasPendingUpgrade = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
 
 const isModalOpen = ref(false);
 const selectedAnimal = ref<Animal | null>(null);
+
+const isContactModalOpen = ref(false);
+const selectedAnimalForContact = ref<Animal | null>(null);
 
 // View mode - defaults to buyer if user is not a farmer
 const isFarmerView = computed(() => {
@@ -833,14 +863,25 @@ const closeModal = () => {
   selectedAnimal.value = null;
 };
 
-const contactFarmer = (animal: Animal) => {
+const openContactModal = (animal: Animal) => {
   if (!isFarmerView.value && !currentUser?.email) {
     router.push('/signin');
     return;
   }
-  showToastNotification(`Contact request sent to ${animal.farmer.farmName || animal.farmer.name}`);
-  // Copy contact info to clipboard
-  navigator.clipboard.writeText(animal.farmer.contact);
+  selectedAnimalForContact.value = animal;
+  isContactModalOpen.value = true;
+};
+
+const closeContactModal = () => {
+  isContactModalOpen.value = false;
+  selectedAnimalForContact.value = null;
+};
+
+const sendMessage = (messageData: { message: string; contactMethod: string }) => {
+  // Here you would typically send the message to a backend service
+  // For now, we'll just show a success notification
+  showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
+  closeContactModal();
 };
 
 const contactFarmerFromModal = (contactInfo: string) => {
