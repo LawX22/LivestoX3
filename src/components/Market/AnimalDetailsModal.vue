@@ -416,6 +416,7 @@ const getStatusClass = (status: string) => {
   }
 };
 
+
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { 
     year: 'numeric', 
@@ -424,6 +425,8 @@ const formatDate = (dateString: string) => {
   };
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
+
+console.log(formatDate('')); 
 
 const getDaysListed = (dateString: string) => {
   const now = new Date();
