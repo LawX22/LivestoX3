@@ -480,7 +480,11 @@
     <UserDetailsModal
       v-if="selectedUser"
       :visible="showModal"
-      :user="selectedUser"
+      :user="{
+    userId: selectedUser.userId,
+    email: selectedUser.email,
+    role: selectedUser.role
+  }"
       :is-admin="true"
       @close="closeModal"
       @approve="handleVerificationApproval"
@@ -695,12 +699,12 @@ const getStatusLabel = (u: User) => {
   return 'Unverified'
 }
 
-const viewUserDetails = (u: null) => {
+const viewUserDetails = (u: User) => {
   selectedUser.value = u
   showModal.value = true
 }
 
-const editUser = (u: null) => {
+const editUser = (u: User) => {
   selectedUser.value = u
   showModal.value = true
 }

@@ -474,7 +474,8 @@ const getUserInitials = (name: string) => {
 }
 
 const initUserChart = () => {
-  // @ts-ignore
+  if (!userChart.value) return;
+  
   new Chart(userChart.value, {
     type: 'line',
     data: {
@@ -502,9 +503,6 @@ const initUserChart = () => {
       scales: {
         y: {
           beginAtZero: true,
-          grid: {
-            drawBorder: false,
-          },
         },
         x: {
           grid: {
@@ -517,7 +515,8 @@ const initUserChart = () => {
 }
 
 const initRequestsChart = () => {
-  // @ts-ignore
+    if (!requestsChart.value) return;
+
   new Chart(requestsChart.value, {
     type: 'doughnut',
     data: {

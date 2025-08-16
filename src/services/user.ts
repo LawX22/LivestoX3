@@ -26,6 +26,7 @@ export interface User {
     lastActive?: string | Date
     verificationStatus?: 'unverified' | 'pending' | 'approved' | 'rejected'
     verification?: VerificationInfo
+    isOnline? : boolean
   profilePicture?: string
   farmName?: string
   farmLocation?: string
