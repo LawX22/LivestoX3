@@ -70,6 +70,11 @@ export interface SignUpForm {
   createdAt?: string
 }
 
+export interface UserData {
+  role?: string
+  department?: string
+}
+
 // Default sign-up form values
 export const defaultSignUpForm: SignUpForm = {
   userId: '',
