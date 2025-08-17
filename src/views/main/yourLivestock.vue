@@ -786,13 +786,28 @@ interface Farmer {
   avatar: string;
 }
 
-interface Animal {
+interface AnimalFormData {
+  id?: number;
+  type: string;
+  breed: string;
+  weight: number | string;
+  quantity: number | string;
+  age: string;
+  status: string;
+  price: number | string;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+}
+
+export interface Animal {
   id: number;
   type: string;
   breed: string;
   weight: number;
   quantity: number;
   age: string;
+  gender: string;
   status: string;
   price: number;
   deliveryOptions: string[];
@@ -800,7 +815,9 @@ interface Animal {
   description: string;
   datePosted: string;
   farmer: Farmer;
+  location: string;
 }
+
 
 interface Bid {
   id: number;
@@ -848,6 +865,16 @@ const selectedAuction = ref<Auction>({} as Auction);
 const currentAnimalForEdit = ref<Animal | null>(null);
 const currentAuctionForEdit = ref<Auction | null>(null);
 
+defineProps<{
+  animal: Animal | null
+}>()
+
+defineEmits<{
+  (e: 'close'): void
+  (e: 'edit', animal: Animal): void
+  (e: 'delete', id: number): void
+}>()
+
 const currentFarmer: Farmer = {
   id: 1,
   name: 'Juan Dela Cruz',
@@ -862,6 +889,8 @@ const animals = ref<Animal[]>([
     id: 1,
     type: 'Cattle',
     breed: 'Angus',
+    gender: 'female',
+    location: 'bogo',
     weight: 450,
     quantity: 5,
     age: '24 months',
@@ -880,6 +909,8 @@ const animals = ref<Animal[]>([
     id: 2,
     type: 'Pig',
     breed: 'Duroc',
+    gender: 'female',
+    location: 'bogo',
     weight: 120,
     quantity: 10,
     age: '8 months',
@@ -897,6 +928,8 @@ const animals = ref<Animal[]>([
     id: 3,
     type: 'Goat',
     breed: 'Boer',
+       gender: 'female',
+    location: 'bogo',
     weight: 45,
     quantity: 2,
     age: '12 months',
@@ -914,6 +947,8 @@ const animals = ref<Animal[]>([
     id: 4,
     type: 'Chicken',
     breed: 'Native',
+       gender: 'female',
+    location: 'bogo',
     weight: 1.5,
     quantity: 0,
     age: '6 months',
@@ -1100,23 +1135,35 @@ const editAnimal = (animal: Animal): void => {
   showDropdown.value = false;
 }
 
-const handleFormSubmit = (animalData: Animal): void => {
+const handleFormSubmit = (formData: AnimalFormData) => {
   if (isEditMode.value && currentAnimalForEdit.value) {
     const index = animals.value.findIndex(a => a.id === currentAnimalForEdit.value?.id);
     if (index !== -1) {
-      animals.value[index] = { ...animalData, id: currentAnimalForEdit.value.id };
+      animals.value[index] = {
+        ...currentAnimalForEdit.value,
+        ...formData,
+        weight: Number(formData.weight),
+        quantity: Number(formData.quantity),
+        price: Number(formData.price),
+      };
     }
   } else {
-    const newId = Math.max(...animals.value.map(a => a.id)) + 1;
+    const newId = Math.max(0, ...animals.value.map(a => a.id)) + 1;
     animals.value.push({
-      ...animalData,
+      ...formData,
       id: newId,
-      farmer: currentFarmer.value,
-      datePosted: new Date().toISOString()
-    });
+      weight: Number(formData.weight),
+      quantity: Number(formData.quantity),
+      price: Number(formData.price),
+      farmer: currentFarmer,
+      datePosted: new Date().toISOString(),
+      gender: 'Unknown',
+      location: 'TBD'   
+    } as Animal);
   }
+
   closeFormModal();
-}
+};
 
 const deleteAnimal = (animalId: number): void => {
   animals.value = animals.value.filter(animal => animal.id !== animalId);
@@ -1184,7 +1231,7 @@ const handleAuctionFormSubmit = (auctionData: any): void => {
         endDate: auctionData.endDate,
         status: new Date(auctionData.startDate) > new Date() ? 'Upcoming' : 'Active',
         description: auctionData.description,
-        createdBy: currentFarmer.value
+        createdBy: currentFarmer,
       });
     }
   }

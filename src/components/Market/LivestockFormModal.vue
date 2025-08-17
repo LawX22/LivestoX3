@@ -249,7 +249,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'submit', data: AnimalFormData & { datePosted: string }): void;
+  (e: 'submit', data: AnimalFormData): void;
 }>();
 
 const formData = ref<AnimalFormData>({
@@ -301,17 +301,17 @@ const closeModal = () => {
 }
 
 const handleSubmit = () => {
-  const submittedData = {
+  const submittedData: AnimalFormData = {
     ...formData.value,
     weight: Number(formData.value.weight),
     quantity: Number(formData.value.quantity),
-    price: Number(formData.value.price),
-    datePosted: new Date().toISOString()
+    price: Number(formData.value.price)
   };
 
   emit('submit', submittedData);
   closeModal();
-}
+};
+
 
 const handleImageUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;

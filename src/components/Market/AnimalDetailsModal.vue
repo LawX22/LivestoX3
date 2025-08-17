@@ -351,33 +351,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-}
+import type { Animal } from '../../services/animal'
 
 // Props
 const props = defineProps<{
@@ -386,7 +360,7 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  close: [];
+  (e: 'close'): void
 }>();
 
 // State
@@ -418,13 +392,14 @@ const getStatusClass = (status: string) => {
 
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return 'No date provided'
   const options: Intl.DateTimeFormatOptions = { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
-  };
-  return new Date(dateString).toLocaleDateString(undefined, options);
-};
+  }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
 
 console.log(formatDate('')); 
 
