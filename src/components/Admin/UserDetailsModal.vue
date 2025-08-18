@@ -389,7 +389,7 @@ interface User {
   profilePicture?: string;
   role: string;
   phoneNumber?: string;
-  createdAt: string;
+createdAt?: string | Date
   bannedUntil?: string;
   verification?: VerificationRequest;
   isVerified?: boolean;
@@ -496,14 +496,21 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-const formattedDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+const formattedDate = (date?: string | Date): string => {
+  if (!date) return '';
+
+  try {
+
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch (error) {
+    console.log('Failed', error)
+    return String(date);
+  }
 };
 
 const formatIdType = (idType: string) => {

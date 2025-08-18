@@ -481,12 +481,16 @@
     <UserDetailsModal
       v-if="selectedUser"
       :visible="showModal"
-      :user="selectedUser"
+      :user="{
+    userId: selectedUser.userId,
+    email: selectedUser.email,
+    role: selectedUser.role
+  }"
       :is-admin="true"
       @close="closeModal"
       @approve="handleVerificationApproval"
       @reject="handleVerificationRejection"
-      @update-user="handleUserUpdate"
+      @update-user="(u) => handleUserUpdate (u as User)"
       @ban="handleBanUser"
       @unban="handleUnbanUser"
     />
@@ -506,7 +510,7 @@ interface User {
   lastName?: string
   fullName?: string
   profilePicture?: string
-  role?: string
+  role: string
   phoneNumber?: string
   createdAt: string | number | Date
   bannedUntil?: string | number | Date | null
@@ -725,10 +729,12 @@ const getStatusLabel = (u: User): string => {
   return 'Unverified'
 }
 
+
 const viewUserDetails = (u: User): void => {
   selectedUser.value = u
   showModal.value = true
 }
+
 
 const editUser = (u: User): void => {
   selectedUser.value = u

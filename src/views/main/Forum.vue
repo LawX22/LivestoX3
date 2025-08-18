@@ -540,7 +540,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+// import { useRouter } from 'vue-router';
 import NavBar from '../../components/NavBar.vue';
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import { getCurrentUser } from '../../services/user';
@@ -567,7 +567,7 @@ interface ForumQuestion {
   visibility?: 'all' | 'farmers';
 }
 
-const router = useRouter();
+// const router = useRouter();
 const currentUser = getCurrentUser();
 const showModal = ref(false);
 const showBuyerGuide = ref(false);
