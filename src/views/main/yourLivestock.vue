@@ -774,7 +774,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import LivestockFormModal from '../../components/Market/LivestockFormModal.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
 
 interface Farmer {
