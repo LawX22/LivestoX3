@@ -1,3 +1,4 @@
+<!-- userManagement.vue -->
 <template>
   <div class="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Sidebar Component -->
@@ -490,6 +491,8 @@
       @approve="handleVerificationApproval"
       @reject="handleVerificationRejection"
       @update-user="handleUserUpdate"
+      @ban="handleBanUser"
+      @unban="handleUnbanUser"
     />
   </div>
 </template>
@@ -498,8 +501,30 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import UserDetailsModal from '../../components/Admin/UserDetailsModal.vue'
-import type { User } from '../../services/user'
 
+// Define the User interface
+interface User {
+  userId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  profilePicture?: string
+  role?: string
+  phoneNumber?: string
+  createdAt: string | number | Date
+  bannedUntil?: string | number | Date | null
+  verification?: any
+  isVerified?: boolean
+  verificationStatus?: string
+  submittedId?: boolean
+  isBanned?: boolean
+  username?: string
+  lastActive?: string | number | Date
+  isOnline?: boolean
+}
+
+// Reactive variables
 const registeredUsers = ref<User[]>([])
 const selectedUser = ref<User | null>(null)
 const showModal = ref(false)
@@ -560,21 +585,26 @@ const pendingCount = computed(
 const bannedCount = computed(() => filteredUsers.value.filter((u) => u.isBanned).length)
 
 // Methods
-const getProfileImage = (user) => {
-  const storedProfileImage = localStorage.getItem(`profileImage_${user.userId}`)
-  if (storedProfileImage) return storedProfileImage
+const getProfileImage = (user: User): string => {
+  try {
+    const storedProfileImage = localStorage.getItem(`profileImage_${user.userId}`)
+    if (storedProfileImage) return storedProfileImage
 
-  if (user.profilePicture) {
-    if (user.profilePicture.startsWith('http')) {
-      return user.profilePicture
+    if (user.profilePicture) {
+      if (user.profilePicture.startsWith('http')) {
+        return user.profilePicture
+      }
+      return `/api/uploads/${user.profilePicture}`
     }
-    return `/api/uploads/${user.profilePicture}`
-  }
 
-  return defaultAvatar
+    return defaultAvatar
+  } catch (error) {
+    console.error('Error getting profile image:', error)
+    return defaultAvatar
+  }
 }
 
-const loadUsers = () => {
+const loadUsers = (): void => {
   try {
     const keys = Object.keys(localStorage).filter((k) => k.startsWith('user_'))
     registeredUsers.value = keys
@@ -613,20 +643,20 @@ const loadUsers = () => {
             profilePicture: u.profilePicture || null,
             isOnline,
             lastActive,
-          }
+          } as User
         } catch (error) {
           console.error('Error parsing user data:', error)
           return null
         }
       })
-      .filter(Boolean)
+      .filter((user): user is User => user !== null)
   } catch (error) {
     console.error('Error loading users:', error)
     registeredUsers.value = []
   }
 }
 
-const formatDate = (d?: string | number | Date) => {
+const formatDate = (d?: string | number | Date): string => {
   if (!d) return ''
   try {
     return new Date(d).toLocaleDateString()
@@ -635,7 +665,7 @@ const formatDate = (d?: string | number | Date) => {
   }
 }
 
-const formatRelativeTime = (dateString: string | number | Date) => {
+const formatRelativeTime = (dateString: string | number | Date): string => {
   if (!dateString) return ''
   const date = new Date(dateString)
   const now = new Date()
@@ -650,7 +680,7 @@ const formatRelativeTime = (dateString: string | number | Date) => {
   }
 }
 
-const formatLastActive = (date?: string | number | Date) => {
+const formatLastActive = (date?: string | number | Date): string => {
   if (!date) return 'Never'
   const now = new Date()
   const diffInMinutes = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60))
@@ -662,7 +692,7 @@ const formatLastActive = (date?: string | number | Date) => {
   return formatDate(date)
 }
 
-const roleBadgeClass = (r) => {
+const roleBadgeClass = (r?: string): string => {
   const base = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
   switch (r) {
     case 'Admin':
@@ -676,7 +706,7 @@ const roleBadgeClass = (r) => {
   }
 }
 
-const statusBadgeClass = (u) => {
+const statusBadgeClass = (u: User): string => {
   const base = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
   if (u.isBanned) {
     return `${base} bg-red-100 text-red-800`
@@ -691,7 +721,7 @@ const statusBadgeClass = (u) => {
   }
 }
 
-const getStatusLabel = (u: User) => {
+const getStatusLabel = (u: User): string => {
   if (u.isBanned) return 'Banned'
   if (u.verificationStatus === 'pending') return 'Pending'
   if (u.verificationStatus === 'rejected') return 'Rejected'
@@ -699,22 +729,24 @@ const getStatusLabel = (u: User) => {
   return 'Unverified'
 }
 
-const viewUserDetails = (u: User) => {
+
+const viewUserDetails = (u: User): void => {
   selectedUser.value = u
   showModal.value = true
 }
 
-const editUser = (u: User) => {
+
+const editUser = (u: User): void => {
   selectedUser.value = u
   showModal.value = true
 }
 
-const closeModal = () => {
+const closeModal = (): void => {
   showModal.value = false
   selectedUser.value = null
 }
 
-const banUser = (u: any) => {
+const banUser = (u: User): void => {
   const days = prompt('Enter number of days to ban (0 for permanent):', '7')
   if (days === null) return
 
@@ -732,7 +764,7 @@ const banUser = (u: any) => {
   })
 }
 
-const unbanUser = (u: any) => {
+const unbanUser = (u: User): void => {
   if (confirm('Are you sure you want to unban this user?')) {
     updateUser({
       ...u,
@@ -742,7 +774,7 @@ const unbanUser = (u: any) => {
   }
 }
 
-const handleVerificationApproval = (userId: any) => {
+const handleVerificationApproval = (userId: string): void => {
   const user = registeredUsers.value.find((u) => u.userId === userId)
   if (user) {
     updateUser({
@@ -758,7 +790,7 @@ const handleVerificationApproval = (userId: any) => {
   }
 }
 
-const handleVerificationRejection = ({ userId, reason }) => {
+const handleVerificationRejection = ({ userId, reason }: { userId: string; reason: string }): void => {
   const user = registeredUsers.value.find((u) => u.userId === userId)
   if (user) {
     updateUser({
@@ -775,16 +807,30 @@ const handleVerificationRejection = ({ userId, reason }) => {
   }
 }
 
-const handleUserUpdate = (updatedUser: any) => {
+const handleUserUpdate = (updatedUser: User): void => {
   updateUser(updatedUser)
 }
 
-const updateUser = (u) => {
+const handleBanUser = (userId: string): void => {
+  const user = registeredUsers.value.find((u) => u.userId === userId)
+  if (user) {
+    banUser(user)
+  }
+}
+
+const handleUnbanUser = (userId: string): void => {
+  const user = registeredUsers.value.find((u) => u.userId === userId)
+  if (user) {
+    unbanUser(user)
+  }
+}
+
+const updateUser = (u: Partial<User> & { userId: string }): void => {
   try {
     const existingData = localStorage.getItem(`user_${u.userId}`)
     const existingUser = existingData ? JSON.parse(existingData) : {}
 
-    const updatedUser = {
+    const updatedUser: User = {
       ...existingUser,
       ...u,
       isVerified: u.isVerified !== undefined ? u.isVerified : existingUser.isVerified,
@@ -793,8 +839,7 @@ const updateUser = (u) => {
       submittedId: u.submittedId !== undefined ? u.submittedId : existingUser.submittedId,
       isBanned: u.isBanned !== undefined ? u.isBanned : existingUser.isBanned,
       bannedUntil: u.bannedUntil !== undefined ? u.bannedUntil : existingUser.bannedUntil,
-      profilePicture:
-        u.profilePicture !== undefined ? u.profilePicture : existingUser.profilePicture,
+      profilePicture: u.profilePicture !== undefined ? u.profilePicture : existingUser.profilePicture,
     }
 
     localStorage.setItem(`user_${u.userId}`, JSON.stringify(updatedUser))
@@ -816,8 +861,8 @@ const updateUser = (u) => {
 const exportToCSV = (): void => {
   const headers = ['Name', 'Email', 'Role', 'Status', 'Joined', 'Last Active']
   const data = filteredUsers.value.map((user) => [
-    `${user.firstName} ${user.lastName}`,
-    user.email,
+    `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'No name',
+    user.email || 'No email',
     user.role || 'User',
     getStatusLabel(user),
     formatDate(user.createdAt),
@@ -828,7 +873,7 @@ const exportToCSV = (): void => {
     'data:text/csv;charset=utf-8,' +
     headers.join(',') +
     '\n' +
-    data.map((row) => row.join(',')).join('\n')
+    data.map((row) => row.map(cell => `"${cell}"`).join(',')).join('\n')
 
   const encodedUri = encodeURI(csvContent)
   const link = document.createElement('a')

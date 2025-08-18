@@ -1,3 +1,4 @@
+<!-- UserDetailsModal.vue -->
 <template>
   <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-full max-h-[95vh] p-6 relative flex flex-col">
