@@ -674,7 +674,7 @@ const initPriceChart = () => {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return context.dataset.label + ': ₱' + context.raw.toLocaleString()
+              return context.dataset.label + ': ₱' + (context.raw as number).toLocaleString()
             }
           }
         }
@@ -703,9 +703,6 @@ const initPriceChart = () => {
               size: 10
             }
           },
-          grid: {
-            drawBorder: false
-          }
         }
       }
     }
@@ -765,9 +762,6 @@ const initAvailabilityChart = () => {
               size: 10
             }
           },
-          grid: {
-            drawBorder: false
-          }
         }
       }
     }

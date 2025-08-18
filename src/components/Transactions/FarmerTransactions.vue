@@ -380,10 +380,16 @@ interface Transaction {
   message?: string
 }
 
+interface Tab {
+  id: 'pending' | 'all' | 'accepted' | 'completed'
+  name: string
+  count?: number
+}
+
 const activeTab = ref<'all' | 'pending' | 'accepted' | 'completed'>('all')
 const selectedTransaction = ref<Transaction | null>(null)
 
-const tabs = [
+const tabs: Tab[] = [
   { id: 'all', name: 'All Transactions', count: 12 },
   { id: 'pending', name: 'Pending', count: 5 },
   { id: 'accepted', name: 'Accepted', count: 3 },

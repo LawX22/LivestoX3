@@ -26,6 +26,7 @@ export interface User {
     lastActive?: string | Date
     verificationStatus?: 'unverified' | 'pending' | 'approved' | 'rejected'
     verification?: VerificationInfo
+    isOnline? : boolean
   profilePicture?: string
   farmName?: string
   farmLocation?: string
@@ -67,6 +68,11 @@ export interface SignUpForm {
   role?: string
   profilePicture?: string
   createdAt?: string
+}
+
+export interface UserData {
+  role?: string
+  department?: string
 }
 
 // Default sign-up form values

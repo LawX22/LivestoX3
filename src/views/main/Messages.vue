@@ -411,7 +411,7 @@
 
             <div class="flex-1 relative">
               <textarea v-model="newMessage" @keydown.enter.exact.prevent="sendMessage"
-                @keydown.enter.shift.except="newMessage += '\n'"
+                @keydown.enter.shift="newMessage += '\n'"
                 placeholder="Type your message... (Shift+Enter for new line)" rows="1"
                 class="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-white/90 hover:border-gray-300 resize-none"
                 style="min-height: 48px; max-height: 120px;"></textarea>
