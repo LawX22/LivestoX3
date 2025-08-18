@@ -490,7 +490,7 @@
       @close="closeModal"
       @approve="handleVerificationApproval"
       @reject="handleVerificationRejection"
-      @update-user="handleUserUpdate"
+      @update-user="(u) => handleUserUpdate (u as User)"
       @ban="handleBanUser"
       @unban="handleUnbanUser"
     />
@@ -510,7 +510,7 @@ interface User {
   lastName?: string
   fullName?: string
   profilePicture?: string
-  role?: string
+  role: string
   phoneNumber?: string
   createdAt: string | number | Date
   bannedUntil?: string | number | Date | null
