@@ -113,7 +113,8 @@
 
       <!-- Additional links for logged-in users -->
       <template v-if="user">
-        <li>
+        <!-- Show Transactions only for farmers in main navbar -->
+        <li v-if="user.role.toLowerCase() === 'farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -129,6 +130,25 @@
               class="underline absolute -bottom-1 left-0 w-full h-0.5 bg-green-600 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
           </router-link>
         </li>
+        
+        <!-- Show My Purchases only for buyers in main navbar -->
+        <li v-if="user.role.toLowerCase() === 'buyer'">
+          <router-link to="/myPurchases"
+            class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
+            active-class="text-green-600 [&_.underline]:scale-x-100">
+            <div class="flex items-center gap-1.5 px-1 py-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2.3">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span>My Purchases</span>
+            </div>
+            <span
+              class="underline absolute -bottom-1 left-0 w-full h-0.5 bg-green-600 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+          </router-link>
+        </li>
+        
         <li>
           <router-link to="/dashboard"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -509,8 +529,8 @@
                 <span class="font-medium">Dashboard</span>
               </router-link>
 
-              <!-- Show Transactions only for farmers -->
-              <router-link v-if="user.role === 'FARMER'" to="/transactions"
+              <!-- Show Transactions only for farmers in dropdown -->
+              <router-link v-if="user.role.toLowerCase() === 'farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -522,6 +542,21 @@
                   </svg>
                 </div>
                 <span class="font-medium">Transactions</span>
+              </router-link>
+              
+              <!-- Show My Purchases only for buyers in dropdown -->
+              <router-link v-if="user.role.toLowerCase() === 'buyer'" to="/myPurchases"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
+                @click="closeDropdown">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <span class="font-medium">My Purchases</span>
               </router-link>
 
               <router-link to="/settings"

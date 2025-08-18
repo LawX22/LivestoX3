@@ -1,11 +1,11 @@
-<!-- Transactions.vue -->
+<!-- myPurchases.vue -->
 <template>
-  <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
+  <div class="h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-20 left-10 w-12 h-12 bg-green-300/30 rounded-full blur-sm animate-pulse"></div>
-      <div class="absolute bottom-24 right-24 w-16 h-16 bg-teal-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
-      <div class="absolute top-1/2 right-8 w-6 h-6 bg-green-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
+      <div class="absolute top-20 left-10 w-12 h-12 bg-blue-300/30 rounded-full blur-sm animate-pulse"></div>
+      <div class="absolute bottom-24 right-24 w-16 h-16 bg-indigo-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
+      <div class="absolute top-1/2 right-8 w-6 h-6 bg-purple-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
     </div>
 
     <!-- NavBar -->
@@ -15,18 +15,18 @@
 
     <!-- Combined Header -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
-      <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
+      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-blue-200 shadow-lg backdrop-blur-sm">
         <!-- Left side - Logo and Title -->
         <div class="flex items-center min-w-0">
           <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
             <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
           <div class="min-w-0">
-            <h1 class="text-xl font-bold text-white truncate">Transaction History</h1>
-            <p class="text-green-100 text-sm opacity-90 truncate">
-              Manage buyer inquiries and completed sales
+            <h1 class="text-xl font-bold text-white truncate">My Purchases</h1>
+            <p class="text-blue-100 text-sm opacity-90 truncate">
+              Track your livestock orders and purchases
             </p>
           </div>
         </div>
@@ -35,14 +35,14 @@
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 w-full md:w-auto">
           <div class="bg-white/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
             <div class="flex items-center gap-2">
-              <div class="p-1.5 rounded-full bg-green-100 text-green-600">
+              <div class="p-1.5 rounded-full bg-blue-100 text-blue-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-green-100">Total Inquiries</p>
-                <p class="text-base font-bold text-white">24</p>
+                <p class="text-xs font-medium text-blue-100">Total Orders</p>
+                <p class="text-base font-bold text-white">{{ transactions.length }}</p>
               </div>
             </div>
           </div>
@@ -55,7 +55,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-green-100">Pending</p>
+                <p class="text-xs font-medium text-blue-100">Pending</p>
                 <p class="text-base font-bold text-white">{{ pendingCount }}</p>
               </div>
             </div>
@@ -63,14 +63,14 @@
 
           <div class="bg-white/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
             <div class="flex items-center gap-2">
-              <div class="p-1.5 rounded-full bg-blue-100 text-blue-600">
+              <div class="p-1.5 rounded-full bg-green-100 text-green-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-green-100">Total Earnings</p>
-                <p class="text-base font-bold text-white">₱124,500</p>
+                <p class="text-xs font-medium text-blue-100">Total Spent</p>
+                <p class="text-base font-bold text-white">₱{{ totalSpent.toLocaleString() }}</p>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@
     <div class="flex flex-1 overflow-hidden">
       <!-- Enhanced Filters Sidebar with Collapse/Expand -->
       <div :class="`${isSidebarExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
-        <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-blue-50/20 via-transparent to-indigo-50/20"></div>
 
         <!-- Toggle Button integrated into filter logo -->
         <div 
@@ -90,7 +90,7 @@
           class="absolute inset-0 flex items-center justify-center cursor-pointer group z-20"
           v-if="!isSidebarExpanded"
         >
-          <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
             </svg>
@@ -101,9 +101,9 @@
           <!-- Expanded View -->
           <div v-if="isSidebarExpanded" class="h-full flex flex-col">
             <!-- Header with integrated close button -->
-            <div class="flex justify-between items-center p-3 border-b border-green-100/50">
-              <h2 class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="flex justify-between items-center p-3 border-b border-blue-100/50">
+              <h2 class="text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-1">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
                 </svg>
                 Filters
@@ -124,13 +124,13 @@
             </div>
 
             <!-- Sticky Search & Active Filters -->
-            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
+            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-blue-100/50 p-3 shadow-sm">
               <!-- Search -->
-              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
+              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100 mb-2">
                 <div class="relative">
-                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 focus:border-green-500" placeholder="Search..." />
+                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-blue-200 rounded-md text-xs bg-blue-50/30 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" placeholder="Search..." />
                   <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                    <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-3 w-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
@@ -138,13 +138,13 @@
               </div>
 
               <!-- Active Filters -->
-              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
+              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-md p-2 border border-blue-200">
                 <div class="flex flex-wrap gap-1">
-                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
+                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">
                     "{{ filters.search }}"
                   </span>
-                  <span v-for="status in filters.statuses" :key="status" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ status }}</span>
-                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
+                  <span v-for="status in filters.statuses" :key="status" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ status }}</span>
+                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ type }}</span>
                 </div>
               </div>
             </div>
@@ -153,20 +153,20 @@
             <div class="flex-1 overflow-y-auto p-3">
               <div class="space-y-3">
                 <!-- Status Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Status
                   </h3>
                   <div class="space-y-1">
-                    <label v-for="status in statusOptions" :key="status" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                    <label v-for="status in statusOptions" :key="status" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-blue-50/50 p-1 rounded cursor-pointer">
                       <input 
                         type="checkbox" 
                         :value="status" 
                         v-model="filters.statuses" 
-                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                        class="h-3 w-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                       >
                       <span class="truncate">{{ status }}</span>
                     </label>
@@ -174,20 +174,20 @@
                 </div>
                 
                 <!-- Livestock Type Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
                     Animal Type
                   </h3>
                   <div class="space-y-1 max-h-32 overflow-y-auto">
-                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-blue-50/50 p-1 rounded cursor-pointer">
                       <input 
                         type="checkbox" 
                         :value="type" 
                         v-model="filters.types" 
-                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                        class="h-3 w-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                       >
                       <span class="truncate">{{ type }}</span>
                     </label>
@@ -195,9 +195,9 @@
                 </div>
                 
                 <!-- Date Filter -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Date Range
@@ -205,14 +205,15 @@
                   <div class="space-y-2">
                     <div>
                       <label class="text-xs text-gray-600 block mb-1">From</label>
-                      <input v-model="filters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
+                      <input v-model="filters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500/50" />
                     </div>
                     <div>
                       <label class="text-xs text-gray-600 block mb-1">To</label>
-                      <input v-model="filters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
+                      <input v-model="filters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500/50" />
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -225,14 +226,14 @@
         <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-white/40 px-4 py-2">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+              <div class="w-7 h-7 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
                 </svg>
               </div>
               <div>
                 <h3 class="text-sm font-bold text-gray-800">
-                  {{ filteredTransactions.length }} {{ filteredTransactions.length === 1 ? 'Transaction' : 'Transactions' }} Found
+                  {{ filteredTransactions.length }} {{ filteredTransactions.length === 1 ? 'Order' : 'Orders' }} Found
                 </h3>
               </div>
             </div>
@@ -240,7 +241,7 @@
             <!-- Sort By Filter -->
             <div class="flex items-center gap-2">
               <label class="text-xs font-semibold text-gray-700">Sort By:</label>
-              <select v-model="sortBy" class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm">
+              <select v-model="sortBy" class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 rounded-md bg-white shadow-sm">
                 <option value="date-desc">Newest</option>
                 <option value="date-asc">Oldest</option>
                 <option value="price-asc">Price (Low)</option>
@@ -257,10 +258,10 @@
             <div class="flex-1 overflow-auto bg-white">
               <table class="w-full">
                 <!-- Fixed Table Header -->
-                <thead class="bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10">
+                <thead class="bg-gradient-to-r from-blue-50 to-indigo-50 sticky top-0 z-10">
                   <tr>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Livestock</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Buyer</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Seller</th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Date</th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Status</th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Amount</th>
@@ -269,7 +270,7 @@
                 </thead>
                 <!-- Table Body -->
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="transaction in filteredTransactions" :key="transaction.id" class="hover:bg-green-50/50 transition-colors">
+                  <tr v-for="transaction in filteredTransactions" :key="transaction.id" class="hover:bg-blue-50/50 transition-colors">
                     <td class="px-4 py-3 whitespace-nowrap w-1/4">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
@@ -284,11 +285,11 @@
                     <td class="px-4 py-3 whitespace-nowrap w-1/4">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
-                          <img class="h-10 w-10 rounded-full object-cover border border-gray-200" :src="transaction.buyer.avatar" alt="">
+                          <img class="h-10 w-10 rounded-full object-cover border border-gray-200" :src="transaction.seller.avatar" alt="">
                         </div>
                         <div class="ml-3 min-w-0">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ transaction.buyer.name }}</div>
-                          <div class="text-xs text-gray-500 truncate">{{ transaction.buyer.contact }}</div>
+                          <div class="text-sm font-medium text-gray-900 truncate">{{ transaction.seller.name }}</div>
+                          <div class="text-xs text-gray-500 truncate">{{ transaction.seller.farm }}</div>
                         </div>
                       </div>
                     </td>
@@ -302,7 +303,7 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 w-1/6">
                       <div class="flex items-center">
-                        <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-xs mr-2">₱</span>
+                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-xs mr-2">₱</span>
                         {{ transaction.amount.toLocaleString() }}
                       </div>
                     </td>
@@ -310,7 +311,7 @@
                       <div class="flex justify-end gap-1">
                         <button 
                           @click="viewDetails(transaction)"
-                          class="text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 p-1.5 rounded-lg transition-colors"
+                          class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-lg transition-colors"
                           title="View Details"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -320,22 +321,22 @@
                         </button>
                         <button 
                           v-if="transaction.status === 'Pending'"
-                          @click="updateStatus(transaction.id, 'Accepted')"
-                          class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-lg transition-colors"
-                          title="Accept"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                        <button 
-                          v-if="transaction.status === 'Pending'"
-                          @click="updateStatus(transaction.id, 'Rejected')"
+                          @click="cancelOrder(transaction.id)"
                           class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 p-1.5 rounded-lg transition-colors"
-                          title="Reject"
+                          title="Cancel Order"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <button 
+                          v-if="transaction.status === 'Shipped'"
+                          @click="confirmDelivery(transaction.id)"
+                          class="text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 p-1.5 rounded-lg transition-colors"
+                          title="Confirm Delivery"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                           </svg>
                         </button>
                       </div>
@@ -352,14 +353,14 @@
                 <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md mx-auto text-center shadow-xl">
                   <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-inner">
                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-gray-800 mb-2">No transactions found</h3>
-                  <p class="text-xs text-gray-500 mb-4 leading-relaxed">We couldn't find any transactions matching your current search criteria. Try adjusting your filters.</p>
+                  <h3 class="text-lg font-bold text-gray-800 mb-2">No orders found</h3>
+                  <p class="text-xs text-gray-500 mb-4 leading-relaxed">We couldn't find any orders matching your current search criteria. Try adjusting your filters.</p>
                   <button 
                     @click="resetFilters"
-                    class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -385,7 +386,7 @@
                           <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
                       </button>
-                      <button aria-current="page" class="z-10 bg-green-50 border-green-500 text-green-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                      <button aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
                         1
                       </button>
                       <button class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
@@ -424,11 +425,11 @@
             <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
               <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
                 <div class="flex items-start justify-between">
-                  <h2 class="text-lg font-medium text-gray-900">Transaction Details</h2>
+                  <h2 class="text-lg font-medium text-gray-900">Order Details</h2>
                   <div class="ml-3 h-7 flex items-center">
                     <button 
                       @click="selectedTransaction = null"
-                      class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <span class="sr-only">Close panel</span>
                       <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -449,7 +450,7 @@
                           <div>
                             <div class="flex justify-between text-base font-medium text-gray-900">
                               <h3>{{ selectedTransaction.livestock.type }} ({{ selectedTransaction.livestock.breed }})</h3>
-                              <p class="ml-4 bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-sm">
+                              <p class="ml-4 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-sm">
                                 ₱{{ selectedTransaction.amount.toLocaleString() }}
                               </p>
                             </div>
@@ -460,28 +461,29 @@
                     </div>
 
                     <div class="py-6 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer Information</h3>
+                      <h3 class="text-lg font-medium text-gray-900 mb-4">Seller Information</h3>
                       <div class="flex items-start">
                         <div class="flex-shrink-0">
-                          <img class="h-12 w-12 rounded-full border border-gray-200" :src="selectedTransaction.buyer.avatar" alt="">
+                          <img class="h-12 w-12 rounded-full border border-gray-200" :src="selectedTransaction.seller.avatar" alt="">
                         </div>
                         <div class="ml-4">
-                          <h4 class="text-sm font-medium text-gray-900">{{ selectedTransaction.buyer.name }}</h4>
-                          <p class="text-sm text-gray-500">{{ selectedTransaction.buyer.contact }}</p>
-                          <p class="text-sm text-gray-500">{{ selectedTransaction.buyer.address }}</p>
+                          <h4 class="text-sm font-medium text-gray-900">{{ selectedTransaction.seller.name }}</h4>
+                          <p class="text-sm text-gray-500">{{ selectedTransaction.seller.farm }}</p>
+                          <p class="text-sm text-gray-500">{{ selectedTransaction.seller.contact }}</p>
+                          <p class="text-sm text-gray-500">{{ selectedTransaction.seller.location }}</p>
                         </div>
                       </div>
                     </div>
 
                     <div class="py-6 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Details</h3>
+                      <h3 class="text-lg font-medium text-gray-900 mb-4">Order Details</h3>
                       <dl class="space-y-4">
                         <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Transaction ID</dt>
+                          <dt class="text-sm text-gray-600">Order ID</dt>
                           <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.id }}</dd>
                         </div>
                         <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Date</dt>
+                          <dt class="text-sm text-gray-600">Order Date</dt>
                           <dd class="text-sm font-medium text-gray-900">{{ formatDate(selectedTransaction.date) }}</dd>
                         </div>
                         <div class="flex items-center justify-between">
@@ -500,13 +502,21 @@
                           <dt class="text-sm text-gray-600">Delivery Method</dt>
                           <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.deliveryMethod }}</dd>
                         </div>
+                        <div v-if="selectedTransaction.trackingNumber" class="flex items-center justify-between">
+                          <dt class="text-sm text-gray-600">Tracking Number</dt>
+                          <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.trackingNumber }}</dd>
+                        </div>
+                        <div v-if="selectedTransaction.estimatedDelivery" class="flex items-center justify-between">
+                          <dt class="text-sm text-gray-600">Estimated Delivery</dt>
+                          <dd class="text-sm font-medium text-gray-900">{{ formatDate(selectedTransaction.estimatedDelivery) }}</dd>
+                        </div>
                       </dl>
                     </div>
 
                     <div class="py-6">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer's Message</h3>
+                      <h3 class="text-lg font-medium text-gray-900 mb-4">Your Message</h3>
                       <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm text-gray-700">{{ selectedTransaction.message || "No message provided by the buyer." }}</p>
+                        <p class="text-sm text-gray-700">{{ selectedTransaction.message || "No message provided." }}</p>
                       </div>
                     </div>
                   </div>
@@ -522,20 +532,19 @@
                 <div class="flex space-x-3">
                   <button 
                     v-if="selectedTransaction.status === 'Pending'"
-                    @click="updateStatus(selectedTransaction.id, 'Accepted')"
+                    @click="cancelOrder(selectedTransaction.id)"
+                    class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
+                  >
+                    Cancel Order
+                  </button>
+                  <button 
+                    v-if="selectedTransaction.status === 'Shipped'"
+                    @click="confirmDelivery(selectedTransaction.id)"
                     class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
                   >
-                    Accept Offer
+                    Confirm Delivery
                   </button>
                   <button 
-                    v-if="selectedTransaction.status === 'Pending'"
-                    @click="updateStatus(selectedTransaction.id, 'Rejected')"
-                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
-                  >
-                    Reject Offer
-                  </button>
-                  <button 
-                    v-if="selectedTransaction.status !== 'Pending'"
                     @click="selectedTransaction = null"
                     class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
                   >
@@ -551,10 +560,10 @@
 
     <!-- Enhanced Success Toast -->
     <div v-if="showToast" class="fixed top-4 right-4 z-50">
-      <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-3 transform transition-all duration-300 ease-in-out">
+      <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-blue-200/60 p-3 transform transition-all duration-300 ease-in-out">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
@@ -587,28 +596,31 @@ interface Livestock {
   image: string
 }
 
-interface Buyer {
+interface Seller {
   id: number
   name: string
+  farm: string
   contact: string
-  address: string
+  location: string
   avatar: string
 }
 
 interface Transaction {
   id: string
   livestock: Livestock
-  buyer: Buyer
+  seller: Seller
   date: string
-  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  status: 'Pending' | 'Accepted' | 'Shipped' | 'Completed' | 'Cancelled'
   amount: number
   paymentMethod: string
   deliveryMethod: string
   message?: string
+  trackingNumber?: string
+  estimatedDelivery?: string
 }
 
 export default defineComponent({
-  name: 'FarmerTransactions',
+  name: 'MyPurchases',
   components: {
     NavBar
   },
@@ -624,15 +636,16 @@ export default defineComponent({
       search: '',
       statuses: [] as string[],
       types: [] as string[],
+      sellers: [] as string[],
       dateFrom: '',
       dateTo: ''
     });
 
-    const statusOptions = ['Pending', 'Accepted', 'Rejected', 'Completed'];
+    const statusOptions = ['Pending', 'Accepted', 'Shipped', 'Completed', 'Cancelled'];
 
     const transactions = ref<Transaction[]>([
       {
-        id: 'TXN-78901',
+        id: 'ORD-78901',
         livestock: {
           id: 1,
           type: 'Cattle',
@@ -640,22 +653,23 @@ export default defineComponent({
           description: 'Healthy Angus cattle, vaccinated and dewormed',
           image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
         },
-        buyer: {
-          id: 101,
-          name: 'Juan Dela Cruz',
-          contact: '+63 917 123 4567',
-          address: '123 Main St, Quezon City',
-          avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+        seller: {
+          id: 201,
+          name: 'Farmers Co-op',
+          farm: 'Green Pastures Farm',
+          contact: '+63 917 765 4321',
+          location: 'Tarlac',
+          avatar: 'https://randomuser.me/api/portraits/men/41.jpg'
         },
         date: new Date(Date.now() - 86400000 * 2).toISOString(),
         status: 'Pending',
         amount: 45000,
         paymentMethod: 'Bank Transfer',
         deliveryMethod: 'Pickup',
-        message: 'I would like to visit your farm to see the cattle before finalizing the purchase.'
+        message: 'I would like to visit the farm to see the cattle before finalizing the purchase.'
       },
       {
-        id: 'TXN-78902',
+        id: 'ORD-78902',
         livestock: {
           id: 2,
           type: 'Pig',
@@ -663,22 +677,24 @@ export default defineComponent({
           description: 'Healthy pigs ready for market',
           image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
         },
-        buyer: {
-          id: 102,
-          name: 'Maria Santos',
-          contact: '+63 918 765 4321',
-          address: '456 Farm Road, Bulacan',
-          avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+        seller: {
+          id: 202,
+          name: 'Juan Dela Cruz',
+          farm: 'Delacruz Swine Farm',
+          contact: '+63 918 123 4567',
+          location: 'Bulacan',
+          avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
         },
         date: new Date(Date.now() - 86400000 * 5).toISOString(),
         status: 'Accepted',
         amount: 12000,
         paymentMethod: 'Cash on Delivery',
         deliveryMethod: 'Delivery',
-        message: 'Need 10 pigs for my restaurant. Can you deliver next week?'
+        message: 'Need 10 pigs for my restaurant. Can you deliver next week?',
+        estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString()
       },
       {
-        id: 'TXN-78903',
+        id: 'ORD-78903',
         livestock: {
           id: 3,
           type: 'Goat',
@@ -686,12 +702,13 @@ export default defineComponent({
           description: 'Purebred Boer goats, excellent for breeding',
           image: 'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
         },
-        buyer: {
-          id: 103,
-          name: 'Carlos Reyes',
-          contact: '+63 919 555 1234',
-          address: '789 Hillside, Rizal',
-          avatar: 'https://randomuser.me/api/portraits/men/22.jpg'
+        seller: {
+          id: 203,
+          name: 'Maria Santos',
+          farm: 'Mountain View Goat Farm',
+          contact: '+63 919 555 6789',
+          location: 'Rizal',
+          avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
         },
         date: new Date(Date.now() - 86400000 * 10).toISOString(),
         status: 'Completed',
@@ -701,7 +718,7 @@ export default defineComponent({
         message: 'Looking for quality breeding goats. Please contact me.'
       },
       {
-        id: 'TXN-78904',
+        id: 'ORD-78904',
         livestock: {
           id: 4,
           type: 'Chicken',
@@ -709,22 +726,24 @@ export default defineComponent({
           description: 'Laying hens, 6 months old',
           image: 'https://images.unsplash.com/photo-1589923186200-85bae8f239d9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
         },
-        buyer: {
-          id: 104,
-          name: 'Elena Rodriguez',
+        seller: {
+          id: 204,
+          name: 'Roberto Cruz',
+          farm: 'Cruz Poultry Farm',
           contact: '+63 920 111 2222',
-          address: '321 Poultry Ave, Laguna',
-          avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
+          location: 'Laguna',
+          avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
         },
         date: new Date(Date.now() - 86400000 * 3).toISOString(),
-        status: 'Pending',
+        status: 'Shipped',
         amount: 8000,
         paymentMethod: 'GCash',
         deliveryMethod: 'Delivery',
-        message: 'Interested in 20 hens for egg production.'
+        trackingNumber: 'TRK-789456123',
+        estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString()
       },
       {
-        id: 'TXN-78905',
+        id: 'ORD-78905',
         livestock: {
           id: 5,
           type: 'Sheep',
@@ -732,19 +751,20 @@ export default defineComponent({
           description: 'Dorper sheep known for excellent meat quality',
           image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
         },
-        buyer: {
-          id: 105,
-          name: 'Roberto Cruz',
+        seller: {
+          id: 205,
+          name: 'Elena Rodriguez',
+          farm: 'Rodriguez Livestock',
           contact: '+63 921 456 2345',
-          address: '654 Wool St, Benguet',
-          avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
+          location: 'Benguet',
+          avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
         },
         date: new Date(Date.now() - 86400000 * 7).toISOString(),
-        status: 'Rejected',
+        status: 'Cancelled',
         amount: 30000,
         paymentMethod: 'Cash on Delivery',
         deliveryMethod: 'Pickup',
-        message: 'Interested in your sheep but the price is too high. Can you lower it?'
+        message: 'Changed my mind about the purchase.'
       }
     ]);
 
@@ -752,14 +772,25 @@ export default defineComponent({
       transactions.value.filter(t => t.status === 'Pending').length
     );
 
+    const totalSpent = computed(() => {
+      return transactions.value
+        .filter(t => t.status === 'Completed' || t.status === 'Shipped' || t.status === 'Accepted')
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
+    });
+
     const uniqueTypes = computed(() => {
       return [...new Set(transactions.value.map(t => t.livestock.type))].sort();
+    });
+
+    const uniqueSellers = computed(() => {
+      return [...new Set(transactions.value.map(t => t.seller.name))].sort();
     });
 
     const hasActiveFilters = computed(() => {
       return filters.value.search !== '' || 
         filters.value.statuses.length > 0 || 
         filters.value.types.length > 0 ||
+        filters.value.sellers.length > 0 ||
         filters.value.dateFrom !== '' ||
         filters.value.dateTo !== '';
     });
@@ -770,11 +801,13 @@ export default defineComponent({
         const matchesSearch = !f.search || 
           transaction.livestock.type.toLowerCase().includes(f.search.toLowerCase()) || 
           transaction.livestock.breed.toLowerCase().includes(f.search.toLowerCase()) || 
-          transaction.buyer.name.toLowerCase().includes(f.search.toLowerCase()) ||
+          transaction.seller.name.toLowerCase().includes(f.search.toLowerCase()) ||
+          transaction.seller.farm.toLowerCase().includes(f.search.toLowerCase()) ||
           transaction.id.toLowerCase().includes(f.search.toLowerCase());
         
         const matchesStatus = f.statuses.length === 0 || f.statuses.includes(transaction.status);
         const matchesType = f.types.length === 0 || f.types.includes(transaction.livestock.type);
+        const matchesSeller = f.sellers.length === 0 || f.sellers.includes(transaction.seller.name);
         
         // Date filtering
         let matchesDate = true;
@@ -787,7 +820,7 @@ export default defineComponent({
           if (toDate && transactionDate > toDate) matchesDate = false;
         }
         
-        return matchesSearch && matchesStatus && matchesType && matchesDate;
+        return matchesSearch && matchesStatus && matchesType && matchesSeller && matchesDate;
       }).sort((a, b) => {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
@@ -811,6 +844,7 @@ export default defineComponent({
         search: '',
         statuses: [],
         types: [],
+        sellers: [],
         dateFrom: '',
         dateTo: ''
       };
@@ -827,12 +861,21 @@ export default defineComponent({
       selectedTransaction.value = transaction;
     };
 
-    const updateStatus = (id: string, status: 'Accepted' | 'Rejected'): void => {
+    const cancelOrder = (id: string): void => {
       const index = transactions.value.findIndex(t => t.id === id);
       if (index !== -1) {
-        transactions.value[index].status = status;
+        transactions.value[index].status = 'Cancelled';
         selectedTransaction.value = null;
-        showToastNotification(`Transaction ${status.toLowerCase()} successfully!`);
+        showToastNotification('Order cancelled successfully!');
+      }
+    };
+
+    const confirmDelivery = (id: string): void => {
+      const index = transactions.value.findIndex(t => t.id === id);
+      if (index !== -1) {
+        transactions.value[index].status = 'Completed';
+        selectedTransaction.value = null;
+        showToastNotification('Delivery confirmed successfully!');
       }
     };
 
@@ -852,8 +895,9 @@ export default defineComponent({
       switch (status) {
         case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
         case 'Accepted': return 'bg-blue-100 text-blue-800 border-blue-300';
+        case 'Shipped': return 'bg-purple-100 text-purple-800 border-purple-300';
         case 'Completed': return 'bg-green-100 text-green-800 border-green-300';
-        case 'Rejected': return 'bg-red-100 text-red-800 border-red-300';
+        case 'Cancelled': return 'bg-red-100 text-red-800 border-red-300';
         default: return 'bg-gray-100 text-gray-800 border-gray-300';
       }
     };
@@ -868,14 +912,17 @@ export default defineComponent({
       statusOptions,
       transactions,
       pendingCount,
+      totalSpent,
       uniqueTypes,
+      uniqueSellers,
       hasActiveFilters,
       filteredTransactions,
       toggleSidebar,
       resetFilters,
       showToastNotification,
       viewDetails,
-      updateStatus,
+      cancelOrder,
+      confirmDelivery,
       closeModalIfClickedOutside,
       formatDate,
       getStatusClass
