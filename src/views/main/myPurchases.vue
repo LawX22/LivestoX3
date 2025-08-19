@@ -585,7 +585,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 
 // Interfaces remain the same
@@ -777,10 +777,6 @@ const totalSpent = computed(() => {
 
 const uniqueTypes = computed(() => {
   return [...new Set(transactions.value.map(t => t.livestock.type))].sort();
-});
-
-const uniqueSellers = computed(() => {
-  return [...new Set(transactions.value.map(t => t.seller.name))].sort();
 });
 
 const hasActiveFilters = computed(() => {
