@@ -584,10 +584,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 
+// Interfaces remain the same
 interface Livestock {
   id: number
   type: string
@@ -619,314 +620,282 @@ interface Transaction {
   estimatedDelivery?: string
 }
 
-export default defineComponent({
-  name: 'MyPurchases',
-  components: {
-    NavBar
+// Reactive state
+const isSidebarExpanded = ref(true);
+const selectedTransaction = ref<Transaction | null>(null);
+const sortBy = ref('date-desc');
+const showToast = ref(false);
+const toastMessage = ref('');
+
+const filters = ref({
+  search: '',
+  statuses: [] as string[],
+  types: [] as string[],
+  sellers: [] as string[],
+  dateFrom: '',
+  dateTo: ''
+});
+
+const statusOptions = ['Pending', 'Accepted', 'Shipped', 'Completed', 'Cancelled'];
+
+// Sample data
+const transactions = ref<Transaction[]>([
+  {
+    id: 'ORD-78901',
+    livestock: {
+      id: 1,
+      type: 'Cattle',
+      breed: 'Angus',
+      description: 'Healthy Angus cattle, vaccinated and dewormed',
+      image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    seller: {
+      id: 201,
+      name: 'Farmers Co-op',
+      farm: 'Green Pastures Farm',
+      contact: '+63 917 765 4321',
+      location: 'Tarlac',
+      avatar: 'https://randomuser.me/api/portraits/men/41.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    status: 'Pending',
+    amount: 45000,
+    paymentMethod: 'Bank Transfer',
+    deliveryMethod: 'Pickup',
+    message: 'I would like to visit the farm to see the cattle before finalizing the purchase.'
   },
-  setup() {
-    const isSidebarExpanded = ref(true);
-    const selectedTransaction = ref<Transaction | null>(null);
-    const sortBy = ref('date-desc');
-    const showToast = ref(false);
-    const toastMessage = ref('');
-    
-    // Filters state
-    const filters = ref({
-      search: '',
-      statuses: [] as string[],
-      types: [] as string[],
-      sellers: [] as string[],
-      dateFrom: '',
-      dateTo: ''
-    });
-
-    const statusOptions = ['Pending', 'Accepted', 'Shipped', 'Completed', 'Cancelled'];
-
-    const transactions = ref<Transaction[]>([
-      {
-        id: 'ORD-78901',
-        livestock: {
-          id: 1,
-          type: 'Cattle',
-          breed: 'Angus',
-          description: 'Healthy Angus cattle, vaccinated and dewormed',
-          image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        seller: {
-          id: 201,
-          name: 'Farmers Co-op',
-          farm: 'Green Pastures Farm',
-          contact: '+63 917 765 4321',
-          location: 'Tarlac',
-          avatar: 'https://randomuser.me/api/portraits/men/41.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 2).toISOString(),
-        status: 'Pending',
-        amount: 45000,
-        paymentMethod: 'Bank Transfer',
-        deliveryMethod: 'Pickup',
-        message: 'I would like to visit the farm to see the cattle before finalizing the purchase.'
-      },
-      {
-        id: 'ORD-78902',
-        livestock: {
-          id: 2,
-          type: 'Pig',
-          breed: 'Large White',
-          description: 'Healthy pigs ready for market',
-          image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        seller: {
-          id: 202,
-          name: 'Juan Dela Cruz',
-          farm: 'Delacruz Swine Farm',
-          contact: '+63 918 123 4567',
-          location: 'Bulacan',
-          avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 5).toISOString(),
-        status: 'Accepted',
-        amount: 12000,
-        paymentMethod: 'Cash on Delivery',
-        deliveryMethod: 'Delivery',
-        message: 'Need 10 pigs for my restaurant. Can you deliver next week?',
-        estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString()
-      },
-      {
-        id: 'ORD-78903',
-        livestock: {
-          id: 3,
-          type: 'Goat',
-          breed: 'Boer',
-          description: 'Purebred Boer goats, excellent for breeding',
-          image: 'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        seller: {
-          id: 203,
-          name: 'Maria Santos',
-          farm: 'Mountain View Goat Farm',
-          contact: '+63 919 555 6789',
-          location: 'Rizal',
-          avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 10).toISOString(),
-        status: 'Completed',
-        amount: 24000,
-        paymentMethod: 'GCash',
-        deliveryMethod: 'Pickup',
-        message: 'Looking for quality breeding goats. Please contact me.'
-      },
-      {
-        id: 'ORD-78904',
-        livestock: {
-          id: 4,
-          type: 'Chicken',
-          breed: 'Rhode Island Red',
-          description: 'Laying hens, 6 months old',
-          image: 'https://images.unsplash.com/photo-1589923186200-85bae8f239d9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        seller: {
-          id: 204,
-          name: 'Roberto Cruz',
-          farm: 'Cruz Poultry Farm',
-          contact: '+63 920 111 2222',
-          location: 'Laguna',
-          avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 3).toISOString(),
-        status: 'Shipped',
-        amount: 8000,
-        paymentMethod: 'GCash',
-        deliveryMethod: 'Delivery',
-        trackingNumber: 'TRK-789456123',
-        estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString()
-      },
-      {
-        id: 'ORD-78905',
-        livestock: {
-          id: 5,
-          type: 'Sheep',
-          breed: 'Dorper',
-          description: 'Dorper sheep known for excellent meat quality',
-          image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        seller: {
-          id: 205,
-          name: 'Elena Rodriguez',
-          farm: 'Rodriguez Livestock',
-          contact: '+63 921 456 2345',
-          location: 'Benguet',
-          avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 7).toISOString(),
-        status: 'Cancelled',
-        amount: 30000,
-        paymentMethod: 'Cash on Delivery',
-        deliveryMethod: 'Pickup',
-        message: 'Changed my mind about the purchase.'
-      }
-    ]);
-
-    const pendingCount = computed(() => 
-      transactions.value.filter(t => t.status === 'Pending').length
-    );
-
-    const totalSpent = computed(() => {
-      return transactions.value
-        .filter(t => t.status === 'Completed' || t.status === 'Shipped' || t.status === 'Accepted')
-        .reduce((sum, transaction) => sum + transaction.amount, 0);
-    });
-
-    const uniqueTypes = computed(() => {
-      return [...new Set(transactions.value.map(t => t.livestock.type))].sort();
-    });
-
-    const uniqueSellers = computed(() => {
-      return [...new Set(transactions.value.map(t => t.seller.name))].sort();
-    });
-
-    const hasActiveFilters = computed(() => {
-      return filters.value.search !== '' || 
-        filters.value.statuses.length > 0 || 
-        filters.value.types.length > 0 ||
-        filters.value.sellers.length > 0 ||
-        filters.value.dateFrom !== '' ||
-        filters.value.dateTo !== '';
-    });
-
-    const filteredTransactions = computed(() => {
-      return transactions.value.filter(transaction => {
-        const f = filters.value;
-        const matchesSearch = !f.search || 
-          transaction.livestock.type.toLowerCase().includes(f.search.toLowerCase()) || 
-          transaction.livestock.breed.toLowerCase().includes(f.search.toLowerCase()) || 
-          transaction.seller.name.toLowerCase().includes(f.search.toLowerCase()) ||
-          transaction.seller.farm.toLowerCase().includes(f.search.toLowerCase()) ||
-          transaction.id.toLowerCase().includes(f.search.toLowerCase());
-        
-        const matchesStatus = f.statuses.length === 0 || f.statuses.includes(transaction.status);
-        const matchesType = f.types.length === 0 || f.types.includes(transaction.livestock.type);
-        const matchesSeller = f.sellers.length === 0 || f.sellers.includes(transaction.seller.name);
-        
-        // Date filtering
-        let matchesDate = true;
-        if (f.dateFrom || f.dateTo) {
-          const transactionDate = new Date(transaction.date);
-          const fromDate = f.dateFrom ? new Date(f.dateFrom) : null;
-          const toDate = f.dateTo ? new Date(f.dateTo) : null;
-          
-          if (fromDate && transactionDate < fromDate) matchesDate = false;
-          if (toDate && transactionDate > toDate) matchesDate = false;
-        }
-        
-        return matchesSearch && matchesStatus && matchesType && matchesSeller && matchesDate;
-      }).sort((a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        
-        switch (sortBy.value) {
-          case 'date-desc': return dateB - dateA;
-          case 'date-asc': return dateA - dateB;
-          case 'price-asc': return a.amount - b.amount;
-          case 'price-desc': return b.amount - a.amount;
-          default: return dateB - dateA;
-        }
-      });
-    });
-
-    const toggleSidebar = () => {
-      isSidebarExpanded.value = !isSidebarExpanded.value;
-    };
-
-    const resetFilters = () => {
-      filters.value = {
-        search: '',
-        statuses: [],
-        types: [],
-        sellers: [],
-        dateFrom: '',
-        dateTo: ''
-      };
-      showToastNotification('All filters have been reset');
-    };
-
-    const showToastNotification = (message: string) => {
-      toastMessage.value = message;
-      showToast.value = true;
-      setTimeout(() => showToast.value = false, 4000);
-    };
-
-    const viewDetails = (transaction: Transaction): void => {
-      selectedTransaction.value = transaction;
-    };
-
-    const cancelOrder = (id: string): void => {
-      const index = transactions.value.findIndex(t => t.id === id);
-      if (index !== -1) {
-        transactions.value[index].status = 'Cancelled';
-        selectedTransaction.value = null;
-        showToastNotification('Order cancelled successfully!');
-      }
-    };
-
-    const confirmDelivery = (id: string): void => {
-      const index = transactions.value.findIndex(t => t.id === id);
-      if (index !== -1) {
-        transactions.value[index].status = 'Completed';
-        selectedTransaction.value = null;
-        showToastNotification('Delivery confirmed successfully!');
-      }
-    };
-
-    const closeModalIfClickedOutside = (event: Event) => {
-      // Only close if clicked on the overlay (not on the modal content)
-      if (event.target === event.currentTarget) {
-        selectedTransaction.value = null;
-      }
-    };
-
-    const formatDate = (dateString: string): string => {
-      const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    };
-
-    const getStatusClass = (status: string): string => {
-      switch (status) {
-        case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-        case 'Accepted': return 'bg-blue-100 text-blue-800 border-blue-300';
-        case 'Shipped': return 'bg-purple-100 text-purple-800 border-purple-300';
-        case 'Completed': return 'bg-green-100 text-green-800 border-green-300';
-        case 'Cancelled': return 'bg-red-100 text-red-800 border-red-300';
-        default: return 'bg-gray-100 text-gray-800 border-gray-300';
-      }
-    };
-
-    return {
-      isSidebarExpanded,
-      selectedTransaction,
-      sortBy,
-      showToast,
-      toastMessage,
-      filters,
-      statusOptions,
-      transactions,
-      pendingCount,
-      totalSpent,
-      uniqueTypes,
-      uniqueSellers,
-      hasActiveFilters,
-      filteredTransactions,
-      toggleSidebar,
-      resetFilters,
-      showToastNotification,
-      viewDetails,
-      cancelOrder,
-      confirmDelivery,
-      closeModalIfClickedOutside,
-      formatDate,
-      getStatusClass
-    }
+  {
+    id: 'ORD-78902',
+    livestock: {
+      id: 2,
+      type: 'Pig',
+      breed: 'Large White',
+      description: 'Healthy pigs ready for market',
+      image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    seller: {
+      id: 202,
+      name: 'Juan Dela Cruz',
+      farm: 'Delacruz Swine Farm',
+      contact: '+63 918 123 4567',
+      location: 'Bulacan',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 5).toISOString(),
+    status: 'Accepted',
+    amount: 12000,
+    paymentMethod: 'Cash on Delivery',
+    deliveryMethod: 'Delivery',
+    message: 'Need 10 pigs for my restaurant. Can you deliver next week?',
+    estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString()
+  },
+  {
+    id: 'ORD-78903',
+    livestock: {
+      id: 3,
+      type: 'Goat',
+      breed: 'Boer',
+      description: 'Purebred Boer goats, excellent for breeding',
+      image: 'https://images.unsplash.com/photo-1551290464-66719418ca54?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    seller: {
+      id: 203,
+      name: 'Maria Santos',
+      farm: 'Mountain View Goat Farm',
+      contact: '+63 919 555 6789',
+      location: 'Rizal',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 10).toISOString(),
+    status: 'Completed',
+    amount: 24000,
+    paymentMethod: 'GCash',
+    deliveryMethod: 'Pickup',
+    message: 'Looking for quality breeding goats. Please contact me.'
+  },
+  {
+    id: 'ORD-78904',
+    livestock: {
+      id: 4,
+      type: 'Chicken',
+      breed: 'Rhode Island Red',
+      description: 'Laying hens, 6 months old',
+      image: 'https://images.unsplash.com/photo-1589923186200-85bae8f239d9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    seller: {
+      id: 204,
+      name: 'Roberto Cruz',
+      farm: 'Cruz Poultry Farm',
+      contact: '+63 920 111 2222',
+      location: 'Laguna',
+      avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 3).toISOString(),
+    status: 'Shipped',
+    amount: 8000,
+    paymentMethod: 'GCash',
+    deliveryMethod: 'Delivery',
+    trackingNumber: 'TRK-789456123',
+    estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString()
+  },
+  {
+    id: 'ORD-78905',
+    livestock: {
+      id: 5,
+      type: 'Sheep',
+      breed: 'Dorper',
+      description: 'Dorper sheep known for excellent meat quality',
+      image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    },
+    seller: {
+      id: 205,
+      name: 'Elena Rodriguez',
+      farm: 'Rodriguez Livestock',
+      contact: '+63 921 456 2345',
+      location: 'Benguet',
+      avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
+    },
+    date: new Date(Date.now() - 86400000 * 7).toISOString(),
+    status: 'Cancelled',
+    amount: 30000,
+    paymentMethod: 'Cash on Delivery',
+    deliveryMethod: 'Pickup',
+    message: 'Changed my mind about the purchase.'
   }
-})
+]);
+
+// Computed properties
+const pendingCount = computed(() => 
+  transactions.value.filter(t => t.status === 'Pending').length
+);
+
+const totalSpent = computed(() => {
+  return transactions.value
+    .filter(t => t.status === 'Completed' || t.status === 'Shipped' || t.status === 'Accepted')
+    .reduce((sum, transaction) => sum + transaction.amount, 0);
+});
+
+const uniqueTypes = computed(() => {
+  return [...new Set(transactions.value.map(t => t.livestock.type))].sort();
+});
+
+const uniqueSellers = computed(() => {
+  return [...new Set(transactions.value.map(t => t.seller.name))].sort();
+});
+
+const hasActiveFilters = computed(() => {
+  return filters.value.search !== '' || 
+    filters.value.statuses.length > 0 || 
+    filters.value.types.length > 0 ||
+    filters.value.sellers.length > 0 ||
+    filters.value.dateFrom !== '' ||
+    filters.value.dateTo !== '';
+});
+
+const filteredTransactions = computed(() => {
+  return transactions.value.filter(transaction => {
+    const f = filters.value;
+    const matchesSearch = !f.search || 
+      transaction.livestock.type.toLowerCase().includes(f.search.toLowerCase()) || 
+      transaction.livestock.breed.toLowerCase().includes(f.search.toLowerCase()) || 
+      transaction.seller.name.toLowerCase().includes(f.search.toLowerCase()) ||
+      transaction.seller.farm.toLowerCase().includes(f.search.toLowerCase()) ||
+      transaction.id.toLowerCase().includes(f.search.toLowerCase());
+    
+    const matchesStatus = f.statuses.length === 0 || f.statuses.includes(transaction.status);
+    const matchesType = f.types.length === 0 || f.types.includes(transaction.livestock.type);
+    const matchesSeller = f.sellers.length === 0 || f.sellers.includes(transaction.seller.name);
+    
+    // Date filtering
+    let matchesDate = true;
+    if (f.dateFrom || f.dateTo) {
+      const transactionDate = new Date(transaction.date);
+      const fromDate = f.dateFrom ? new Date(f.dateFrom) : null;
+      const toDate = f.dateTo ? new Date(f.dateTo) : null;
+      
+      if (fromDate && transactionDate < fromDate) matchesDate = false;
+      if (toDate && transactionDate > toDate) matchesDate = false;
+    }
+    
+    return matchesSearch && matchesStatus && matchesType && matchesSeller && matchesDate;
+  }).sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    
+    switch (sortBy.value) {
+      case 'date-desc': return dateB - dateA;
+      case 'date-asc': return dateA - dateB;
+      case 'price-asc': return a.amount - b.amount;
+      case 'price-desc': return b.amount - a.amount;
+      default: return dateB - dateA;
+    }
+  });
+});
+
+// Methods
+const toggleSidebar = () => {
+  isSidebarExpanded.value = !isSidebarExpanded.value;
+};
+
+const resetFilters = () => {
+  filters.value = {
+    search: '',
+    statuses: [],
+    types: [],
+    sellers: [],
+    dateFrom: '',
+    dateTo: ''
+  };
+  showToastNotification('All filters have been reset');
+};
+
+const showToastNotification = (message: string) => {
+  toastMessage.value = message;
+  showToast.value = true;
+  setTimeout(() => showToast.value = false, 4000);
+};
+
+const viewDetails = (transaction: Transaction): void => {
+  selectedTransaction.value = transaction;
+};
+
+const cancelOrder = (id: string): void => {
+  const index = transactions.value.findIndex(t => t.id === id);
+  if (index !== -1) {
+    transactions.value[index].status = 'Cancelled';
+    selectedTransaction.value = null;
+    showToastNotification('Order cancelled successfully!');
+  }
+};
+
+const confirmDelivery = (id: string): void => {
+  const index = transactions.value.findIndex(t => t.id === id);
+  if (index !== -1) {
+    transactions.value[index].status = 'Completed';
+    selectedTransaction.value = null;
+    showToastNotification('Delivery confirmed successfully!');
+  }
+};
+
+const closeModalIfClickedOutside = (event: Event) => {
+  if (event.target === event.currentTarget) {
+    selectedTransaction.value = null;
+  }
+};
+
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+const getStatusClass = (status: string): string => {
+  switch (status) {
+    case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    case 'Accepted': return 'bg-blue-100 text-blue-800 border-blue-300';
+    case 'Shipped': return 'bg-purple-100 text-purple-800 border-purple-300';
+    case 'Completed': return 'bg-green-100 text-green-800 border-green-300';
+    case 'Cancelled': return 'bg-red-100 text-red-800 border-red-300';
+    default: return 'bg-gray-100 text-gray-800 border-gray-300';
+  }
+};
 </script>
