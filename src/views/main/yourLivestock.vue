@@ -1031,7 +1031,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 
 // Define interfaces
 interface Farmer {
