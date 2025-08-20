@@ -1,4 +1,3 @@
-<!-- BuyerDashboard.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
     <!-- Sticky NavBar -->
@@ -24,7 +23,7 @@
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3B82F6" stroke-width="1.5" />
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3b82f6" stroke-width="1.5" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -32,125 +31,178 @@
       </div>
 
       <div class="max-w-screen-2xl mx-auto px-8 pt-8 relative z-10">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Buyer Dashboard</h1>
-            <p class="text-gray-600 mt-2">Discover quality livestock and manage your purchases</p>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="text-sm bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
-              <span class="text-gray-500">Last activity:</span>
-              <span class="font-medium ml-1">{{ new Date().toLocaleString() }}</span>
+        <!-- DYNAMIC COMBINED HEADER -->
+        <div class="sticky top-0 z-40 mb-6">
+          <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-blue-200 shadow-lg backdrop-blur-sm">
+            <!-- Left side - Logo and Title -->
+            <div class="flex items-center min-w-0">
+              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h1 class="text-xl font-bold text-white truncate">Buyer Dashboard</h1>
+                <p class="text-blue-100 text-sm opacity-90 truncate">Browse livestock and manage your purchases</p>
+              </div>
             </div>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-              </svg>
-            </button>
+
+            <!-- Right side - Last updated and refresh button -->
+            <div class="flex items-center space-x-4">
+              <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
+                <span class="opacity-90">Last updated:</span>
+                <span class="font-medium ml-1">{{ new Date().toLocaleString() }}</span>
+              </div>
+              <button
+                class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg shadow-sm transition-colors backdrop-blur-md border border-white/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                    clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <!-- Watchlist Card -->
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
+          <!-- Total Orders Card -->
+          <div
+            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Watchlist</p>
-                <p class="text-xl font-bold text-gray-900 mt-1">7</p>
-                <div class="mt-2">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                    2 new updates
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Orders</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">8</p>
+                <div class="mt-2 flex items-center text-xs text-gray-500">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <svg class="-ml-0.5 mr-0.5 h-3 w-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    12%
                   </span>
+                  <span class="ml-1">from last month</span>
                 </div>
               </div>
               <div class="p-2.5 rounded-lg bg-blue-100 text-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <!-- Recent Purchases Card -->
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
+          <!-- Pending Orders Card -->
+          <div
+            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Recent Purchases</p>
-                <p class="text-xl font-bold text-gray-900 mt-1">3</p>
-                <div class="mt-2 flex items-center text-xs text-gray-500">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                    <svg class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                    </svg>
-                    1 this month
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Orders</p>
+                <p class="text-xl font-bold text-gray-900 mt-1">2</p>
+                <div class="mt-2">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Awaiting shipment
                   </span>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-green-100 text-green-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6a2 2 0 002 2h4a2 2 0 002-2v-6a2 2 0 00-2-2H10a2 2 0 00-2 2z" />
+              <div class="p-2.5 rounded-lg bg-yellow-100 text-yellow-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </div>
 
           <!-- Total Spent Card -->
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
+          <div
+            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</p>
-                <p class="text-xl font-bold text-gray-900 mt-1">₱95,000</p>
-                <div class="mt-2">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                    All time
+                <p class="text-xl font-bold text-gray-900 mt-1">₱96,500</p>
+                <div class="mt-2 flex items-center text-xs text-gray-500">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                    <svg class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    5%
                   </span>
+                  <span class="ml-1">savings vs last month</span>
                 </div>
               </div>
               <div class="p-2.5 rounded-lg bg-purple-100 text-purple-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </div>
 
-          <!-- Saved Searches Card -->
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
+          <!-- Messages Card -->
+          <div
+            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Saved Searches</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</p>
                 <p class="text-xl font-bold text-gray-900 mt-1">5</p>
                 <div class="mt-2">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                    3 active alerts
-                  </span>
-                </div>
-              </div>
-              <div class="p-2.5 rounded-lg bg-orange-100 text-orange-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Forum Activity Card -->
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Forum Posts</p>
-                <p class="text-xl font-bold text-gray-900 mt-1">12</p>
-                <div class="mt-2">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
-                    Expert Level
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                    2 unread
                   </span>
                 </div>
               </div>
               <div class="p-2.5 rounded-lg bg-indigo-100 text-indigo-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Buyer Rating Card -->
+          <div
+            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-5 transition-all hover:shadow-2xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Buyer Rating</p>
+                <div class="flex items-center mt-1">
+                  <span class="text-xl font-bold text-gray-900">4.9</span>
+                  <div class="flex ml-2">
+                    <svg v-for="i in 5" :key="i" class="h-4 w-4 text-yellow-400" fill="currentColor"
+                      viewBox="0 0 20 20">
+                      <path
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.540 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                    18 reviews
+                  </span>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-pink-100 text-pink-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
               </div>
             </div>
@@ -161,216 +213,140 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left Column -->
           <div class="lg:col-span-2 space-y-6">
-            <!-- Featured Livestock Section -->
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+            <!-- Recent Purchases Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h3 class="text-lg font-semibold text-white">Featured Livestock</h3>
-                    <p class="mt-1 text-xs text-blue-100">Premium listings from verified farmers</p>
+                    <h3 class="text-lg font-semibold text-white">Your Recent Purchases</h3>
+                    <p class="mt-1 text-xs text-blue-100">Track your livestock purchases</p>
                   </div>
-                  <router-link to="/marketplace" class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
-                    Browse All
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <router-link to="/myPurchases"
+                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </router-link>
+                </div>
+              </div>
+              <div class="relative">
+                <div class="max-h-64 overflow-y-auto">
+                  <table class="w-full">
+                    <thead class="bg-gray-50/80 sticky top-0 z-10">
+                      <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200/50">
+                      <tr v-for="(order, index) in ordersData.slice(0, 5)" :key="index" class="hover:bg-gray-50/80 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {{ order.id }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="flex items-center">
+                            <div class="h-10 w-10 flex-shrink-0">
+                              <img class="h-10 w-10 rounded-full object-cover" :src="order.image" :alt="order.livestock" />
+                            </div>
+                            <div class="ml-4">
+                              <div class="text-sm font-medium text-gray-900">{{ order.livestock }}</div>
+                              <div class="text-xs text-gray-500">{{ order.type }}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {{ order.seller }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                          {{ order.amount }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {{ order.date }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span :class="`px-2 py-1 text-xs font-medium rounded-full ${order.statusClass}`">
+                            {{ order.status }}
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                          <button 
+                            class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-full transition-all duration-200"
+                            title="View Details">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Saved Livestock Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Your Saved Livestock</h3>
+                    <p class="mt-1 text-xs text-blue-100">Livestock you're interested in</p>
+                  </div>
+                  <router-link to="/saved"
+                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </router-link>
                 </div>
               </div>
               <div class="p-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <!-- Premium Cattle -->
-                  <div class="group relative rounded-xl border border-gray-200/50 bg-white overflow-hidden hover:shadow-lg transition-all">
-                    <div class="relative h-32">
-                      <img
-                        src="https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-                        alt="Premium Cattle"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div class="absolute top-2 left-2">
-                        <span class="px-1.5 py-0.5 text-xs font-bold rounded-full shadow-sm bg-yellow-100 text-yellow-800">
-                          ⭐ Featured
-                        </span>
-                      </div>
-                      <div class="absolute top-2 right-2">
-                        <button class="p-1 bg-white/80 rounded-full hover:bg-white transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div v-for="(item, index) in savedLivestockData" :key="index" 
+                    class="bg-gray-50 rounded-lg p-4 flex items-center hover:shadow-md transition-shadow">
+                    <img :src="item.image" :alt="item.name" class="h-12 w-12 rounded-full object-cover">
+                    <div class="ml-3 flex-1">
+                      <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
+                      <p class="text-xs text-gray-500">{{ item.type }}</p>
+                      <p class="text-sm font-semibold text-blue-600 mt-1">{{ item.price }}</p>
+                      <div class="flex items-center mt-1">
+                        <span class="text-xs text-gray-500">From: {{ item.seller }}</span>
                       </div>
                     </div>
-                    <div class="p-4">
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <h3 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            Premium Angus Cattle
-                          </h3>
-                          <p class="text-xs text-blue-600 font-medium">Angus • 2.5 years old</p>
-                          <p class="text-xs text-gray-500 mt-1">by Santos Farm</p>
-                        </div>
-                        <p class="text-sm font-bold text-gray-900">₱48,000</p>
-                      </div>
-                      <div class="mt-3 flex justify-between items-center">
-                        <div class="flex items-center text-xs text-gray-500">
-                          <svg class="flex-shrink-0 mr-1 h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          Batangas
-                        </div>
-                        <router-link
-                          to="/livestock/1"
-                          class="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          View Details
-                        </router-link>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quality Pig -->
-                  <div class="group relative rounded-xl border border-gray-200/50 bg-white overflow-hidden hover:shadow-lg transition-all">
-                    <div class="relative h-32">
-                      <img
-                        src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-                        alt="Quality Pig"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div class="absolute top-2 right-2">
-                        <button class="p-1 bg-white/80 rounded-full hover:bg-white transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <h3 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            Large White Pig
-                          </h3>
-                          <p class="text-xs text-blue-600 font-medium">Large White • 8 months</p>
-                          <p class="text-xs text-gray-500 mt-1">by Cruz Farm</p>
-                        </div>
-                        <p class="text-sm font-bold text-gray-900">₱13,500</p>
-                      </div>
-                      <div class="mt-3 flex justify-between items-center">
-                        <div class="flex items-center text-xs text-gray-500">
-                          <svg class="flex-shrink-0 mr-1 h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          Laguna
-                        </div>
-                        <router-link
-                          to="/livestock/2"
-                          class="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          View Details
-                        </router-link>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Healthy Goat -->
-                  <div class="group relative rounded-xl border border-gray-200/50 bg-white overflow-hidden hover:shadow-lg transition-all">
-                    <div class="relative h-32">
-                      <img
-                        src="https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-                        alt="Healthy Goat"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div class="absolute top-2 right-2">
-                        <button class="p-1 bg-white/80 rounded-full hover:bg-white transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="p-4">
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <h3 class="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            Boer Goat
-                          </h3>
-                          <p class="text-xs text-blue-600 font-medium">Boer • 1.5 years old</p>
-                          <p class="text-xs text-gray-500 mt-1">by Reyes Farm</p>
-                        </div>
-                        <p class="text-sm font-bold text-gray-900">₱9,200</p>
-                      </div>
-                      <div class="mt-3 flex justify-between items-center">
-                        <div class="flex items-center text-xs text-gray-500">
-                          <svg class="flex-shrink-0 mr-1 h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          Cavite
-                        </div>
-                        <router-link
-                          to="/livestock/3"
-                          class="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          View Details
-                        </router-link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Market Insights Section -->
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Market Insights & Trends</h3>
-                    <p class="mt-1 text-xs text-blue-100">Price trends and market analysis</p>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button class="text-xs px-2 py-1 bg-white/20 text-white rounded hover:bg-white/30 transition-colors">
-                      Weekly
-                    </button>
-                    <button class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors">
-                      Monthly
+                    <button @click="removeFromSaved(item.id)" 
+                      class="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      title="Remove from saved">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
                 </div>
-              </div>
-              <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">Price Trends</h4>
-                    <div class="h-64">
-                      <canvas ref="priceChart"></canvas>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">Available Livestock</h4>
-                    <div class="h-64">
-                      <canvas ref="availabilityChart"></canvas>
-                    </div>
-                  </div>
+                <div v-if="savedLivestockData.length === 0" class="text-center py-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <p class="mt-2 text-sm text-gray-600">No saved livestock yet</p>
+                  <router-link to="/marketplace" class="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    Browse livestock to save items
+                  </router-link>
                 </div>
-                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">Avg. Market Price</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">₱18,500</p>
-                    <p class="text-xs text-green-600 mt-1">+5% from last week</p>
-                  </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">Active Listings</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">847</p>
-                    <p class="text-xs text-blue-600 mt-1">+12% from last week</p>
-                  </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">New This Week</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">156</p>
-                    <p class="text-xs text-purple-600 mt-1">Fresh listings</p>
-                  </div>
+                <div v-else class="mt-4 text-center">
+                  <router-link to="/marketplace" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                    + Browse more livestock
+                  </router-link>
                 </div>
               </div>
             </div>
@@ -378,217 +354,184 @@
 
           <!-- Right Column -->
           <div class="space-y-6">
-            <!-- Watchlist Section -->
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Your Watchlist</h3>
-                    <p class="mt-1 text-xs text-blue-100">Items you're following</p>
-                  </div>
-                  <router-link to="/watchlist" class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
-                    View All
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </router-link>
-                </div>
-              </div>
-              <div class="divide-y divide-gray-200/50">
-                <ul class="divide-y divide-gray-200/50">
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-center">
-                      <img class="h-12 w-12 rounded-lg object-cover" src="https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Cattle" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Angus Cattle</h4>
-                          <span class="text-xs text-green-600 font-medium">Price dropped</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1">₱45,000 → ₱42,000</p>
-                        <div class="mt-2 flex space-x-2">
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            View
-                          </button>
-                          <button class="text-xs font-medium text-red-600 hover:text-red-700">
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-center">
-                      <img class="h-12 w-12 rounded-lg object-cover" src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Pig" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Large White Pig</h4>
-                          <span class="text-xs text-blue-600 font-medium">New photos</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1">₱12,500</p>
-                        <div class="mt-2 flex space-x-2">
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            View
-                          </button>
-                          <button class="text-xs font-medium text-red-600 hover:text-red-700">
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-center">
-                      <img class="h-12 w-12 rounded-lg object-cover" src="https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Goat" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Boer Goat</h4>
-                          <span class="text-xs text-gray-500 font-medium">No updates</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1">₱8,800</p>
-                        <div class="mt-2 flex space-x-2">
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            View
-                          </button>
-                          <button class="text-xs font-medium text-red-600 hover:text-red-700">
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Recent Forum Activity Section -->
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Forum Activity</h3>
-                    <p class="mt-1 text-xs text-blue-100">Latest discussions and updates</p>
-                  </div>
-                  <router-link to="/forum" class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
-                    Join Forum
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </router-link>
-                </div>
-              </div>
-              <div class="divide-y divide-gray-200/50">
-                <ul class="divide-y divide-gray-200/50">
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-start">
-                      <img class="h-8 w-8 rounded-full" src="https://randomuser.me/api/portraits/men/45.jpg" alt="Expert" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Dr. Garcia</h4>
-                          <span class="text-xs text-gray-500">2 hours ago</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">
-                          "Tips for selecting healthy cattle: Look for clear eyes, good body condition..."
-                        </p>
-                        <div class="mt-2 flex items-center space-x-4">
-                          <span class="text-xs text-gray-500">🔥 Hot Topic</span>
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            Read More
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-start">
-                      <img class="h-8 w-8 rounded-full" src="https://randomuser.me/api/portraits/women/32.jpg" alt="Farmer" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Maria Santos</h4>
-                          <span class="text-xs text-gray-500">5 hours ago</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">
-                          "Question about pig vaccination schedules for first-time buyers..."
-                        </p>
-                        <div class="mt-2 flex items-center space-x-4">
-                          <span class="text-xs text-gray-500">❓ Q&A</span>
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            Answer
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                    <div class="flex items-start">
-                      <img class="h-8 w-8 rounded-full" src="https://randomuser.me/api/portraits/men/28.jpg" alt="Buyer" />
-                      <div class="ml-3 flex-1">
-                        <div class="flex items-center justify-between">
-                          <h4 class="text-sm font-medium text-gray-900">Juan Reyes</h4>
-                          <span class="text-xs text-gray-500">1 day ago</span>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">
-                          "Great experience buying from Verde Farm! Highly recommend their goats..."
-                        </p>
-                        <div class="mt-2 flex items-center space-x-4">
-                          <span class="text-xs text-gray-500">⭐ Review</span>
-                          <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
-                            Read Review
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
             <!-- Quick Actions Section -->
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
               <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
                 <h3 class="text-lg font-semibold text-white">Quick Actions</h3>
-                <p class="mt-1 text-xs text-blue-100">Essential tools at your fingertips</p>
+                <p class="mt-1 text-xs text-blue-100">Manage your buyer account</p>
               </div>
               <div class="p-6">
                 <div class="grid grid-cols-2 gap-4">
-                  <router-link to="/marketplace" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                    <div class="p-2 bg-blue-100 rounded-full text-blue-600 mb-2">
+                  <router-link to="/marketplace" class="bg-blue-50 hover:bg-blue-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-blue-100 text-blue-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 text-center">Browse Market</span>
+                    <p class="text-xs font-medium text-gray-700 mt-2">Browse Livestock</p>
                   </router-link>
-                  
-                  <router-link to="/search" class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-                    <div class="p-2 bg-purple-100 rounded-full text-purple-600 mb-2">
+
+                  <router-link to="/myPurchases" class="bg-indigo-50 hover:bg-indigo-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-indigo-100 text-indigo-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                       </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 text-center">Advanced Search</span>
+                    <p class="text-xs font-medium text-gray-700 mt-2">My Purchases</p>
                   </router-link>
-                  
-                  <router-link to="/forum" class="flex flex-col items-center justify-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                    <div class="p-2 bg-green-100 rounded-full text-green-600 mb-2">
+
+                  <router-link to="/messages" class="bg-purple-50 hover:bg-purple-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-purple-100 text-purple-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                       </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 text-center">Join Discussion</span>
+                    <p class="text-xs font-medium text-gray-700 mt-2">Messages</p>
                   </router-link>
-                  
-                  <router-link to="/profile" class="flex flex-col items-center justify-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                    <div class="p-2 bg-orange-100 rounded-full text-orange-600 mb-2">
+
+                  <router-link to="/saved" class="bg-pink-50 hover:bg-pink-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-pink-100 text-pink-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 text-center">My Profile</span>
+                    <p class="text-xs font-medium text-gray-700 mt-2">Saved Items</p>
                   </router-link>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Messages Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Recent Messages</h3>
+                    <p class="mt-1 text-xs text-blue-100">Communications with sellers</p>
+                  </div>
+                  <router-link to="/messages"
+                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </router-link>
+                </div>
+              </div>
+              <div class="divide-y divide-gray-200/50">
+                <div>
+                  <ul class="divide-y divide-gray-200/50">
+                    <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
+                      <div class="flex items-start">
+                        <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                          alt="Farm Fresh" />
+                        <div class="ml-3 flex-1">
+                          <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium text-gray-900">Farm Fresh</h4>
+                            <span class="text-xs text-gray-500">2 hours ago</span>
+                          </div>
+                          <p class="text-xs text-gray-600 mt-1 truncate">
+                            Your order #ORD-2871 has been shipped and is on its way!
+                          </p>
+                          <div class="mt-2 flex space-x-2">
+                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                              Reply
+                            </button>
+                            <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
+                              Track Order
+                            </button>
+                          </div>
+                        </div>
+                        <span class="ml-2 flex-shrink-0">
+                          <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                        </span>
+                      </div>
+                    </li>
+
+                    <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
+                      <div class="flex items-start">
+                        <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                          alt="Green Pastures" />
+                        <div class="ml-3 flex-1">
+                          <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium text-gray-900">Green Pastures</h4>
+                            <span class="text-xs text-gray-500">1 day ago</span>
+                          </div>
+                          <p class="text-xs text-gray-600 mt-1 truncate">
+                            We have new Angus cattle available. Would you like to schedule a visit?
+                          </p>
+                          <div class="mt-2 flex space-x-2">
+                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                              Reply
+                            </button>
+                            <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
+                              View Listing
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+
+                    <li class="px-6 py-4 hover:bg-gray-50/50 transition-colors">
+                      <div class="flex items-start">
+                        <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                          alt="Livestock Direct" />
+                        <div class="ml-3 flex-1">
+                          <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium text-gray-900">Livestock Direct</h4>
+                            <span class="text-xs text-gray-500">2 days ago</span>
+                          </div>
+                          <p class="text-xs text-gray-600 mt-1 truncate">
+                            Thank you for your review! We're glad you're happy with your purchase.
+                          </p>
+                          <div class="mt-2 flex space-x-2">
+                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                              Reply
+                            </button>
+                            <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
+                              View Order
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recommended Livestock Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+                <h3 class="text-lg font-semibold text-white">Recommended for You</h3>
+                <p class="mt-1 text-xs text-blue-100">Based on your browsing history</p>
+              </div>
+              <div class="p-6">
+                <div class="space-y-4">
+                  <div v-for="(item, index) in recommendedData.slice(0, 3)" :key="index" class="flex items-center">
+                    <img :src="item.image" :alt="item.name" class="h-12 w-12 rounded-lg object-cover">
+                    <div class="ml-3 flex-1">
+                      <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
+                      <p class="text-xs text-gray-500">{{ item.type }}</p>
+                      <p class="text-sm font-semibold text-blue-600 mt-1">{{ item.price }}</p>
+                    </div>
+                    <button @click="saveLivestock(item)" 
+                      class="text-blue-600 hover:text-blue-800 text-xs font-medium p-1"
+                      title="Save this item">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-4 text-center">
+                  <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                    See more recommendations
+                  </button>
                 </div>
               </div>
             </div>
@@ -600,182 +543,166 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref } from 'vue'
 import NavBar from '../../components/NavBar.vue'
-import { Chart, registerables } from 'chart.js'
 
-const priceChart = ref<Chart | null>(null)
-const availabilityChart = ref<Chart | null>(null)
-const priceChartRef = ref<HTMLCanvasElement | null>(null)
-const availabilityChartRef = ref<HTMLCanvasElement | null>(null)
-
-const initPriceChart = () => {
-  if (!priceChartRef.value) return
-
-  const ctx = priceChartRef.value.getContext('2d')
-  if (!ctx) return
-
-  priceChart.value = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-      datasets: [
-        {
-          label: 'Cattle',
-          data: [42000, 45000, 43000, 47000, 46000, 48000, 45000],
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.05)',
-          fill: false,
-          tension: 0.3,
-          borderWidth: 2,
-          pointBackgroundColor: '#3B82F6',
-          pointRadius: 2
-        },
-        {
-          label: 'Pigs',
-          data: [12000, 13000, 12500, 14000, 13500, 13800, 13500],
-          borderColor: '#10B981',
-          backgroundColor: 'rgba(16, 185, 129, 0.05)',
-          fill: false,
-          tension: 0.3,
-          borderWidth: 2,
-          pointBackgroundColor: '#10B981',
-          pointRadius: 2
-        },
-        {
-          label: 'Goats',
-          data: [8000, 8500, 8200, 9000, 8800, 9200, 8800],
-          borderColor: '#F59E0B',
-          backgroundColor: 'rgba(245, 158, 11, 0.05)',
-          fill: false,
-          tension: 0.3,
-          borderWidth: 2,
-          pointBackgroundColor: '#F59E0B',
-          pointRadius: 2
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            boxWidth: 10,
-            padding: 12,
-            usePointStyle: true,
-            pointStyle: 'circle',
-            font: {
-              size: 10
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return context.dataset.label + ': ₱' + (context.raw as number).toLocaleString()
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            font: {
-              size: 10
-            }
-          }
-        },
-        y: {
-          beginAtZero: false,
-          ticks: {
-            callback: function(value) {
-              if (typeof value === 'number' && value >= 1000) {
-                return '₱' + (value / 1000).toFixed(0) + 'k'
-              }
-              return '₱' + value
-            },
-            font: {
-              size: 10
-            }
-          },
-        }
-      }
-    }
-  })
+interface SavedLivestock {
+  id: number
+  name: string
+  type: string
+  seller: string
+  price: string
+  image: string
 }
 
-const initAvailabilityChart = () => {
-  if (!availabilityChartRef.value) return
+// Orders data for the table
+const ordersData = ref([
+  {
+    id: 'ORD-2871',
+    livestock: 'Cattle',
+    type: 'Angus',
+    seller: 'Farm Fresh',
+    amount: '₱45,000',
+    date: 'Today',
+    status: 'Shipped',
+    statusClass: 'bg-blue-100 text-blue-800',
+    image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 'ORD-2870',
+    livestock: 'Pigs',
+    type: 'Large White',
+    seller: 'Green Pastures',
+    amount: '₱24,000',
+    date: 'Yesterday',
+    status: 'Delivered',
+    statusClass: 'bg-green-100 text-green-800',
+    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 'ORD-2869',
+    livestock: 'Goats',
+    type: 'Boer',
+    seller: 'Livestock Direct',
+    amount: '₱17,000',
+    date: '2 days ago',
+    status: 'Processing',
+    statusClass: 'bg-yellow-100 text-yellow-800',
+    image: 'https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 'ORD-2868',
+    livestock: 'Sheep',
+    type: 'Dorper',
+    seller: 'Prime Stock',
+    amount: '₱19,600',
+    date: '3 days ago',
+    status: 'Cancelled',
+    statusClass: 'bg-red-100 text-red-800',
+    image: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 'ORD-2867',
+    livestock: 'Poultry',
+    type: 'Native Chicken',
+    seller: 'Farm Fresh',
+    amount: '₱8,750',
+    date: '4 days ago',
+    status: 'Delivered',
+    statusClass: 'bg-green-100 text-green-800',
+    image: 'https://images.unsplash.com/photo-1589923188937-cb64779f4abe?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  }
+])
 
-  const ctx = availabilityChartRef.value.getContext('2d')
-  if (!ctx) return
+// Saved livestock data
+const savedLivestockData = ref<SavedLivestock[]>([
+  {
+    id: 1,
+    name: 'Cattle',
+    type: 'Hereford',
+    seller: 'Green Pastures',
+    price: '₱42,000',
+    image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 2,
+    name: 'Pig',
+    type: 'Duroc',
+    seller: 'Prime Stock',
+    price: '₱11,500',
+    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 3,
+    name: 'Goat',
+    type: 'Saanen',
+    seller: 'Livestock Direct',
+    price: '₱9,200',
+    image: 'https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 4,
+    name: 'Sheep',
+    type: 'Merino',
+    seller: 'Farm Fresh',
+    price: '₱10,500',
+    image: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  }
+])
 
-  availabilityChart.value = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
-      datasets: [
-        {
-          label: 'Available',
-          data: [234, 156, 198, 87, 445],
-          backgroundColor: [
-            '#3B82F6',
-            '#10B981',
-            '#F59E0B',
-            '#8B5CF6',
-            '#EC4899'
-          ],
-          borderRadius: 4,
-          borderWidth: 0
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            font: {
-              size: 10
-            }
-          }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            precision: 0,
-            font: {
-              size: 10
-            }
-          },
-        }
-      }
-    }
-  })
+// Recommended livestock data
+const recommendedData = ref([
+  {
+    id: 5,
+    name: 'Cattle',
+    type: 'Simmental',
+    seller: 'Prime Stock',
+    price: '₱47,500',
+    image: 'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 6,
+    name: 'Pig',
+    type: 'Berkshire',
+    seller: 'Green Pastures',
+    price: '₱13,000',
+    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  },
+  {
+    id: 7,
+    name: 'Goat',
+    type: 'Nubian',
+    seller: 'Farm Fresh',
+    price: '₱8,800',
+    image: 'https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  }
+])
+
+// Function to remove an item from saved livestock
+const removeFromSaved = (id: number) => {
+  const index = savedLivestockData.value.findIndex(item => item.id === id)
+  if (index !== -1) {
+    savedLivestockData.value.splice(index, 1)
+  }
 }
 
-onMounted(() => {
-  Chart.register(...registerables)
-  initPriceChart()
-  initAvailabilityChart()
-})
-
-onBeforeUnmount(() => {
-  if (priceChart.value) priceChart.value.destroy()
-  if (availabilityChart.value) availabilityChart.value.destroy()
-})
+// Function to save a livestock item
+const saveLivestock = (item: any) => {
+  // Check if already saved
+  if (!savedLivestockData.value.some(savedItem => savedItem.id === item.id)) {
+    savedLivestockData.value.push({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      seller: item.seller,
+      price: item.price,
+      image: item.image
+    })
+    
+    // Show some feedback that item was saved
+    alert(`${item.name} (${item.type}) has been saved to your list!`)
+  } else {
+    alert('This item is already in your saved list.')
+  }
+}
 </script>

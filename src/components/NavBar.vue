@@ -130,7 +130,7 @@
               class="underline absolute -bottom-1 left-0 w-full h-0.5 bg-green-600 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
           </router-link>
         </li>
-        
+
         <!-- Show My Purchases only for buyers in main navbar -->
         <li v-if="user.role.toLowerCase() === 'buyer'">
           <router-link to="/myPurchases"
@@ -139,8 +139,7 @@
             <div class="flex items-center gap-1.5 px-1 py-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="2.3">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               <span>My Purchases</span>
             </div>
@@ -148,7 +147,7 @@
               class="underline absolute -bottom-1 left-0 w-full h-0.5 bg-green-600 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
           </router-link>
         </li>
-        
+
         <li>
           <router-link to="/dashboard"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -172,10 +171,28 @@
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Notification and Message Icons (only shown when logged in) -->
       <template v-if="user">
+        <!-- Cart Button -->
+        <div class="relative">
+          <router-link to="/carts"
+            class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 flex items-center justify-center cursor-pointer">
+            <div class="w-5 h-5 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-gray-500 group-hover:text-green-600 group-hover:scale-110 transition-all duration-200"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l-2.5-5m0 0l-.5-3H2m8 14a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z" />
+              </svg>
+              <span
+                class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
+                3
+              </span>
+            </div>
+          </router-link>
+        </div>
         <!-- Notification Dropdown -->
         <div class="relative" ref="notificationRef">
           <button @click="toggleNotificationDropdown"
-            class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200">
+            class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 cursor-pointer">
             <div class="w-5 h-5 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5 text-gray-500 group-hover:text-green-600 group-hover:scale-110 transition-all duration-200"
@@ -313,7 +330,7 @@
         <!-- Messages Dropdown -->
         <div class="relative" ref="messageRef">
           <button @click="toggleMessageDropdown"
-            class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200">
+            class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 cursor-pointer">
             <div class="w-5 h-5 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5 text-gray-500 group-hover:text-green-600 group-hover:scale-110 transition-all duration-200"
@@ -543,7 +560,7 @@
                 </div>
                 <span class="font-medium">Transactions</span>
               </router-link>
-              
+
               <!-- Show My Purchases only for buyers in dropdown -->
               <router-link v-if="user.role.toLowerCase() === 'buyer'" to="/myPurchases"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"

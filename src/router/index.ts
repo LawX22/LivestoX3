@@ -21,6 +21,8 @@ import Notifications from '../views/main/Notifications.vue';
 import upgradeForm from '../views/auth/upgradeForm.vue';
 import YourLivestock from '../views/main/yourLivestock.vue';
 import UserProfile from '../views/main/userProfile.vue';
+import Carts from '../views/main/Carts.vue';
+import CheckOut from '../views/main/checkOut.vue';
 
 
 // utility
@@ -50,6 +52,8 @@ const routes = [
   { path: '/notifications', component: Notifications, name: 'Notifications' },
   { path: '/yourLivestock', component: YourLivestock, name: 'YourLivestock' },
   { path: '/userProfile', component: UserProfile, name: 'UserProfile' },
+  { path: '/carts', component: Carts, name: 'Carts' },
+  { path: '/checkOut', component: CheckOut, name: 'CheckOut' },
 
   // Utility Routes
   { path: '/DesignSystemGuide', component: DesignSystemGuide, name: 'DesignSystemGuide' },
