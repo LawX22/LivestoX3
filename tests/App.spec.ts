@@ -8,8 +8,8 @@ describe('App.vue', () => {
   it('renders the landing page on default route', async () => {
     const { getByText } = render(App, {
       global: {
-        plugins: [router]
-      }
+        plugins: [router],
+      },
     })
     await router.isReady()
     expect(getByText('Find the Right Livestock for You')).toBeTruthy()
