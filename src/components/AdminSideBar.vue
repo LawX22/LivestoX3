@@ -2,16 +2,22 @@
 <template>
   <aside 
     :class="[
-      'min-h-screen bg-gradient-to-b from-white via-gray-50 to-white border-r border-gray-200 shadow-xl relative transition-all duration-300 ease-in-out flex flex-col',
+      'min-h-screen bg-gradient-to-b from-white via-gray-50 to-white border-r border-gray-200 shadow-xl relative transition-all duration-300 ease-in-out flex flex-col group',
       isMinimized ? 'w-20' : 'w-72'
     ]"
   >
     <!-- Header Section -->
     <div class="p-6 border-b border-gray-200 flex-shrink-0">
       <div class="flex items-center justify-between">
-        <!-- Logo -->
+        <!-- Logo (clickable when minimized) -->
         <div class="flex items-center min-w-0">
-          <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 via-emerald-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ring-2 ring-emerald-400/20">
+          <div 
+            :class="[
+              'w-10 h-10 bg-gradient-to-br from-emerald-400 via-emerald-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ring-2 ring-emerald-400/20 transition-all duration-200',
+              isMinimized ? 'cursor-pointer hover:scale-110 hover:shadow-xl hover:ring-4 hover:ring-emerald-400/30' : 'cursor-default'
+            ]"
+            @click="isMinimized ? toggleMinimize() : null"
+          >
             <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -26,19 +32,18 @@
           </div>
         </div>
         
-        <!-- Toggle Button -->
+        <!-- Hamburger Toggle Button (only visible when expanded) -->
         <button
+          v-if="!isMinimized"
           @click="toggleMinimize"
-          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 flex-shrink-0 group"
+          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 flex-shrink-0 group/toggle"
         >
-          <svg 
-            :class="['w-5 h-5 transition-transform duration-300 group-hover:scale-110', isMinimized ? 'rotate-180' : '']" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <!-- Hamburger Menu Icon -->
+          <div class="w-5 h-5 flex flex-col justify-center items-center space-y-1 group-hover/toggle:scale-110 transition-transform duration-300">
+            <div class="w-4 h-0.5 bg-current transition-all duration-300"></div>
+            <div class="w-4 h-0.5 bg-current transition-all duration-300"></div>
+            <div class="w-4 h-0.5 bg-current transition-all duration-300"></div>
+          </div>
         </button>
       </div>
     </div>
@@ -104,17 +109,6 @@
             <!-- Hover effect overlay -->
             <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-50/50 to-transparent opacity-0 group-hover/link:opacity-100 transition-opacity duration-200"></div>
           </router-link>
-
-          <!-- Tooltip for minimized state -->
-          <div 
-            v-if="isMinimized"
-            class="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-xl border border-gray-600"
-          >
-            <div class="font-medium">{{ item.label }}</div>
-            <div class="text-xs text-gray-300">{{ item.description }}</div>
-            <!-- Tooltip arrow -->
-            <div class="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-800"></div>
-          </div>
         </div>
       </nav>
 
@@ -143,17 +137,6 @@
           >
             Sign Out
           </span>
-          
-          <!-- Tooltip for logout when minimized -->
-          <div 
-            v-if="isMinimized"
-            class="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-xl border border-gray-600"
-          >
-            <div class="font-medium">Sign Out</div>
-            <div class="text-xs text-gray-300">Exit admin panel</div>
-            <!-- Tooltip arrow -->
-            <div class="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-800"></div>
-          </div>
           
           <!-- Hover effect overlay -->
           <div class="absolute inset-0 bg-gradient-to-r from-red-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>

@@ -1,3 +1,4 @@
+<!-- FarmerDashboard.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
     <!-- Sticky NavBar -->
@@ -33,22 +34,32 @@
       <div class="max-w-screen-2xl mx-auto px-8 pt-8 relative z-10">
         <!-- DYNAMIC COMBINED HEADER -->
         <div class="sticky top-0 z-40 mb-6">
-          <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
+          <div
+            class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
             <!-- Left side - Logo and Title -->
             <div class="flex items-center min-w-0">
-              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
+              <div
+                class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
                 <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.3" />
-                  <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
-                  <path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" fill="#fff" />
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                    opacity="0.3" />
+                  <path
+                    d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
+                  <path
+                    d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"
+                    fill="#fff" />
                   <path d="M9.5 8.5L8 7l1.5-1.5L11 7l-1.5 1.5zM15.5 8.5L14 7l1.5-1.5L17 7l-1.5 1.5z" />
-                  <path d="M16.5 10.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm-9 0c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z" fill="#4ade80" />
+                  <path
+                    d="M16.5 10.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm-9 0c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z"
+                    fill="#4ade80" />
                   <path d="M12 17c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2z" fill="#fff" />
                 </svg>
               </div>
               <div class="min-w-0">
                 <h1 class="text-xl font-bold text-white truncate">Farmer Dashboard</h1>
-                <p class="text-green-100 text-sm opacity-90 truncate">Manage your farm operations and livestock sales</p>
+                <p class="text-green-100 text-sm opacity-90 truncate">Manage your farm operations and livestock sales
+                </p>
               </div>
             </div>
 
@@ -220,10 +231,100 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left Column -->
           <div class="lg:col-span-2 space-y-6">
+
+            <!-- Revenue Trends Section - Simplified -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Revenue & Sales Performance</h3>
+                    <p class="mt-1 text-xs text-emerald-100">Your earnings at a glance</p>
+                  </div>
+                  <div class="flex space-x-2">
+                    <button class="text-xs px-2 py-1 bg-white/20 text-white rounded hover:bg-white/30 transition-colors"
+                      @click="setTimeRange('monthly')" :class="{ 'bg-white/30': timeRange === 'monthly' }">
+                      Monthly
+                    </button>
+                    <button class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors"
+                      @click="setTimeRange('quarterly')" :class="{ 'bg-white/30': timeRange === 'quarterly' }">
+                      Quarterly
+                    </button>
+                    <button class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors"
+                      @click="setTimeRange('yearly')" :class="{ 'bg-white/30': timeRange === 'yearly' }">
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Simplified Revenue Chart -->
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Earnings Overview</h4>
+                    <div class="h-64">
+                      <Chart type="bar" :data="simplifiedRevenueData" :options="simplifiedRevenueOptions" />
+                    </div>
+                  </div>
+
+                  <!-- Earnings Breakdown -->
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Earnings Breakdown</h4>
+                    <div class="space-y-4">
+                      <div v-for="(source, index) in earningsSources" :key="index"
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                          <div class="w-3 h-3 rounded-full mr-3" :class="source.color"></div>
+                          <span class="text-sm font-medium text-gray-700">{{ source.name }}</span>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-sm font-semibold text-gray-900">{{ source.amount }}</div>
+                          <div class="text-xs text-gray-500">{{ source.percentage }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Avg. Selling Price</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">₱15,417</p>
+                    <p class="text-xs text-gray-500 mt-1">+12% from last month</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Total Units Sold</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">24</p>
+                    <p class="text-xs text-gray-500 mt-1">+8% from last month</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Conversion Rate</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">18.5%</p>
+                    <p class="text-xs text-gray-500 mt-1">+3.2% from last month</p>
+                  </div>
+                </div>
+
+                <!-- View Full Details Button -->
+                <div class="mt-6 flex justify-center">
+                  <button @click="viewFullFinancialDetails"
+                    class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow-md hover:from-green-600 hover:to-emerald-700 transition-all duration-300 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    View Full Financial Details
+                  </button>
+                </div>
+              </div>
+            </div>
+            
             <!-- Recent Listings Section - Converted to Table with Sticky Header -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+              <div
+                class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-semibold text-white">Your Livestock Inventory</h3>
@@ -242,19 +343,27 @@
               <div class="relative">
                 <div class="max-h-64 overflow-y-auto">
                   <table class="w-full">
-                    <thead class="bg-gray-50/80 sticky top-0 z-10">
+                    <thead class="bg-white sticky top-0 z-10">
                       <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Livestock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions</th>
                       </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200/50">
-                      <tr v-for="(item, index) in livestockData.slice(0, 5)" :key="index" class="hover:bg-gray-50/80 transition-colors">
+                      <tr v-for="(item, index) in livestockData.slice(0, 5)" :key="index"
+                        class="hover:bg-gray-50/80 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
                             <div class="h-10 w-10 flex-shrink-0">
@@ -266,7 +375,8 @@
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <span class="px-2 py-1 text-xs font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">
+                          <span
+                            class="px-2 py-1 text-xs font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">
                             {{ item.type }}
                           </span>
                         </td>
@@ -285,12 +395,15 @@
                           {{ item.date }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                          <button 
+                          <button
                             class="text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 p-2 rounded-full transition-all duration-200"
                             title="View Details">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                              stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </button>
                         </td>
@@ -304,7 +417,8 @@
             <!-- Recent Transactions Section with Sticky Header -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+              <div
+                class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-semibold text-white">Recent Transactions</h3>
@@ -323,26 +437,35 @@
               <div class="relative">
                 <div class="max-h-64 overflow-y-auto">
                   <table class="w-full">
-                    <thead class="bg-gray-50/80 sticky top-0 z-10">
+                    <thead class="bg-white sticky top-0 z-10">
                       <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Buyer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Transaction ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Livestock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Buyer
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions</th>
                       </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200/50">
-                      <tr v-for="(transaction, index) in transactionsData.slice(0, 5)" :key="index" class="hover:bg-gray-50/80 transition-colors">
+                      <tr v-for="(transaction, index) in transactionsData.slice(0, 5)" :key="index"
+                        class="hover:bg-gray-50/80 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {{ transaction.id }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
                             <div class="h-10 w-10 flex-shrink-0">
-                              <img class="h-10 w-10 rounded-full object-cover" :src="transaction.image" :alt="transaction.livestock" />
+                              <img class="h-10 w-10 rounded-full object-cover" :src="transaction.image"
+                                :alt="transaction.livestock" />
                             </div>
                             <div class="ml-4">
                               <div class="text-sm font-medium text-gray-900">{{ transaction.livestock }}</div>
@@ -365,78 +488,21 @@
                           </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                          <button 
+                          <button
                             class="text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 p-2 rounded-full transition-all duration-200"
                             title="View Details">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                              stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </button>
                         </td>
                       </tr>
                     </tbody>
                   </table>
-                </div>
-              </div>
-            </div>
-
-            <!-- Revenue Trends Section -->
-            <div
-              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Revenue & Sales Performance</h3>
-                    <p class="mt-1 text-xs text-emerald-100">Your sales trends and projections</p>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button
-                      class="text-xs px-2 py-1 bg-white/20 text-white rounded hover:bg-white/30 transition-colors">
-                      Monthly
-                    </button>
-                    <button
-                      class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors">
-                      Quarterly
-                    </button>
-                    <button
-                      class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors">
-                      Yearly
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">Revenue Trends</h4>
-                    <div class="h-64">
-                      <Chart type="line" :data="revenueChartData" :options="revenueChartOptions" />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">Sales Volume</h4>
-                    <div class="h-64">
-                      <Chart type="bar" :data="salesChartData" :options="salesChartOptions" />
-                    </div>
-                  </div>
-                </div>
-                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">Avg. Selling Price</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">₱15,417</p>
-                    <p class="text-xs text-gray-500 mt-1">+12% from last month</p>
-                  </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">Total Units Sold</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">24</p>
-                    <p class="text-xs text-gray-500 mt-1">+8% from last month</p>
-                  </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-xs font-medium text-gray-500">Conversion Rate</p>
-                    <p class="text-lg font-bold text-gray-900 mt-1">18.5%</p>
-                    <p class="text-xs text-gray-500 mt-1">+3.2% from last month</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -631,6 +697,9 @@ import { ref } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import Chart from 'primevue/chart'
 
+// Time range state
+const timeRange = ref('monthly')
+
 // Livestock data for the table
 const livestockData = ref([
   {
@@ -649,7 +718,7 @@ const livestockData = ref([
     price: '₱12,000',
     status: 'Available',
     statusClass: 'bg-green-100 text-green-800',
-    stock: 8, 
+    stock: 8,
     date: '1 day ago',
     image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
   },
@@ -744,6 +813,91 @@ const transactionsData = ref([
   }
 ])
 
+// Simplified Revenue Data
+const simplifiedRevenueData = ref({
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+  datasets: [
+    {
+      label: 'Monthly Earnings',
+      data: [120000, 135000, 145000, 155000, 165000, 175000, 185000],
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      borderColor: '#10B981',
+      borderWidth: 0,
+      borderRadius: 6,
+    }
+  ]
+})
+
+const simplifiedRevenueOptions = ref({
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          return '₱' + context.raw.toLocaleString()
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false
+      },
+      ticks: {
+        font: {
+          size: 11
+        }
+      }
+    },
+    y: {
+      beginAtZero: false,
+      ticks: {
+        callback: function (value: any) {
+          return value >= 1000 ? `₱${(value / 1000).toFixed(0)}k` : `₱${value}`
+        },
+        font: {
+          size: 11
+        }
+      },
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)'
+      }
+    }
+  },
+  maintainAspectRatio: false
+})
+
+// Earnings Sources Data
+const earningsSources = ref([
+  {
+    name: 'Cattle Sales',
+    amount: '₱95,000',
+    percentage: '51.4%',
+    color: 'bg-green-500'
+  },
+  {
+    name: 'Pig Sales',
+    amount: '₱45,000',
+    percentage: '24.3%',
+    color: 'bg-blue-500'
+  },
+  {
+    name: 'Goat Sales',
+    amount: '₱28,000',
+    percentage: '15.1%',
+    color: 'bg-yellow-500'
+  },
+  {
+    name: 'Poultry Sales',
+    amount: '₱17,000',
+    percentage: '9.2%',
+    color: 'bg-purple-500'
+  }
+])
+
 // Livestock Distribution Chart (Doughnut)
 const livestockChartData = ref({
   labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
@@ -775,104 +929,14 @@ const livestockChartOptions = ref({
   maintainAspectRatio: false
 })
 
-// Revenue Trends Chart (Line)
-const revenueChartData = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-  datasets: [
-    {
-      label: 'Monthly Revenue',
-      data: [120000, 135000, 145000, 155000, 165000, 175000, 185000],
-      fill: true,
-      borderColor: '#10B981',
-      backgroundColor: 'rgba(16, 185, 129, 0.05)',
-      tension: 0.3,
-      pointBackgroundColor: '#10B981',
-      pointRadius: 3,
-      pointHoverRadius: 5
-    }
-  ]
-})
+// Functions
+const setTimeRange = (range: string) => {
+  timeRange.value = range
+  // Here you would typically update the chart data based on the selected time range
+}
 
-const revenueChartOptions = ref({
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return '₱' + context.raw.toLocaleString()
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: {
-        display: false
-      },
-      ticks: {
-        font: {
-          size: 10
-        }
-      }
-    },
-    y: {
-      beginAtZero: false,
-      ticks: {
-        callback: function(value: any) {
-          return value >= 1000 ? `₱${(value / 1000).toFixed(0)}k` : `₱${value}`
-        },
-        font: {
-          size: 10
-        }
-      }
-    }
-  },
-  maintainAspectRatio: false
-})
-
-// Sales Volume Chart (Bar)
-const salesChartData = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-  datasets: [
-    {
-      label: 'Units Sold',
-      data: [3, 4, 2, 5, 3, 4, 3],
-      backgroundColor: '#3B82F6',
-      borderRadius: 4,
-      borderWidth: 0
-    }
-  ]
-})
-
-const salesChartOptions = ref({
-  plugins: {
-    legend: {
-      display: false
-    }
-  },
-  scales: {
-    x: {
-      grid: {
-        display: false
-      },
-      ticks: {
-        font: {
-          size: 10
-        }
-      }
-    },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0,
-        font: {
-          size: 10
-        }
-      }
-    }
-  },
-  maintainAspectRatio: false
-})
+const viewFullFinancialDetails = () => {
+  // Navigate to detailed financial page or open modal
+  console.log('Navigating to full financial details...')
+}
 </script>
