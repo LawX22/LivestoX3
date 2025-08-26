@@ -1,28 +1,74 @@
+<!-- upgradeRequests.vue -->
 <template>
-  <div class="flex min-h-screen bg-gray-50">
-    <!-- Sidebar -->
-    <AdminSidebar />
+  <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
+    <!-- Floating Background Elements -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-20 left-10 w-16 h-16 bg-green-300 rounded-full opacity-30 animate-bounce"></div>
+      <div class="absolute top-32 right-16 w-12 h-12 bg-emerald-300 rounded-full opacity-40 animate-pulse"></div>
+      <div class="absolute bottom-24 left-24 w-20 h-20 bg-teal-300 rounded-full opacity-25 animate-ping"></div>
+      <div class="absolute top-1/2 right-8 w-10 h-10 bg-green-400 rounded-full opacity-35 animate-bounce"
+        style="animation-delay: 1s"></div>
+      <div class="absolute bottom-1/3 right-1/3 w-8 h-8 bg-emerald-400 rounded-full opacity-20 animate-pulse"
+        style="animation-delay: 0.5s"></div>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-auto">
-      <div class="p-6 max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-800">Upgrade Requests</h1>
-            <p class="text-gray-500 mt-1">Review and manage farmer upgrade applications</p>
-          </div>
-          <div class="mt-4 md:mt-0">
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500">Total: {{ filteredRequests.length }}</span>
-              <div class="h-4 w-px bg-gray-300"></div>
-              <span class="text-sm text-gray-500">Pending: {{ pendingCount }}</span>
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#059669" stroke-width="1.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+
+    <div class="flex min-h-screen relative z-10">
+      <!-- Sticky Sidebar Component -->
+      <div class="sticky top-0 h-screen">
+        <AdminSidebar />
+      </div>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-8 overflow-auto">
+        <!-- Enhanced Header Section -->
+        <div class="mb-6">
+          <div
+            class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-xl backdrop-blur-sm">
+            <!-- Left side - Logo and Title -->
+            <div class="flex items-center min-w-0">
+              <div
+                class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h1 class="text-2xl font-bold text-white truncate">Upgrade Requests</h1>
+                <p class="text-green-100 text-sm opacity-90 truncate">Review and manage farmer upgrade applications</p>
+              </div>
+            </div>
+
+            <!-- Right side - Stats -->
+            <div class="flex items-center space-x-4">
+              <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
+                <span class="opacity-90">Total: {{ filteredRequests.length }}</span>
+              </div>
+              <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
+                <span class="opacity-90">Pending: {{ pendingCount }}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Filters Card -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 mb-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Search -->
             <div class="relative">
@@ -45,7 +91,7 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search requests..."
-                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm bg-white/80"
               />
             </div>
 
@@ -53,7 +99,7 @@
             <div>
               <select
                 v-model="statusFilter"
-                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg"
+                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg bg-white/80"
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -66,7 +112,7 @@
             <div>
               <select
                 v-model="sortBy"
-                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg"
+                class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg bg-white/80"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -78,7 +124,7 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-gray-500">Total Requests</p>
@@ -97,7 +143,7 @@
             </div>
           </div>
 
-          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-gray-500">Pending Review</p>
@@ -116,7 +162,7 @@
             </div>
           </div>
 
-          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-gray-500">Approved Today</p>
@@ -137,10 +183,10 @@
         </div>
 
         <!-- Requests Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 overflow-hidden transition-all hover:shadow-2xl">
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200/50">
+              <thead class="bg-white/80 sticky top-0 z-10">
                 <tr>
                   <th
                     scope="col"
@@ -174,11 +220,11 @@
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-white/80 divide-y divide-gray-200/50">
                 <tr
                   v-for="request in paginatedRequests"
                   :key="request.userId"
-                  class="hover:bg-gray-50 transition-colors duration-150"
+                  class="hover:bg-gray-50/80 transition-colors duration-150"
                 >
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
@@ -259,7 +305,7 @@
                     <div class="flex justify-end space-x-2">
                       <button
                         @click="viewRequestDetails(request)"
-                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all"
                       >
                         Review
                       </button>
@@ -297,7 +343,7 @@
 
           <!-- Pagination -->
           <div
-            class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6"
+            class="bg-white/80 px-4 py-3 flex items-center justify-between border-t border-gray-200/50 sm:px-6"
           >
             <div class="flex-1 flex justify-between sm:hidden">
               <button
@@ -409,8 +455,8 @@
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
     <!-- Request Details Modal -->
     <UpgradeRequestModal
@@ -472,6 +518,7 @@ interface UserData {
   role?: string
   isVerified?: boolean
 }
+
 const upgradeRequests = ref<UpgradeRequest[]>([])
 const selectedRequest = ref<UpgradeRequest | null>(null)
 const showModal = ref(false)
