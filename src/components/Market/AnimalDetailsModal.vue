@@ -449,12 +449,6 @@ const props = defineProps<{
   animal: Animal;
 }>();
 
-// Emits
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'contact', contactInfo: string): void;
-}>();
-
 // User state
 const rawUser = getCurrentUser() as ServiceUser | null;
 const currentUser = rawUser
