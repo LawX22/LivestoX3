@@ -13,7 +13,7 @@
             </div>
             <div>
               <h3 class="font-bold">Contact Farmer</h3>
-              <p class="text-green-100 text-xs opacity-90">Send SMS message</p>
+              <p class="text-green-100 text-xs opacity-90">Send message</p>
             </div>
           </div>
           <button @click="$emit('close')" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
@@ -160,7 +160,7 @@
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            Send SMS
+            Send Message
           </button>
         </div>
       </div>
