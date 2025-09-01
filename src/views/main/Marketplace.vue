@@ -1067,28 +1067,6 @@ const getTypeBadgeClassForImage = (type: string) => {
   }
 };
 
-// Get type badge class based on animal type
-const getTypeBadgeClass = (type: string) => {
-  switch (type) {
-    case 'Cattle':
-      return 'bg-green-100 text-green-800';
-    case 'Pig':
-      return 'bg-pink-100 text-pink-800';
-    case 'Goat':
-      return 'bg-amber-100 text-amber-800';
-    case 'Chicken':
-      return 'bg-red-100 text-red-800';
-    case 'Buffalo':
-      return 'bg-blue-100 text-blue-800';
-    case 'Duck':
-      return 'bg-indigo-100 text-indigo-800';
-    case 'Sheep':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   return new Date(dateString).toLocaleDateString(undefined, options);
