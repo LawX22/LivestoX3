@@ -1026,11 +1026,6 @@ const isAuctionEnded = computed(() => {
   return new Date(props.animal.endTime).getTime() <= Date.now();
 });
 
-const auctionStatus = computed(() => {
-  if (isAuctionEnded.value) return 'Ended';
-  return 'Live Bidding';
-});
-
 const bidError = computed(() => {
   if (!bidAmount.value) return null;
   if (bidAmount.value < minimumBidAmount.value) {

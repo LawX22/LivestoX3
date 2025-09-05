@@ -907,23 +907,6 @@ const uniqueLocations = computed(() => {
   return Array.from(locations).sort();
 });
 
-const hasActiveFilters = computed(() => {
-  return filters.value.search !== '' || 
-    filters.value.types.length > 0 || 
-    filters.value.breeds.length > 0 || 
-    filters.value.locations.length > 0 || 
-    filters.value.priceRanges.length > 0 || 
-    filters.value.genders.length > 0 ||
-    // New auction filters
-    filters.value.auctionStatuses.length > 0 ||
-    filters.value.endTimeRanges.length > 0 ||
-    filters.value.bidCountMin !== null ||
-    filters.value.bidCountMax !== null ||
-    filters.value.startingBidRanges.length > 0 ||
-    filters.value.auctionDurations.length > 0 ||
-    filters.value.bidActivities.length > 0;
-});
-
 // Helper function to get auction status
 const getAuctionStatus = (animal: Animal): string => {
   if (!animal.isAuction || !animal.endTime) return 'Unknown';
@@ -1138,22 +1121,6 @@ const handleFiltersChanged = (newFilters: Filters) => {
   filters.value = { ...newFilters };
 };
 
-const handleLocationChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement;
-  const selectedLocation = target.value;
-  
-  if (selectedLocation && !filters.value.locations.includes(selectedLocation)) {
-    filters.value.locations.push(selectedLocation);
-  }
-  
-  // Reset dropdown to "All Locations"
-  target.value = '';
-};
-
-const removeLocation = (locationToRemove: string) => {
-  filters.value.locations = filters.value.locations.filter(location => location !== locationToRemove);
-};
-
 const showToastNotification = (message: string) => {
   toastMessage.value = message;
   showToast.value = true;
@@ -1265,29 +1232,6 @@ const getTypeBadgeClassForImage = (type: string) => {
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   return new Date(dateString).toLocaleDateString(undefined, options);
-};
-
-const formatPriceRange = (range: string) => {
-  switch (range) {
-    case '0-5000': return 'Below ₱5K';
-    case '5000-20000': return '₱5K - ₱20K';
-    case '20000-50000': return '₱20K - ₱50K';
-    case '50000-100000': return '₱50K - ₱100K';
-    case '100000+': return 'Above ₱100K';
-    default: return range;
-  }
-};
-
-const formatTimeRange = (range: string) => {
-  switch (range) {
-    case '0-1h': return 'Ending in 1 hour';
-    case '0-3h': return 'Ending in 3 hours';
-    case '0-6h': return 'Ending in 6 hours';
-    case '0-12h': return 'Ending in 12 hours';
-    case '0-24h': return 'Ending in 24 hours';
-    case '24h+': return 'More than 1 day';
-    default: return range;
-  }
 };
 
 const getTimeRemaining = (endTime?: string): string => {

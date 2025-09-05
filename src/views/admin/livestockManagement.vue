@@ -874,11 +874,6 @@ const viewListingDetails = (listing: LivestockListing): void => {
   showModal.value = true
 }
 
-const closeModal = (): void => {
-  showModal.value = false
-  selectedListing.value = null
-}
-
 const approveListing = (listing: LivestockListing): void => {
   if (confirm(`Review complete. Approve "${listing.title}" to make it live?`)) {
     updateListing({
