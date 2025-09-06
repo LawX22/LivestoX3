@@ -6,30 +6,43 @@
     </div>
 
     <!-- Section 1: Search / Login / Signup -->
-    <section class="bg-green-100 py-16 px-6 text-center">
-      <h1 class="text-3xl font-bold text-green-800 mb-4">Find the Right Livestock for You</h1>
-      <p class="text-gray-700 mb-6">Search for animals or create an account to get started.</p>
+   <section 
+  class="bg-[url(https://media.istockphoto.com/id/1141422847/photo/close-up-of-calves-on-animal-farm-eating-food-meat-industry-concept.jpg?s=612x612&w=0&k=20&c=arqh59aXH9bqUYAZR1ncWh5Jxc--NrMADhSzYhzIIIw=)] 
+  bg-cover bg-center h-[500px] py-16 px-6 text-center relative"
+>
+  <!-- Overlay for better text readability -->
+  <div class="absolute inset-0 bg-green-100/70"></div>
 
-      <div class="flex flex-col sm:flex-row justify-center items-center gap-4 max-w-xl mx-auto">
-        <input
-          type="text"
-          placeholder="Search livestock (e.g., bull, cow)"
-          class="w-full sm:w-2/3 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <button class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
-          Search
-        </button>
-      </div>
+  <!-- Content -->
+  <div class="relative z-10">
+    <h1 class="text-5xl font-bold text-green-800 mb-6 pt-20">
+      Find the Right Livestock for You
+    </h1>
+    <p class="text-gray-700 mb-8">
+      Search for animals or create an account to get started.
+    </p>
 
-      <div class="mt-6 flex justify-center gap-4">
-        <button class="border border-green-600 text-green-600 px-5 py-2 rounded hover:bg-green-50 transition">
-          Sign In
-        </button>
-        <button class="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition">
-          Sign Up
-        </button>
-      </div>
-    </section>
+    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 max-w-2xl mx-auto">
+      <input
+        type="text"
+        placeholder="Search livestock (e.g., bull, cow)"
+        class="w-full sm:w-2/3 px-6 py-3 bg-white border-1 border-gray-500 rounded-full shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300 text-lg transition" 
+      />
+      <button class="bg-green-600 text-white px-8 py-3 rounded hover:bg-green-700 transition text-lg">
+        Search
+      </button>
+    </div>
+
+    <div class="mt-8 flex justify-center gap-6">
+      <button class="border border-green-600 text-white px-6 py-3 rounded hover:bg-green-50 duration-300 transition text-lg hover:text-green-600">
+        Sign In
+      </button>
+      <button class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition text-lg">
+        Sign Up
+      </button>
+    </div>
+  </div>
+</section>
 
     <!-- Section 2: Best Selling Animals -->
     <section class="py-16 px-6 bg-white">
