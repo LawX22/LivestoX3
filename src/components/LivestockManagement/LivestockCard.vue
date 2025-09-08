@@ -387,7 +387,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue';
+import { defineProps } from 'vue';
 
 interface Farmer {
   id: number;

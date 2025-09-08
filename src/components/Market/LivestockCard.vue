@@ -282,11 +282,6 @@ const props = defineProps<{
 const isSidebarExpanded = props.isSidebarExpanded ?? false;
 const weightUnit = props.weightUnit ?? 'kg';
 
-// Emits
-const emit = defineEmits<{
-  openModal: [animal: Animal];
-  openContactModal: [animal: Animal];
-}>();
 
 // Methods
 const getStatusClass = (status: string) => {
