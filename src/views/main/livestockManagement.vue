@@ -1,4 +1,4 @@
-<!-- Marketplace.vue -->
+<!-- yourLivestock.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -7,19 +7,30 @@
       <div class="absolute bottom-24 right-24 w-16 h-16 bg-teal-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
       <div class="absolute top-1/2 right-8 w-6 h-6 bg-green-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
     </div>
-
-    <!-- NavBar -->
-    <div class="sticky top-0 z-50">
-      <NavBar />
-    </div>
-
+    
     <!-- DYNAMIC COMBINED HEADER -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
       <div
         class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm"
       >
-        <!-- Left side - Logo and Title -->
+        <!-- Left side - Return Button + Logo and Title -->
         <div class="flex items-center min-w-0">
+          <!-- Return Button -->
+          <button 
+            @click="goBack"
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg transition-all duration-200 hover:scale-105"
+            title="Go back"
+          >
+            <svg
+              class="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
           <div
             class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg"
           >
@@ -52,145 +63,72 @@
           </div>
           <div class="min-w-0">
             <h1 class="text-xl font-bold text-white truncate">
-              Livestock Marketplace
+              Manage Livestock Posts
             </h1>
             <p class="text-green-100 text-sm opacity-90 truncate">
-              {{
-                isFarmerView
-                  ? "Discover quality livestock from verified farmers"
-                  : "Browse premium livestock from verified farmers"
-              }}
+              Keep track of your livestock listings and manage them easily
             </p>
           </div>
         </div>
-
-        <!-- Right side - Dynamic Content Area -->
-        <div class="flex-1 flex justify-end min-w-0">
-          <!-- Farmer View -->
-          <div
-            v-if="isFarmerView"
-            class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md"
-          >
-            <svg
-              class="w-4 h-4 text-blue-500 shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
+        <!-- Right side - Create Buttons + View Toggle -->
+        <div class="flex items-center gap-3">
+          <!-- Create Buttons (only show for farmers or when in farmer view) -->
+          <div v-if="isFarmerView || currentUser?.role === 'Farmer'" class="flex items-center gap-2">
+            <!-- Create Listing Button -->
+            <button
+              @click="createListing"
+              class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm border border-white/20 hover:scale-105 shadow-lg"
+              title="Create new livestock listing"
             >
-              <path
-                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
-              />
-            </svg>
-            <span class="text-sm font-semibold truncate ml-2"
-              >Welcome Farmer - Manage your livestock</span
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden sm:inline">Create Listing</span>
+              <span class="sm:hidden">List</span>
+            </button>
+            
+            <!-- Create Auction Button -->
+            <button
+              @click="createAuction"
+              class="px-4 py-2 bg-gradient-to-r from-amber-500/90 to-orange-600/90 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:scale-105"
+              title="Create new auction"
             >
-            <router-link
-              to="/LivestockManagement"
-              class="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0"
-            >
-              Post Livestock
-            </router-link>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="hidden sm:inline">Create Auction</span>
+              <span class="sm:hidden">Auction</span>
+            </button>
           </div>
 
-          <!-- Guest Mode -->
-          <div
-            v-else-if="!currentUser?.email"
-            class="bg-yellow-100/80 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-yellow-200 shadow-md max-w-full"
-          >
-            <svg
-              class="w-4 h-4 text-yellow-500 shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
+          <!-- View Toggle -->
+          <div class="flex bg-white/10 rounded-lg p-1 backdrop-blur-sm border border-white/20">
+            <button
+              @click="viewMode = 'card'"
+              :class="`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                viewMode === 'card'
+                  ? 'bg-white/20 text-white shadow-sm'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`"
             >
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span class="text-sm font-semibold truncate ml-2"
-              >Guest mode - Sign In for full access</span
-            >
-            <router-link
-              to="/signin"
-              class="whitespace-nowrap bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0"
-            >
-              Sign In
-            </router-link>
-          </div>
-
-          <!-- Buyer View -->
-          <div
-            v-else-if="currentUser?.role !== 'Farmer'"
-            class="flex items-center gap-3 max-w-full"
-          >
-            <!-- Account Not Verified -->
-            <div
-              v-if="!currentUser?.isVerified"
-              class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md"
-            >
-              <svg
-                class="w-4 h-4 text-red-500 shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
-                />
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
-              <span class="text-sm font-semibold truncate ml-2"
-                >Buyer account - Verify to upgrade</span
-              >
-              <button
-                @click="goToUserProfile"
-                class="whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0"
-              >
-                Verify Account
-              </button>
-            </div>
-
-            <!-- Pending Upgrade -->
-            <div
-              v-else-if="hasPendingUpgrade"
-              class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md"
+              <span class="hidden sm:inline">Cards</span>
+            </button>
+            <button
+              @click="viewMode = 'table'"
+              :class="`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                viewMode === 'table'
+                  ? 'bg-white/20 text-white shadow-sm'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`"
             >
-              <svg
-                class="w-4 h-4 text-red-500 animate-pulse shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 018 8zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  clip-rule="evenodd"
-                />
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
-              <span class="text-sm font-semibold">Upgrade pending</span>
-            </div>
-
-            <!-- Can Upgrade -->
-            <div
-              v-else
-              class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md"
-            >
-              <svg
-                class="w-4 h-4 text-red-500 shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
-                />
-              </svg>
-              <span class="text-sm font-semibold truncate ml-2"
-                >Ready to become a Farmer?</span
-              >
-              <button
-                @click="goToUpgradeForm"
-                class="whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0"
-              >
-                Upgrade Account
-              </button>
-            </div>
+              <span class="hidden sm:inline">Table</span>
+            </button>
           </div>
         </div>
       </div>
@@ -213,6 +151,104 @@
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Status Overview Cards -->
+        <div class="sticky top-0 z-30 px-4 md:px-6 py-4 bg-gradient-to-b from-white/80 to-transparent backdrop-blur-sm">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <!-- Total Listings -->
+            <div
+              class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs md:text-sm font-medium text-gray-600">Total Listings</p>
+                  <p class="text-xl md:text-2xl font-bold text-gray-900">
+                    {{ animals.length }}
+                  </p>
+                </div>
+                <div class="p-2 bg-blue-100/80 rounded-lg">
+                  <svg class="w-5 h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Available -->
+            <div
+              class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs md:text-sm font-medium text-gray-600">Available</p>
+                  <p class="text-xl md:text-2xl font-bold text-green-600">
+                    {{ animals.filter(a => a.status === 'Available').length }}
+                  </p>
+                </div>
+                <div class="p-2 bg-green-100/80 rounded-lg">
+                  <svg class="w-5 h-5 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Low Stock -->
+            <div
+              class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs md:text-sm font-medium text-gray-600">Low Stock</p>
+                  <p class="text-xl md:text-2xl font-bold text-yellow-600">
+                    {{ animals.filter(a => a.status === 'Low Stock').length }}
+                  </p>
+                </div>
+                <div class="p-2 bg-yellow-100/80 rounded-lg">
+                  <svg class="w-5 h-5 md:w-6 md:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Out of Stock -->
+            <div
+              class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs md:text-sm font-medium text-gray-600">Out of Stock</p>
+                  <p class="text-xl md:text-2xl font-bold text-red-600">
+                    {{ animals.filter(a => a.status === 'Out of Stock' || a.status === 'No stock').length }}
+                  </p>
+                </div>
+                <div class="p-2 bg-red-100/80 rounded-lg">
+                  <svg class="w-5 h-5 md:w-6 md:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Value -->
+            <div
+              class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs md:text-sm font-medium text-gray-600">Total Value</p>
+                  <p class="text-xl md:text-2xl font-bold text-purple-600">
+                    ₱{{ totalValue.toLocaleString() }}
+                  </p>
+                </div>
+                <div class="p-2 bg-purple-100/80 rounded-lg">
+                  <svg class="w-5 h-5 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- STICKY Results Summary with Tabs and Sort -->
         <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-white/40 px-4 py-3">
           <!-- Use grid to keep layout stable -->
@@ -299,12 +335,12 @@
           </div>
         </div>
         
-        <!-- SCROLLABLE Cards Area -->
+        <!-- SCROLLABLE Content Area -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-4">
-            <!-- Card View using LivestockCard Component -->
+            <!-- Card View -->
             <div 
-              v-if="currentFilteredAnimals.length > 0" 
+              v-if="viewMode === 'card' && currentFilteredAnimals.length > 0" 
               :class="`grid gap-4 ${isFarmerView ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4'}`"
             >
               <LivestockCard
@@ -313,9 +349,42 @@
                 :animal="animal"
                 :isSidebarExpanded="isSidebarExpanded"
                 :weightUnit="weightUnit"
+                :displayMode="'card'"
                 @openModal="openModal"
                 @openContactModal="openContactModal"
               />
+            </div>
+
+            <!-- Table View -->
+            <div v-if="viewMode === 'table' && currentFilteredAnimals.length > 0" class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 overflow-hidden shadow-lg">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gradient-to-r from-green-50 to-emerald-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Image</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Animal</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Details</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Price/Bid</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Farmer</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Location</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Posted</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <LivestockCard
+                      v-for="animal in currentFilteredAnimals"
+                      :key="animal.id"
+                      :animal="animal"
+                      :isSidebarExpanded="isSidebarExpanded"
+                      :weightUnit="weightUnit"
+                      :displayMode="'table'"
+                      @openModal="openModal"
+                      @openContactModal="openContactModal"
+                    />
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <!-- Enhanced Empty State -->
@@ -338,12 +407,26 @@
                     : 'We couldn\'t find any livestock matching your current search criteria. Try adjusting your filters or browse all available listings.'
                   }}
                 </p>
-                <button @click="resetFilters" class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Reset All Filters
-                </button>
+                <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                  <button @click="resetFilters" class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 justify-center transform hover:scale-105">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Reset Filters
+                  </button>
+                  
+                  <!-- Quick Create Button in Empty State (only for farmers) -->
+                  <button 
+                    v-if="isFarmerView || currentUser?.role === 'Farmer'"
+                    @click="activeTab === 'auction' ? createAuction() : createListing()"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 justify-center transform hover:scale-105"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {{ activeTab === 'auction' ? 'Create Auction' : 'Create Listing' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -370,15 +453,6 @@
       @redirectToLogin="redirectToLogin"
     />
 
-    <!-- Contact Farmer Modal -->
-    <ContactFarmerModal 
-      v-if="isContactModalOpen && selectedAnimalForContact" 
-      :animal="selectedAnimalForContact"
-      :currentUser="currentUser"
-      @close="closeContactModal"
-      @send="sendMessage"
-    />
-
     <!-- Enhanced Success Toast -->
     <div v-if="showToast" class="fixed top-4 right-4 z-50">
       <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-3 transform transition-all duration-300 ease-in-out">
@@ -402,19 +476,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Create Listing/Auction Coming Soon Modal -->
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all duration-300">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Coming Soon!</h3>
+          <p class="text-gray-600 mb-6">
+            {{ createType === 'listing' ? 'Create Listing' : 'Create Auction' }} feature is currently under development. 
+            Stay tuned for this exciting new functionality!
+          </p>
+          <div class="flex gap-3 justify-center">
+            <button 
+              @click="closeCreateModal"
+              class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors duration-200"
+            >
+              Close
+            </button>
+            <button 
+              @click="notifyMe"
+              class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Notify Me
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
   
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import NavBar from '../../components/NavBar.vue';
-import FilterSidebar from '../../components/Market/FilterSidebar.vue';
-import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
-import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
+import FilterSidebar from '../../components/YourLivestock/FilterSidebar.vue';
+import AnimalDetailsModal from '../../components/YourLivestock/AnimalDetailsModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
-import LivestockCard from '../../components/Market/LivestockCard.vue';
-import { getCurrentUser} from '../../services/user';
+import LivestockCard from '../../components/YourLivestock/LivestockCard.vue';
+import { getCurrentUser } from '../../services/user';
 
 interface ServiceUser {
   email?: string;
@@ -466,7 +570,6 @@ interface Filters {
   locations: string[];
   priceRanges: string[];
   genders: string[];
-  // New auction-specific filters
   auctionStatuses: string[];
   endTimeRanges: string[];
   bidCountMin: number | null;
@@ -476,13 +579,11 @@ interface Filters {
   bidActivities: string[];
 }
 
-// Props to determine view mode
 const props = defineProps<{
   viewMode?: 'buyer' | 'farmer';
 }>();
 
 const router = useRouter();
-// Ensure currentUser has a 'name' property for ContactFarmerModal compatibility
 const rawUser = getCurrentUser() as ServiceUser | null;
 const currentUser = rawUser
   ? {
@@ -491,6 +592,7 @@ const currentUser = rawUser
       email: rawUser.email || ''
     }
   : null;
+
 const hasPendingUpgrade = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
@@ -502,25 +604,22 @@ const selectedAnimal = ref<Animal | null>(null);
 const isContactModalOpen = ref(false);
 const selectedAnimalForContact = ref<Animal | null>(null);
 
-// Tab state
-const activeTab = ref<'normal' | 'auction'>('normal');
+// Create modal states
+const showCreateModal = ref(false);
+const createType = ref<'listing' | 'auction'>('listing');
 
-// View mode - defaults to buyer if user is not a farmer
+const activeTab = ref<'normal' | 'auction'>('normal');
+const viewMode = ref<'card' | 'table'>('card');
+
 const isFarmerView = computed(() => {
   if (props.viewMode) return props.viewMode === 'farmer';
   return currentUser?.role === 'Farmer';
 });
 
-// Sidebar state
 const isSidebarExpanded = ref(true);
-
-// Sorting
 const sortBy = ref('datePosted');
-
-// Weight unit toggle
 const weightUnit = ref('kg');
 
-// Filters
 const filters = ref<Filters>({
   search: '',
   types: [],
@@ -528,7 +627,6 @@ const filters = ref<Filters>({
   locations: [],
   priceRanges: [],
   genders: [],
-  // New auction filters
   auctionStatuses: [],
   endTimeRanges: [],
   bidCountMin: null,
@@ -538,7 +636,16 @@ const filters = ref<Filters>({
   bidActivities: []
 });
 
-// Sample animal data with more auction items
+// ✅ Unified farmer (same person for all animals)
+const farmerMaria: Farmer = {
+  id: 2,
+  name: 'Maria Santos',
+  farmName: 'Santos Ranch',
+  contact: '+63 921 777 8888',
+  address: '123 Poultry Lane, Barangay Fowl, Pampanga',
+  avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
+};
+
 const animals = ref<Animal[]>([
   {
     id: 1,
@@ -557,18 +664,10 @@ const animals = ref<Animal[]>([
     ],
     description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed.',
     datePosted: new Date().toISOString(),
-    farmer: {
-      id: 2,
-      name: 'Maria Santos',
-      farmName: 'Santos Ranch',
-      contact: '+63 921 777 8888',
-      address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-      avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
-    },
+    farmer: farmerMaria,
     location: 'Pampanga',
     isAuction: false
   },
-  // Auction items with enhanced data
   {
     id: 6,
     type: 'Pig',
@@ -585,217 +684,96 @@ const animals = ref<Animal[]>([
     ],
     description: 'High-quality Landrace pigs, excellent for commercial production. Well-fed and healthy.',
     datePosted: new Date(Date.now() - 43200000).toISOString(),
-    farmer: {
-      id: 7,
-      name: 'Elena Morales',
-      farmName: 'Morales Hog Farm',
-      contact: '+63 926 333 4444',
-      address: '777 Swine Valley, Barangay Pork, Tarlac',
-      avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
-    },
-    location: 'Tarlac',
+    farmer: farmerMaria, 
+    location: 'Pampanga',
     isAuction: true,
     startingBid: 24000,
     currentBid: 28500,
     bidCount: 5,
-    endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
+    endTime: new Date(Date.now() + 10800000).toISOString(),
     duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 345600000).toISOString() // Started 4 days ago
-  },
-  {
-    id: 7,
-    type: 'Cattle',
-    breed: 'Holstein',
-    weight: 520,
-    quantity: 2,
-    age: '2-3 years',
-    gender: 'Female',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1516467508483-a7212febe31a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Premium Holstein dairy cows, excellent milk production. Vaccinated and health certified.',
-    datePosted: new Date(Date.now() - 86400000).toISOString(),
-    farmer: {
-      id: 8,
-      name: 'Roberto Cruz',
-      farmName: 'Cruz Dairy Farm',
-      contact: '+63 917 555 6666',
-      address: '456 Milk Road, Barangay Dairy, Bataan',
-      avatar: 'https://randomuser.me/api/portraits/men/45.jpg'
-    },
-    location: 'Bataan',
-    isAuction: true,
-    startingBid: 55000,
-    currentBid: 72000,
-    bidCount: 12,
-    endTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-    duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 518400000).toISOString() // Started 6 days ago
-  },
-  {
-    id: 8,
-    type: 'Goat',
-    breed: 'Boer',
-    weight: 35,
-    quantity: 8,
-    age: '8-12 months',
-    gender: 'Mixed',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Young Boer goats, perfect for meat production. Healthy and well-socialized.',
-    datePosted: new Date(Date.now() - 172800000).toISOString(),
-    farmer: {
-      id: 9,
-      name: 'Carmen Dela Cruz',
-      farmName: 'Dela Cruz Goat Farm',
-      contact: '+63 922 777 9999',
-      address: '789 Goat Hill, Barangay Capra, Laguna',
-      avatar: 'https://randomuser.me/api/portraits/women/56.jpg'
-    },
-    location: 'Laguna',
-    isAuction: true,
-    startingBid: 8000,
-    currentBid: 8000,
-    bidCount: 0,
-    endTime: new Date(Date.now() + 86400000).toISOString(), // 24 hours from now
-    duration: '1-3d',
-    auctionStartTime: new Date(Date.now() - 7200000).toISOString() // Started 2 hours ago
-  },
-  {
-    id: 9,
-    type: 'Chicken',
-    breed: 'Rhode Island Red',
-    weight: 2.5,
-    quantity: 50,
-    age: '6 months',
-    gender: 'Female',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Productive laying hens, excellent egg layers. Healthy and disease-free.',
-    datePosted: new Date(Date.now() - 259200000).toISOString(),
-    farmer: {
-      id: 10,
-      name: 'Jose Ramirez',
-      farmName: 'Ramirez Poultry',
-      contact: '+63 918 888 0000',
-      address: '321 Feather Street, Barangay Poultry, Nueva Ecija',
-      avatar: 'https://randomuser.me/api/portraits/men/78.jpg'
-    },
-    location: 'Nueva Ecija',
-    isAuction: true,
-    startingBid: 15000,
-    currentBid: 22500,
-    bidCount: 18,
-    endTime: new Date(Date.now() + 21600000).toISOString(), // 6 hours from now
-    duration: '7-14d',
-    auctionStartTime: new Date(Date.now() - 777600000).toISOString() // Started 9 days ago
+    auctionStartTime: new Date(Date.now() - 345600000).toISOString()
   }
 ]);
 
-// Computed properties
+// ---- Computed & Helpers ----
 const normalListings = computed(() => animals.value.filter(animal => !animal.isAuction));
 const auctionListings = computed(() => animals.value.filter(animal => animal.isAuction));
 
+// Calculate total value of all listings
+const totalValue = computed(() => {
+  return animals.value.reduce((total, animal) => {
+    if (animal.isAuction) {
+      return total + (animal.currentBid || animal.startingBid || 0) * animal.quantity;
+    }
+    return total + animal.price * animal.quantity;
+  }, 0);
+});
+
 const uniqueTypes = computed(() => {
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
-  const types = new Set(currentAnimals.map(animal => animal.type));
-  return Array.from(types).sort();
+  return Array.from(new Set(currentAnimals.map(animal => animal.type))).sort();
 });
 
 const uniqueBreeds = computed(() => {
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
-  const breeds = new Set(currentAnimals.map(animal => animal.breed));
-  return Array.from(breeds).sort();
+  return Array.from(new Set(currentAnimals.map(animal => animal.breed))).sort();
 });
 
 const uniqueLocations = computed(() => {
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
-  const locations = new Set(currentAnimals.map(animal => animal.location));
-  return Array.from(locations).sort();
+  return Array.from(new Set(currentAnimals.map(animal => animal.location))).sort();
 });
 
-// Helper function to get auction status
 const getAuctionStatus = (animal: Animal): string => {
   if (!animal.isAuction || !animal.endTime) return 'Unknown';
-  
   const now = new Date().getTime();
   const endTime = new Date(animal.endTime).getTime();
   const timeLeft = endTime - now;
-  
   if (timeLeft <= 0) return 'Ended';
-  if (timeLeft <= 3600000) return 'Ending Soon'; // 1 hour
+  if (timeLeft <= 3600000) return 'Ending Soon';
   if (animal.bidCount && animal.bidCount >= 10) return 'Hot Auction';
-  if (animal.datePosted && new Date(animal.datePosted).getTime() > now - 86400000) return 'New Listing'; // 24 hours
+  if (animal.datePosted && new Date(animal.datePosted).getTime() > now - 86400000) return 'New Listing';
   return 'Live';
 };
 
-// Helper function to get auction duration category
 const getAuctionDurationCategory = (animal: Animal): string => {
   if (!animal.isAuction || !animal.auctionStartTime || !animal.endTime) return 'unknown';
-  
   const startTime = new Date(animal.auctionStartTime).getTime();
   const endTime = new Date(animal.endTime).getTime();
-  const duration = endTime - startTime;
-  
-  const days = duration / (1000 * 60 * 60 * 24);
-  
+  const days = (endTime - startTime) / (1000 * 60 * 60 * 24);
   if (days <= 3) return '1-3d';
   if (days <= 7) return '3-7d';
   if (days <= 14) return '7-14d';
   return '14d+';
 };
 
-// Helper function to get bid activity category
 const getBidActivityCategory = (animal: Animal): string => {
   const bidCount = animal.bidCount || 0;
-  
   if (bidCount === 0) return 'No Bids Yet';
   if (bidCount <= 5) return 'Low Activity (1-5 bids)';
   if (bidCount <= 10) return 'Moderate Activity (5-10 bids)';
   return 'High Activity (10+ bids)';
 };
 
+// ---- Filtering & Sorting ----
 const currentFilteredAnimals = computed(() => {
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
-  
   let filtered = currentAnimals.filter(animal => {
-    // Search filter
     const searchLower = filters.value.search.toLowerCase();
-    const matchesSearch = !filters.value.search ||
+    const matchesSearch =
+      !filters.value.search ||
       animal.type.toLowerCase().includes(searchLower) ||
       animal.breed.toLowerCase().includes(searchLower) ||
       animal.description.toLowerCase().includes(searchLower) ||
       (animal.farmer.farmName && animal.farmer.farmName.toLowerCase().includes(searchLower)) ||
       animal.farmer.name.toLowerCase().includes(searchLower);
 
-    // Type filter (multi-select)
-    const matchesType = filters.value.types.length === 0 || 
-      filters.value.types.includes(animal.type);
+    const matchesType = filters.value.types.length === 0 || filters.value.types.includes(animal.type);
+    const matchesBreed = filters.value.breeds.length === 0 || filters.value.breeds.includes(animal.breed);
+    const matchesLocation = filters.value.locations.length === 0 || filters.value.locations.includes(animal.location);
+    const matchesGender = filters.value.genders.length === 0 || filters.value.genders.includes(animal.gender);
 
-    // Breed filter (multi-select)
-    const matchesBreed = filters.value.breeds.length === 0 || 
-      filters.value.breeds.includes(animal.breed);
-
-    // Location filter (multi-select)
-    const matchesLocation = filters.value.locations.length === 0 || 
-      filters.value.locations.includes(animal.location);
-
-    // Gender filter (multi-select)
-    const matchesGender = filters.value.genders.length === 0 || 
-      filters.value.genders.includes(animal.gender);
-
-    // Price range filter (multi-select) - adjusted for auctions
     let matchesPrice = true;
     if (filters.value.priceRanges.length > 0) {
       matchesPrice = filters.value.priceRanges.some(range => {
@@ -809,23 +787,18 @@ const currentFilteredAnimals = computed(() => {
       });
     }
 
-    // NEW: Auction-specific filters (only apply when viewing auctions)
     if (activeTab.value === 'auction' && animal.isAuction) {
-      // Auction Status filter
       if (filters.value.auctionStatuses.length > 0) {
         const animalStatus = getAuctionStatus(animal);
-        if (!filters.value.auctionStatuses.includes(animalStatus)) {
-          return false;
-        }
+        if (!filters.value.auctionStatuses.includes(animalStatus)) return false;
       }
 
-      // End Time Range filter
       if (filters.value.endTimeRanges.length > 0) {
         const now = new Date().getTime();
         const endTime = animal.endTime ? new Date(animal.endTime).getTime() : 0;
         const timeLeft = endTime - now;
         const hoursLeft = timeLeft / (1000 * 60 * 60);
-        
+
         const matchesEndTime = filters.value.endTimeRanges.some(range => {
           switch (range) {
             case '0-1h': return hoursLeft <= 1;
@@ -837,20 +810,14 @@ const currentFilteredAnimals = computed(() => {
             default: return false;
           }
         });
-        
+
         if (!matchesEndTime) return false;
       }
 
-      // Bid Count Range filter
       const bidCount = animal.bidCount || 0;
-      if (filters.value.bidCountMin !== null && bidCount < filters.value.bidCountMin) {
-        return false;
-      }
-      if (filters.value.bidCountMax !== null && bidCount > filters.value.bidCountMax) {
-        return false;
-      }
+      if (filters.value.bidCountMin !== null && bidCount < filters.value.bidCountMin) return false;
+      if (filters.value.bidCountMax !== null && bidCount > filters.value.bidCountMax) return false;
 
-      // Starting Bid Range filter
       if (filters.value.startingBidRanges.length > 0) {
         const startingBid = animal.startingBid || 0;
         const matchesStartingBid = filters.value.startingBidRanges.some(range => {
@@ -861,79 +828,55 @@ const currentFilteredAnimals = computed(() => {
             return startingBid >= parseInt(min.replace('+', ''));
           }
         });
-        
         if (!matchesStartingBid) return false;
       }
 
-      // Auction Duration filter
       if (filters.value.auctionDurations.length > 0) {
         const durationCategory = getAuctionDurationCategory(animal);
-        if (!filters.value.auctionDurations.includes(durationCategory)) {
-          return false;
-        }
+        if (!filters.value.auctionDurations.includes(durationCategory)) return false;
       }
 
-      // Bid Activity filter
       if (filters.value.bidActivities.length > 0) {
         const activityCategory = getBidActivityCategory(animal);
-        if (!filters.value.bidActivities.includes(activityCategory)) {
-          return false;
-        }
+        if (!filters.value.bidActivities.includes(activityCategory)) return false;
       }
     }
 
     return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPrice && matchesGender;
   });
 
-  // Sorting - enhanced for auctions
   return filtered.sort((a, b) => {
     switch (sortBy.value) {
-      case 'datePosted':
-        return new Date(b.datePosted).getTime() - new Date(a.datePosted).getTime();
-      case 'datePosted-asc':
-        return new Date(a.datePosted).getTime() - new Date(b.datePosted).getTime();
-      case 'price':
+      case 'datePosted': return new Date(b.datePosted).getTime() - new Date(a.datePosted).getTime();
+      case 'datePosted-asc': return new Date(a.datePosted).getTime() - new Date(b.datePosted).getTime();
+      case 'price': {
         const aPrice = a.isAuction ? (a.currentBid || a.startingBid || 0) : a.price;
-        const bPrice = b.isAuction? (b.currentBid || b.startingBid || 0) : b.price;
+        const bPrice = b.isAuction ? (b.currentBid || b.startingBid || 0) : b.price;
         return aPrice - bPrice;
-      case 'price-desc':
+      }
+      case 'price-desc': {
         const aPriceDesc = a.isAuction ? (a.currentBid || a.startingBid || 0) : a.price;
         const bPriceDesc = b.isAuction ? (b.currentBid || b.startingBid || 0) : b.price;
         return bPriceDesc - aPriceDesc;
+      }
       case 'endTime':
-        if (a.endTime && b.endTime) {
-          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
-        }
+        if (a.endTime && b.endTime) return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
         return 0;
-      case 'bids':
-        return (b.bidCount || 0) - (a.bidCount || 0);
-      case 'bidActivity':
-        // Sort by bid activity (bids per hour)
-        const aActivity = a.bidCount || 0;
-        const bActivity = b.bidCount || 0;
-        return bActivity - aActivity;
-      case 'type':
-        return a.type.localeCompare(b.type);
-      case 'type-desc':
-        return b.type.localeCompare(a.type);
-      case 'breed':
-        return a.breed.localeCompare(b.breed);
-      case 'breed-desc':
-        return b.breed.localeCompare(a.breed);
-      case 'quantity':
-        return a.quantity - b.quantity;
-      case 'quantity-desc':
-        return b.quantity - a.quantity;
-      default:
-        return 0;
+      case 'bids': return (b.bidCount || 0) - (a.bidCount || 0);
+      case 'bidActivity': return (b.bidCount || 0) - (a.bidCount || 0);
+      case 'type': return a.type.localeCompare(b.type);
+      case 'type-desc': return b.type.localeCompare(a.type);
+      case 'breed': return a.breed.localeCompare(b.breed);
+      case 'breed-desc': return b.breed.localeCompare(a.breed);
+      case 'quantity': return a.quantity - b.quantity;
+      case 'quantity-desc': return b.quantity - a.quantity;
+      default: return 0;
     }
   });
 });
 
-// Methods
-const toggleSidebar = () => {
-  isSidebarExpanded.value = !isSidebarExpanded.value;
-};
+// ---- Methods ----
+const toggleSidebar = () => (isSidebarExpanded.value = !isSidebarExpanded.value);
 
 const handleFiltersChanged = (newFilters: Filters) => {
   filters.value = { ...newFilters };
@@ -942,7 +885,7 @@ const handleFiltersChanged = (newFilters: Filters) => {
 const showToastNotification = (message: string) => {
   toastMessage.value = message;
   showToast.value = true;
-  setTimeout(() => showToast.value = false, 4000);
+  setTimeout(() => (showToast.value = false), 4000);
 };
 
 const openModal = (animal: Animal) => {
@@ -979,9 +922,9 @@ const closeContactModal = () => {
 };
 
 const sendMessage = (messageData: { message: string; contactMethod: string }) => {
-  // Here you would typically send the message to a backend service
-  // For now, we'll just show a success notification
-  showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
+  showToastNotification(
+    `Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`
+  );
   closeContactModal();
 };
 
@@ -999,7 +942,6 @@ const resetFilters = () => {
     locations: [],
     priceRanges: [],
     genders: [],
-    // Reset auction filters
     auctionStatuses: [],
     endTimeRanges: [],
     bidCountMin: null,
@@ -1012,31 +954,50 @@ const resetFilters = () => {
   showToastNotification('All filters have been reset');
 };
 
-const goToUpgradeForm = () => {
-  router.push('/upgradeForm');
+// Navigation methods
+const goBack = () => {
+  // Use router.back() to go to previous page, or fallback to home
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push('/');
+  }
 };
 
-const goToUserProfile = () => {
-  router.push('/userProfile');
+// Create methods
+const createListing = () => {
+  createType.value = 'listing';
+  showCreateModal.value = true;
 };
 
-const redirectToLogin = () => {
-  router.push('/signin');
+const createAuction = () => {
+  createType.value = 'auction';
+  showCreateModal.value = true;
 };
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+};
+
+const notifyMe = () => {
+  showToastNotification(`You'll be notified when the ${createType.value} feature becomes available!`);
+  closeCreateModal();
+};
+
+const goToUpgradeForm = () => router.push('/upgradeForm');
+const goToUserProfile = () => router.push('/userProfile');
+const redirectToLogin = () => router.push('/signin');
 
 const handlePlaceBid = (bidData: { animalId: number; amount: number }) => {
-  // Find the animal in the list
   const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
   if (animalIndex !== -1) {
-    // Update the animal's bid information
     animals.value[animalIndex].currentBid = bidData.amount;
     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
-    
     showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
   }
 };
 
-// Lifecycle hooks
+// ---- Lifecycle ----
 onMounted(() => {
   const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]');
   hasPendingUpgrade.value = currentUser?.email
