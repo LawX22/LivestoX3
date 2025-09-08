@@ -514,10 +514,10 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import FilterSidebar from '../../components/YourLivestock/FilterSidebar.vue';
-import AnimalDetailsModal from '../../components/YourLivestock/AnimalDetailsModal.vue';
+import FilterSidebar from '../../components/LivestockManagement/FilterSidebar.vue';
+import AnimalDetailsModal from '../../components/LivestockManagement/AnimalDetailsModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
-import LivestockCard from '../../components/YourLivestock/LivestockCard.vue';
+import LivestockCard from '../../components/LivestockManagement/LivestockCard.vue';
 import { getCurrentUser } from '../../services/user';
 
 interface ServiceUser {
@@ -916,18 +916,6 @@ const openContactModal = (animal: Animal) => {
   isContactModalOpen.value = true;
 };
 
-const closeContactModal = () => {
-  isContactModalOpen.value = false;
-  selectedAnimalForContact.value = null;
-};
-
-const sendMessage = (messageData: { message: string; contactMethod: string }) => {
-  showToastNotification(
-    `Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`
-  );
-  closeContactModal();
-};
-
 const contactFarmerFromModal = (contactInfo: string) => {
   showToastNotification(`Contact information has been copied to clipboard: ${contactInfo}`);
   navigator.clipboard.writeText(contactInfo);
@@ -984,8 +972,6 @@ const notifyMe = () => {
   closeCreateModal();
 };
 
-const goToUpgradeForm = () => router.push('/upgradeForm');
-const goToUserProfile = () => router.push('/userProfile');
 const redirectToLogin = () => router.push('/signin');
 
 const handlePlaceBid = (bidData: { animalId: number; amount: number }) => {

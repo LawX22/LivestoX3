@@ -436,13 +436,6 @@ const isSidebarExpanded = props.isSidebarExpanded ?? false;
 const weightUnit = props.weightUnit ?? 'kg';
 const displayMode = props.displayMode ?? 'card'; // DEFAULT TO CARD
 
-// Emits
-const emit = defineEmits<{
-  openModal: [animal: Animal];
-  editListing: [animal: Animal];
-  deleteListing: [animal: Animal];
-}>();
-
 // Methods
 const getStatusClass = (status: string) => {
   switch (status) {

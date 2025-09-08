@@ -313,9 +313,6 @@ const emit = defineEmits<{
 const currentImageIndex = ref(0);
 const showDeleteConfirmation = ref(false);
 
-const isOwner = computed(() => {
-  return props.currentUserId && props.currentUserId === props.animal.farmer.id;
-});
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -349,15 +346,6 @@ const closeModal = () => {
   emit('close');
 };
 
-const contactFarmer = () => {
-  emit('contact', props.animal.farmer.contact);
-};
-
-const copyContact = () => {
-  const contactInfo = `${props.animal.farmer.name}\n${props.animal.farmer.contact}\n${props.animal.farmer.address}`;
-  navigator.clipboard.writeText(contactInfo);
-  emit('contact', contactInfo);
-};
 
 const editAnimal = () => {
   emit('edit', props.animal.id);
