@@ -120,14 +120,14 @@
 
             <!-- Registration Steps Indicator -->
             <div class="mb-5">
-              <div class="bg-white bg-opacity-10 rounded-xl p-3 backdrop-blur-sm">
+              <div class="bg-green-400 bg-opacity-30 rounded-xl p-3 backdrop-blur-sm">
                 <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-base font-semibold">Registration Progress</h3>
-                  <span class="text-xs text-green-100">Step {{ currentStep }} of 3</span>
+                  <h3 class="text-base font-semibold text-white">Registration Progress</h3>
+                  <span class="text-xs text-white">Step {{ currentStep }} of 3</span>
                 </div>
 
                 <!-- Progress bar -->
-                <div class="w-full bg-white bg-opacity-20 rounded-full h-1.5">
+                <div class="w-full bg-green-400 bg-opacity-40 rounded-full h-1.5">
                   <div class="bg-white h-1.5 rounded-full transition-all duration-500 ease-in-out"
                     :style="`width: ${(currentStep / 3) * 100}%`">
                   </div>
@@ -205,23 +205,23 @@
             <div class="grid grid-cols-3 gap-3">
               <div class="text-center group">
                 <div
-                  class="bg-white bg-opacity-10 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-20 transition-all duration-300">
+                  class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">10k+</p>
-                  <p class="text-xs text-green-100 font-medium tracking-wider">USERS</p>
+                  <p class="text-xs text-white font-medium tracking-wider">USERS</p>
                 </div>
               </div>
               <div class="text-center group">
                 <div
-                  class="bg-white bg-opacity-10 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-20 transition-all duration-300">
+                  class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">50k+</p>
-                  <p class="text-xs text-green-100 font-medium tracking-wider">DEALS</p>
+                  <p class="text-xs text-white font-medium tracking-wider">DEALS</p>
                 </div>
               </div>
               <div class="text-center group">
                 <div
-                  class="bg-white bg-opacity-10 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-20 transition-all duration-300">
+                  class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">24/7</p>
-                  <p class="text-xs text-green-100 font-medium tracking-wider">SUPPORT</p>
+                  <p class="text-xs text-white font-medium tracking-wider">SUPPORT</p>
                 </div>
               </div>
             </div>

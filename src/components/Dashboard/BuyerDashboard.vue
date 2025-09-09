@@ -1,5 +1,6 @@
+<!-- BuyerDashboard.vue -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+  <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
     <!-- Sticky NavBar -->
     <div class="fixed top-0 left-0 right-0 z-50">
       <NavBar />
@@ -9,12 +10,12 @@
     <div class="pt-16 relative">
       <!-- Floating Background Elements -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-20 left-10 w-16 h-16 bg-blue-300 rounded-full opacity-30 animate-bounce"></div>
-        <div class="absolute top-32 right-16 w-12 h-12 bg-indigo-300 rounded-full opacity-40 animate-pulse"></div>
-        <div class="absolute bottom-24 left-24 w-20 h-20 bg-purple-300 rounded-full opacity-25 animate-ping"></div>
-        <div class="absolute top-1/2 right-8 w-10 h-10 bg-blue-400 rounded-full opacity-35 animate-bounce"
+        <div class="absolute top-20 left-10 w-16 h-16 bg-green-300 rounded-full opacity-30 animate-bounce"></div>
+        <div class="absolute top-32 right-16 w-12 h-12 bg-emerald-300 rounded-full opacity-40 animate-pulse"></div>
+        <div class="absolute bottom-24 left-24 w-20 h-20 bg-teal-300 rounded-full opacity-25 animate-ping"></div>
+        <div class="absolute top-1/2 right-8 w-10 h-10 bg-green-400 rounded-full opacity-35 animate-bounce"
           style="animation-delay: 1s"></div>
-        <div class="absolute bottom-1/3 right-1/3 w-8 h-8 bg-indigo-400 rounded-full opacity-20 animate-pulse"
+        <div class="absolute bottom-1/3 right-1/3 w-8 h-8 bg-emerald-400 rounded-full opacity-20 animate-pulse"
           style="animation-delay: 0.5s"></div>
       </div>
 
@@ -23,7 +24,7 @@
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3b82f6" stroke-width="1.5" />
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#059669" stroke-width="1.5" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -33,7 +34,7 @@
       <div class="max-w-screen-2xl mx-auto px-8 pt-8 relative z-10">
         <!-- DYNAMIC COMBINED HEADER -->
         <div class="sticky top-0 z-40 mb-6">
-          <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-blue-200 shadow-lg backdrop-blur-sm">
+          <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
             <!-- Left side - Logo and Title -->
             <div class="flex items-center min-w-0">
               <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
@@ -43,7 +44,7 @@
               </div>
               <div class="min-w-0">
                 <h1 class="text-xl font-bold text-white truncate">Buyer Dashboard</h1>
-                <p class="text-blue-100 text-sm opacity-90 truncate">Browse livestock and manage your purchases</p>
+                <p class="text-green-100 text-sm opacity-90 truncate">Browse livestock and manage your purchases</p>
               </div>
             </div>
 
@@ -76,8 +77,8 @@
                 <p class="text-xl font-bold text-gray-900 mt-1">8</p>
                 <div class="mt-2 flex items-center text-xs text-gray-500">
                   <span
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                    <svg class="-ml-0.5 mr-0.5 h-3 w-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                    <svg class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
                         clip-rule="evenodd" />
@@ -87,7 +88,7 @@
                   <span class="ml-1">from last month</span>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-blue-100 text-blue-600">
+              <div class="p-2.5 rounded-lg bg-green-100 text-green-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -165,7 +166,7 @@
                   </span>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-indigo-100 text-indigo-600">
+              <div class="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -198,7 +199,7 @@
                   </span>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-pink-100 text-pink-600">
+              <div class="p-2.5 rounded-lg bg-teal-100 text-teal-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -213,17 +214,82 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left Column -->
           <div class="lg:col-span-2 space-y-6">
+            <!-- Purchase Analytics Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Purchase Analytics</h3>
+                    <p class="mt-1 text-xs text-emerald-100">Your spending patterns and trends</p>
+                  </div>
+                  <div class="flex space-x-2">
+                    <button class="text-xs px-2 py-1 bg-white/20 text-white rounded hover:bg-white/30 transition-colors"
+                      @click="setTimeRange('monthly')" :class="{ 'bg-white/30': timeRange === 'monthly' }">
+                      Monthly
+                    </button>
+                    <button class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors"
+                      @click="setTimeRange('quarterly')" :class="{ 'bg-white/30': timeRange === 'quarterly' }">
+                      Quarterly
+                    </button>
+                    <button class="text-xs px-2 py-1 bg-white/10 text-white rounded hover:bg-white/20 transition-colors"
+                      @click="setTimeRange('yearly')" :class="{ 'bg-white/30': timeRange === 'yearly' }">
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Spending Chart -->
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Monthly Spending</h4>
+                    <div class="h-64">
+                      <Chart type="line" :data="spendingChartData" :options="spendingChartOptions" />
+                    </div>
+                  </div>
+
+                  <!-- Purchase Categories -->
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Purchase Categories</h4>
+                    <div class="h-64">
+                      <Chart type="doughnut" :data="categoryChartData" :options="categoryChartOptions" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Avg. Purchase Amount</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">₱12,062</p>
+                    <p class="text-xs text-gray-500 mt-1">+8% from last month</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Orders per Month</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">3.2</p>
+                    <p class="text-xs text-gray-500 mt-1">+15% from last month</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-xs font-medium text-gray-500">Preferred Category</p>
+                    <p class="text-lg font-bold text-gray-900 mt-1">Cattle</p>
+                    <p class="text-xs text-gray-500 mt-1">42% of purchases</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Recent Purchases Section -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-semibold text-white">Your Recent Purchases</h3>
-                    <p class="mt-1 text-xs text-blue-100">Track your livestock purchases</p>
+                    <p class="mt-1 text-xs text-emerald-100">Track your livestock purchases</p>
                   </div>
                   <router-link to="/myPurchases"
-                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    class="text-xs font-medium text-white hover:text-emerald-100 flex items-center">
                     View All
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor">
@@ -235,7 +301,7 @@
               <div class="relative">
                 <div class="max-h-64 overflow-y-auto">
                   <table class="w-full">
-                    <thead class="bg-gray-50/80 sticky top-0 z-10">
+                    <thead class="bg-white sticky top-0 z-10">
                       <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock</th>
@@ -278,7 +344,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                           <button 
-                            class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-full transition-all duration-200"
+                            class="text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 p-2 rounded-full transition-all duration-200"
                             title="View Details">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -296,14 +362,14 @@
             <!-- Saved Livestock Section -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-semibold text-white">Your Saved Livestock</h3>
-                    <p class="mt-1 text-xs text-blue-100">Livestock you're interested in</p>
+                    <p class="mt-1 text-xs text-emerald-100">Livestock you're interested in</p>
                   </div>
                   <router-link to="/saved"
-                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    class="text-xs font-medium text-white hover:text-emerald-100 flex items-center">
                     View All
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor">
@@ -320,7 +386,7 @@
                     <div class="ml-3 flex-1">
                       <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
                       <p class="text-xs text-gray-500">{{ item.type }}</p>
-                      <p class="text-sm font-semibold text-blue-600 mt-1">{{ item.price }}</p>
+                      <p class="text-sm font-semibold text-emerald-600 mt-1">{{ item.price }}</p>
                       <div class="flex items-center mt-1">
                         <span class="text-xs text-gray-500">From: {{ item.seller }}</span>
                       </div>
@@ -339,12 +405,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                   <p class="mt-2 text-sm text-gray-600">No saved livestock yet</p>
-                  <router-link to="/marketplace" class="mt-2 inline-block text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  <router-link to="/marketplace" class="mt-2 inline-block text-sm text-emerald-600 hover:text-emerald-800 font-medium">
                     Browse livestock to save items
                   </router-link>
                 </div>
                 <div v-else class="mt-4 text-center">
-                  <router-link to="/marketplace" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                  <router-link to="/marketplace" class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">
                     + Browse more livestock
                   </router-link>
                 </div>
@@ -357,14 +423,14 @@
             <!-- Quick Actions Section -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
                 <h3 class="text-lg font-semibold text-white">Quick Actions</h3>
-                <p class="mt-1 text-xs text-blue-100">Manage your buyer account</p>
+                <p class="mt-1 text-xs text-emerald-100">Manage your buyer account</p>
               </div>
               <div class="p-6">
                 <div class="grid grid-cols-2 gap-4">
-                  <router-link to="/marketplace" class="bg-blue-50 hover:bg-blue-100 rounded-lg p-4 text-center transition-colors">
-                    <div class="bg-blue-100 text-blue-600 p-2 rounded-full inline-flex">
+                  <router-link to="/marketplace" class="bg-green-50 hover:bg-green-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-green-100 text-green-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
@@ -372,8 +438,8 @@
                     <p class="text-xs font-medium text-gray-700 mt-2">Browse Livestock</p>
                   </router-link>
 
-                  <router-link to="/myPurchases" class="bg-indigo-50 hover:bg-indigo-100 rounded-lg p-4 text-center transition-colors">
-                    <div class="bg-indigo-100 text-indigo-600 p-2 rounded-full inline-flex">
+                  <router-link to="/myPurchases" class="bg-emerald-50 hover:bg-emerald-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-emerald-100 text-emerald-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                       </svg>
@@ -381,8 +447,8 @@
                     <p class="text-xs font-medium text-gray-700 mt-2">My Purchases</p>
                   </router-link>
 
-                  <router-link to="/messages" class="bg-purple-50 hover:bg-purple-100 rounded-lg p-4 text-center transition-colors">
-                    <div class="bg-purple-100 text-purple-600 p-2 rounded-full inline-flex">
+                  <router-link to="/messages" class="bg-teal-50 hover:bg-teal-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-teal-100 text-teal-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                       </svg>
@@ -390,8 +456,8 @@
                     <p class="text-xs font-medium text-gray-700 mt-2">Messages</p>
                   </router-link>
 
-                  <router-link to="/saved" class="bg-pink-50 hover:bg-pink-100 rounded-lg p-4 text-center transition-colors">
-                    <div class="bg-pink-100 text-pink-600 p-2 rounded-full inline-flex">
+                  <router-link to="/saved" class="bg-lime-50 hover:bg-lime-100 rounded-lg p-4 text-center transition-colors">
+                    <div class="bg-lime-100 text-lime-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
@@ -402,17 +468,79 @@
               </div>
             </div>
 
+            <!-- Purchase Analytics Section -->
+            <div
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
+                <h3 class="text-lg font-semibold text-white">Purchase Analytics</h3>
+                <p class="mt-1 text-xs text-emerald-100">Your buying preferences and statistics</p>
+              </div>
+              <div class="p-6">
+                <div class="space-y-6">
+                  <div>
+                    <h4 class="text-xs font-medium text-gray-700 mb-3">Livestock Preferences</h4>
+                    <div class="h-48">
+                      <Chart type="doughnut" :data="preferencesChartData" :options="preferencesChartOptions" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-medium text-gray-700 mb-3">Purchase Status Overview</h4>
+                    <div class="space-y-3">
+                      <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full mr-2 bg-green-500"></div>
+                        <div class="flex-1">
+                          <div class="flex justify-between text-xs">
+                            <span class="font-medium text-gray-700">Completed</span>
+                            <span class="text-gray-500">5 (62%)</span>
+                          </div>
+                          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                            <div class="h-1.5 rounded-full bg-green-500" style="width: 62%"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full mr-2 bg-yellow-500"></div>
+                        <div class="flex-1">
+                          <div class="flex justify-between text-xs">
+                            <span class="font-medium text-gray-700">Processing</span>
+                            <span class="text-gray-500">2 (25%)</span>
+                          </div>
+                          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                            <div class="h-1.5 rounded-full bg-yellow-500" style="width: 25%"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full mr-2 bg-blue-500"></div>
+                        <div class="flex-1">
+                          <div class="flex justify-between text-xs">
+                            <span class="font-medium text-gray-700">Shipped</span>
+                            <span class="text-gray-500">1 (13%)</span>
+                          </div>
+                          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                            <div class="h-1.5 rounded-full bg-blue-500" style="width: 13%"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Recent Messages Section -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
                 <div class="flex items-center justify-between">
                   <div>
                     <h3 class="text-lg font-semibold text-white">Recent Messages</h3>
-                    <p class="mt-1 text-xs text-blue-100">Communications with sellers</p>
+                    <p class="mt-1 text-xs text-emerald-100">Communications with sellers</p>
                   </div>
                   <router-link to="/messages"
-                    class="text-xs font-medium text-white hover:text-blue-100 flex items-center">
+                    class="text-xs font-medium text-white hover:text-emerald-100 flex items-center">
                     View All
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor">
@@ -437,7 +565,7 @@
                             Your order #ORD-2871 has been shipped and is on its way!
                           </p>
                           <div class="mt-2 flex space-x-2">
-                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button class="text-xs font-medium text-emerald-600 hover:text-emerald-700">
                               Reply
                             </button>
                             <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
@@ -464,7 +592,7 @@
                             We have new Angus cattle available. Would you like to schedule a visit?
                           </p>
                           <div class="mt-2 flex space-x-2">
-                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button class="text-xs font-medium text-emerald-600 hover:text-emerald-700">
                               Reply
                             </button>
                             <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
@@ -488,7 +616,7 @@
                             Thank you for your review! We're glad you're happy with your purchase.
                           </p>
                           <div class="mt-2 flex space-x-2">
-                            <button class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                            <button class="text-xs font-medium text-emerald-600 hover:text-emerald-700">
                               Reply
                             </button>
                             <button class="text-xs font-medium text-gray-600 hover:text-gray-700">
@@ -506,9 +634,9 @@
             <!-- Recommended Livestock Section -->
             <div
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
                 <h3 class="text-lg font-semibold text-white">Recommended for You</h3>
-                <p class="mt-1 text-xs text-blue-100">Based on your browsing history</p>
+                <p class="mt-1 text-xs text-emerald-100">Based on your browsing history</p>
               </div>
               <div class="p-6">
                 <div class="space-y-4">
@@ -517,10 +645,10 @@
                     <div class="ml-3 flex-1">
                       <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
                       <p class="text-xs text-gray-500">{{ item.type }}</p>
-                      <p class="text-sm font-semibold text-blue-600 mt-1">{{ item.price }}</p>
+                      <p class="text-sm font-semibold text-emerald-600 mt-1">{{ item.price }}</p>
                     </div>
                     <button @click="saveLivestock(item)" 
-                      class="text-blue-600 hover:text-blue-800 text-xs font-medium p-1"
+                      class="text-emerald-600 hover:text-emerald-800 text-xs font-medium p-1"
                       title="Save this item">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -529,7 +657,7 @@
                   </div>
                 </div>
                 <div class="mt-4 text-center">
-                  <button class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                  <button class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">
                     See more recommendations
                   </button>
                 </div>
@@ -545,6 +673,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import NavBar from '../../components/NavBar.vue'
+import Chart from 'primevue/chart'
 
 interface SavedLivestock {
   id: number
@@ -554,6 +683,9 @@ interface SavedLivestock {
   price: string
   image: string
 }
+
+// Time range state
+const timeRange = ref('monthly')
 
 // Orders data for the table
 const ordersData = ref([
@@ -677,6 +809,137 @@ const recommendedData = ref([
     image: 'https://images.unsplash.com/photo-1554995202-568b4089a0e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
   }
 ])
+
+// Spending Chart Data
+const spendingChartData = ref({
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+  datasets: [
+    {
+      label: 'Monthly Spending',
+      data: [8500, 12300, 15600, 11200, 18400, 22100, 19800],
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      borderColor: '#10B981',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#10B981',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 3,
+      pointRadius: 6,
+      pointHoverRadius: 8
+    }
+  ]
+})
+
+const spendingChartOptions = ref({
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          return '₱' + context.raw.toLocaleString()
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false
+      },
+      ticks: {
+        font: {
+          size: 11
+        }
+      }
+    },
+    y: {
+      beginAtZero: false,
+      ticks: {
+        callback: function (value: any) {
+          return value >= 1000 ? `₱${(value / 1000).toFixed(0)}k` : `₱${value}`
+        },
+        font: {
+          size: 11
+        }
+      },
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)'
+      }
+    }
+  },
+  maintainAspectRatio: false
+})
+
+// Category Chart Data
+const categoryChartData = ref({
+  labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
+  datasets: [
+    {
+      data: [42, 28, 15, 10, 5],
+      backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899'],
+      hoverBackgroundColor: ['#059669', '#2563EB', '#D97706', '#7C3AED', '#DB2777']
+    }
+  ]
+})
+
+const categoryChartOptions = ref({
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        boxWidth: 10,
+        padding: 12,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        font: {
+          size: 10
+        }
+      }
+    }
+  },
+  cutout: '70%',
+  maintainAspectRatio: false
+})
+
+// Preferences Chart Data (for sidebar analytics)
+const preferencesChartData = ref({
+  labels: ['Cattle', 'Pigs', 'Goats', 'Sheep', 'Poultry'],
+  datasets: [
+    {
+      data: [40, 25, 20, 10, 5],
+      backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899'],
+      hoverBackgroundColor: ['#059669', '#2563EB', '#D97706', '#7C3AED', '#DB2777']
+    }
+  ]
+})
+
+const preferencesChartOptions = ref({
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        boxWidth: 10,
+        padding: 12,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        font: {
+          size: 10
+        }
+      }
+    }
+  },
+  cutout: '70%',
+  maintainAspectRatio: false
+})
+
+// Functions
+const setTimeRange = (range: string) => {
+  timeRange.value = range
+  // Here you would typically update the chart data based on the selected time range
+}
 
 // Function to remove an item from saved livestock
 const removeFromSaved = (id: number) => {

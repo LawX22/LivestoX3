@@ -1,11 +1,11 @@
 <!-- myPurchases.vue -->
 <template>
-  <div class="h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 flex flex-col relative overflow-hidden">
+  <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-20 left-10 w-12 h-12 bg-blue-300/30 rounded-full blur-sm animate-pulse"></div>
-      <div class="absolute bottom-24 right-24 w-16 h-16 bg-indigo-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
-      <div class="absolute top-1/2 right-8 w-6 h-6 bg-purple-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
+      <div class="absolute top-20 left-10 w-12 h-12 bg-green-300/30 rounded-full blur-sm animate-pulse"></div>
+      <div class="absolute bottom-24 right-24 w-16 h-16 bg-teal-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
+      <div class="absolute top-1/2 right-8 w-6 h-6 bg-green-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
     </div>
 
     <!-- NavBar -->
@@ -15,7 +15,7 @@
 
     <!-- Combined Header -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
-      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-blue-200 shadow-lg backdrop-blur-sm">
+      <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
         <!-- Left side - Logo and Title -->
         <div class="flex items-center min-w-0">
           <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
@@ -25,52 +25,52 @@
           </div>
           <div class="min-w-0">
             <h1 class="text-xl font-bold text-white truncate">My Purchases</h1>
-            <p class="text-blue-100 text-sm opacity-90 truncate">
+            <p class="text-green-100 text-sm opacity-90 truncate">
               Track your livestock orders and purchases
             </p>
           </div>
         </div>
 
-        <!-- Right side - Stats Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 w-full md:w-auto">
-          <div class="bg-white/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
-            <div class="flex items-center gap-2">
-              <div class="p-1.5 rounded-full bg-blue-100 text-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- Right side - Stats Cards (Compact) -->
+        <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-green-100 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-blue-100">Total Orders</p>
-                <p class="text-base font-bold text-white">{{ transactions.length }}</p>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Total Orders</p>
+                <p class="text-sm font-bold text-white">{{ transactions.length }}</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
-            <div class="flex items-center gap-2">
-              <div class="p-1.5 rounded-full bg-yellow-100 text-yellow-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-yellow-100 text-yellow-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-blue-100">Pending</p>
-                <p class="text-base font-bold text-white">{{ pendingCount }}</p>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Pending</p>
+                <p class="text-sm font-bold text-white">{{ pendingCount }}</p>
               </div>
             </div>
           </div>
 
-          <div class="bg-white/20 backdrop-blur-sm rounded-lg p-2 border border-white/20">
-            <div class="flex items-center gap-2">
-              <div class="p-1.5 rounded-full bg-green-100 text-green-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-blue-100">Total Spent</p>
-                <p class="text-base font-bold text-white">₱{{ totalSpent.toLocaleString() }}</p>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Total Spent</p>
+                <p class="text-sm font-bold text-white">₱{{ totalSpent.toLocaleString() }}</p>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@
     <div class="flex flex-1 overflow-hidden">
       <!-- Enhanced Filters Sidebar with Collapse/Expand -->
       <div :class="`${isSidebarExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
-        <div class="absolute inset-0 bg-gradient-to-b from-blue-50/20 via-transparent to-indigo-50/20"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
 
         <!-- Toggle Button integrated into filter logo -->
         <div 
@@ -90,7 +90,7 @@
           class="absolute inset-0 flex items-center justify-center cursor-pointer group z-20"
           v-if="!isSidebarExpanded"
         >
-          <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
+          <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
             </svg>
@@ -101,9 +101,9 @@
           <!-- Expanded View -->
           <div v-if="isSidebarExpanded" class="h-full flex flex-col">
             <!-- Header with integrated close button -->
-            <div class="flex justify-between items-center p-3 border-b border-blue-100/50">
-              <h2 class="text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-1">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="flex justify-between items-center p-3 border-b border-green-100/50">
+              <h2 class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
                 </svg>
                 Filters
@@ -124,13 +124,13 @@
             </div>
 
             <!-- Sticky Search & Active Filters -->
-            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-blue-100/50 p-3 shadow-sm">
+            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
               <!-- Search -->
-              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100 mb-2">
+              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
                 <div class="relative">
-                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-blue-200 rounded-md text-xs bg-blue-50/30 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" placeholder="Search..." />
+                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 focus:border-green-500" placeholder="Search..." />
                   <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                    <svg class="h-3 w-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
@@ -138,13 +138,13 @@
               </div>
 
               <!-- Active Filters -->
-              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-md p-2 border border-blue-200">
+              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
                 <div class="flex flex-wrap gap-1">
-                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">
+                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
                     "{{ filters.search }}"
                   </span>
-                  <span v-for="status in filters.statuses" :key="status" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ status }}</span>
-                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ type }}</span>
+                  <span v-for="status in filters.statuses" :key="status" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ status }}</span>
+                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
                 </div>
               </div>
             </div>
@@ -153,20 +153,20 @@
             <div class="flex-1 overflow-y-auto p-3">
               <div class="space-y-3">
                 <!-- Status Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Status
                   </h3>
                   <div class="space-y-1">
-                    <label v-for="status in statusOptions" :key="status" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-blue-50/50 p-1 rounded cursor-pointer">
+                    <label v-for="status in statusOptions" :key="status" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
                       <input 
                         type="checkbox" 
                         :value="status" 
                         v-model="filters.statuses" 
-                        class="h-3 w-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
                       >
                       <span class="truncate">{{ status }}</span>
                     </label>
@@ -174,20 +174,20 @@
                 </div>
                 
                 <!-- Livestock Type Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
                     Animal Type
                   </h3>
                   <div class="space-y-1 max-h-32 overflow-y-auto">
-                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-blue-50/50 p-1 rounded cursor-pointer">
+                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
                       <input 
                         type="checkbox" 
                         :value="type" 
                         v-model="filters.types" 
-                        class="h-3 w-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
                       >
                       <span class="truncate">{{ type }}</span>
                     </label>
@@ -195,9 +195,9 @@
                 </div>
                 
                 <!-- Date Filter -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-100">
+                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
                   <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Date Range
@@ -205,11 +205,11 @@
                   <div class="space-y-2">
                     <div>
                       <label class="text-xs text-gray-600 block mb-1">From</label>
-                      <input v-model="filters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500/50" />
+                      <input v-model="filters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
                     </div>
                     <div>
                       <label class="text-xs text-gray-600 block mb-1">To</label>
-                      <input v-model="filters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500/50" />
+                      <input v-model="filters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
                     </div>
                   </div>
                 </div>
@@ -226,7 +226,7 @@
         <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-white/40 px-4 py-2">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
+              <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
                 </svg>
@@ -241,7 +241,7 @@
             <!-- Sort By Filter -->
             <div class="flex items-center gap-2">
               <label class="text-xs font-semibold text-gray-700">Sort By:</label>
-              <select v-model="sortBy" class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 rounded-md bg-white shadow-sm">
+              <select v-model="sortBy" class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm">
                 <option value="date-desc">Newest</option>
                 <option value="date-asc">Oldest</option>
                 <option value="price-asc">Price (Low)</option>
@@ -258,7 +258,7 @@
             <div class="flex-1 overflow-auto bg-white">
               <table class="w-full">
                 <!-- Fixed Table Header -->
-                <thead class="bg-gradient-to-r from-blue-50 to-indigo-50 sticky top-0 z-10">
+                <thead class="bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10">
                   <tr>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Livestock</th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Seller</th>
@@ -270,7 +270,7 @@
                 </thead>
                 <!-- Table Body -->
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="transaction in filteredTransactions" :key="transaction.id" class="hover:bg-blue-50/50 transition-colors">
+                  <tr v-for="transaction in filteredTransactions" :key="transaction.id" class="hover:bg-green-50/50 transition-colors">
                     <td class="px-4 py-3 whitespace-nowrap w-1/4">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
@@ -303,7 +303,7 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 w-1/6">
                       <div class="flex items-center">
-                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-xs mr-2">₱</span>
+                        <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-xs mr-2">₱</span>
                         {{ transaction.amount.toLocaleString() }}
                       </div>
                     </td>
@@ -311,7 +311,7 @@
                       <div class="flex justify-end gap-1">
                         <button 
                           @click="viewDetails(transaction)"
-                          class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-lg transition-colors"
+                          class="text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 p-1.5 rounded-lg transition-colors"
                           title="View Details"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,7 +332,7 @@
                         <button 
                           v-if="transaction.status === 'Shipped'"
                           @click="confirmDelivery(transaction.id)"
-                          class="text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 p-1.5 rounded-lg transition-colors"
+                          class="text-emerald-600 hover:text-emerald-800 bg-emerald-100 hover:bg-emerald-200 p-1.5 rounded-lg transition-colors"
                           title="Confirm Delivery"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -360,7 +360,7 @@
                   <p class="text-xs text-gray-500 mb-4 leading-relaxed">We couldn't find any orders matching your current search criteria. Try adjusting your filters.</p>
                   <button 
                     @click="resetFilters"
-                    class="px-4 py-2 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105"
+                    class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105"
                   >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -386,7 +386,7 @@
                           <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
                       </button>
-                      <button aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                      <button aria-current="page" class="z-10 bg-green-50 border-green-500 text-green-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
                         1
                       </button>
                       <button class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
@@ -429,7 +429,7 @@
                   <div class="ml-3 h-7 flex items-center">
                     <button 
                       @click="selectedTransaction = null"
-                      class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <span class="sr-only">Close panel</span>
                       <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -450,7 +450,7 @@
                           <div>
                             <div class="flex justify-between text-base font-medium text-gray-900">
                               <h3>{{ selectedTransaction.livestock.type }} ({{ selectedTransaction.livestock.breed }})</h3>
-                              <p class="ml-4 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-sm">
+                              <p class="ml-4 bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-sm">
                                 ₱{{ selectedTransaction.amount.toLocaleString() }}
                               </p>
                             </div>
@@ -560,10 +560,10 @@
 
     <!-- Enhanced Success Toast -->
     <div v-if="showToast" class="fixed top-4 right-4 z-50">
-      <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-blue-200/60 p-3 transform transition-all duration-300 ease-in-out">
+      <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-3 transform transition-all duration-300 ease-in-out">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>

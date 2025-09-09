@@ -3,15 +3,17 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Auth Pages
 import signIn from '../views/auth/signIn.vue';
 import signUp from '../views/auth/signUp.vue';
+import ForgotPassword from '../views/auth/ForgotPassword.vue';
 
 // Admin Pages
 import adminDashboard from '../views/admin/adminDashboard.vue';
 import UserManagement from '../views/admin/userManagement.vue';
 import UpgradeRequests from '../views/admin/upgradeRequests.vue';
-import LivestockManagement from '../views/admin/livestockManagement.vue';
+import AdminLivestockManagement from '../views/admin/adminlivestockManagement.vue';
 
 // Main Pages
 import LandingPage from '../views/main/landingPage.vue';
+import AboutUs from '../views/main/AboutUs.vue';
 import Dashboard from '../views/main/Dashboard.vue';
 import Transactions from '../views/main/Transactions.vue';
 import myPurchases from '../views/main/myPurchases.vue';
@@ -20,7 +22,7 @@ import Forum from '../views/main/Forum.vue';
 import Messages from '../views/main/Messages.vue';
 import Notifications from '../views/main/Notifications.vue';
 import upgradeForm from '../views/auth/upgradeForm.vue';
-import YourLivestock from '../views/main/yourLivestock.vue';
+import LivestockManagement from '../views/main/livestockManagement.vue';
 import UserProfile from '../views/main/userProfile.vue';
 import Carts from '../views/main/Carts.vue';
 import CheckOut from '../views/main/checkOut.vue';
@@ -34,6 +36,7 @@ const routes = [
   // Auth Routes
   { path: '/signIn', component: signIn, name: 'SignIn' },
   { path: '/signUp', component: signUp, name: 'SignUp' },
+  { path: '/forgotPassword', component: ForgotPassword, name: 'ForgotPassword.vue' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
 
@@ -41,10 +44,11 @@ const routes = [
   { path: '/adminDashboard', component: adminDashboard, name: 'adminDashboard' },
   { path: '/userManagement', component: UserManagement, name: 'UserManagement' },
   { path: '/upgradeRequests', component: UpgradeRequests, name: 'UpgradeRequests' },
-  { path: '/livestockManagement', component: LivestockManagement, name: 'LivestockManagement' },
+  { path: '/AdminLivestockManagement', component: AdminLivestockManagement, name: 'AdminLivestockManagement' },
 
   // Main Routes
   { path: '/', component: LandingPage, name: 'LandingPage' },
+  { path: '/AboutUs', component: AboutUs, name: 'AboutUs' },
   { path: '/dashboard', component: Dashboard, name: 'Dashboard' },
   { path: '/transactions', component: Transactions, name: 'Transactions' },
   { path: '/myPurchases', component: myPurchases, name: 'myPurchases' },
@@ -52,7 +56,7 @@ const routes = [
   { path: '/forum', component: Forum, name: 'Forum' },
   { path: '/messages', component: Messages, name: 'Messages' },
   { path: '/notifications', component: Notifications, name: 'Notifications' },
-  { path: '/yourLivestock', component: YourLivestock, name: 'YourLivestock' },
+  { path: '/LivestockManagement', component: LivestockManagement, name: 'LivestockManagement' },
   { path: '/userProfile', component: UserProfile, name: 'UserProfile' },
   { path: '/carts', component: Carts, name: 'Carts' },
   { path: '/checkOut', component: CheckOut, name: 'CheckOut' },
