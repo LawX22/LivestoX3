@@ -67,6 +67,7 @@
               <span v-for="location in localFilters.locations" :key="location" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ location }}</span>
               <span v-for="priceRange in localFilters.priceRanges" :key="priceRange" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ formatPriceRange(priceRange) }}</span>
               <span v-for="gender in localFilters.genders" :key="gender" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ gender }}</span>
+              <span v-for="health in localFilters.healthStatuses" :key="health" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ health }}</span>
               <!-- Auction-specific filters -->
               <span v-for="status in localFilters.auctionStatuses" :key="status" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ status }}</span>
               <span v-for="timeRange in localFilters.endTimeRanges" :key="timeRange" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ formatTimeRange(timeRange) }}</span>
@@ -148,6 +149,17 @@
                 <option value="">Select a location</option>
                 <option v-for="location in uniqueLocations" :key="location" :value="location">{{ location }}</option>
               </select>
+              <!-- Show selected locations -->
+              <div v-if="localFilters.locations.length > 0" class="mt-2 space-y-1">
+                <div v-for="location in localFilters.locations" :key="location" class="flex items-center justify-between text-xs bg-green-50 px-2 py-1 rounded">
+                  <span>{{ location }}</span>
+                  <button @click="removeLocation(location)" class="text-red-500 hover:text-red-700">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Price Range Checkboxes -->
@@ -188,6 +200,27 @@
                     class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
                   >
                   <span class="truncate">{{ gender }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Health Status Checkboxes -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+              <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Health Status
+              </h3>
+              <div class="space-y-1 max-h-32 overflow-y-auto">
+                <label v-for="health in uniqueHealthStatuses" :key="health" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    :value="health" 
+                    v-model="localFilters.healthStatuses" 
+                    class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                  >
+                  <span class="truncate">{{ health }}</span>
                 </label>
               </div>
             </div>
@@ -350,6 +383,7 @@ interface Filters {
   locations: string[];
   priceRanges: string[];
   genders: string[];
+  healthStatuses: string[];
   // Auction-specific filters
   auctionStatuses: string[];
   endTimeRanges: string[];
@@ -367,6 +401,7 @@ const props = defineProps<{
   uniqueTypes: string[];
   uniqueBreeds: string[];
   uniqueLocations: string[];
+  uniqueHealthStatuses: string[];
 }>();
 
 const emit = defineEmits<{
@@ -436,6 +471,7 @@ const hasActiveFilters = computed(() => {
     localFilters.value.locations.length > 0 || 
     localFilters.value.priceRanges.length > 0 || 
     localFilters.value.genders.length > 0 ||
+    localFilters.value.healthStatuses.length > 0 ||
     // Auction filters
     localFilters.value.auctionStatuses.length > 0 ||
     localFilters.value.endTimeRanges.length > 0 ||
@@ -459,6 +495,7 @@ const resetFilters = () => {
     locations: [],
     priceRanges: [],
     genders: [],
+    healthStatuses: [],
     auctionStatuses: [],
     endTimeRanges: [],
     bidCountMin: null,
@@ -480,6 +517,12 @@ const handleLocationChange = (event: Event) => {
   
   // Reset dropdown
   target.value = '';
+};
+
+const removeLocation = (locationToRemove: string) => {
+  localFilters.value.locations = localFilters.value.locations.filter(
+    location => location !== locationToRemove
+  );
 };
 
 const formatPriceRange = (range: string) => {
