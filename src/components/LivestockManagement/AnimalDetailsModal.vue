@@ -323,7 +323,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'edit', 'delete']);
+// const emit = defineEmits(['close', 'edit', 'delete']);
 
 const selectedImageIndex = ref(0);
 

@@ -729,11 +729,6 @@ const handleSubmit = async () => {
     }
 };
 
-const saveDraft = () => {
-    emit('draft', { ...form });
-    closeModal();
-};
-
 const closeModal = () => {
     resetForm();
     emit('close');

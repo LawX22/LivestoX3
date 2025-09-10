@@ -1115,10 +1115,10 @@ const closeModal = () => {
   selectedAnimal.value = null;
 };
 
-const closeAuctionModal = () => {
-  isAuctionModalOpen.value = false;
-  selectedAnimal.value = null;
-};
+// const closeAuctionModal = () => {
+//   isAuctionModalOpen.value = false;
+//   selectedAnimal.value = null;
+// };
 
 const resetFilters = () => {
   filters.value = {
@@ -1268,18 +1268,18 @@ const handleListingCreated = (listingData: CreateListingForm) => {
 const handleListingDraft = (listingData: CreateListingForm) => {
   showToastNotification(`Draft saved for "${listingData.title}"`);
   closeCreateListingModal();
-};
+};  
 
-const redirectToLogin = () => router.push('/signin');
+// const redirectToLogin = () => router.push('/signin');
 
-const handlePlaceBid = (bidData: { animalId: string; amount: number }) => {
-  const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
-  if (animalIndex !== -1) {
-    animals.value[animalIndex].currentBid = bidData.amount;
-    animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
-    showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
-  }
-};
+// const handlePlaceBid = (bidData: { animalId: string; amount: number }) => {
+//   const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
+//   if (animalIndex !== -1) {
+//     animals.value[animalIndex].currentBid = bidData.amount;
+//     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
+//     showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
+//   }
+// };
 
 // Lifecycle
 onMounted(() => {
