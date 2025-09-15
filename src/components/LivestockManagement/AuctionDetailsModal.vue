@@ -519,7 +519,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 
 interface Farmer {
     id: number;
@@ -572,11 +572,6 @@ const props = defineProps<{
     isOpen: boolean;
 }>();
 
-const emit = defineEmits<{
-    close: [];
-    edit: [animalId: string];
-    delete: [animalId: string];
-}>();
 
 const selectedImageIndex = ref(0);
 const bidHistory = ref<Bid[]>([]);

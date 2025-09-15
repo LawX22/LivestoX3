@@ -639,7 +639,7 @@ const bankInfo = ref({
   accountNumber: '',
   accountName: ''
 });
-const promoCode = ref('');
+
 const discount = ref(0);
 const termsAgreed = ref(false);
 const isProcessingOrder = ref(false);
