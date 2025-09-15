@@ -1,3 +1,4 @@
+<!-- AuctionDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div v-if="isOpen" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">

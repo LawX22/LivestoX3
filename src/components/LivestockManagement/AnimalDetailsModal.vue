@@ -114,35 +114,60 @@
                   Basic Information
                 </h3>
 
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Animal Type</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.type }}</div>
+                <div class="space-y-4">
+                  <!-- Animal Details Grid -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Animal Type</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.type }}</div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Breed</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.breed }}</div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Gender</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.gender }}</div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Age</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.age }}</div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Weight</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.weight }} kg</div>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-1">Quantity</label>
+                      <div class="text-sm font-medium text-gray-900">{{ animal.quantity }}</div>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Breed</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.breed }}</div>
+
+                  <!-- Health Status -->
+                  <div v-if="animal.healthStatus" class="border-t border-gray-200 pt-4">
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Health Status</label>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(status, index) in animal.healthStatus" :key="index"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {{ status }}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Gender</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.gender }}</div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Age</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.age }}</div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Weight</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.weight }} kg</div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Quantity</label>
-                    <div class="text-sm font-medium text-gray-900">{{ animal.quantity }}</div>
+
+                  <!-- Delivery Options -->
+                  <div class="border-t border-gray-200 pt-4">
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Delivery Options</label>
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(option, index) in animal.deliveryOptions" :key="index"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        {{ formatDeliveryOption(option) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -184,54 +209,6 @@
                     <div class="text-sm font-medium text-gray-900">{{ formatDate(animal.datePosted) }}</div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Health Status -->
-              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  Health Status
-                </h3>
-
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(status, index) in animal.healthStatus" :key="index"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {{ status }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Delivery Options -->
-              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  Delivery Options
-                </h3>
-
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(option, index) in animal.deliveryOptions" :key="index"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                    {{ formatDeliveryOption(option) }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Location -->
-              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Location
-                </h3>
-                <div class="text-sm font-medium text-gray-900">{{ animal.location }}</div>
               </div>
 
               <!-- Farmer Information -->
