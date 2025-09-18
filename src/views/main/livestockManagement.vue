@@ -169,6 +169,7 @@
       <div class="flex flex-1 overflow-hidden">
         <!-- Enhanced Filters Sidebar Component -->
         <FilterSidebar 
+          v-if="filtersReady"
           :isExpanded="isSidebarExpanded"
           :filters="filters"
           :activeTab="activeTab"
@@ -478,12 +479,31 @@
       @close="closeModal"
     />
 
+    <!-- Auction Details Modal -->
+    <AuctionDetailsModal 
+      v-if="isAuctionModalOpen && selectedAnimal && selectedAnimal.isAuction" 
+      :animal="selectedAnimal"
+      :isOpen="isAuctionModalOpen"
+      @close="closeAuctionModal"
+      @placeBid="handlePlaceBid"
+    />
+
     <!-- Create Listing Modal -->
     <CreateListingModal
+      v-if="showCreateListingModal"
       :isOpen="showCreateListingModal"
       @close="closeCreateListingModal"
       @created="handleListingCreated"
       @draft="handleListingDraft"
+    />
+
+    <!-- Create Auction Modal -->
+    <CreateAuctionModal
+      v-if="showCreateAuctionModal"
+      :isOpen="showCreateAuctionModal"
+      @close="closeCreateAuctionModal"
+      @created="handleAuctionCreated"
+      @draft="handleAuctionDraft"
     />
 
     <!-- Enhanced Success Toast -->
@@ -506,38 +526,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create Auction Coming Soon Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all duration-300">
-        <div class="text-center">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Coming Soon!</h3>
-          <p class="text-gray-600 mb-6">
-            Create Auction feature is currently under development. 
-            Stay tuned for this exciting new functionality!
-          </p>
-          <div class="flex gap-3 justify-center">
-            <button 
-              @click="closeCreateModal"
-              class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors duration-200"
-            >
-              Close
-            </button>
-            <button 
-              @click="notifyMe"
-              class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Notify Me
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -580,9 +568,17 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import FilterSidebar from '../../components/LivestockManagement/FilterSidebar.vue';
 import AnimalDetailsModal from '../../components/LivestockManagement/AnimalDetailsModal.vue';
+import AuctionDetailsModal from '../../components/LivestockManagement/AuctionDetailsModal.vue';
 import LivestockCard from '../../components/LivestockManagement/LivestockCard.vue';
 import CreateListingModal from '../../components/LivestockManagement/CreateListingModal.vue';
-import { getCurrentUser } from '../../services/user';
+import CreateAuctionModal from '../../components/LivestockManagement/CreateAuctionModal.vue';
+
+// Mock user service for demonstration
+const getCurrentUser = () => ({
+  role: 'Farmer',
+  name: 'John Doe',
+  email: 'john@example.com'
+});
 
 interface ServiceUser {
   email?: string;
@@ -609,7 +605,7 @@ interface Animal {
   breed: string;
   weight: number;
   quantity: number;
-  originalQuantity: number; // NEW: Track original quantity
+  originalQuantity: number;
   age: string;
   gender: string;
   status: string;
@@ -628,6 +624,10 @@ interface Animal {
   endTime?: string;
   duration?: string;
   auctionStartTime?: string;
+  reservePrice?: number;
+  bidIncrement?: number;
+  paymentTerms?: string;
+  additionalTerms?: string;
 }
 
 interface Filters {
@@ -664,6 +664,29 @@ interface CreateListingForm {
   description: string;
 }
 
+interface CreateAuctionForm {
+  title: string;
+  type: string;
+  breed: string;
+  gender: string;
+  age: string;
+  weight: number | null;
+  weightUnit: string;
+  quantity: number | null;
+  startingBid: number | null;
+  reservePrice: number | null;
+  duration: string;
+  bidIncrement: number | null;
+  healthStatus: string[];
+  location: string;
+  paymentTerms: string;
+  deliveryOptions: string[];
+  additionalTerms: string;
+  images: string[];
+  description: string;
+  isAuction: boolean;
+}
+
 // Generate a unique ID using a simple UUID v4 implementation
 const generateUniqueId = (): string => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -691,7 +714,7 @@ const hasPendingUpgrade = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
 
-// NEW: Low stock alert states
+// Low stock alert states
 const showLowStockAlert = ref(false);
 const lowStockMessage = ref('');
 const alertAnimalId = ref('');
@@ -701,9 +724,8 @@ const isAuctionModalOpen = ref(false);
 const selectedAnimal = ref<Animal | null>(null);
 
 // Create modal states
-const showCreateModal = ref(false);
 const showCreateListingModal = ref(false);
-const createType = ref<'listing' | 'auction'>('listing');
+const showCreateAuctionModal = ref(false);
 
 const activeTab = ref<'normal' | 'auction'>('normal');
 const displayMode = ref<'card' | 'table'>('card');
@@ -711,6 +733,7 @@ const displayMode = ref<'card' | 'table'>('card');
 const isSidebarExpanded = ref(true);
 const sortBy = ref('datePosted');
 const weightUnit = ref('kg');
+const filtersReady = ref(true);
 
 const filters = ref<Filters>({
   search: '',
@@ -739,7 +762,7 @@ const farmerMaria: Farmer = {
   avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
 };
 
-// NEW: Function to automatically update status based on quantity
+// Function to automatically update status based on quantity
 const updateAnimalStatus = (animal: Animal): string => {
   if (animal.quantity === 0) {
     return 'Out of Stock';
@@ -750,12 +773,12 @@ const updateAnimalStatus = (animal: Animal): string => {
   }
 };
 
-// NEW: Function to check for status changes and show alerts
+// Function to check for status changes and show alerts
 const checkForStatusChange = (animal: Animal, oldQuantity: number, newQuantity: number) => {
   const oldStatus = oldQuantity === 0 ? 'Out of Stock' : 
-                   oldQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
+                  oldQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
   const newStatus = newQuantity === 0 ? 'Out of Stock' : 
-                   newQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
+                  newQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
   
   if (oldStatus !== newStatus) {
     let message = '';
@@ -784,7 +807,7 @@ const animals = ref<Animal[]>([
     breed: 'Angus',
     weight: 450,
     quantity: 5,
-    originalQuantity: 5, // NEW: Track original quantity
+    originalQuantity: 5,
     age: '18-24 months',
     gender: 'Male',
     status: 'Available',
@@ -808,7 +831,7 @@ const animals = ref<Animal[]>([
     breed: 'Native',
     weight: 70,
     quantity: 2,
-    originalQuantity: 2, // NEW: Track original quantity
+    originalQuantity: 2,
     age: '12 months',
     gender: 'Mixed',
     status: 'Available',
@@ -828,20 +851,23 @@ const animals = ref<Animal[]>([
     bidCount: 7,
     auctionStartTime: new Date().toISOString(),
     endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-    duration: '2 days'
+    duration: '2 days',
+    reservePrice: 8000,
+    bidIncrement: 500,
+    paymentTerms: '3days',
+    additionalTerms: 'Must arrange pickup within 7 days of auction end.'
   },
-  // NEW: Add some test animals with different quantities to demonstrate the feature
   {
     id: generateUniqueId(),
     title: 'Native Chickens - Free Range',
     type: 'Poultry',
     breed: 'Native',
     weight: 1.5,
-    quantity: 25, // Low stock example (30% of 100)
-    originalQuantity: 100, // Original was 100
+    quantity: 25,
+    originalQuantity: 100,
     age: '4-6 months',
     gender: 'Mixed',
-    status: 'Low Stock', // Will be auto-updated
+    status: 'Low Stock',
     healthStatus: ['Healthy', 'Free Range'],
     price: 350,
     deliveryOptions: ['pickup', 'delivery'],
@@ -860,11 +886,11 @@ const animals = ref<Animal[]>([
     type: 'Cattle',
     breed: 'Brown Swiss',
     weight: 600,
-    quantity: 0, // Out of stock example
-    originalQuantity: 8, // Original was 8
+    quantity: 0,
+    originalQuantity: 8,
     age: '2-3 years',
     gender: 'Female',
-    status: 'Out of Stock', // Will be auto-updated
+    status: 'Out of Stock',
     healthStatus: ['Healthy', 'Excellent Milk Production'],
     price: 85000,
     deliveryOptions: ['pickup'],
@@ -1115,10 +1141,10 @@ const closeModal = () => {
   selectedAnimal.value = null;
 };
 
-// const closeAuctionModal = () => {
-//   isAuctionModalOpen.value = false;
-//   selectedAnimal.value = null;
-// };
+const closeAuctionModal = () => {
+  isAuctionModalOpen.value = false;
+  selectedAnimal.value = null;
+};
 
 const resetFilters = () => {
   filters.value = {
@@ -1156,24 +1182,18 @@ const createListing = () => {
 };
 
 const createAuction = () => {
-  createType.value = 'auction';
-  showCreateModal.value = true;
-};
-
-const closeCreateModal = () => {
-  showCreateModal.value = false;
+  showCreateAuctionModal.value = true;
 };
 
 const closeCreateListingModal = () => {
   showCreateListingModal.value = false;
 };
 
-const notifyMe = () => {
-  showToastNotification(`You'll be notified when the ${createType.value} feature becomes available!`);
-  closeCreateModal();
+const closeCreateAuctionModal = () => {
+  showCreateAuctionModal.value = false;
 };
 
-// NEW: Quantity update handler - This is the main function that handles stock changes
+// Quantity update handler - This is the main function that handles stock changes
 const handleQuantityUpdate = (data: { animalId: string; newQuantity: number; operation: string }) => {
   const animalIndex = animals.value.findIndex(a => a.id === data.animalId);
   if (animalIndex !== -1) {
@@ -1211,7 +1231,7 @@ const handleQuantityUpdate = (data: { animalId: string; newQuantity: number; ope
   }
 };
 
-// NEW: Low stock alert handlers
+// Low stock alert handlers
 const closeLowStockAlert = () => {
   showLowStockAlert.value = false;
   lowStockMessage.value = '';
@@ -1235,7 +1255,7 @@ const handleListingCreated = (listingData: CreateListingForm) => {
     breed: listingData.breed,
     weight: listingData.weight || 0,
     quantity: listingData.quantity || 0,
-    originalQuantity: listingData.quantity || 0, // NEW: Set original quantity
+    originalQuantity: listingData.quantity || 0,
     age: listingData.age,
     gender: listingData.gender,
     status: listingData.status,
@@ -1268,18 +1288,72 @@ const handleListingCreated = (listingData: CreateListingForm) => {
 const handleListingDraft = (listingData: CreateListingForm) => {
   showToastNotification(`Draft saved for "${listingData.title}"`);
   closeCreateListingModal();
-};  
+};
 
-// const redirectToLogin = () => router.push('/signin');
+const handleAuctionCreated = (auctionData: CreateAuctionForm) => {
+  // Calculate auction end time
+  const startTime = new Date();
+  const endTime = new Date(startTime.getTime() + (parseInt(auctionData.duration) * 24 * 60 * 60 * 1000));
 
-// const handlePlaceBid = (bidData: { animalId: string; amount: number }) => {
-//   const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
-//   if (animalIndex !== -1) {
-//     animals.value[animalIndex].currentBid = bidData.amount;
-//     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
-//     showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
-//   }
-// };
+  // Generate new auction from form data
+  const newAuction: Animal = {
+    id: generateUniqueId(),
+    title: auctionData.title,
+    type: auctionData.type,
+    breed: auctionData.breed,
+    weight: auctionData.weight || 0,
+    quantity: auctionData.quantity || 0,
+    originalQuantity: auctionData.quantity || 0,
+    age: auctionData.age,
+    gender: auctionData.gender,
+    status: 'Available',
+    healthStatus: auctionData.healthStatus,
+    price: 0, // Auctions start at 0 for price field
+    deliveryOptions: auctionData.deliveryOptions,
+    images: auctionData.images.length > 0 ? auctionData.images : [
+      'https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+    ],
+    description: auctionData.description,
+    datePosted: new Date().toISOString(),
+    farmer: farmerMaria,
+    location: auctionData.location,
+    isAuction: true,
+    startingBid: auctionData.startingBid || 0,
+    currentBid: auctionData.startingBid || 0, // Start with starting bid as current bid
+    bidCount: 0,
+    auctionStartTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    duration: `${auctionData.duration} ${parseInt(auctionData.duration) === 1 ? 'day' : 'days'}`,
+    reservePrice: auctionData.reservePrice || undefined,
+    bidIncrement: auctionData.bidIncrement || 100,
+    paymentTerms: auctionData.paymentTerms,
+    additionalTerms: auctionData.additionalTerms || undefined
+  };
+
+  // Add to animals list
+  animals.value.unshift(newAuction);
+  
+  // Show success message
+  showToastNotification(`Auction "${auctionData.title}" has been created successfully! Auction ends ${endTime.toLocaleDateString()}`);
+  
+  // Close modal and switch to auction tab
+  closeCreateAuctionModal();
+  activeTab.value = 'auction';
+};
+
+const handleAuctionDraft = (auctionData: CreateAuctionForm) => {
+  showToastNotification(`Draft saved for auction "${auctionData.title}"`);
+  closeCreateAuctionModal();
+};
+
+const handlePlaceBid = (bidData: { animalId: string; amount: number }) => {
+  const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
+  if (animalIndex !== -1) {
+    animals.value[animalIndex].currentBid = bidData.amount;
+    animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
+    showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
+  }
+};
 
 // Lifecycle
 onMounted(() => {
@@ -1288,7 +1362,7 @@ onMounted(() => {
     ? requests.some((r: any) => r.email === currentUser.email)
     : false;
     
-  // NEW: Initialize all animal statuses on mount
+  // Initialize all animal statuses on mount
   animals.value.forEach(animal => {
     if (!animal.isAuction) {
       animal.status = updateAnimalStatus(animal);

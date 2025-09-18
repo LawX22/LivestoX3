@@ -3,71 +3,71 @@
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-20 left-10 w-12 h-12 bg-green-300/30 rounded-full blur-sm animate-pulse"></div>
-      <div class="absolute bottom-24 right-24 w-16 h-16 bg-teal-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
-      <div class="absolute top-1/2 right-8 w-6 h-6 bg-green-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
+      <div class="absolute top-20 left-10 w-8 h-8 bg-green-300/20 rounded-full blur-sm animate-pulse"></div>
+      <div class="absolute bottom-24 right-24 w-12 h-12 bg-teal-300/15 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
+      <div class="absolute top-1/2 right-8 w-4 h-4 bg-green-400/20 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 container mx-auto px-4 py-6 max-w-6xl">
-      <!-- Page Header -->
-      <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-5 rounded-xl mb-6 shadow-lg border border-green-200 flex items-center justify-between">
+    <div class="flex-1 container mx-auto px-3 py-4 max-w-7xl">
+      <!-- Compact Page Header - Sticky -->
+      <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-lg mb-4 shadow-md border border-green-200 flex items-center justify-between sticky top-0 z-10">
         <div class="flex items-center">
-          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4 backdrop-blur-sm shadow-lg">
-            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mr-3 backdrop-blur-sm">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
             </svg>
           </div>
           <div>
-            <h1 class="text-2xl font-bold">Checkout</h1>
-            <p class="text-green-100 opacity-90">Complete your purchase</p>
+            <h1 class="text-lg font-bold">Checkout</h1>
+            <p class="text-green-100 opacity-90 text-xs">Complete your purchase</p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="bg-white/20 px-3 py-1 rounded-lg text-sm font-semibold backdrop-blur-sm">
+        <div class="flex items-center gap-2">
+          <span class="bg-white/20 px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm">
             {{ checkoutItems.length }} {{ checkoutItems.length === 1 ? 'Item' : 'Items' }}
           </span>
         </div>
       </div>
 
       <!-- Checkout Content -->
-      <div class="flex flex-col lg:flex-row gap-6">
+      <div class="flex flex-col xl:flex-row gap-4">
         <!-- Left Panel - Form -->
-        <div class="flex-1">
+        <div class="flex-1 max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
           <!-- User Information (Display only) -->
-          <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60 mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50 mb-4">
+            <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               Your Information
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label class="block text-sm font-medium text-gray-500 mb-1">First Name</label>
-                <div class="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="block text-xs font-medium text-gray-500 mb-1">First Name</label>
+                <div class="w-full px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                   {{ userInfo.firstName }}
                 </div>
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
-                <div class="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Last Name</label>
+                <div class="w-full px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                   {{ userInfo.lastName }}
                 </div>
               </div>
               
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
-                <div class="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
+                <div class="w-full px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                   {{ userInfo.email }}
                 </div>
               </div>
               
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
-                <div class="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Phone Number</label>
+                <div class="w-full px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                   {{ userInfo.phone }}
                 </div>
               </div>
@@ -75,103 +75,103 @@
           </div>
 
           <!-- Delivery Method -->
-          <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60 mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50 mb-4">
+            <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
               Delivery Method
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div 
-                class="border-2 rounded-lg p-4 cursor-pointer transition-all duration-200"
+                class="border-2 rounded-lg p-3 cursor-pointer transition-all duration-200"
                 :class="deliveryMethod === 'delivery' ? 'border-green-500 bg-green-50' : 'border-gray-300'"
                 @click="deliveryMethod = 'delivery'"
               >
                 <div class="flex items-center">
-                  <div class="flex items-center justify-center h-5">
+                  <div class="flex items-center justify-center h-4">
                     <input 
                       type="radio" 
                       id="delivery"
                       value="delivery"
                       v-model="deliveryMethod"
-                      class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      class="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
                     >
                   </div>
-                  <label for="delivery" class="ml-3 flex items-center cursor-pointer">
-                    <div class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md mr-3">
-                      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label for="delivery" class="ml-2 flex items-center cursor-pointer">
+                    <div class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-md mr-2">
+                      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
                     </div>
-                    <span class="block text-sm font-medium text-gray-700">Home Delivery</span>
+                    <span class="block text-xs font-medium text-gray-700">Home Delivery</span>
                   </label>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 ml-7">We'll deliver to your selected address</p>
+                <p class="text-xs text-gray-500 mt-1 ml-5">We'll deliver to your selected address</p>
               </div>
               
               <div 
-                class="border-2 rounded-lg p-4 cursor-pointer transition-all duration-200"
+                class="border-2 rounded-lg p-3 cursor-pointer transition-all duration-200"
                 :class="deliveryMethod === 'pickup' ? 'border-green-500 bg-green-50' : 'border-gray-300'"
                 @click="deliveryMethod = 'pickup'"
               >
                 <div class="flex items-center">
-                  <div class="flex items-center justify-center h-5">
+                  <div class="flex items-center justify-center h-4">
                     <input 
                       type="radio" 
                       id="pickup"
                       value="pickup"
                       v-model="deliveryMethod"
-                      class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      class="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
                     >
                   </div>
-                  <label for="pickup" class="ml-3 flex items-center cursor-pointer">
-                    <div class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md mr-3">
-                      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label for="pickup" class="ml-2 flex items-center cursor-pointer">
+                    <div class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-md mr-2">
+                      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <span class="block text-sm font-medium text-gray-700">Pickup</span>
+                    <span class="block text-xs font-medium text-gray-700">Pickup</span>
                   </label>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 ml-7">Pick up from our nearest farm location</p>
+                <p class="text-xs text-gray-500 mt-1 ml-5">Pick up from our nearest farm location</p>
               </div>
             </div>
           </div>
 
           <!-- Shipping Information -->
-          <div v-if="deliveryMethod === 'delivery'" class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60 mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="deliveryMethod === 'delivery'" class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50 mb-4">
+            <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Shipping Address
             </h2>
             
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Select Address</label>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-700 mb-2">Select Address</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div 
                   v-for="(address, index) in userAddresses" 
                   :key="index"
-                  class="border rounded-lg p-3 cursor-pointer transition-all duration-200"
+                  class="border rounded-lg p-2 cursor-pointer transition-all duration-200"
                   :class="selectedAddressIndex === index ? 'border-2 border-green-500 bg-green-50' : 'border-gray-300'"
                   @click="selectedAddressIndex = index"
                 >
                   <div class="flex items-start">
-                    <div class="flex items-center h-5 mt-0.5">
+                    <div class="flex items-center h-4 mt-0.5">
                       <input 
                         type="radio" 
                         :name="'address-' + index"
                         :checked="selectedAddressIndex === index"
-                        class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                        class="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
                       >
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-800">{{ address.name }}</p>
-                      <p class="text-xs text-gray-600 mt-1">{{ address.street }}</p>
+                    <div class="ml-2">
+                      <p class="text-xs font-medium text-gray-800">{{ address.name }}</p>
+                      <p class="text-xs text-gray-600 mt-0.5">{{ address.street }}</p>
                       <p class="text-xs text-gray-600">{{ address.city }}, {{ address.province }} {{ address.postalCode }}</p>
                     </div>
                   </div>
@@ -179,34 +179,34 @@
               </div>
             </div>
             
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-3">
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Address</label>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Delivery Address</label>
                 <textarea 
                   v-model="selectedAddress.street"
-                  rows="3"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                  rows="2"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 text-sm"
                   placeholder="Enter complete delivery address"
                 ></textarea>
                 <p v-if="errors.address" class="text-red-500 text-xs mt-1">{{ errors.address }}</p>
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <label class="block text-xs font-medium text-gray-700 mb-1">City</label>
                 <input 
                   v-model="selectedAddress.city"
                   type="text" 
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 text-sm"
                   placeholder="Enter city"
                 >
                 <p v-if="errors.city" class="text-red-500 text-xs mt-1">{{ errors.city }}</p>
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Province</label>
                 <select 
                   v-model="selectedAddress.province"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 text-sm"
                 >
                   <option value="" disabled selected>Select province</option>
                   <option v-for="province in phProvinces" :key="province" :value="province">{{ province }}</option>
@@ -215,11 +215,11 @@
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Postal Code</label>
                 <input 
                   v-model="selectedAddress.postalCode"
                   type="text" 
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 text-sm"
                   placeholder="Enter postal code"
                 >
                 <p v-if="errors.postalCode" class="text-red-500 text-xs mt-1">{{ errors.postalCode }}</p>
@@ -228,39 +228,39 @@
           </div>
 
           <!-- Pickup Information -->
-          <div v-if="deliveryMethod === 'pickup'" class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60 mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="deliveryMethod === 'pickup'" class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50 mb-4">
+            <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               Pickup Location
             </h2>
             
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Select Pickup Location</label>
-              <div class="grid grid-cols-1 gap-3">
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-700 mb-2">Select Pickup Location</label>
+              <div class="grid grid-cols-1 gap-2">
                 <div 
                   v-for="(location, index) in pickupLocations" 
                   :key="index"
-                  class="border rounded-lg p-3 cursor-pointer transition-all duration-200"
+                  class="border rounded-lg p-2 cursor-pointer transition-all duration-200"
                   :class="selectedPickupIndex === index ? 'border-2 border-green-500 bg-green-50' : 'border-gray-300'"
                   @click="selectedPickupIndex = index"
                 >
                   <div class="flex items-start">
-                    <div class="flex items-center h-5 mt-0.5">
+                    <div class="flex items-center h-4 mt-0.5">
                       <input 
                         type="radio" 
                         :name="'pickup-' + index"
                         :checked="selectedPickupIndex === index"
-                        class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                        class="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
                       >
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-800">{{ location.name }}</p>
-                      <p class="text-xs text-gray-600 mt-1">{{ location.address }}</p>
+                    <div class="ml-2">
+                      <p class="text-xs font-medium text-gray-800">{{ location.name }}</p>
+                      <p class="text-xs text-gray-600 mt-0.5">{{ location.address }}</p>
                       <p class="text-xs text-gray-600">{{ location.hours }}</p>
-                      <p class="text-xs text-green-600 font-medium mt-1">{{ location.distance }}</p>
+                      <p class="text-xs text-green-600 font-medium mt-0.5">{{ location.distance }}</p>
                     </div>
                   </div>
                 </div>
@@ -269,59 +269,59 @@
           </div>
 
           <!-- Payment Method -->
-          <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50">
+            <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
               Payment Method
             </h2>
             
-            <div class="space-y-4">
+            <div class="space-y-3">
               <div 
                 v-for="method in paymentMethods" 
                 :key="method.id"
-                class="border border-gray-300 rounded-lg p-4 cursor-pointer transition-all duration-200"
+                class="border border-gray-300 rounded-lg p-3 cursor-pointer transition-all duration-200"
                 :class="{ 'border-2 border-green-500 bg-green-50': paymentMethod === method.id }"
                 @click="paymentMethod = method.id"
               >
                 <div class="flex items-center">
-                  <div class="flex items-center justify-center h-5">
+                  <div class="flex items-center justify-center h-4">
                     <input 
                       type="radio" 
                       :id="method.id"
                       :value="method.id"
                       v-model="paymentMethod"
-                      class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      class="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
                     >
                   </div>
-                  <label :for="method.id" class="ml-3 flex items-center cursor-pointer">
-                    <div class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md mr-3">
-                      <component :is="method.icon" class="w-5 h-5 text-gray-600" />
+                  <label :for="method.id" class="ml-2 flex items-center cursor-pointer">
+                    <div class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-md mr-2">
+                      <component :is="method.icon" class="w-4 h-4 text-gray-600" />
                     </div>
-                    <span class="block text-sm font-medium text-gray-700">{{ method.name }}</span>
+                    <span class="block text-xs font-medium text-gray-700">{{ method.name }}</span>
                   </label>
                 </div>
                 
                 <!-- GCash specific fields -->
-                <div v-if="paymentMethod === 'gcash'" class="mt-3 ml-7 pl-1 border-t border-gray-200 pt-3">
-                  <div class="grid grid-cols-2 gap-3">
+                <div v-if="paymentMethod === 'gcash'" class="mt-2 ml-5 pl-1 border-t border-gray-200 pt-2">
+                  <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">GCash Number</label>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">GCash Number</label>
                       <input 
                         v-model="gcashInfo.number"
                         type="tel" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-xs"
                         placeholder="09XX XXX XXXX"
                       >
                       <p v-if="errors.gcashNumber" class="text-red-500 text-xs mt-1">{{ errors.gcashNumber }}</p>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Account Name</label>
                       <input 
                         v-model="gcashInfo.name"
                         type="text" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-xs"
                         placeholder="Name on account"
                       >
                       <p v-if="errors.gcashName" class="text-red-500 text-xs mt-1">{{ errors.gcashName }}</p>
@@ -330,13 +330,13 @@
                 </div>
                 
                 <!-- Bank Transfer specific fields -->
-                <div v-if="paymentMethod === 'bank'" class="mt-3 ml-7 pl-1 border-t border-gray-200 pt-3">
-                  <div class="grid grid-cols-2 gap-3">
+                <div v-if="paymentMethod === 'bank'" class="mt-2 ml-5 pl-1 border-t border-gray-200 pt-2">
+                  <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Bank Name</label>
                       <select 
                         v-model="bankInfo.bankName"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-xs"
                       >
                         <option value="" disabled selected>Select bank</option>
                         <option value="BDO">BDO (Banco de Oro)</option>
@@ -348,21 +348,21 @@
                       <p v-if="errors.bankName" class="text-red-500 text-xs mt-1">{{ errors.bankName }}</p>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Account Number</label>
                       <input 
                         v-model="bankInfo.accountNumber"
                         type="text" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-xs"
                         placeholder="XXXX-XXXX-XXXX"
                       >
                       <p v-if="errors.accountNumber" class="text-red-500 text-xs mt-1">{{ errors.accountNumber }}</p>
                     </div>
                     <div class="md:col-span-2">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Account Name</label>
                       <input 
                         v-model="bankInfo.accountName"
                         type="text" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-xs"
                         placeholder="Name on account"
                       >
                       <p v-if="errors.accountName" class="text-red-500 text-xs mt-1">{{ errors.accountName }}</p>
@@ -371,8 +371,8 @@
                 </div>
 
                 <!-- Cash on Delivery specific note -->
-                <div v-if="paymentMethod === 'cod'" class="mt-3 ml-7 pl-1 border-t border-gray-200 pt-3">
-                  <p class="text-sm text-gray-600">
+                <div v-if="paymentMethod === 'cod'" class="mt-2 ml-5 pl-1 border-t border-gray-200 pt-2">
+                  <p class="text-xs text-gray-600">
                     Pay with cash when your order is delivered. An additional ₱50 processing fee applies.
                   </p>
                 </div>
@@ -381,59 +381,58 @@
           </div>
         </div>
 
-        <!-- Right Panel - Order Summary -->
-        <div class="w-full lg:w-96 flex-shrink-0">
-          <!-- Order Summary -->
-          <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/60 sticky top-24">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">Order Summary</h2>
+        <!-- Right Panel - Compact Order Summary -->
+        <div class="w-full xl:w-72 flex-shrink-0">
+          <div class="bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-md border border-white/50 sticky top-20">
+            <h2 class="text-base font-bold text-gray-800 mb-3">Order Summary</h2>
             
-            <!-- Items List -->
-            <div class="max-h-64 overflow-y-auto pr-2 mb-4">
-              <div v-for="item in checkoutItems" :key="item.id" class="flex items-start py-3 border-b border-gray-100 last:border-0">
-                <div class="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 mr-3">
+            <!-- Compact Items List -->
+            <div class="max-h-48 overflow-y-auto pr-1 mb-3">
+              <div v-for="item in checkoutItems" :key="item.id" class="flex items-start py-2 border-b border-gray-100 last:border-0">
+                <div class="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 mr-2">
                   <img :src="item.images[0]" :alt="item.type" class="w-full h-full object-cover">
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-medium text-gray-800 truncate">{{ item.type }} - {{ item.breed }}</h4>
+                  <h4 class="text-xs font-medium text-gray-800 truncate">{{ item.type }} - {{ item.breed }}</h4>
                   <p class="text-xs text-gray-600">Qty: {{ item.quantity }}</p>
                 </div>
-                <div class="text-sm font-medium text-gray-800 ml-2">₱{{ (item.price * item.quantity).toLocaleString() }}</div>
+                <div class="text-xs font-medium text-gray-800 ml-1">₱{{ (item.price * item.quantity).toLocaleString() }}</div>
               </div>
             </div>
             
-            <!-- Price Breakdown -->
-            <div class="space-y-2 mb-4">
-              <div class="flex justify-between text-sm">
+            <!-- Compact Price Breakdown -->
+            <div class="space-y-1 mb-3">
+              <div class="flex justify-between text-xs">
                 <span class="text-gray-600">Subtotal</span>
                 <span class="font-medium">₱{{ subtotal.toLocaleString() }}</span>
               </div>
               
-              <div v-if="deliveryMethod === 'delivery'" class="flex justify-between text-sm">
+              <div v-if="deliveryMethod === 'delivery'" class="flex justify-between text-xs">
                 <span class="text-gray-600">Shipping</span>
                 <span class="font-medium">₱{{ shippingCost.toLocaleString() }}</span>
               </div>
 
-              <div v-if="paymentMethod === 'cod'" class="flex justify-between text-sm">
+              <div v-if="paymentMethod === 'cod'" class="flex justify-between text-xs">
                 <span class="text-gray-600">COD Fee</span>
                 <span class="font-medium">₱{{ codFee.toLocaleString() }}</span>
               </div>
               
-              <div v-if="discount > 0" class="flex justify-between text-sm text-green-600">
+              <div v-if="discount > 0" class="flex justify-between text-xs text-green-600">
                 <span>Discount</span>
                 <span>-₱{{ discount.toLocaleString() }}</span>
               </div>
               
-              <div class="border-t border-gray-200 pt-2 mt-1">
-                <div class="flex justify-between text-base font-bold">
+              <div class="border-t border-gray-200 pt-1 mt-1">
+                <div class="flex justify-between text-sm font-bold">
                   <span>Total</span>
-                  <span>₱{{ totalPrice.toLocaleString() }}</span>
+                  <span class="text-green-700">₱{{ totalPrice.toLocaleString() }}</span>
                 </div>
               </div>
             </div>
             
-            <!-- Delivery Method Summary -->
-            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p class="text-sm font-medium text-gray-700 mb-1">
+            <!-- Compact Delivery Method Summary -->
+            <div class="mb-3 p-2 bg-gray-50 rounded-lg">
+              <p class="text-xs font-medium text-gray-700 mb-0.5">
                 {{ deliveryMethod === 'delivery' ? 'Delivery to:' : 'Pickup from:' }}
               </p>
               <p class="text-xs text-gray-600" v-if="deliveryMethod === 'delivery' && selectedAddress">
@@ -444,66 +443,45 @@
               </p>
             </div>
             
-            <!-- Promo Code -->
-            <div class="mb-4">
-              <div class="flex items-center">
-                <input 
-                  v-model="promoCode"
-                  type="text" 
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Promo code"
-                >
-                <button 
-                  @click="applyPromoCode"
-                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-r-lg hover:from-green-700 hover:to-emerald-700 transition-colors duration-200"
-                >
-                  Apply
-                </button>
-              </div>
-              <p v-if="promoMessage" class="text-xs mt-2" :class="promoMessage.type === 'success' ? 'text-green-600' : 'text-red-500'">
-                {{ promoMessage.text }}
-              </p>
-            </div>
-            
-            <!-- Terms Agreement -->
-            <div class="flex items-start mb-4">
+            <!-- Compact Terms Agreement -->
+            <div class="flex items-start mb-3">
               <input 
                 id="termsAgreement"
                 v-model="termsAgreed"
                 type="checkbox" 
-                class="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 mt-1"
+                class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500 mt-1"
               >
               <label for="termsAgreement" class="ml-2 block text-xs text-gray-700">
                 I agree to the <a href="#" class="text-green-600 hover:underline">Terms of Service</a> and <a href="#" class="text-green-600 hover:underline">Privacy Policy</a>. I understand that livestock purchases are subject to availability and health conditions at the time of delivery.
               </label>
             </div>
-            <p v-if="errors.termsAgreed" class="text-red-500 text-xs mb-3">{{ errors.termsAgreed }}</p>
+            <p v-if="errors.termsAgreed" class="text-red-500 text-xs mb-2">{{ errors.termsAgreed }}</p>
             
-            <!-- Place Order Button -->
+            <!-- Compact Place Order Button -->
             <button 
               @click="placeOrder"
               :disabled="isProcessingOrder"
-              class="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <svg v-if="isProcessingOrder" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
               {{ isProcessingOrder ? 'Processing Order...' : `Place Order - ₱${totalPrice.toLocaleString()}` }}
             </button>
             
-            <p class="text-xs text-gray-500 mt-3 text-center">
+            <p class="text-xs text-gray-500 mt-2 text-center">
               Your order will be processed within 24 hours. A confirmation will be sent to your email.
             </p>
           </div>
           
           <!-- Back to Cart -->
-          <div class="mt-4 text-center">
-            <button @click="goBackToCart" class="inline-flex items-center text-sm text-green-600 hover:text-green-700 font-medium transition-colors">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mt-3 text-center">
+            <button @click="goBackToCart" class="inline-flex items-center text-xs text-green-600 hover:text-green-700 font-medium transition-colors">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back to Cart
@@ -661,7 +639,7 @@ const bankInfo = ref({
   accountNumber: '',
   accountName: ''
 });
-const promoCode = ref('');
+
 const discount = ref(0);
 const termsAgreed = ref(false);
 const isProcessingOrder = ref(false);
@@ -849,28 +827,6 @@ const validateForm = (): boolean => {
   }
 
   return isValid;
-};
-
-const applyPromoCode = () => {
-  const code = promoCode.value.trim().toUpperCase();
-  promoMessage.value = null;
-
-  if (code === 'LIVESTOCK10') {
-    discount.value = subtotal.value * 0.1; // 10% discount
-    promoMessage.value = { text: '10% discount applied!', type: 'success' };
-  } else if (code === 'FREESHIP' && deliveryMethod.value === 'delivery') {
-    discount.value = shippingCost.value; // Free shipping
-    promoMessage.value = { text: 'Free shipping applied!', type: 'success' };
-  } else if (code === 'FREESHIP' && deliveryMethod.value === 'pickup') {
-    promoMessage.value = { text: 'Promo code not applicable for pickup', type: 'error' };
-  } else if (code === 'NOCOD' && paymentMethod.value === 'cod') {
-    discount.value = codFee.value; // No COD fee
-    promoMessage.value = { text: 'COD fee waived!', type: 'success' };
-  } else if (code === '') {
-    promoMessage.value = { text: 'Please enter a promo code', type: 'error' };
-  } else {
-    promoMessage.value = { text: 'Invalid promo code', type: 'error' };
-  }
 };
 
 const placeOrder = () => {
