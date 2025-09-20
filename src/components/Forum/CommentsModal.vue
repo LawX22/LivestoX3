@@ -117,12 +117,12 @@
                             <!-- Enhanced Voting Component -->
                             <div
                                 class="flex flex-col items-center gap-1 bg-white/10 rounded-xl p-2 backdrop-blur-sm border border-white/15 shadow-lg">
-                                <button v-if="currentUser" @click="upvoteQuestion"
-                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group"
+                                <button v-if="currentUser" @click="upvoteQuestion" :disabled="isVoting || question.userEmail === currentUser.email"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="{
                                         'bg-white/30 text-white shadow-md': question.userVote === 'up',
                                         'text-white/70 hover:bg-white/20 hover:text-white': question.userVote !== 'up'
-                                    }" :disabled="question.userEmail === currentUser.email">
+                                    }">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
@@ -134,12 +134,12 @@
                                     {{ (question.upvotes || 0) - (question.downvotes || 0) }}
                                 </div>
 
-                                <button v-if="currentUser" @click="downvoteQuestion"
-                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group"
+                                <button v-if="currentUser" @click="downvoteQuestion" :disabled="isVoting || question.userEmail === currentUser.email"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="{
                                         'bg-white/30 text-white shadow-md': question.userVote === 'down',
                                         'text-white/70 hover:bg-white/20 hover:text-white': question.userVote !== 'down'
-                                    }" :disabled="question.userEmail === currentUser.email">
+                                    }">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -148,8 +148,8 @@
                             </div>
 
                             <!-- Enhanced Bookmark Button -->
-                            <button v-if="currentUser" @click="toggleBookmark"
-                                class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 backdrop-blur-sm border shadow-lg group"
+                            <button v-if="currentUser" @click="toggleBookmark" :disabled="isBookmarking"
+                                class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 backdrop-blur-sm border shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
                                 :class="{
                                     'bg-amber-400/30 text-amber-100 border-amber-300/30': question.isBookmarked,
                                     'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white border-white/15': !question.isBookmarked
@@ -181,9 +181,15 @@
             <div class="flex-1 flex flex-col overflow-hidden min-h-0">
                 <!-- Comments List - Fixed scrollable area -->
                 <div class="flex-1 overflow-y-auto px-4 py-4 min-h-0">
+                    <!-- Loading State for Comments -->
+                    <div v-if="isLoadingAnswers" class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span class="ml-3 text-gray-600">Loading answers...</span>
+                    </div>
+
                     <!-- Comments with content -->
-                    <div v-if="question.answers.length > 0" class="space-y-4 max-w-5xl mx-auto">
-                        <div v-for="(answer, i) in question.answers" :key="i"
+                    <div v-else-if="question.answers.length > 0" class="space-y-4 max-w-5xl mx-auto">
+                        <div v-for="(answer, i) in question.answers" :key="answer.id"
                             class="bg-white/98 backdrop-blur-xl rounded-xl shadow-md overflow-hidden border border-white/60 transition-all duration-200 hover:shadow-lg group">
                             <div class="p-4">
                                 <!-- Compact Answer Header -->
@@ -287,24 +293,29 @@
                             <textarea v-model="tempAnswer"
                                 placeholder="Share your expertise, experience, or helpful advice..."
                                 class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white/95 backdrop-blur-sm resize-none transition-all duration-200 text-sm shadow-sm focus:shadow-md"
-                                rows="2" />
+                                rows="2" 
+                                :disabled="isSubmittingAnswer" />
 
                             <div class="flex justify-between items-center">
                                 <p class="text-xs text-gray-500">{{ tempAnswer.length }}/1000</p>
                                 <div class="flex gap-2">
-                                    <button @click="tempAnswer = ''"
-                                        class="px-3 py-1.5 rounded-md font-medium transition-all duration-200 border border-gray-300 text-gray-700 hover:bg-gray-100 shadow-sm text-xs">
+                                    <button @click="tempAnswer = ''" :disabled="isSubmittingAnswer"
+                                        class="px-3 py-1.5 rounded-md font-medium transition-all duration-200 border border-gray-300 text-gray-700 hover:bg-gray-100 shadow-sm text-xs disabled:opacity-50 disabled:cursor-not-allowed">
                                         Clear
                                     </button>
                                     <button @click="submitAnswer"
                                         class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-1.5 rounded-md font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 text-xs"
-                                        :disabled="!tempAnswer.trim()">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
+                                        :disabled="!tempAnswer.trim() || tempAnswer.length > 1000 || isSubmittingAnswer">
+                                        <svg v-if="isSubmittingAnswer" class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                         </svg>
-                                        Post Answer
+                                        {{ isSubmittingAnswer ? 'Posting...' : 'Post Answer' }}
                                     </button>
                                 </div>
                             </div>
@@ -355,32 +366,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-
-interface ForumAnswer {
-    text: string;
-    userEmail: string;
-    userRole: string;
-    createdAt: string;
-}
-
-interface ForumQuestion {
-    id: number;
-    title: string;
-    description?: string;
-    userEmail: string;
-    userRole: string;
-    createdAt: string;
-    answers: ForumAnswer[];
-    category?: string;
-    urgency?: string;
-    isBookmarked?: boolean;
-    views?: number;
-    visibility?: 'all' | 'farmers';
-    upvotes?: number;
-    downvotes?: number;
-    userVote?: 'up' | 'down' | null;
-    userVotes?: { [userEmail: string]: 'up' | 'down' };
-}
+import { forumService, type ForumQuestion, type ForumAnswer } from '../../services/forumService';
 
 interface User {
     email: string;
@@ -402,87 +388,138 @@ const emit = defineEmits<{
     showToast: [message: string];
 }>();
 
+// State
 const tempAnswer = ref('');
+const isSubmittingAnswer = ref(false);
+const isVoting = ref(false);
+const isBookmarking = ref(false);
+const isLoadingAnswers = ref(false);
 
+// Computed
 const canAnswer = computed(() => {
     if (!props.currentUser) return false;
     if (props.currentUser.role === 'Buyer' && props.question.visibility === 'farmers') return false;
     return true;
 });
 
-const upvoteQuestion = () => {
-    if (!props.currentUser || props.question.userEmail === props.currentUser.email) return;
+// Methods
+const upvoteQuestion = async () => {
+    if (!props.currentUser || props.question.userEmail === props.currentUser.email || isVoting.value) return;
 
-    const question = { ...props.question };
-    if (!question.userVotes) question.userVotes = {};
-
-    const currentVote = question.userVotes[props.currentUser.email];
-
-    if (currentVote === 'up') {
-        question.upvotes = (question.upvotes || 0) - 1;
-        delete question.userVotes[props.currentUser.email];
-        question.userVote = null;
-    } else {
-        if (currentVote === 'down') {
-            question.downvotes = (question.downvotes || 0) - 1;
+    try {
+        isVoting.value = true;
+        const result = await forumService.voteQuestion(props.question.id, props.currentUser.email, 'up');
+        
+        // Update local question state
+        const updatedQuestion = { ...props.question };
+        updatedQuestion.upvotes = result.upvotes;
+        updatedQuestion.downvotes = result.downvotes;
+        updatedQuestion.userVote = result.userVote;
+        
+        // Update userVotes object
+        if (!updatedQuestion.userVotes) updatedQuestion.userVotes = {};
+        if (result.userVote) {
+            updatedQuestion.userVotes[props.currentUser.email] = result.userVote;
+        } else {
+            delete updatedQuestion.userVotes[props.currentUser.email];
         }
-        question.upvotes = (question.upvotes || 0) + 1;
-        question.userVotes[props.currentUser.email] = 'up';
-        question.userVote = 'up';
+        
+        emit('updateQuestion', updatedQuestion);
+    } catch (error) {
+        console.error('Failed to vote:', error);
+        emit('showToast', 'Failed to vote. Please try again.');
+    } finally {
+        isVoting.value = false;
+    }
+};
+
+const downvoteQuestion = async () => {
+    if (!props.currentUser || props.question.userEmail === props.currentUser.email || isVoting.value) return;
+
+    try {
+        isVoting.value = true;
+        const result = await forumService.voteQuestion(props.question.id, props.currentUser.email, 'down');
+        
+        // Update local question state
+        const updatedQuestion = { ...props.question };
+        updatedQuestion.upvotes = result.upvotes;
+        updatedQuestion.downvotes = result.downvotes;
+        updatedQuestion.userVote = result.userVote;
+        
+        // Update userVotes object
+        if (!updatedQuestion.userVotes) updatedQuestion.userVotes = {};
+        if (result.userVote) {
+            updatedQuestion.userVotes[props.currentUser.email] = result.userVote;
+        } else {
+            delete updatedQuestion.userVotes[props.currentUser.email];
+        }
+        
+        emit('updateQuestion', updatedQuestion);
+    } catch (error) {
+        console.error('Failed to vote:', error);
+        emit('showToast', 'Failed to vote. Please try again.');
+    } finally {
+        isVoting.value = false;
+    }
+};
+
+const toggleBookmark = async () => {
+    if (!props.currentUser || isBookmarking.value) return;
+
+    try {
+        isBookmarking.value = true;
+        const isBookmarked = await forumService.toggleBookmark(props.question.id, props.currentUser.email);
+        
+        const updatedQuestion = { ...props.question };
+        updatedQuestion.isBookmarked = isBookmarked;
+        
+        emit('updateQuestion', updatedQuestion);
+        
+        const action = isBookmarked ? 'bookmarked' : 'removed from bookmarks';
+        emit('showToast', `Question ${action}`);
+    } catch (error) {
+        console.error('Failed to toggle bookmark:', error);
+        emit('showToast', 'Failed to bookmark question. Please try again.');
+    } finally {
+        isBookmarking.value = false;
+    }
+};
+
+const submitAnswer = async () => {
+    if (!props.currentUser || !tempAnswer.value.trim() || isSubmittingAnswer.value) return;
+    if (tempAnswer.value.length > 1000) {
+        emit('showToast', 'Answer must be 1000 characters or less.');
+        return;
     }
 
-    emit('updateQuestion', question);
-};
+    try {
+        isSubmittingAnswer.value = true;
+        
+        // Add answer to database
+        const newAnswer = await forumService.addAnswer(
+            {
+                questionId: props.question.id,
+                text: tempAnswer.value.trim()
+            },
+            props.currentUser.email,
+            props.currentUser.role
+        );
 
-const downvoteQuestion = () => {
-    if (!props.currentUser || props.question.userEmail === props.currentUser.email) return;
+        // Update local question state
+        const updatedQuestion = { ...props.question };
+        updatedQuestion.answers = [...updatedQuestion.answers, newAnswer];
 
-    const question = { ...props.question };
-    if (!question.userVotes) question.userVotes = {};
-
-    const currentVote = question.userVotes[props.currentUser.email];
-
-    if (currentVote === 'down') {
-        question.downvotes = (question.downvotes || 0) - 1;
-        delete question.userVotes[props.currentUser.email];
-        question.userVote = null;
-    } else {
-        if (currentVote === 'up') {
-            question.upvotes = (question.upvotes || 0) - 1;
-        }
-        question.downvotes = (question.downvotes || 0) + 1;
-        question.userVotes[props.currentUser.email] = 'down';
-        question.userVote = 'down';
+        // Clear the form
+        tempAnswer.value = '';
+        
+        emit('updateQuestion', updatedQuestion);
+        emit('showToast', 'Your answer has been posted successfully!');
+    } catch (error) {
+        console.error('Failed to submit answer:', error);
+        emit('showToast', 'Failed to post answer. Please try again.');
+    } finally {
+        isSubmittingAnswer.value = false;
     }
-
-    emit('updateQuestion', question);
-};
-
-const toggleBookmark = () => {
-    const question = { ...props.question };
-    question.isBookmarked = !question.isBookmarked;
-    emit('updateQuestion', question);
-
-    const action = question.isBookmarked ? 'bookmarked' : 'removed from bookmarks';
-    emit('showToast', `Question ${action}`);
-};
-
-const submitAnswer = () => {
-    if (!props.currentUser || !tempAnswer.value.trim()) return;
-
-    const answer: ForumAnswer = {
-        text: tempAnswer.value.trim(),
-        userEmail: props.currentUser.email,
-        userRole: props.currentUser.role,
-        createdAt: new Date().toISOString()
-    };
-
-    const question = { ...props.question };
-    question.answers = [...question.answers, answer];
-
-    tempAnswer.value = '';
-    emit('updateQuestion', question);
-    emit('showToast', 'Your answer has been posted!');
 };
 
 const formatDate = (dateStr: string) => {

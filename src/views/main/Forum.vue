@@ -133,8 +133,16 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading forum questions...</p>
+      </div>
+    </div>
+
     <!-- Main Content with Sidebar -->
-    <div class="flex flex-1 overflow-hidden">
+    <div v-else class="flex flex-1 overflow-hidden">
       <!-- Enhanced Filters Sidebar with Collapse/Expand -->
       <div
         :class="`${isSidebarExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
@@ -333,262 +341,19 @@
           <div class="p-3">
             <!-- Compact Card View -->
             <div v-if="filteredQuestions.length > 0" class="space-y-4">
-              <div v-for="question in sortedQuestions" :key="question.id" class="group">
-                <!-- Compact Card Container -->
-                <div
-                  class="bg-gradient-to-br from-white/95 to-green-50/30 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-white/60 relative">
-                  <!-- Subtle gradient overlay -->
-                  <div
-                    class="absolute inset-0 bg-gradient-to-br from-transparent via-green-50/10 to-emerald-50/20 pointer-events-none">
-                  </div>
-
-                  <!-- Card Content -->
-                  <div class="relative p-4">
-                    <!-- User Info, Date, and Views - At the very top -->
-                    <div
-                      class="flex items-center justify-between flex-wrap gap-3 mb-4 pb-3 border-b border-gray-200/50">
-                      <div class="flex items-center text-sm">
-                        <div class="relative mr-2">
-                          <div
-                            class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none"
-                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          </div>
-                          <!-- Online indicator -->
-                          <div
-                            class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm">
-                          </div>
-                        </div>
-                        <div>
-                          <p class="font-bold text-gray-900 text-sm">{{ question.userRole }}</p>
-                          <p class="text-gray-600 text-xs">{{ question.userEmail }}</p>
-                        </div>
-                      </div>
-
-                      <!-- Date and View Count -->
-                      <div class="flex items-center gap-3 text-xs text-gray-600">
-                        <div
-                          class="flex items-center bg-gradient-to-r from-gray-50 to-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-gray-400" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span class="font-semibold">{{ formatDate(question.createdAt) }}</span>
-                        </div>
-                        <div
-                          class="flex items-center bg-gradient-to-r from-blue-50 to-cyan-50 px-2 py-1 rounded-md border border-blue-200 shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span class="font-semibold text-blue-700">{{ question.views || 0 }} views</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Question Header with original 3-column layout -->
-                    <div class="flex justify-between items-start gap-4 mb-3">
-                      <!-- Left - Compact Voting Section (Top Left) -->
-                      <div class="flex flex-col items-center gap-1">
-                        <button v-if="currentUser" @click="upvoteQuestion(question)"
-                          class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 shadow-sm cursor-pointer"
-                          :class="{
-                            'bg-gradient-to-br from-green-100 to-green-200 text-green-700': question.userVote === 'up',
-                            'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600': question.userVote !== 'up'
-                          }" :disabled="question.userEmail === currentUser.email">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-                          </svg>
-                        </button>
-
-                        <div class="text-sm font-bold px-2 py-0.5 rounded-md shadow-inner" :class="{
-                          'text-green-700 bg-gradient-to-br from-green-100 to-green-200': (question.upvotes || 0) - (question.downvotes || 0) > 0,
-                          'text-red-700 bg-gradient-to-br from-red-100 to-red-200': (question.upvotes || 0) - (question.downvotes || 0) < 0,
-                          'text-gray-700 bg-gradient-to-br from-gray-100 to-gray-200': (question.upvotes || 0) - (question.downvotes || 0) === 0
-                        }">
-                          {{ (question.upvotes || 0) - (question.downvotes || 0) }}
-                        </div>
-
-                        <button v-if="currentUser" @click="downvoteQuestion(question)"
-                          class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 shadow-sm cursor-pointer"
-                          :class="{
-                            'bg-gradient-to-br from-red-100 to-red-200 text-red-700': question.userVote === 'down',
-                            'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600': question.userVote !== 'down'
-                          }" :disabled="question.userEmail === currentUser.email">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <!-- Middle - Compact Question Content -->
-                      <div class="flex-1">
-                        <!-- Compact Tags Section -->
-                        <div class="flex items-center gap-1.5 mb-2 flex-wrap">
-                          <!-- Urgency Tag -->
-                          <span v-if="question.urgency"
-                            class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm"
-                            :class="{
-                              'bg-gradient-to-r from-red-500 to-rose-600 text-white animate-pulse': question.urgency === 'Critical',
-                              'bg-gradient-to-r from-orange-400 to-red-500 text-white': question.urgency === 'High',
-                              'bg-gradient-to-r from-yellow-400 to-orange-400 text-white': question.urgency === 'Normal',
-                              'bg-gradient-to-r from-green-400 to-emerald-500 text-white': question.urgency === 'Low'
-                            }">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 mr-1" fill="none"
-                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ question.urgency }}
-                          </span>
-
-                          <!-- Category Tag -->
-                          <span v-if="question.category"
-                            class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 mr-1" fill="none"
-                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M7 7h.01M7 3h5c1.1045695 0 2 .8954305 2 2v1M7 7l-4 4M7 7l4 4m-4-4v8a2 2 0 002 2h8.394a2 2 0 001.561-.75l2.788-3.5a1 1 0 000-1.5l-2.788-3.5A2 2 0 0016.394 7H11" />
-                            </svg>
-                            {{ question.category }}
-                          </span>
-
-                          <!-- Bookmark Tag -->
-                          <span v-if="question.isBookmarked"
-                            class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 mr-1" fill="currentColor"
-                              viewBox="0 0 24 24">
-                              <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
-                            Saved
-                          </span>
-
-                          <!-- Visibility Tag -->
-                          <span v-if="question.visibility === 'farmers'"
-                            class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 mr-1" fill="none"
-                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            Farmers Only
-                          </span>
-                        </div>
-
-                        <!-- Compact Question Title -->
-                        <h3 class="text-lg font-bold text-gray-900 mb-2 leading-tight cursor-pointer"
-                          @click="openCommentsModal(question)">
-                          {{ question.title }}
-                        </h3>
-
-                        <!-- Compact Description -->
-                        <p v-if="question.description"
-                          class="text-sm text-gray-700 mb-3 leading-relaxed bg-gradient-to-br from-gray-50/50 to-white/50 p-3 rounded-lg border border-gray-100 shadow-inner">
-                          {{ question.description.length > 120 ? question.description.substring(0, 120) + '...' :
-                          question.description }}
-                        </p>
-                      </div>
-
-                      <!-- Right - Compact Action Buttons -->
-                      <div class="flex flex-col items-center gap-2">
-                        <!-- Compact Answer Button -->
-                        <button @click="openCommentsModal(question)"
-                          class="bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-200 px-3 py-2 rounded-lg transition-all duration-300 shadow-md cursor-pointer">
-                          <div class="flex flex-col items-center text-green-700">
-                            <div class="flex items-center mb-0.5">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                              </svg>
-                              <span class="font-bold text-base">{{ question.answers.length }}</span>
-                            </div>
-                            <span class="text-[10px] font-semibold">{{ question.answers.length === 1 ? 'Answer' :
-                              'Answers' }}</span>
-                          </div>
-                        </button>
-
-                        <!-- Compact Bookmark Button -->
-                        <button v-if="currentUser" @click="toggleBookmark(question)"
-                          class="w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-300 shadow-md cursor-pointer"
-                          :class="{
-                            'bg-gradient-to-br from-amber-100 to-yellow-200 text-amber-700 border-2 border-amber-300': question.isBookmarked,
-                            'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 border-2 border-gray-300': !question.isBookmarked
-                          }" :aria-label="question.isBookmarked ? 'Remove bookmark' : 'Bookmark question'">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                            :fill="question.isBookmarked ? 'currentColor' : 'none'" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Compact Answer Preview Section -->
-                    <div class="mt-3">
-                      <!-- Has Answers Preview -->
-                      <div v-if="question.answers.length > 0"
-                        class="bg-gradient-to-br from-gray-50/80 to-blue-50/40 p-3 rounded-lg border border-gray-200/50 backdrop-blur-sm shadow-inner">
-                        <div class="flex items-center justify-between mb-2">
-                          <div class="flex items-center text-sm text-gray-700">
-                            <div class="relative mr-2">
-                              <div
-                                class="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none"
-                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                  <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                              </div>
-                            </div>
-                            <span class="font-bold text-gray-900 text-sm">{{ question.answers[0].userRole }}</span>
-                          </div>
-                          <button @click="openCommentsModal(question)"
-                            class="text-xs text-green-600 font-bold bg-gradient-to-r from-green-100 to-emerald-100 px-2 py-1 rounded-md border border-green-200 transition-all duration-200 shadow-sm cursor-pointer">
-                            View all {{ question.answers.length }} →
-                          </button>
-                        </div>
-                        <p class="text-gray-800 text-sm leading-relaxed">{{ question.answers[0].text.length > 100 ?
-                          question.answers[0].text.substring(0, 100) + '...' : question.answers[0].text }}</p>
-                      </div>
-
-                      <!-- No Answers - Compact Call to Action -->
-                      <div v-else
-                        class="bg-gradient-to-br from-green-50/60 to-emerald-50/40 p-3 rounded-lg border border-green-200/50 backdrop-blur-sm shadow-inner">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center text-green-800 text-sm">
-                            <div
-                              class="w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mr-2 shadow-sm animate-pulse">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <span class="font-bold text-sm">No answers yet</span>
-                              <p class="text-xs text-green-700 opacity-90">Be the first to help!</p>
-                            </div>
-                          </div>
-                          <button @click="openCommentsModal(question)"
-                            class="text-xs text-green-600 font-bold bg-gradient-to-r from-green-100 to-emerald-100 px-3 py-1.5 rounded-md border border-green-200 transition-all duration-200 shadow-sm cursor-pointer">
-                            Answer →
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ForumCard 
+                v-for="question in sortedQuestions" 
+                :key="question.id" 
+                :question="question"
+                :currentUser="currentUser"
+                @upvote="upvoteQuestion"
+                @downvote="downvoteQuestion" 
+                @toggleBookmark="toggleBookmark"
+                @openComments="openCommentsModal"
+                @editQuestion="handleEditQuestion"
+                @deleteQuestion="handleDeleteQuestion"
+                @showToast="showToastNotification"
+              />
             </div>
 
             <!-- Enhanced Empty State -->
@@ -645,6 +410,11 @@
         <div class="bg-gradient-to-r from-blue-600 to-cyan-600 p-4 text-white rounded-t-2xl sticky top-0 z-10">
           <div class="flex justify-between items-center">
             <h3 class="font-bold text-lg">Buyer Guide</h3>
+            <button @click="showBuyerGuide = false" class="text-white/80 hover:text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="p-6">
@@ -710,6 +480,11 @@
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4 text-white rounded-t-2xl sticky top-0 z-10">
           <div class="flex justify-between items-center">
             <h3 class="font-bold text-lg">Farmer Guide</h3>
+            <button @click="showFarmerGuide = false" class="text-white/80 hover:text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="p-6">
@@ -790,6 +565,11 @@
         <div class="bg-gradient-to-r from-amber-600 to-yellow-600 p-4 text-white rounded-t-2xl sticky top-0 z-10">
           <div class="flex justify-between items-center">
             <h3 class="font-bold text-lg">Guest Guide</h3>
+            <button @click="showGuestGuide = false" class="text-white/80 hover:text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="p-6">
@@ -897,48 +677,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from '../../components/NavBar.vue';
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import CommentsModal from '../../components/Forum/CommentsModal.vue';
+import ForumCard from '../../components/Forum/ForumCard.vue';
 import { getCurrentUser } from '../../services/user';
+import { forumService, type ForumQuestion, type ForumAnswer, type NewQuestion } from '../../services/forumService';
 
-interface ForumAnswer {
-  text: string;
-  userEmail: string;
-  userRole: string;
-  createdAt: string;
-}
-
-interface ForumQuestion {
-  id: number;
-  title: string;
-  description?: string;
-  userEmail: string;
-  userRole: string;
-  createdAt: string;
-  answers: ForumAnswer[];
-  category?: string;
-  urgency?: string;
-  isBookmarked?: boolean;
-  views?: number;
-  tempAnswer?: string;
-  visibility?: 'all' | 'farmers';
-  upvotes?: number;
-  downvotes?: number;
-  userVote?: 'up' | 'down' | null;
-  userVotes?: { [userEmail: string]: 'up' | 'down' };
+// Define interfaces to ensure type safety
+interface User {
+  email: string;
+  role: 'Farmer' | 'Buyer';
 }
 
 // Router setup
 const router = useRouter();
 
-// Local storage key
-const STORAGE_KEY = 'livestock-forum-data';
-
 // Get current user
-const currentUser = getCurrentUser();
+const currentUser = getCurrentUser() as User | null;
+
+// State
+const isLoading = ref(true);
 const showModal = ref(false);
 const showBuyerGuide = ref(false);
 const showFarmerGuide = ref(false);
@@ -947,7 +708,6 @@ const showToast = ref(false);
 const toastMessage = ref('');
 const showCommentsModal = ref(false);
 const selectedQuestion = ref<ForumQuestion | null>(null);
-
 const isSidebarExpanded = ref(true);
 const sortBy = ref('newest');
 
@@ -960,69 +720,19 @@ const filters = ref({
   urgency: ''
 });
 
-// Initialize forumQuestions from localStorage or with a single example
+// Forum questions from Supabase
 const forumQuestions = ref<ForumQuestion[]>([]);
 
-// Load data from localStorage
-const loadFromStorage = () => {
-  const storedData = localStorage.getItem(STORAGE_KEY);
-  if (storedData) {
-    try {
-      forumQuestions.value = JSON.parse(storedData);
-      // Initialize voting data for existing questions if not present
-      forumQuestions.value.forEach(question => {
-        if (question.upvotes === undefined) question.upvotes = 0;
-        if (question.downvotes === undefined) question.downvotes = 0;
-        if (question.userVotes === undefined) question.userVotes = {};
-        if (currentUser && question.userVotes[currentUser.email]) {
-          question.userVote = question.userVotes[currentUser.email];
-        }
-      });
-    } catch (e) {
-      console.error('Error parsing stored forum data:', e);
-      initializeDefaultData();
-    }
-  } else {
-    initializeDefaultData();
-  }
-};
-
-// Initialize with one example question if no data exists
-const initializeDefaultData = () => {
-  forumQuestions.value = [
-    {
-      id: 1,
-      title: 'Best practices for raising healthy chickens in tropical climate?',
-      description: 'Looking for advice on feed, housing, and disease prevention for my new poultry farm in Batangas. I have about 500 chickens and want to ensure they stay healthy during the hot months.',
-      userEmail: 'farmer@gmail.com',
-      userRole: 'Farmer',
-      createdAt: new Date().toISOString(),
-      answers: [
-        {
-          text: 'For tropical climates, focus on ventilation, high-quality feed with proper nutrients, and strict biosecurity measures. Vaccinate against common diseases and control parasites regularly.',
-          userEmail: 'experienced_farmer@gmail.com',
-          userRole: 'Farmer',
-          createdAt: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-        }
-      ],
-      category: 'Poultry',
-      urgency: 'Normal',
-      views: 42,
-      isBookmarked: false,
-      visibility: 'all',
-      upvotes: 5,
-      downvotes: 1,
-      userVotes: {},
-      userVote: null
-    }
-  ];
-  saveToStorage();
-};
-
-// Save data to localStorage
-const saveToStorage = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(forumQuestions.value));
-};
+// Ensure all answers have the required 'id' property from ForumAnswer interface
+function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
+  return questions.map(q => ({
+    ...q,
+    answers: q.answers.map((a, idx) => ({
+      ...a,
+      id: (a as any).id ?? idx // fallback if missing
+    })) as ForumAnswer[]
+  }));
+}
 
 // Computed properties
 const hasActiveFilters = computed(() => {
@@ -1033,6 +743,11 @@ const hasActiveFilters = computed(() => {
 
 const filteredQuestions = computed(() => {
   return forumQuestions.value.filter(question => {
+    // Visibility filter based on user role
+    if (question.visibility === 'farmers' && (!currentUser || currentUser.role !== 'Farmer')) {
+      return false;
+    }
+
     // Search filter
     const searchLower = filters.value.search.toLowerCase();
     const matchesSearch = !filters.value.search ||
@@ -1079,12 +794,31 @@ const totalAnswers = computed(() => {
   return forumQuestions.value.reduce((total, question) => total + question.answers.length, 0);
 });
 
+// Active users: count unique userEmail from questions and answers
 const activeUsers = computed(() => {
-  const emails = new Set(forumQuestions.value.map(q => q.userEmail));
-  return emails.size;
+  const userSet = new Set<string>();
+  forumQuestions.value.forEach(q => {
+    if (q.userEmail) userSet.add(q.userEmail);
+    q.answers.forEach(a => {
+      if ((a as any).userEmail) userSet.add((a as any).userEmail);
+    });
+  });
+  return userSet.size;
 });
 
-// Methods
+const loadQuestions = async () => {
+  try {
+    isLoading.value = true;
+    const questions = await forumService.getQuestions(currentUser?.email);
+    forumQuestions.value = normalizeAnswers(questions);
+  } catch (error) {
+    console.error('Failed to load questions:', error);
+    showToastNotification('Failed to load questions. Please try again.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 const toggleSidebar = () => {
   isSidebarExpanded.value = !isSidebarExpanded.value;
 };
@@ -1104,20 +838,28 @@ const showToastNotification = (message: string) => {
   setTimeout(() => showToast.value = false, 4000);
 };
 
-const openCommentsModal = (question: ForumQuestion) => {
+const openCommentsModal = async (question: ForumQuestion) => {
   selectedQuestion.value = question;
   showCommentsModal.value = true;
-  // Increment view count
-  question.views = (question.views || 0) + 1;
-  saveToStorage();
+  
+  // Increment view count in database
+  try {
+    await forumService.incrementViews(question.id);
+    // Update local state
+    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    if (index !== -1) {
+      forumQuestions.value[index].views = (forumQuestions.value[index].views || 0) + 1;
+    }
+  } catch (error) {
+    console.error('Failed to increment views:', error);
+  }
 };
 
 const handleUpdateQuestion = (updatedQuestion: ForumQuestion) => {
   const index = forumQuestions.value.findIndex(q => q.id === updatedQuestion.id);
   if (index !== -1) {
     forumQuestions.value[index] = updatedQuestion;
-    selectedQuestion.value = updatedQuestion; // Update the selected question as well
-    saveToStorage();
+    selectedQuestion.value = updatedQuestion;
   }
 };
 
@@ -1125,118 +867,166 @@ const handleSignin = () => {
   router.push('/signin');
 };
 
-const handlePostQuestion = (question: ForumQuestion) => {
-  // Allow both Farmer and Buyer to post questions, but not guests
+const handlePostQuestion = async (questionData: any) => {
   if (!currentUser) return;
 
-  const newQuestion: ForumQuestion = {
-    ...question,
-    id: Date.now(),
-    userEmail: currentUser.email,
-    userRole: currentUser.role,
-    createdAt: new Date().toISOString(),
-    answers: [],
-    views: 0,
-    isBookmarked: false,
-    upvotes: 0,
-    downvotes: 0,
-    userVotes: {},
-    userVote: null,
-    visibility: question.visibility || 'all'
-  };
+  try {
+    const newQuestion = await forumService.createQuestion(
+      {
+        title: questionData.title,
+        description: questionData.description,
+        category: questionData.category,
+        urgency: questionData.urgency,
+        visibility: questionData.visibility
+      },
+      currentUser.email,
+      currentUser.role
+    );
 
-  forumQuestions.value.unshift(newQuestion);
-  saveToStorage();
-  showModal.value = false;
-  showToastNotification('Your question has been posted successfully!');
+    forumQuestions.value.unshift(newQuestion);
+    showModal.value = false;
+    showToastNotification('Your question has been posted successfully!');
+  } catch (error) {
+    console.error('Failed to post question:', error);
+    showToastNotification('Failed to post question. Please try again.');
+  }
 };
 
-const upvoteQuestion = (question: ForumQuestion) => {
+const upvoteQuestion = async (question: ForumQuestion) => {
   if (!currentUser || question.userEmail === currentUser.email) return;
 
-  if (!question.userVotes) question.userVotes = {};
-
-  const currentVote = question.userVotes[currentUser.email];
-
-  if (currentVote === 'up') {
-    // Remove upvote
-    question.upvotes = (question.upvotes || 0) - 1;
-    delete question.userVotes[currentUser.email];
-    question.userVote = null;
-  } else {
-    // Add upvote (and remove downvote if exists)
-    if (currentVote === 'down') {
-      question.downvotes = (question.downvotes || 0) - 1;
+  try {
+    const result = await forumService.voteQuestion(question.id, currentUser.email, 'up');
+    
+    // Update local state
+    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    if (index !== -1) {
+      forumQuestions.value[index].upvotes = result.upvotes;
+      forumQuestions.value[index].downvotes = result.downvotes;
+      forumQuestions.value[index].userVote = result.userVote;
+      
+      // Update userVotes object
+      if (!forumQuestions.value[index].userVotes) {
+        forumQuestions.value[index].userVotes = {};
+      }
+      if (result.userVote) {
+        forumQuestions.value[index].userVotes![currentUser.email] = result.userVote;
+      } else {
+        delete forumQuestions.value[index].userVotes![currentUser.email];
+      }
     }
-    question.upvotes = (question.upvotes || 0) + 1;
-    question.userVotes[currentUser.email] = 'up';
-    question.userVote = 'up';
+  } catch (error) {
+    console.error('Failed to vote:', error);
+    showToastNotification('Failed to vote. Please try again.');
   }
-
-  saveToStorage();
 };
 
-const downvoteQuestion = (question: ForumQuestion) => {
+const downvoteQuestion = async (question: ForumQuestion) => {
   if (!currentUser || question.userEmail === currentUser.email) return;
 
-  if (!question.userVotes) question.userVotes = {};
-
-  const currentVote = question.userVotes[currentUser.email];
-
-  if (currentVote === 'down') {
-    // Remove downvote
-    question.downvotes = (question.downvotes || 0) - 1;
-    delete question.userVotes[currentUser.email];
-    question.userVote = null;
-  } else {
-    // Add downvote (and remove upvote if exists)
-    if (currentVote === 'up') {
-      question.upvotes = (question.upvotes || 0) - 1;
+  try {
+    const result = await forumService.voteQuestion(question.id, currentUser.email, 'down');
+    
+    // Update local state
+    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    if (index !== -1) {
+      forumQuestions.value[index].upvotes = result.upvotes;
+      forumQuestions.value[index].downvotes = result.downvotes;
+      forumQuestions.value[index].userVote = result.userVote;
+      
+      // Update userVotes object
+      if (!forumQuestions.value[index].userVotes) {
+        forumQuestions.value[index].userVotes = {};
+      }
+      if (result.userVote) {
+        forumQuestions.value[index].userVotes![currentUser.email] = result.userVote;
+      } else {
+        delete forumQuestions.value[index].userVotes![currentUser.email];
+      }
     }
-    question.downvotes = (question.downvotes || 0) + 1;
-    question.userVotes[currentUser.email] = 'down';
-    question.userVote = 'down';
+  } catch (error) {
+    console.error('Failed to vote:', error);
+    showToastNotification('Failed to vote. Please try again.');
   }
-
-  saveToStorage();
 };
 
-const toggleBookmark = (q: ForumQuestion) => {
-  q.isBookmarked = !q.isBookmarked;
-  saveToStorage();
-  const action = q.isBookmarked ? 'bookmarked' : 'removed from bookmarks';
-  showToastNotification(`Question ${action}`);
+const toggleBookmark = async (question: ForumQuestion) => {
+  if (!currentUser) return;
+
+  try {
+    const isBookmarked = await forumService.toggleBookmark(question.id, currentUser.email);
+    
+    // Update local state
+    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    if (index !== -1) {
+      forumQuestions.value[index].isBookmarked = isBookmarked;
+    }
+    
+    const action = isBookmarked ? 'bookmarked' : 'removed from bookmarks';
+    showToastNotification(`Question ${action}`);
+  } catch (error) {
+    console.error('Failed to toggle bookmark:', error);
+    showToastNotification('Failed to bookmark question. Please try again.');
+  }
 };
 
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInHours / 24);
+// NEW HANDLER METHODS FOR EDIT AND DELETE
+const handleEditQuestion = async (question: ForumQuestion, editedData: Partial<ForumQuestion>) => {
+  try {
+    // Find the question in our local array and update it
+    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    if (index !== -1) {
+      // Update the local question with the edited data and normalize answers
+      const updatedQuestion = {
+        ...forumQuestions.value[index],
+        ...editedData
+      };
+      updatedQuestion.answers = updatedQuestion.answers.map((a, idx) => ({
+        ...a,
+        id: (a as any).id ?? idx
+      }));
+      forumQuestions.value[index] = updatedQuestion;
+      
+      // If this is the selected question in comments modal, update it too
+      if (selectedQuestion.value && selectedQuestion.value.id === question.id) {
+        selectedQuestion.value = {
+          ...selectedQuestion.value,
+          ...editedData,
+          answers: updatedQuestion.answers
+        };
+      }
+    }
+    
+    showToastNotification('Question updated successfully!');
+  } catch (error) {
+    console.error('Failed to handle question edit:', error);
+    showToastNotification('Failed to update question. Please try again.');
+  }
+};
 
-  if (diffInHours < 1) {
-    return 'Just now';
-  } else if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
-  } else if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  } else {
-    return date.toLocaleDateString('en-PH', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
+const handleDeleteQuestion = async (questionId: number) => {
+  try {
+    // Remove the question from our local array
+    const index = forumQuestions.value.findIndex(q => q.id === questionId);
+    if (index !== -1) {
+      forumQuestions.value.splice(index, 1);
+    }
+    
+    // Close comments modal if it was showing the deleted question
+    if (selectedQuestion.value && selectedQuestion.value.id === questionId) {
+      showCommentsModal.value = false;
+      selectedQuestion.value = null;
+    }
+    
+    showToastNotification('Question deleted successfully!');
+  } catch (error) {
+    console.error('Failed to handle question deletion:', error);
+    showToastNotification('Failed to delete question. Please try again.');
   }
 };
 
 // Lifecycle hooks
 onMounted(() => {
-  loadFromStorage();
+  loadQuestions();
 });
-
-// Watch for changes and save to localStorage
-watch(forumQuestions, () => {
-  saveToStorage();
-}, { deep: true });
 </script>
