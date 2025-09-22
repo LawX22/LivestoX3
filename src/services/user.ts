@@ -1,3 +1,4 @@
+// user.ts
 export interface Address {
   fullName: string
   label: string

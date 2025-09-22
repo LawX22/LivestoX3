@@ -180,6 +180,12 @@ const navItems = [
     icon: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
   },
   {
+    path: '/forumManagement',
+    label: 'Forums',
+    description: 'Users discussions',
+    icon: 'M7 8h10M7 12h6m-2 8a9 9 0 100-18 9 9 0 000 18z'
+  },
+  {
     path: '/admin/reports',
     label: 'Reports',
     description: 'Analytics & insights',

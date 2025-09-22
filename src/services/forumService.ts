@@ -6,6 +6,9 @@ export interface ForumAnswer {
   text: string
   userEmail: string
   userRole: string
+  userFirstName?: string
+  userLastName?: string
+  userFullName?: string
   createdAt: string
 }
 
@@ -15,11 +18,13 @@ export interface ForumQuestion {
   description?: string
   userEmail: string
   userRole: string
+  userFirstName?: string
+  userLastName?: string
+  userFullName?: string
   createdAt: string
   answers: ForumAnswer[]
   category?: string
   urgency?: string
-  isBookmarked?: boolean
   views?: number
   visibility?: 'all' | 'farmers'
   upvotes?: number
@@ -42,9 +47,270 @@ export interface NewAnswer {
 }
 
 class ForumService {
-  // Get all questions with answers, votes, and bookmark status
+  // Helper method to get user details by email
+  private async getUserDetails(userEmail: string): Promise<{ firstName?: string, lastName?: string } | null> {
+    try {
+      console.log('Fetching user details for email:', userEmail)
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('user_first_name, user_last_name')
+        .eq('email', userEmail)
+        .single()
+      
+      if (error) {
+        console.error('Error fetching user details:', error)
+        return null
+      }
+      
+      if (!data) {
+        console.log('No user data found for email:', userEmail)
+        return null
+      }
+
+      console.log('Raw user data:', data)
+      
+      const firstName = data.user_first_name || ''
+      const lastName = data.user_last_name || ''
+      
+      console.log('Processed user details:', { firstName, lastName })
+      
+      return {
+        firstName,
+        lastName
+      }
+    } catch (error) {
+      console.error('Exception while fetching user details:', error)
+      return null
+    }
+  }
+
+  // Helper method to get vote counts for a question
+  private async getVoteCounts(questionId: number): Promise<{ upvotes: number; downvotes: number }> {
+    try {
+      const { data: votes, error } = await supabase
+        .from('forum_votes')
+        .select('vote_type')
+        .eq('question_id', questionId)
+
+      if (error) {
+        console.error('Error fetching vote counts:', error)
+        return { upvotes: 0, downvotes: 0 }
+      }
+
+      const upvotes = votes?.filter(vote => vote.vote_type === 'up').length || 0
+      const downvotes = votes?.filter(vote => vote.vote_type === 'down').length || 0
+
+      return { upvotes, downvotes }
+    } catch (error) {
+      console.error('Exception while getting vote counts:', error)
+      return { upvotes: 0, downvotes: 0 }
+    }
+  }
+
+  // Helper method to sync vote counts in questions table
+  private async syncQuestionVoteCounts(questionId: number): Promise<void> {
+    try {
+      const voteCounts = await this.getVoteCounts(questionId)
+      
+      const { error } = await supabase
+        .from('forum_questions')
+        .update({
+          upvotes: voteCounts.upvotes,
+          downvotes: voteCounts.downvotes
+        })
+        .eq('id', questionId)
+
+      if (error) {
+        console.error('Error syncing vote counts:', error)
+      }
+    } catch (error) {
+      console.error('Exception while syncing vote counts:', error)
+    }
+  }
+
+  // Helper method to enrich questions and answers with user names
+  private async enrichWithUserNames(questions: any[]): Promise<ForumQuestion[]> {
+    try {
+      console.log('Starting to enrich questions with user names, count:', questions.length)
+      
+      // Get all unique user emails from questions and answers
+      const userEmails = new Set<string>()
+      
+      questions.forEach(question => {
+        if (question.user_email) {
+          userEmails.add(question.user_email)
+        }
+        question.forum_answers?.forEach((answer: any) => {
+          if (answer.user_email) {
+            userEmails.add(answer.user_email)
+          }
+        })
+      })
+
+      console.log('Unique user emails found:', Array.from(userEmails))
+
+      if (userEmails.size === 0) {
+        console.log('No user emails found, returning questions without enrichment')
+        return questions.map(question => ({
+          ...question,
+          userFirstName: '',
+          userLastName: '',
+          userFullName: 'Unknown User',
+          answers: question.forum_answers?.map((answer: any) => ({
+            ...answer,
+            userFirstName: '',
+            userLastName: '',
+            userFullName: 'Unknown User'
+          })) || []
+        }))
+      }
+
+      // Fetch all user details in one query using correct field names
+      const { data: usersData, error } = await supabase
+        .from('users')
+        .select('email, user_first_name, user_last_name')
+        .in('email', Array.from(userEmails))
+
+      if (error) {
+        console.error('Error fetching users data:', error)
+      }
+
+      console.log('Fetched users data:', usersData)
+
+      // Create a lookup map
+      const userLookup: { [email: string]: { firstName: string, lastName: string } } = {}
+      usersData?.forEach(user => {
+        const firstName = user.user_first_name || ''
+        const lastName = user.user_last_name || ''
+        
+        userLookup[user.email] = {
+          firstName,
+          lastName
+        }
+        
+        console.log(`User lookup entry for ${user.email}:`, { firstName, lastName })
+      })
+
+      console.log('Complete user lookup map:', userLookup)
+
+      // Get real-time vote counts for all questions
+      const questionIds = questions.map(q => q.id)
+      const { data: allVotes } = await supabase
+        .from('forum_votes')
+        .select('question_id, user_email, vote_type')
+        .in('question_id', questionIds)
+
+      // Build vote counts and user votes for each question
+      const questionVoteCounts: { [questionId: number]: { upvotes: number, downvotes: number } } = {}
+      const questionUserVotes: { [questionId: number]: { [userEmail: string]: 'up' | 'down' } } = {}
+
+      questionIds.forEach(qId => {
+        questionVoteCounts[qId] = { upvotes: 0, downvotes: 0 }
+        questionUserVotes[qId] = {}
+      })
+
+      if (allVotes) {
+        allVotes.forEach(vote => {
+          // Count votes
+          if (vote.vote_type === 'up') {
+            questionVoteCounts[vote.question_id].upvotes++
+          } else if (vote.vote_type === 'down') {
+            questionVoteCounts[vote.question_id].downvotes++
+          }
+          
+          // Track user votes
+          questionUserVotes[vote.question_id][vote.user_email] = vote.vote_type
+        })
+      }
+
+      // Enrich questions and answers
+      return questions.map(question => {
+        const questionUser = userLookup[question.user_email] || { firstName: '', lastName: '' }
+        const questionFullName = `${questionUser.firstName} ${questionUser.lastName}`.trim() || 'Unknown User'
+        
+        console.log(`Question ${question.id} user: ${question.user_email} -> ${questionFullName}`)
+        
+        // Use real-time vote counts instead of stored values
+        const voteCounts = questionVoteCounts[question.id] || { upvotes: 0, downvotes: 0 }
+        
+        return {
+          id: question.id,
+          title: question.title,
+          description: question.description,
+          userEmail: question.user_email,
+          userRole: question.user_role,
+          userFirstName: questionUser.firstName,
+          userLastName: questionUser.lastName,
+          userFullName: questionFullName,
+          createdAt: question.created_at,
+          category: question.category,
+          urgency: question.urgency,
+          visibility: question.visibility || 'all',
+          views: question.views || 0,
+          upvotes: voteCounts.upvotes, // Use real-time count
+          downvotes: voteCounts.downvotes, // Use real-time count
+          userVote: question.userVote || null,
+          userVotes: questionUserVotes[question.id] || {},
+          answers: question.forum_answers?.map((answer: any) => {
+            const answerUser = userLookup[answer.user_email] || { firstName: '', lastName: '' }
+            const answerFullName = `${answerUser.firstName} ${answerUser.lastName}`.trim() || 'Unknown User'
+            
+            console.log(`Answer ${answer.id} user: ${answer.user_email} -> ${answerFullName}`)
+            
+            return {
+              id: answer.id,
+              text: answer.text,
+              userEmail: answer.user_email,
+              userRole: answer.user_role,
+              userFirstName: answerUser.firstName,
+              userLastName: answerUser.lastName,
+              userFullName: answerFullName,
+              createdAt: answer.created_at
+            }
+          }) || []
+        }
+      })
+    } catch (error) {
+      console.error('Error enriching with user names:', error)
+      // Return questions with empty user names instead of failing completely
+      return questions.map(question => ({
+        id: question.id,
+        title: question.title,
+        description: question.description,
+        userEmail: question.user_email,
+        userRole: question.user_role,
+        userFirstName: '',
+        userLastName: '',
+        userFullName: 'Unknown User',
+        createdAt: question.created_at,
+        category: question.category,
+        urgency: question.urgency,
+        visibility: question.visibility || 'all',
+        views: question.views || 0,
+        upvotes: question.upvotes || 0,
+        downvotes: question.downvotes || 0,
+        userVote: question.userVote || null,
+        userVotes: question.userVotes || {},
+        answers: question.forum_answers?.map((answer: any) => ({
+          id: answer.id,
+          text: answer.text,
+          userEmail: answer.user_email,
+          userRole: answer.user_role,
+          userFirstName: '',
+          userLastName: '',
+          userFullName: 'Unknown User',
+          createdAt: answer.created_at
+        })) || []
+      }))
+    }
+  }
+
+  // Get all questions with answers and votes (with user names)
   async getQuestions(userEmail?: string): Promise<ForumQuestion[]> {
     try {
+      console.log('Fetching questions for user:', userEmail)
+      
       // Get questions with answers
       const { data: questionsData, error: questionsError } = await supabase
         .from('forum_questions')
@@ -60,19 +326,17 @@ class ForumService {
         `)
         .order('created_at', { ascending: false })
 
-      if (questionsError) throw questionsError
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError)
+        throw questionsError
+      }
 
-      // Get all votes to build userVotes object for each question
-      const { data: allVotes } = await supabase
-        .from('forum_votes')
-        .select('question_id, user_email, vote_type')
+      console.log('Raw questions data:', questionsData)
 
-      // Get user-specific data if logged in
+      // Get user-specific votes if logged in
       let userVotes: { [questionId: number]: 'up' | 'down' } = {}
-      let bookmarks: Set<number> = new Set()
 
       if (userEmail) {
-        // Get user votes
         const { data: votesData } = await supabase
           .from('forum_votes')
           .select('question_id, vote_type')
@@ -84,65 +348,32 @@ class ForumService {
             return acc
           }, {} as { [questionId: number]: 'up' | 'down' })
         }
-
-        // Get user bookmarks
-        const { data: bookmarksData } = await supabase
-          .from('forum_bookmarks')
-          .select('question_id')
-          .eq('user_email', userEmail)
-
-        if (bookmarksData) {
-          bookmarks = new Set(bookmarksData.map(b => b.question_id))
-        }
       }
 
-      // Build userVotes object for each question
-      const questionUserVotes: { [questionId: number]: { [userEmail: string]: 'up' | 'down' } } = {}
-      if (allVotes) {
-        allVotes.forEach(vote => {
-          if (!questionUserVotes[vote.question_id]) {
-            questionUserVotes[vote.question_id] = {}
-          }
-          questionUserVotes[vote.question_id][vote.user_email] = vote.vote_type
-        })
-      }
-
-      // Transform data to match frontend interface
-      const questions: ForumQuestion[] = questionsData?.map(question => ({
-        id: question.id,
-        title: question.title,
-        description: question.description,
-        userEmail: question.user_email,
-        userRole: question.user_role,
-        createdAt: question.created_at,
-        category: question.category,
-        urgency: question.urgency,
-        visibility: question.visibility || 'all',
-        views: question.views || 0,
-        upvotes: question.upvotes || 0,
-        downvotes: question.downvotes || 0,
-        isBookmarked: bookmarks.has(question.id),
-        userVote: userVotes[question.id] || null,
-        userVotes: questionUserVotes[question.id] || {},
-        answers: question.forum_answers?.map((answer: any) => ({
-          id: answer.id,
-          text: answer.text,
-          userEmail: answer.user_email,
-          userRole: answer.user_role,
-          createdAt: answer.created_at
-        })) || []
+      // Add user vote information to question data
+      const questionsWithVotes = questionsData?.map(question => ({
+        ...question,
+        userVote: userVotes[question.id] || null
       })) || []
 
-      return questions
+      console.log('Questions with votes before enrichment:', questionsWithVotes.length)
+
+      // Enrich with user names and real-time vote counts
+      const enrichedQuestions = await this.enrichWithUserNames(questionsWithVotes)
+
+      console.log('Final enriched questions:', enrichedQuestions.length)
+      return enrichedQuestions
     } catch (error) {
       console.error('Error fetching questions:', error)
       throw error
     }
   }
 
-  // Create a new question
+  // Create a new question (with user names)
   async createQuestion(question: NewQuestion, userEmail: string, userRole: string): Promise<ForumQuestion> {
     try {
+      console.log('Creating question for user:', userEmail)
+      
       const { data, error } = await supabase
         .from('forum_questions')
         .insert({
@@ -162,12 +393,21 @@ class ForumService {
 
       if (error) throw error
 
+      console.log('Question created:', data)
+
+      // Get user details for the created question
+      const userDetails = await this.getUserDetails(userEmail)
+      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
+
       return {
         id: data.id,
         title: data.title,
         description: data.description,
         userEmail: data.user_email,
         userRole: data.user_role,
+        userFirstName: userDetails?.firstName || '',
+        userLastName: userDetails?.lastName || '',
+        userFullName: fullName,
         createdAt: data.created_at,
         category: data.category,
         urgency: data.urgency,
@@ -176,7 +416,6 @@ class ForumService {
         upvotes: data.upvotes || 0,
         downvotes: data.downvotes || 0,
         answers: [],
-        isBookmarked: false,
         userVote: null,
         userVotes: {}
       }
@@ -186,9 +425,11 @@ class ForumService {
     }
   }
 
-  // Add an answer to a question
+  // Add an answer to a question (with user names)
   async addAnswer(answer: NewAnswer, userEmail: string, userRole: string): Promise<ForumAnswer> {
     try {
+      console.log('Adding answer for user:', userEmail)
+      
       const { data, error } = await supabase
         .from('forum_answers')
         .insert({
@@ -202,11 +443,20 @@ class ForumService {
 
       if (error) throw error
 
+      console.log('Answer created:', data)
+
+      // Get user details for the answer
+      const userDetails = await this.getUserDetails(userEmail)
+      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
+
       return {
         id: data.id,
         text: data.text,
         userEmail: data.user_email,
         userRole: data.user_role,
+        userFirstName: userDetails?.firstName || '',
+        userLastName: userDetails?.lastName || '',
+        userFullName: fullName,
         createdAt: data.created_at
       }
     } catch (error) {
@@ -215,31 +465,129 @@ class ForumService {
     }
   }
 
-  // Update a question
-  async updateQuestion(questionId: number, updateData: Partial<NewQuestion>): Promise<Partial<ForumQuestion>> {
+  // Update a question with improved error handling
+  async updateQuestion(questionId: number, updateData: Partial<NewQuestion>, userEmail?: string): Promise<Partial<ForumQuestion>> {
     try {
-      const { data, error } = await supabase
+      // Validate required fields
+      if (!updateData.title || !updateData.category || !updateData.urgency || !updateData.visibility) {
+        throw new Error('Missing required fields for question update')
+      }
+
+      console.log('Updating question:', questionId, updateData)
+
+      // First, check if the question exists and get its current data
+      const { data: existingQuestion, error: checkError } = await supabase
         .from('forum_questions')
-        .update({
-          title: updateData.title,
-          description: updateData.description,
-          category: updateData.category,
-          urgency: updateData.urgency,
-          visibility: updateData.visibility
-        })
+        .select('*')
         .eq('id', questionId)
-        .select()
         .single()
 
-      if (error) throw error
+      if (checkError) {
+        console.error('Error checking question existence:', checkError)
+        throw new Error(`Question not found or access denied: ${checkError.message}`)
+      }
+
+      if (!existingQuestion) {
+        throw new Error('Question not found')
+      }
+
+      console.log('Existing question found:', existingQuestion)
+
+      // Prepare update data - only include fields that are actually changing
+      const updatePayload: any = {}
+      
+      if (updateData.title !== existingQuestion.title) {
+        updatePayload.title = updateData.title
+      }
+      if (updateData.description !== existingQuestion.description) {
+        updatePayload.description = updateData.description || null
+      }
+      if (updateData.category !== existingQuestion.category) {
+        updatePayload.category = updateData.category
+      }
+      if (updateData.urgency !== existingQuestion.urgency) {
+        updatePayload.urgency = updateData.urgency
+      }
+      if (updateData.visibility !== existingQuestion.visibility) {
+        updatePayload.visibility = updateData.visibility
+      }
+
+      // If no changes, return existing data with user info
+      if (Object.keys(updatePayload).length === 0) {
+        console.log('No changes detected, returning existing data')
+        const userDetails = await this.getUserDetails(existingQuestion.user_email)
+        const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
+        
+        return {
+          id: existingQuestion.id,
+          title: existingQuestion.title,
+          description: existingQuestion.description,
+          category: existingQuestion.category,
+          urgency: existingQuestion.urgency,
+          visibility: existingQuestion.visibility,
+          userFirstName: userDetails?.firstName || '',
+          userLastName: userDetails?.lastName || '',
+          userFullName: fullName
+        }
+      }
+
+      console.log('Update payload:', updatePayload)
+
+      // Update the question in database
+      const { error: updateError, count } = await supabase
+        .from('forum_questions')
+        .update(updatePayload)
+        .eq('id', questionId)
+
+      if (updateError) {
+        console.error('Supabase update error:', updateError)
+        throw new Error(`Update failed: ${updateError.message}`)
+      }
+
+      console.log('Update completed, affected rows:', count)
+
+      // Get the updated question data
+      const { data: updatedData, error: selectError } = await supabase
+        .from('forum_questions')
+        .select('id, title, description, category, urgency, visibility, user_email')
+        .eq('id', questionId)
+        .single()
+
+      if (selectError || !updatedData) {
+        console.error('Error fetching updated data:', selectError)
+        // Fallback: return the expected updated data based on our payload
+        const userDetails = await this.getUserDetails(existingQuestion.user_email)
+        const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
+        
+        return {
+          id: questionId,
+          title: updatePayload.title || existingQuestion.title,
+          description: updatePayload.description !== undefined ? updatePayload.description : existingQuestion.description,
+          category: updatePayload.category || existingQuestion.category,
+          urgency: updatePayload.urgency || existingQuestion.urgency,
+          visibility: updatePayload.visibility || existingQuestion.visibility,
+          userFirstName: userDetails?.firstName || '',
+          userLastName: userDetails?.lastName || '',
+          userFullName: fullName
+        }
+      }
+
+      console.log('Question updated successfully:', updatedData)
+
+      // Get user details for the updated question
+      const userDetails = await this.getUserDetails(updatedData.user_email)
+      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
 
       return {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        urgency: data.urgency,
-        visibility: data.visibility
+        id: updatedData.id,
+        title: updatedData.title,
+        description: updatedData.description,
+        category: updatedData.category,
+        urgency: updatedData.urgency,
+        visibility: updatedData.visibility,
+        userFirstName: userDetails?.firstName || '',
+        userLastName: userDetails?.lastName || '',
+        userFullName: fullName
       }
     } catch (error) {
       console.error('Error updating question:', error)
@@ -247,44 +595,66 @@ class ForumService {
     }
   }
 
-  // Delete a question (this will cascade delete answers, votes, and bookmarks due to foreign key constraints)
-  async deleteQuestion(questionId: number): Promise<void> {
+  // Delete a question with proper cascading and error handling
+  async deleteQuestion(questionId: number, userEmail?: string): Promise<void> {
     try {
-      // First delete related data (if not using CASCADE DELETE in your database)
-      // Delete bookmarks
-      await supabase
-        .from('forum_bookmarks')
-        .delete()
-        .eq('question_id', questionId)
+      console.log('Deleting question:', questionId)
 
+      // First, check if the question exists and optionally verify ownership
+      const { data: existingQuestion, error: checkError } = await supabase
+        .from('forum_questions')
+        .select('id, user_email')
+        .eq('id', questionId)
+        .single()
+
+      if (checkError || !existingQuestion) {
+        throw new Error('Question not found')
+      }
+
+      // Start a transaction-like approach by deleting related data first
       // Delete votes
-      await supabase
+      const { error: votesError } = await supabase
         .from('forum_votes')
         .delete()
         .eq('question_id', questionId)
 
+      if (votesError) {
+        console.warn('Error deleting votes:', votesError)
+      }
+
       // Delete answers
-      await supabase
+      const { error: answersError } = await supabase
         .from('forum_answers')
         .delete()
         .eq('question_id', questionId)
 
+      if (answersError) {
+        console.warn('Error deleting answers:', answersError)
+      }
+
       // Finally delete the question
-      const { error } = await supabase
+      const { error: questionError } = await supabase
         .from('forum_questions')
         .delete()
         .eq('id', questionId)
 
-      if (error) throw error
+      if (questionError) {
+        console.error('Error deleting question:', questionError)
+        throw questionError
+      }
+
+      console.log('Question deleted successfully:', questionId)
     } catch (error) {
       console.error('Error deleting question:', error)
       throw error
     }
   }
 
-  // Get a single question by ID (useful for refreshing data after edit)
+  // Get a single question by ID with real-time vote counts
   async getQuestionById(questionId: number, userEmail?: string): Promise<ForumQuestion | null> {
     try {
+      console.log('Fetching question by ID:', questionId, 'for user:', userEmail)
+      
       // Get question with answers
       const { data: questionData, error: questionError } = await supabase
         .from('forum_questions')
@@ -301,15 +671,21 @@ class ForumService {
         .eq('id', questionId)
         .single()
 
-      if (questionError) throw questionError
+      if (questionError) {
+        if (questionError.code === 'PGRST116') {
+          return null // Question not found
+        }
+        throw questionError
+      }
+      
       if (!questionData) return null
 
-      // Get user-specific data if logged in
+      console.log('Question data found:', questionData)
+
+      // Get user-specific vote if logged in
       let userVote: 'up' | 'down' | null = null
-      let isBookmarked = false
 
       if (userEmail) {
-        // Get user vote
         const { data: voteData } = await supabase
           .from('forum_votes')
           .select('vote_type')
@@ -318,114 +694,89 @@ class ForumService {
           .single()
 
         userVote = voteData?.vote_type || null
-
-        // Get bookmark status
-        const { data: bookmarkData } = await supabase
-          .from('forum_bookmarks')
-          .select('id')
-          .eq('question_id', questionId)
-          .eq('user_email', userEmail)
-          .single()
-
-        isBookmarked = !!bookmarkData
       }
 
-      // Get all votes for this question to build userVotes object
-      const { data: allVotes } = await supabase
-        .from('forum_votes')
-        .select('user_email, vote_type')
-        .eq('question_id', questionId)
-
-      const userVotes: { [userEmail: string]: 'up' | 'down' } = {}
-      if (allVotes) {
-        allVotes.forEach(vote => {
-          userVotes[vote.user_email] = vote.vote_type
-        })
+      // Add vote information to question data
+      const questionWithVotes = {
+        ...questionData,
+        userVote
       }
 
-      // Transform data
-      const question: ForumQuestion = {
-        id: questionData.id,
-        title: questionData.title,
-        description: questionData.description,
-        userEmail: questionData.user_email,
-        userRole: questionData.user_role,
-        createdAt: questionData.created_at,
-        category: questionData.category,
-        urgency: questionData.urgency,
-        visibility: questionData.visibility || 'all',
-        views: questionData.views || 0,
-        upvotes: questionData.upvotes || 0,
-        downvotes: questionData.downvotes || 0,
-        isBookmarked,
-        userVote,
-        userVotes,
-        answers: questionData.forum_answers?.map((answer: any) => ({
-          id: answer.id,
-          text: answer.text,
-          userEmail: answer.user_email,
-          userRole: answer.user_role,
-          createdAt: answer.created_at
-        })) || []
-      }
-
-      return question
+      // Enrich with user names and get real-time vote counts
+      const enrichedQuestions = await this.enrichWithUserNames([questionWithVotes])
+      
+      const result = enrichedQuestions[0] || null
+      console.log('Final enriched question:', result)
+      
+      return result
     } catch (error) {
       console.error('Error fetching question by ID:', error)
       throw error
     }
   }
 
-  // Vote on a question
+  // Vote on a question with improved error handling and transaction safety
   async voteQuestion(questionId: number, userEmail: string, voteType: 'up' | 'down'): Promise<{ upvotes: number; downvotes: number; userVote: 'up' | 'down' | null }> {
     try {
+      console.log(`User ${userEmail} voting ${voteType} on question ${questionId}`)
+
       // Check if user already voted
-      const { data: existingVote } = await supabase
+      const { data: existingVote, error: voteCheckError } = await supabase
         .from('forum_votes')
         .select('vote_type')
         .eq('question_id', questionId)
         .eq('user_email', userEmail)
         .single()
 
+      if (voteCheckError && voteCheckError.code !== 'PGRST116') {
+        // PGRST116 means no rows found, which is expected for new votes
+        console.error('Error checking existing vote:', voteCheckError)
+        throw voteCheckError
+      }
+
       let newUserVote: 'up' | 'down' | null = null
 
       if (existingVote) {
+        console.log('Existing vote found:', existingVote.vote_type)
+        
         if (existingVote.vote_type === voteType) {
           // Remove vote if clicking same vote type
-          await supabase
+          console.log('Removing existing vote')
+          
+          const { error: deleteError } = await supabase
             .from('forum_votes')
             .delete()
             .eq('question_id', questionId)
             .eq('user_email', userEmail)
 
-          // Update question vote counts
-          const field = voteType === 'up' ? 'upvotes' : 'downvotes'
-          await supabase.rpc('decrement_vote', { 
-            question_id: questionId, 
-            vote_field: field 
-          })
+          if (deleteError) {
+            console.error('Error deleting vote:', deleteError)
+            throw deleteError
+          }
 
           newUserVote = null
         } else {
           // Change vote type
-          await supabase
+          console.log(`Changing vote from ${existingVote.vote_type} to ${voteType}`)
+          
+          const { error: updateError } = await supabase
             .from('forum_votes')
             .update({ vote_type: voteType })
             .eq('question_id', questionId)
             .eq('user_email', userEmail)
 
-          // Update question vote counts (move from one to another)
-          if (voteType === 'up') {
-            await supabase.rpc('increment_upvote_decrement_downvote', { question_id: questionId })
-          } else {
-            await supabase.rpc('increment_downvote_decrement_upvote', { question_id: questionId })
+          if (updateError) {
+            console.error('Error updating vote:', updateError)
+            throw updateError
           }
 
           newUserVote = voteType
         }
       } else {
         // Add new vote
-        await supabase
+        console.log('Adding new vote')
+        
+        const { error: insertError } = await supabase
           .from('forum_votes')
           .insert({
             question_id: questionId,
@@ -433,26 +784,24 @@ class ForumService {
             vote_type: voteType
           })
 
-        // Update question vote counts
-        const field = voteType === 'up' ? 'upvotes' : 'downvotes'
-        await supabase.rpc('increment_vote', { 
-          question_id: questionId, 
-          vote_field: field 
-        })
+        if (insertError) {
+          console.error('Error inserting vote:', insertError)
+          throw insertError
+        }
 
         newUserVote = voteType
       }
 
-      // Get updated vote counts
-      const { data: questionData } = await supabase
-        .from('forum_questions')
-        .select('upvotes, downvotes')
-        .eq('id', questionId)
-        .single()
+      // Get real-time vote counts after the vote operation
+      const voteCounts = await this.getVoteCounts(questionId)
+      console.log('Updated vote counts:', voteCounts)
+
+      // Sync the vote counts in the questions table
+      await this.syncQuestionVoteCounts(questionId)
 
       return {
-        upvotes: questionData?.upvotes || 0,
-        downvotes: questionData?.downvotes || 0,
+        upvotes: voteCounts.upvotes,
+        downvotes: voteCounts.downvotes,
         userVote: newUserVote
       }
     } catch (error) {
@@ -461,143 +810,174 @@ class ForumService {
     }
   }
 
-  // Toggle bookmark
-  async toggleBookmark(questionId: number, userEmail: string): Promise<boolean> {
+  // Increment view count
+  async incrementViews(questionId: number, userEmail?: string): Promise<number> {
     try {
-      // Check if already bookmarked
-      const { data: existingBookmark } = await supabase
-        .from('forum_bookmarks')
-        .select('id')
-        .eq('question_id', questionId)
-        .eq('user_email', userEmail)
+      // Simple increment for now - you can add more sophisticated view tracking later
+      const { data: currentData } = await supabase
+        .from('forum_questions')
+        .select('views')
+        .eq('id', questionId)
         .single()
 
-      if (existingBookmark) {
-        // Remove bookmark
-        await supabase
-          .from('forum_bookmarks')
-          .delete()
-          .eq('question_id', questionId)
-          .eq('user_email', userEmail)
-        return false
-      } else {
-        // Add bookmark
-        await supabase
-          .from('forum_bookmarks')
-          .insert({
-            question_id: questionId,
-            user_email: userEmail
-          })
-        return true
-      }
-    } catch (error) {
-      console.error('Error toggling bookmark:', error)
-      throw error
-    }
-  }
+      const currentViews = currentData?.views || 0
+      const newViews = currentViews + 1
 
-  // Increment view count
-  async incrementViews(questionId: number): Promise<void> {
-    try {
-      await supabase.rpc('increment_views', { question_id: questionId })
+      const { error } = await supabase
+        .from('forum_questions')
+        .update({ views: newViews })
+        .eq('id', questionId)
+      
+      if (error) {
+        console.error('Error incrementing views:', error)
+        return currentViews
+      }
+      
+      return newViews
     } catch (error) {
       console.error('Error incrementing views:', error)
-      // Don't throw error for view counting failures
+      return 0
     }
   }
 
-  // Get forum statistics
-  async getForumStats(): Promise<{ totalQuestions: number; totalAnswers: number; activeUsers: number }> {
-    try {
-      // Get question count
-      const { count: questionCount } = await supabase
-        .from('forum_questions')
-        .select('*', { count: 'exact', head: true })
-
-      // Get answer count
-      const { count: answerCount } = await supabase
-        .from('forum_answers')
-        .select('*', { count: 'exact', head: true })
-
-      // Get unique user count (from questions and answers)
-      const { data: questionUsers } = await supabase
-        .from('forum_questions')
-        .select('user_email')
-
-      const { data: answerUsers } = await supabase
-        .from('forum_answers')
-        .select('user_email')
-
-      const uniqueUsers = new Set([
-        ...(questionUsers?.map(u => u.user_email) || []),
-        ...(answerUsers?.map(u => u.user_email) || [])
-      ])
-
-      return {
-        totalQuestions: questionCount || 0,
-        totalAnswers: answerCount || 0,
-        activeUsers: uniqueUsers.size
-      }
-    } catch (error) {
-      console.error('Error fetching forum stats:', error)
-      return { totalQuestions: 0, totalAnswers: 0, activeUsers: 0 }
-    }
-  }
-
-  // Get user's bookmarked questions
-  async getBookmarkedQuestions(userEmail: string): Promise<ForumQuestion[]> {
+  // Check if user owns a question - useful for frontend authorization checks
+  async checkQuestionOwnership(questionId: number, userEmail: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
-        .from('forum_bookmarks')
-        .select(`
-          forum_questions (
-            *,
-            forum_answers (
-              id,
-              text,
-              user_email,
-              user_role,
-              created_at
-            )
-          )
-        `)
-        .eq('user_email', userEmail)
+        .from('forum_questions')
+        .select('user_email')
+        .eq('id', questionId)
+        .single()
 
-      if (error) throw error
-
-      return data?.map((bookmark: any) => {
-        const question = bookmark.forum_questions
-        return {
-          id: question.id,
-          title: question.title,
-          description: question.description,
-          userEmail: question.user_email,
-          userRole: question.user_role,
-          createdAt: question.created_at,
-          category: question.category,
-          urgency: question.urgency,
-          visibility: question.visibility,
-          views: question.views,
-          upvotes: question.upvotes,
-          downvotes: question.downvotes,
-          isBookmarked: true,
-          userVote: null, // Would need separate query to get this
-          userVotes: {},
-          answers: question.forum_answers?.map((answer: any) => ({
-            id: answer.id,
-            text: answer.text,
-            userEmail: answer.user_email,
-            userRole: answer.user_role,
-            createdAt: answer.created_at
-          })) || []
-        }
-      }) || []
+      if (error || !data) return false
+      
+      return data.user_email === userEmail
     } catch (error) {
-      console.error('Error fetching bookmarked questions:', error)
-      throw error
+      console.error('Error checking question ownership:', error)
+      return false
+    }
+  }
+
+  // Method to repair vote counts in case they get out of sync
+  async repairVoteCounts(): Promise<void> {
+    try {
+      console.log('Starting vote count repair...')
+      
+      // Get all questions
+      const { data: questions, error: questionsError } = await supabase
+        .from('forum_questions')
+        .select('id')
+
+      if (questionsError) {
+        console.error('Error fetching questions for repair:', questionsError)
+        return
+      }
+
+      if (!questions) return
+
+      // Repair each question's vote counts
+      for (const question of questions) {
+        await this.syncQuestionVoteCounts(question.id)
+      }
+
+      console.log(`Repaired vote counts for ${questions.length} questions`)
+    } catch (error) {
+      console.error('Error repairing vote counts:', error)
+    }
+  }
+
+  // Debug method to check what fields exist in your users table
+  async debugUsersTable(): Promise<void> {
+    try {
+      console.log('=== DEBUGGING USERS TABLE ===')
+      
+      // Get the first user to see what fields are available
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .limit(1)
+
+      if (error) {
+        console.error('Error fetching users for debug:', error)
+        return
+      }
+
+      if (data && data.length > 0) {
+        console.log('Sample user record fields:', Object.keys(data[0]))
+        console.log('Sample user record:', data[0])
+      } else {
+        console.log('No users found in table')
+      }
+    } catch (error) {
+      console.error('Exception during debug:', error)
+    }
+  }
+
+  // Debug method to check vote data integrity
+  async debugVotes(questionId?: number): Promise<void> {
+    try {
+      console.log('=== DEBUGGING VOTES ===')
+      
+      if (questionId) {
+        console.log(`Debugging votes for question ${questionId}`)
+        
+        // Get votes from votes table
+        const { data: votes, error: votesError } = await supabase
+          .from('forum_votes')
+          .select('*')
+          .eq('question_id', questionId)
+
+        if (votesError) {
+          console.error('Error fetching votes:', votesError)
+          return
+        }
+
+        console.log('Votes from forum_votes table:', votes)
+
+        // Get question data
+        const { data: question, error: questionError } = await supabase
+          .from('forum_questions')
+          .select('id, upvotes, downvotes')
+          .eq('id', questionId)
+          .single()
+
+        if (questionError) {
+          console.error('Error fetching question:', questionError)
+          return
+        }
+
+        console.log('Question vote counts:', question)
+
+        // Calculate real counts
+        const realUpvotes = votes?.filter(v => v.vote_type === 'up').length || 0
+        const realDownvotes = votes?.filter(v => v.vote_type === 'down').length || 0
+
+        console.log('Real vote counts:', { upvotes: realUpvotes, downvotes: realDownvotes })
+        console.log('Stored vote counts:', { upvotes: question?.upvotes, downvotes: question?.downvotes })
+        
+        if (question?.upvotes !== realUpvotes || question?.downvotes !== realDownvotes) {
+          console.log('⚠️ Vote counts are out of sync!')
+        } else {
+          console.log('✅ Vote counts are in sync')
+        }
+      } else {
+        // Debug all votes
+        const { data: allVotes, error } = await supabase
+          .from('forum_votes')
+          .select('*')
+          .limit(10)
+
+        if (error) {
+          console.error('Error fetching all votes:', error)
+          return
+        }
+
+        console.log('Sample votes data:', allVotes)
+      }
+    } catch (error) {
+      console.error('Exception during vote debug:', error)
     }
   }
 }
-
 
 export const forumService = new ForumService()

@@ -37,6 +37,24 @@
                 <p class="text-green-100 text-xs font-medium">Share your question with the community</p>
               </div>
             </div>
+            
+            <!-- Close Button -->
+            <button
+              @click="closeModal"
+              class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors duration-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isSubmitting" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+            <p class="text-sm text-gray-600">Posting your question...</p>
           </div>
         </div>
 
@@ -59,6 +77,7 @@
                   class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white placeholder-gray-400"
                   placeholder="Summarize your question in a few words..."
                   required 
+                  maxlength="150"
                 />
                 <div class="absolute bottom-2 right-2 text-xs text-gray-400">
                   {{ question.title.length }}/150
@@ -80,6 +99,7 @@
                   rows="4" 
                   class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 resize-none bg-gradient-to-br from-gray-50 to-white placeholder-gray-400"
                   placeholder="Provide more details about your situation, location, current setup, symptoms, etc. The more information you provide, the better answers you'll receive."
+                  maxlength="1000"
                 />
                 <div class="absolute bottom-2 right-2 text-xs text-gray-400">
                   {{ question.description ? question.description.length : 0 }}/1000
@@ -238,6 +258,7 @@
                 type="button"
                 @click="closeModal"
                 class="flex-1 sm:flex-none px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 flex items-center justify-center gap-1 text-sm"
+                :disabled="isSubmitting"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -247,18 +268,19 @@
 
               <button
                 type="submit"
-                :disabled="!isFormValid"
+                :disabled="!isFormValid || isSubmitting"
                 class="flex-1 px-6 py-2 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center gap-1 shadow-lg text-sm"
                 :class="[
-                  isFormValid
+                  isFormValid && !isSubmitting
                     ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div v-if="isSubmitting" class="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Post Question
+                {{ isSubmitting ? 'Posting...' : 'Post Question' }}
               </button>
             </div>
           </form>
@@ -270,6 +292,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { forumService } from '../../services/forumService'
+import type { NewQuestion } from '../../services/forumService'
 
 // Type definitions
 interface User {
@@ -277,68 +301,34 @@ interface User {
   role: 'Farmer' | 'Buyer' | 'Veterinarian' | 'Poultry Specialist' | 'Agribusiness Consultant';
 }
 
-interface ForumAnswer {
-  text: string;
-  userEmail: string;
-  userRole: string;
-  createdAt: string;
-}
-
-interface ForumQuestion {
-  id: number;
+interface QuestionForm {
   title: string;
-  description?: string;
-  userEmail: string;
-  userRole: string;
-  createdAt: string;
-  answers: ForumAnswer[];
-  category?: string;
-  urgency?: string;
-  isBookmarked?: boolean;
-  views?: number;
-  tempAnswer?: string;
-  visibility?: 'all' | 'farmers';
-  upvotes?: number;
-  downvotes?: number;
-  userVote?: 'up' | 'down' | null;
-  userVotes?: { [userEmail: string]: 'up' | 'down' };
+  description: string;
+  category: string;
+  urgency: string;
+  visibility: 'all' | 'farmers';
 }
 
 // Props and emits
 const props = defineProps<{
   visible: boolean;
+  currentUser: User | null;
 }>();
 
 const emits = defineEmits<{
   (e: 'close'): void;
-  (e: 'submit', question: ForumQuestion): void;
+  (e: 'submit', question: any): void;
+  (e: 'showToast', message: string): void;
 }>();
 
-// Get current user
-const getCurrentUser = (): User | null => {
-  try {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  } catch (e) {
-    console.error('Error parsing user from localStorage:', e);
-    return null;
-  }
-};
-
-const currentUser = getCurrentUser();
-
-// Reactive data
-const question = ref<ForumQuestion>({
-  id: 0,
+// State
+const isSubmitting = ref(false);
+const question = ref<QuestionForm>({
   title: '',
   description: '',
-  userEmail: currentUser?.email || '',
-  userRole: currentUser?.role || 'Buyer',
-  visibility: 'all',
   category: '',
   urgency: '',
-  createdAt: '',
-  answers: []
+  visibility: 'all'
 });
 
 // Watch for visibility changes to reset form
@@ -346,18 +336,15 @@ watch(
   () => props.visible,
   (val) => {
     if (val) {
+      // Reset form when modal opens
       question.value = {
-        id: Date.now(),
         title: '',
         description: '',
-        userEmail: currentUser?.email || '',
-        userRole: currentUser?.role || 'Buyer',
-        visibility: 'all',
         category: '',
         urgency: '',
-        createdAt: new Date().toISOString(),
-        answers: []
+        visibility: 'all'
       };
+      isSubmitting.value = false;
     }
   }
 );
@@ -365,7 +352,7 @@ watch(
 // Computed properties
 const isFormValid = computed(() => {
   return (
-    question.value.title.trim() &&
+    question.value.title.trim().length > 0 &&
     question.value.category &&
     question.value.urgency &&
     question.value.visibility &&
@@ -376,12 +363,43 @@ const isFormValid = computed(() => {
 
 // Methods
 const closeModal = (): void => {
+  if (isSubmitting.value) return; // Prevent closing while submitting
   emits('close');
 };
 
-const handleSubmit = (): void => {
-  if (!isFormValid.value) return;
-  emits('submit', { ...question.value });
-  closeModal();
+const handleSubmit = async (): Promise<void> => {
+  if (!isFormValid.value || isSubmitting.value || !props.currentUser) return;
+
+  try {
+    isSubmitting.value = true;
+
+    // Create the new question data
+    const newQuestionData: NewQuestion = {
+      title: question.value.title.trim(),
+      description: question.value.description?.trim() || '',
+      category: question.value.category,
+      urgency: question.value.urgency,
+      visibility: question.value.visibility
+    };
+
+    // Submit to Supabase via forumService
+    const createdQuestion = await forumService.createQuestion(
+      newQuestionData,
+      props.currentUser.email,
+      props.currentUser.role
+    );
+
+    // Emit the created question to parent
+    emits('submit', createdQuestion);
+    emits('showToast', 'Your question has been posted successfully!');
+    
+    // Close modal
+    closeModal();
+  } catch (error) {
+    console.error('Failed to create question:', error);
+    emits('showToast', 'Failed to post question. Please try again.');
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>

@@ -348,7 +348,6 @@
                 :currentUser="currentUser"
                 @upvote="upvoteQuestion"
                 @downvote="downvoteQuestion" 
-                @toggleBookmark="toggleBookmark"
                 @openComments="openCommentsModal"
                 @editQuestion="handleEditQuestion"
                 @deleteQuestion="handleDeleteQuestion"
@@ -394,13 +393,26 @@
     </div>
 
     <!-- Ask Question Modal -->
-    <AskQuestionModal v-if="showModal" :visible="showModal" @submit="handlePostQuestion" @close="showModal = false"
-      :categories="categories" />
+    <AskQuestionModal 
+      v-if="showModal" 
+      :visible="showModal" 
+      :currentUser="currentUser"
+      @submit="handlePostQuestion" 
+      @close="showModal = false"
+      @showToast="showToastNotification"
+    />
 
     <!-- Comments Modal -->
-    <CommentsModal v-if="showCommentsModal" :visible="showCommentsModal" :question="selectedQuestion!"
-      :currentUser="currentUser" @close="showCommentsModal = false" @updateQuestion="handleUpdateQuestion"
-      @signin="handleSignin" @showToast="showToastNotification" />
+    <CommentsModal 
+      v-if="showCommentsModal" 
+      :visible="showCommentsModal" 
+      :question="selectedQuestion!"
+      :currentUser="currentUser" 
+      @close="showCommentsModal = false" 
+      @updateQuestion="handleUpdateQuestion"
+      @signin="handleSignin" 
+      @showToast="showToastNotification" 
+    />
 
     <!-- Buyer Guide Modal -->
     <div v-if="showBuyerGuide"
@@ -684,12 +696,16 @@ import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import CommentsModal from '../../components/Forum/CommentsModal.vue';
 import ForumCard from '../../components/Forum/ForumCard.vue';
 import { getCurrentUser } from '../../services/user';
-import { forumService, type ForumQuestion, type ForumAnswer, type NewQuestion } from '../../services/forumService';
+import { forumService } from '../../services/forumService';
+import type { ForumQuestion, ForumAnswer } from '../../services/forumService';
 
 // Define interfaces to ensure type safety
 interface User {
   email: string;
   role: 'Farmer' | 'Buyer';
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
 }
 
 // Router setup
@@ -734,6 +750,19 @@ function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
   }));
 }
 
+// Helper function to construct user's full name
+function constructUserFullName(user: User): string {
+  if (user.fullName && user.fullName.trim()) {
+    return user.fullName;
+  }
+  
+  const firstName = user.firstName || '';
+  const lastName = user.lastName || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  
+  return fullName || 'Unknown User';
+}
+
 // Computed properties
 const hasActiveFilters = computed(() => {
   return filters.value.search !== '' ||
@@ -753,7 +782,7 @@ const filteredQuestions = computed(() => {
     const matchesSearch = !filters.value.search ||
       question.title.toLowerCase().includes(searchLower) ||
       (question.description && question.description.toLowerCase().includes(searchLower)) ||
-      question.answers.some(answer => answer.text.toLowerCase().includes(searchLower));
+      question.answers.some(answer => answer.text?.toLowerCase().includes(searchLower));
 
     // Category filter
     const matchesCategory = filters.value.categories.length === 0 ||
@@ -867,27 +896,26 @@ const handleSignin = () => {
   router.push('/signin');
 };
 
-const handlePostQuestion = async (questionData: any) => {
+const handlePostQuestion = async (questionData: ForumQuestion) => {
   if (!currentUser) return;
 
   try {
-    const newQuestion = await forumService.createQuestion(
-      {
-        title: questionData.title,
-        description: questionData.description,
-        category: questionData.category,
-        urgency: questionData.urgency,
-        visibility: questionData.visibility
-      },
-      currentUser.email,
-      currentUser.role
-    );
+    // Add user's name information to the question data
+    const enrichedQuestionData = {
+      ...questionData,
+      userFirstName: currentUser.firstName || '',
+      userLastName: currentUser.lastName || '',
+      userFullName: constructUserFullName(currentUser),
+      userRole: currentUser.role,
+      userEmail: currentUser.email
+    };
 
-    forumQuestions.value.unshift(newQuestion);
+    // The question is already created by the modal, just add it to our local array
+    forumQuestions.value.unshift(enrichedQuestionData);
     showModal.value = false;
     showToastNotification('Your question has been posted successfully!');
   } catch (error) {
-    console.error('Failed to post question:', error);
+    console.error('Failed to handle posted question:', error);
     showToastNotification('Failed to post question. Please try again.');
   }
 };
@@ -950,63 +978,74 @@ const downvoteQuestion = async (question: ForumQuestion) => {
   }
 };
 
-const toggleBookmark = async (question: ForumQuestion) => {
+// FIXED: Handler methods for edit and delete with proper database operations
+const handleEditQuestion = async (eventData: { questionId: number; updates: Partial<ForumQuestion> }) => {
   if (!currentUser) return;
-
+  
   try {
-    const isBookmarked = await forumService.toggleBookmark(question.id, currentUser.email);
+    const { questionId, updates } = eventData;
+    
+    // First, check if user owns this question
+    const question = forumQuestions.value.find(q => q.id === questionId);
+    if (!question || question.userEmail !== currentUser.email) {
+      showToastNotification('You can only edit your own questions.');
+      return;
+    }
+
+    // Update question in database using the service method
+    const updatedQuestion = await forumService.updateQuestion(questionId, {
+      title: updates.title,
+      description: updates.description,
+      category: updates.category,
+      urgency: updates.urgency,
+      visibility: updates.visibility
+    });
     
     // Update local state
-    const index = forumQuestions.value.findIndex(q => q.id === question.id);
+    const index = forumQuestions.value.findIndex(q => q.id === questionId);
     if (index !== -1) {
-      forumQuestions.value[index].isBookmarked = isBookmarked;
-    }
-    
-    const action = isBookmarked ? 'bookmarked' : 'removed from bookmarks';
-    showToastNotification(`Question ${action}`);
-  } catch (error) {
-    console.error('Failed to toggle bookmark:', error);
-    showToastNotification('Failed to bookmark question. Please try again.');
-  }
-};
-
-// NEW HANDLER METHODS FOR EDIT AND DELETE
-const handleEditQuestion = async (question: ForumQuestion, editedData: Partial<ForumQuestion>) => {
-  try {
-    // Find the question in our local array and update it
-    const index = forumQuestions.value.findIndex(q => q.id === question.id);
-    if (index !== -1) {
-      // Update the local question with the edited data and normalize answers
-      const updatedQuestion = {
+      // Merge the updates with the existing question while preserving all other properties
+      forumQuestions.value[index] = {
         ...forumQuestions.value[index],
-        ...editedData
+        ...updatedQuestion,
+        // Preserve user name information
+        userFirstName: forumQuestions.value[index].userFirstName,
+        userLastName: forumQuestions.value[index].userLastName,
+        userFullName: forumQuestions.value[index].userFullName,
+        answers: forumQuestions.value[index].answers.map((a, idx) => ({
+          ...a,
+          id: (a as any).id ?? idx
+        }))
       };
-      updatedQuestion.answers = updatedQuestion.answers.map((a, idx) => ({
-        ...a,
-        id: (a as any).id ?? idx
-      }));
-      forumQuestions.value[index] = updatedQuestion;
       
-      // If this is the selected question in comments modal, update it too
-      if (selectedQuestion.value && selectedQuestion.value.id === question.id) {
-        selectedQuestion.value = {
-          ...selectedQuestion.value,
-          ...editedData,
-          answers: updatedQuestion.answers
-        };
+      // Update selected question if it's the one being edited
+      if (selectedQuestion.value && selectedQuestion.value.id === questionId) {
+        selectedQuestion.value = { ...forumQuestions.value[index] };
       }
     }
     
     showToastNotification('Question updated successfully!');
   } catch (error) {
-    console.error('Failed to handle question edit:', error);
+    console.error('Failed to edit question:', error);
     showToastNotification('Failed to update question. Please try again.');
   }
 };
 
 const handleDeleteQuestion = async (questionId: number) => {
+  if (!currentUser) return;
+  
   try {
-    // Remove the question from our local array
+    // First, check if user owns this question
+    const question = forumQuestions.value.find(q => q.id === questionId);
+    if (!question || question.userEmail !== currentUser.email) {
+      showToastNotification('You can only delete your own questions.');
+      return;
+    }
+
+    // Delete question from database using the service method
+    await forumService.deleteQuestion(questionId);
+    
+    // Remove from local state
     const index = forumQuestions.value.findIndex(q => q.id === questionId);
     if (index !== -1) {
       forumQuestions.value.splice(index, 1);
@@ -1020,7 +1059,7 @@ const handleDeleteQuestion = async (questionId: number) => {
     
     showToastNotification('Question deleted successfully!');
   } catch (error) {
-    console.error('Failed to handle question deletion:', error);
+    console.error('Failed to delete question:', error);
     showToastNotification('Failed to delete question. Please try again.');
   }
 };

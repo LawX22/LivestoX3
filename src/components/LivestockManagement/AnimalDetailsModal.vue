@@ -1,6 +1,7 @@
 <!-- AnimalDetailsModal.vue -->
 <template>
-  <div v-if="animal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
+  <!-- Details Modal -->
+  <div v-if="animal && !showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden transform transition-all duration-300">
       
       <!-- Header -->
@@ -237,7 +238,7 @@
             <!-- Action Buttons - Sticky at the bottom -->
             <div class="sticky bottom-0 pt-4 bg-gray-50 mt-auto">
               <div class="flex gap-3 justify-center">
-                <button @click="$emit('edit', animal)"
+                <button @click="openEditModal"
                   class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -258,10 +259,302 @@
       </div>
     </div>
   </div>
+
+  <!-- Edit Modal -->
+  <div v-if="animal && showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden transform transition-all duration-300">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 border-b border-blue-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Edit Animal Listing</h2>
+              <p class="text-blue-100 text-xs">Update livestock information and details</p>
+            </div>
+          </div>
+          <button @click="closeEditModal"
+            class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-200">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="overflow-y-auto max-h-[calc(95vh-80px)]">
+        <form @submit.prevent="handleSave" class="flex">
+          
+          <!-- Left Section - Image Management -->
+          <div class="w-2/5 bg-gradient-to-br from-slate-50 to-gray-100 p-4 border-r border-gray-200">
+            <div class="sticky top-0 space-y-4">
+              <div class="text-center">
+                <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Manage Images
+                </h3>
+                <p class="text-xs text-gray-500">Upload and organize livestock photos</p>
+              </div>
+
+              <!-- Image Upload Area -->
+              <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <p class="text-sm text-gray-600 mb-2">Click to upload images</p>
+                <p class="text-xs text-gray-500">PNG, JPG up to 10MB each</p>
+                <input type="file" multiple accept="image/*" class="hidden">
+              </div>
+
+              <!-- Main Image Preview -->
+              <div class="relative">
+                <div class="w-full h-64 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden">
+                  <div v-if="editForm.images.length === 0" class="text-center text-gray-400">
+                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-sm">No images uploaded</p>
+                  </div>
+                  <img v-else :src="editForm.images[editSelectedImageIndex]" alt="Preview" 
+                    class="w-full h-full object-cover rounded-lg" />
+                </div>
+
+                <!-- Navigation arrows -->
+                <div v-if="editForm.images.length > 1" class="absolute inset-y-0 left-0 flex items-center">
+                  <button @click="previousEditImage" type="button"
+                    class="ml-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                </div>
+                <div v-if="editForm.images.length > 1" class="absolute inset-y-0 right-0 flex items-center">
+                  <button @click="nextEditImage" type="button"
+                    class="mr-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Thumbnail Gallery -->
+              <div v-if="editForm.images.length > 0" class="grid grid-cols-5 gap-2">
+                <div v-for="(image, index) in editForm.images" :key="index"
+                  class="relative group cursor-pointer" @click="editSelectedImageIndex = index">
+                  <img :src="image" :alt="`Thumbnail ${index + 1}`"
+                    :class="`w-full h-14 object-cover rounded-lg border-2 transition-all ${editSelectedImageIndex === index ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-400'}`" />
+                  <!-- Remove button -->
+                  <button @click.stop="removeImage(index)" type="button"
+                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Image Counter -->
+              <div class="text-center" v-if="editForm.images.length > 0">
+                <p class="text-xs text-slate-600 font-medium">{{ editSelectedImageIndex + 1 }}/{{ editForm.images.length }} images</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Section - Form Fields -->
+          <div class="w-3/5 p-4 bg-gray-50 flex flex-col">
+            <div class="overflow-y-auto space-y-4">
+              
+              <!-- Basic Information -->
+              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Basic Information
+                </h3>
+
+                <div class="space-y-4">
+                  <!-- Title and Description -->
+                  <div class="grid grid-cols-1 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Title</label>
+                      <input v-model="editForm.title" type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Description</label>
+                      <textarea v-model="editForm.description" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"></textarea>
+                    </div>
+                  </div>
+
+                  <!-- Animal Details Grid -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Animal Type</label>
+                      <select v-model="editForm.type" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="">Select type</option>
+                        <option value="Cattle">Cattle</option>
+                        <option value="Pig">Pig</option>
+                        <option value="Goat">Goat</option>
+                        <option value="Sheep">Sheep</option>
+                        <option value="Chicken">Chicken</option>
+                        <option value="Duck">Duck</option>
+                        <option value="Buffalo">Buffalo</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Breed</label>
+                      <input v-model="editForm.breed" type="text" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Gender</label>
+                      <select v-model="editForm.gender" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Mixed">Mixed</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Age</label>
+                      <input v-model="editForm.age" type="text" placeholder="e.g., 2 years, 6 months"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Weight (kg)</label>
+                      <input v-model="editForm.weight" type="number" min="0" step="0.1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Quantity</label>
+                      <input v-model="editForm.quantity" type="number" min="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Health and Status -->
+              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Health & Status
+                </h3>
+
+                <div class="space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Status</label>
+                      <select v-model="editForm.status" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="Available">Available</option>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-700 mb-2">Price (₱)</label>
+                      <input v-model="editForm.price" type="number" min="0" step="0.01"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                  </div>
+
+                  <!-- Health Status -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Health Status</label>
+                    <div class="space-y-2">
+                      <div v-for="status in healthStatusOptions" :key="status" class="flex items-center">
+                        <input :id="status" v-model="editForm.healthStatus" :value="status" type="checkbox" 
+                          class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label :for="status" class="ml-2 text-sm text-gray-700">{{ status }}</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delivery Options -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Delivery Options</label>
+                    <div class="space-y-2">
+                      <div v-for="option in deliveryOptionsMap" :key="option.value" class="flex items-center">
+                        <input :id="option.value" v-model="editForm.deliveryOptions" :value="option.value" type="checkbox" 
+                          class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label :for="option.value" class="ml-2 text-sm text-gray-700">{{ option.label }}</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Location -->
+              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Location
+                </h3>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-700 mb-2">Farm Location</label>
+                  <input v-model="editForm.location" type="text" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons - Sticky at the bottom -->
+            <div class="sticky bottom-0 pt-4 bg-gray-50 mt-auto">
+              <div class="flex gap-3 justify-center">
+                <button type="button" @click="closeEditModal"
+                  class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </button>
+                <button type="submit"
+                  class="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType } from 'vue';
+import { ref, reactive, type PropType } from 'vue';
 
 interface Farmer {
   id: number;
@@ -300,9 +593,45 @@ const props = defineProps({
   }
 });
 
-// const emit = defineEmits(['close', 'edit', 'delete']);
+const emit = defineEmits(['close', 'edit', 'delete', 'save']);
 
 const selectedImageIndex = ref(0);
+const editSelectedImageIndex = ref(0);
+const showEditModal = ref(false);
+
+// Edit form data
+const editForm = reactive({
+  id: '',
+  title: '',
+  description: '',
+  type: '',
+  breed: '',
+  gender: '',
+  age: '',
+  weight: 0,
+  quantity: 1,
+  status: 'Available',
+  healthStatus: [] as string[],
+  price: 0,
+  deliveryOptions: [] as string[],
+  images: [] as string[],
+  location: '',
+});
+
+// Options for dropdowns
+const healthStatusOptions = [
+  'Vaccinated',
+  'Dewormed', 
+  'Health Certificate',
+  'Pregnant',
+  'Lactating'
+];
+
+const deliveryOptionsMap = [
+  { value: 'pickup', label: 'Buyer Pickup' },
+  { value: 'delivery', label: 'Farm Delivery' },
+  { value: 'meetup', label: 'Meetup Point' }
+];
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -336,5 +665,59 @@ const previousImage = () => {
       ? selectedImageIndex.value - 1
       : props.animal.images.length - 1;
   }
+};
+
+const nextEditImage = () => {
+  editSelectedImageIndex.value = editSelectedImageIndex.value < editForm.images.length - 1
+    ? editSelectedImageIndex.value + 1
+    : 0;
+};
+
+const previousEditImage = () => {
+  editSelectedImageIndex.value = editSelectedImageIndex.value > 0
+    ? editSelectedImageIndex.value - 1
+    : editForm.images.length - 1;
+};
+
+const removeImage = (index: number) => {
+  editForm.images.splice(index, 1);
+  if (editSelectedImageIndex.value >= editForm.images.length) {
+    editSelectedImageIndex.value = Math.max(0, editForm.images.length - 1);
+  }
+};
+
+const openEditModal = () => {
+  if (props.animal) {
+    // Populate edit form with current animal data
+    Object.assign(editForm, {
+      id: props.animal.id,
+      title: props.animal.title,
+      description: props.animal.description,
+      type: props.animal.type,
+      breed: props.animal.breed,
+      gender: props.animal.gender,
+      age: props.animal.age,
+      weight: props.animal.weight,
+      quantity: props.animal.quantity,
+      status: props.animal.status,
+      healthStatus: [...props.animal.healthStatus],
+      price: props.animal.price,
+      deliveryOptions: [...props.animal.deliveryOptions],
+      images: [...props.animal.images],
+      location: props.animal.location,
+    });
+    editSelectedImageIndex.value = 0;
+    showEditModal.value = true;
+  }
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+};
+
+const handleSave = () => {
+  // Emit the edited data
+  emit('save', { ...editForm });
+  closeEditModal();
 };
 </script>

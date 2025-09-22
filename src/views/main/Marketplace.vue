@@ -636,39 +636,6 @@ const animals = ref<Animal[]>([
     auctionStartTime: new Date(Date.now() - 518400000).toISOString() // Started 6 days ago
   },
   {
-    id: 8,
-    type: 'Goat',
-    breed: 'Boer',
-    weight: 35,
-    quantity: 8,
-    age: '8-12 months',
-    gender: 'Mixed',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Young Boer goats, perfect for meat production. Healthy and well-socialized.',
-    datePosted: new Date(Date.now() - 172800000).toISOString(),
-    farmer: {
-      id: 9,
-      name: 'Carmen Dela Cruz',
-      farmName: 'Dela Cruz Goat Farm',
-      contact: '+63 922 777 9999',
-      address: '789 Goat Hill, Barangay Capra, Laguna',
-      avatar: 'https://randomuser.me/api/portraits/women/56.jpg'
-    },
-    location: 'Laguna',
-    isAuction: true,
-    startingBid: 8000,
-    currentBid: 8000,
-    bidCount: 0,
-    endTime: new Date(Date.now() + 86400000).toISOString(), // 24 hours from now
-    duration: '1-3d',
-    auctionStartTime: new Date(Date.now() - 7200000).toISOString() // Started 2 hours ago
-  },
-  {
     id: 9,
     type: 'Chicken',
     breed: 'Rhode Island Red',

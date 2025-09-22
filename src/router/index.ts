@@ -10,6 +10,7 @@ import adminDashboard from '../views/admin/adminDashboard.vue';
 import UserManagement from '../views/admin/userManagement.vue';
 import UpgradeRequests from '../views/admin/upgradeRequests.vue';
 import AdminLivestockManagement from '../views/admin/adminlivestockManagement.vue';
+import ForumManagement from '../views/admin/forumManagement.vue';
 
 // Main Pages
 import LandingPage from '../views/main/landingPage.vue';
@@ -45,6 +46,7 @@ const routes = [
   { path: '/userManagement', component: UserManagement, name: 'UserManagement' },
   { path: '/upgradeRequests', component: UpgradeRequests, name: 'UpgradeRequests' },
   { path: '/AdminLivestockManagement', component: AdminLivestockManagement, name: 'AdminLivestockManagement' },
+  { path: '/forumManagement', component: ForumManagement, name: 'ForumManagement' },
 
   // Main Routes
   { path: '/', component: LandingPage, name: 'LandingPage' },
