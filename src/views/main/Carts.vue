@@ -314,60 +314,6 @@ const getExampleCartItems = (): CartItem[] => [
     location: 'Pampanga'
   },
   {
-    id: 2,
-    type: 'Goat',
-    breed: 'Boer',
-    weight: 35,
-    quantity: 3,
-    maxQuantity: 8,
-    age: '12 months',
-    gender: 'Female',
-    status: 'Available',
-    price: 8000,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1543944165-ef2f5469bafe?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Healthy Boer goats, excellent for meat production.',
-    dateAdded: new Date(Date.now() - 86400000).toISOString(),
-    farmer: {
-      id: 3,
-      name: 'Juan Dela Cruz',
-      farmName: 'Dela Cruz Goat Farm',
-      contact: '+63 921 555 1234',
-      address: '456 Goat Street, Barangay Livestock, Bulacan',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-    },
-    location: 'Bulacan'
-  },
-  {
-    id: 3,
-    type: 'Pig',
-    breed: 'Berkshire',
-    weight: 80,
-    quantity: 1,
-    maxQuantity: 3,
-    age: '8 months',
-    gender: 'Male',
-    status: 'Available',
-    price: 12000,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1589923188937-cb64779f4abe?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Premium Berkshire pig, raised organically.',
-    dateAdded: new Date(Date.now() - 172800000).toISOString(),
-    farmer: {
-      id: 4,
-      name: 'Pedro Reyes',
-      farmName: 'Reyes Swine Farm',
-      contact: '+63 921 444 5678',
-      address: '789 Pig Farm Road, Barangay Pork, Laguna',
-      avatar: 'https://randomuser.me/api/portraits/men/67.jpg'
-    },
-    location: 'Laguna'
-  },
-  {
     id: 4,
     type: 'Chicken',
     breed: 'Native',
@@ -393,33 +339,6 @@ const getExampleCartItems = (): CartItem[] => [
       avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
     },
     location: 'Batangas'
-  },
-  {
-    id: 5,
-    type: 'Buffalo',
-    breed: 'Carabao',
-    weight: 600,
-    quantity: 1,
-    maxQuantity: 2,
-    age: '36 months',
-    gender: 'Male',
-    status: 'Available',
-    price: 80000,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://images.unsplash.com/photo-1573246123716-6b1782bfc499?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Strong and healthy carabao, excellent for farming work and milk production.',
-    dateAdded: new Date(Date.now() - 432000000).toISOString(),
-    farmer: {
-      id: 6,
-      name: 'Elena Mendoza',
-      farmName: 'Mendoza Buffalo Ranch',
-      contact: '+63 921 999 8877',
-      address: '789 Buffalo Lane, Barangay Ranch, Nueva Ecija',
-      avatar: 'https://randomuser.me/api/portraits/women/67.jpg'
-    },
-    location: 'Nueva Ecija'
   }
 ];
 

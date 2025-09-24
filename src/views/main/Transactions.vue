@@ -32,192 +32,65 @@
         </div>
 
         <!-- Right side - Stats Cards (Compact) -->
-          <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
-            <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
-              <div class="flex items-center gap-1.5">
-                <div class="p-1 rounded-full bg-green-100 text-green-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-[10px] font-medium text-green-100 leading-tight">Total Inquiries</p>
-                  <p class="text-sm font-bold text-white">24</p>
-                </div>
+        <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-green-100 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
               </div>
-            </div>
-
-            <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
-              <div class="flex items-center gap-1.5">
-                <div class="p-1 rounded-full bg-yellow-100 text-yellow-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-[10px] font-medium text-green-100 leading-tight">Pending</p>
-                  <p class="text-sm font-bold text-white">{{ pendingCount }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
-              <div class="flex items-center gap-1.5">
-                <div class="p-1 rounded-full bg-blue-100 text-blue-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-[10px] font-medium text-green-100 leading-tight">Total Earnings</p>
-                  <p class="text-sm font-bold text-white">₱124,500</p>
-                </div>
+              <div>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Total Inquiries</p>
+                <p class="text-sm font-bold text-white">24</p>
               </div>
             </div>
           </div>
+
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-yellow-100 text-yellow-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Pending</p>
+                <p class="text-sm font-bold text-white">{{ pendingCount }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/20 backdrop-blur-sm rounded-md p-1.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+              <div class="p-1 rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-medium text-green-100 leading-tight">Total Earnings</p>
+                <p class="text-sm font-bold text-white">₱124,500</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Main Content Container -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Enhanced Filters Sidebar with Collapse/Expand -->
-      <div :class="`${isSidebarExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
-        <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
-
-        <!-- Toggle Button integrated into filter logo -->
-        <div 
-          @click="toggleSidebar"
-          class="absolute inset-0 flex items-center justify-center cursor-pointer group z-20"
-          v-if="!isSidebarExpanded"
-        >
-          <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
-            </svg>
-          </div>
-        </div>
-
-        <div class="relative h-full flex flex-col">
-          <!-- Expanded View -->
-          <div v-if="isSidebarExpanded" class="h-full flex flex-col">
-            <!-- Header with integrated close button -->
-            <div class="flex justify-between items-center p-3 border-b border-green-100/50">
-              <h2 class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
-                </svg>
-                Filters
-              </h2>
-              <div class="flex gap-1">
-                <button @click="resetFilters" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Reset
-                </button>
-                <button @click="toggleSidebar" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Sticky Search & Active Filters -->
-            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
-              <!-- Search -->
-              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
-                <div class="relative">
-                  <input v-model="filters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 focus:border-green-500" placeholder="Search..." />
-                  <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                    <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Active Filters -->
-              <div v-if="hasActiveFilters" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
-                <div class="flex flex-wrap gap-1">
-                  <span v-if="filters.search" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
-                    "{{ filters.search }}"
-                  </span>
-                  <span v-for="status in filters.statuses" :key="status" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ status }}</span>
-                  <span v-for="type in filters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Scrollable Filters Area -->
-            <div class="flex-1 overflow-y-auto p-3">
-              <div class="space-y-3">
-                <!-- Status Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Status
-                  </h3>
-                  <div class="space-y-1">
-                    <label v-for="status in statusOptions" :key="status" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        :value="status" 
-                        v-model="filters.statuses" 
-                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                      >
-                      <span class="truncate">{{ status }}</span>
-                    </label>
-                  </div>
-                </div>
-                
-                <!-- Livestock Type Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    Animal Type
-                  </h3>
-                  <div class="space-y-1 max-h-32 overflow-y-auto">
-                    <label v-for="type in uniqueTypes" :key="type" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        :value="type" 
-                        v-model="filters.types" 
-                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
-                      >
-                      <span class="truncate">{{ type }}</span>
-                    </label>
-                  </div>
-                </div>
-                
-                <!-- Date Filter -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Date Range
-                  </h3>
-                  <div class="space-y-2">
-                    <div>
-                      <label class="text-xs text-gray-600 block mb-1">From</label>
-                      <input v-model="filters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
-                    </div>
-                    <div>
-                      <label class="text-xs text-gray-600 block mb-1">To</label>
-                      <input v-model="filters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Filters Sidebar Component -->
+      <FiltersSidebar
+        :is-expanded="isSidebarExpanded"
+        :filters="filters"
+        :status-options="statusOptions"
+        :unique-types="uniqueTypes"
+        :has-active-filters="hasActiveFilters"
+        @toggle="toggleSidebar"
+        @update:filters="updateFilters"
+        @reset="resetFilters"
+      />
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden">
@@ -250,304 +123,23 @@
           </div>
         </div>
 
-        <!-- FIXED Table with Aligned Headers and Body -->
-        <div class="flex-1 overflow-hidden">
-          <div class="h-full flex flex-col">
-            <!-- Table Container -->
-            <div class="flex-1 overflow-auto bg-white">
-              <table class="w-full">
-                <!-- Fixed Table Header -->
-                <thead class="bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10">
-                  <tr>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Livestock</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">Buyer</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Date</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Status</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/6">Amount</th>
-                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider w-1/12">Actions</th>
-                  </tr>
-                </thead>
-                <!-- Table Body -->
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="transaction in filteredTransactions" :key="transaction.id" class="hover:bg-green-50/50 transition-colors">
-                    <td class="px-4 py-3 whitespace-nowrap w-1/4">
-                      <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10">
-                          <img class="h-10 w-10 rounded-xl object-cover border border-gray-200" :src="transaction.livestock.image" alt="">
-                        </div>
-                        <div class="ml-3 min-w-0">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ transaction.livestock.type }}</div>
-                          <div class="text-xs text-gray-500 truncate">{{ transaction.livestock.breed }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap w-1/4">
-                      <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10">
-                          <img class="h-10 w-10 rounded-full object-cover border border-gray-200" :src="transaction.buyer.avatar" alt="">
-                        </div>
-                        <div class="ml-3 min-w-0">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ transaction.buyer.name }}</div>
-                          <div class="text-xs text-gray-500 truncate">{{ transaction.buyer.contact }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 w-1/6">
-                      {{ formatDate(transaction.date) }}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap w-1/6">
-                      <span :class="`px-3 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${getStatusClass(transaction.status)}`">
-                        {{ transaction.status }}
-                      </span>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 w-1/6">
-                      <div class="flex items-center">
-                        <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-xs mr-2">₱</span>
-                        {{ transaction.amount.toLocaleString() }}
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium w-1/12">
-                      <div class="flex justify-end gap-1">
-                        <button 
-                          @click="viewDetails(transaction)"
-                          class="text-green-600 hover:text-green-800 bg-green-100 hover:bg-green-200 p-1.5 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </button>
-                        <button 
-                          v-if="transaction.status === 'Pending'"
-                          @click="updateStatus(transaction.id, 'Accepted')"
-                          class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-lg transition-colors"
-                          title="Accept"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                        <button 
-                          v-if="transaction.status === 'Pending'"
-                          @click="updateStatus(transaction.id, 'Rejected')"
-                          class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 p-1.5 rounded-lg transition-colors"
-                          title="Reject"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Empty State -->
-              <div 
-                v-if="filteredTransactions.length === 0"
-                class="text-center py-12"
-              >
-                <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md mx-auto text-center shadow-xl">
-                  <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 class="text-lg font-bold text-gray-800 mb-2">No transactions found</h3>
-                  <p class="text-xs text-gray-500 mb-4 leading-relaxed">We couldn't find any transactions matching your current search criteria. Try adjusting your filters.</p>
-                  <button 
-                    @click="resetFilters"
-                    class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Reset All Filters
-                  </button>
-                </div>
-              </div>
-
-              <!-- Pagination -->
-              <div class="flex items-center justify-between mt-4 px-4 py-2 bg-white/50">
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p class="text-sm text-gray-700">
-                      Showing <span class="font-medium">1</span> to <span class="font-medium">{{ Math.min(filteredTransactions.length, 5) }}</span> of <span class="font-medium">{{ filteredTransactions.length }}</span> results
-                    </p>
-                  </div>
-                  <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                      <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        <span class="sr-only">Previous</span>
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                      <button aria-current="page" class="z-10 bg-green-50 border-green-500 text-green-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                        1
-                      </button>
-                      <button class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                        2
-                      </button>
-                      <button class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                        3
-                      </button>
-                      <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        <span class="sr-only">Next</span>
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    </nav>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Transactions Table Component -->
+        <TransactionsTable
+          :transactions="filteredTransactions"
+          :sort-by="sortBy"
+          @view-details="viewDetails"
+          @update-status="updateStatus"
+          @reset-filters="resetFilters"
+        />
       </div>
     </div>
 
-    <!-- Transaction Details Modal - Fixed Background Interaction -->
-    <div v-if="selectedTransaction" class="fixed inset-0 overflow-hidden z-50">
-      <div class="absolute inset-0 overflow-hidden">
-        <!-- Non-blurred background overlay with pointer-events-none for background visibility -->
-        <div class="absolute inset-0 bg-black/20 pointer-events-none"></div>
-        <!-- Clickable overlay only on the left side to close modal -->
-        <div class="absolute inset-0 pointer-events-auto" @click="closeModalIfClickedOutside"></div>
-        
-        <!-- Modal positioned on the right -->
-        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex pointer-events-none">
-          <div class="w-screen max-w-md pointer-events-auto">
-            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
-              <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
-                <div class="flex items-start justify-between">
-                  <h2 class="text-lg font-medium text-gray-900">Transaction Details</h2>
-                  <div class="ml-3 h-7 flex items-center">
-                    <button 
-                      @click="selectedTransaction = null"
-                      class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      <span class="sr-only">Close panel</span>
-                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="mt-8">
-                  <div class="flow-root">
-                    <div class="border-b border-gray-200 pb-6">
-                      <div class="flex items-center">
-                        <div class="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden border border-gray-200">
-                          <img :src="selectedTransaction.livestock.image" class="h-full w-full object-cover">
-                        </div>
-                        <div class="ml-4 flex-1">
-                          <div>
-                            <div class="flex justify-between text-base font-medium text-gray-900">
-                              <h3>{{ selectedTransaction.livestock.type }} ({{ selectedTransaction.livestock.breed }})</h3>
-                              <p class="ml-4 bg-green-100 text-green-800 px-2 py-0.5 rounded-md text-sm">
-                                ₱{{ selectedTransaction.amount.toLocaleString() }}
-                              </p>
-                            </div>
-                            <p class="mt-1 text-sm text-gray-500">{{ selectedTransaction.livestock.description }}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="py-6 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer Information</h3>
-                      <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                          <img class="h-12 w-12 rounded-full border border-gray-200" :src="selectedTransaction.buyer.avatar" alt="">
-                        </div>
-                        <div class="ml-4">
-                          <h4 class="text-sm font-medium text-gray-900">{{ selectedTransaction.buyer.name }}</h4>
-                          <p class="text-sm text-gray-500">{{ selectedTransaction.buyer.contact }}</p>
-                          <p class="text-sm text-gray-500">{{ selectedTransaction.buyer.address }}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="py-6 border-b border-gray-200">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Details</h3>
-                      <dl class="space-y-4">
-                        <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Transaction ID</dt>
-                          <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.id }}</dd>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Date</dt>
-                          <dd class="text-sm font-medium text-gray-900">{{ formatDate(selectedTransaction.date) }}</dd>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Status</dt>
-                          <dd class="text-sm font-medium text-gray-900">
-                            <span :class="`px-3 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${getStatusClass(selectedTransaction.status)}`">
-                              {{ selectedTransaction.status }}
-                            </span>
-                          </dd>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Payment Method</dt>
-                          <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.paymentMethod }}</dd>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <dt class="text-sm text-gray-600">Delivery Method</dt>
-                          <dd class="text-sm font-medium text-gray-900">{{ selectedTransaction.deliveryMethod }}</dd>
-                        </div>
-                      </dl>
-                    </div>
-
-                    <div class="py-6">
-                      <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer's Message</h3>
-                      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm text-gray-700">{{ selectedTransaction.message || "No message provided by the buyer." }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="border-t border-gray-200 px-4 py-6 sm:px-6">
-                <div class="flex justify-between text-base font-medium text-gray-900 mb-2">
-                  <p>Total</p>
-                  <p>₱{{ selectedTransaction.amount.toLocaleString() }}</p>
-                </div>
-                <p class="mt-0.5 text-sm text-gray-500 mb-4">Shipping and taxes calculated at checkout.</p>
-                <div class="flex space-x-3">
-                  <button 
-                    v-if="selectedTransaction.status === 'Pending'"
-                    @click="updateStatus(selectedTransaction.id, 'Accepted')"
-                    class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
-                  >
-                    Accept Offer
-                  </button>
-                  <button 
-                    v-if="selectedTransaction.status === 'Pending'"
-                    @click="updateStatus(selectedTransaction.id, 'Rejected')"
-                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
-                  >
-                    Reject Offer
-                  </button>
-                  <button 
-                    v-if="selectedTransaction.status !== 'Pending'"
-                    @click="selectedTransaction = null"
-                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Transaction Details Modal Component -->
+    <TransactionDetailsModal
+      :transaction="selectedTransaction"
+      @close="selectedTransaction = null"
+      @update-status="updateStatus"
+    />
 
     <!-- Enhanced Success Toast -->
     <div v-if="showToast" class="fixed top-4 right-4 z-50">
@@ -578,6 +170,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import NavBar from '../../components/NavBar.vue'
+import FiltersSidebar from '../../components/Transactions/FilterSidebar.vue'
+import TransactionsTable from '../../components/Transactions/TransactionsTable.vue'
+import TransactionDetailsModal from '../../components/Transactions/TransactionDetailsModal.vue'
 
 // Interfaces
 interface Livestock {
@@ -608,7 +203,15 @@ interface Transaction {
   message?: string
 }
 
-// State
+interface Filters {
+  search: string
+  statuses: string[]
+  types: string[]
+  dateFrom: string
+  dateTo: string
+}
+
+// Reactive state
 const isSidebarExpanded = ref(true)
 const selectedTransaction = ref<Transaction | null>(null)
 const sortBy = ref('date-desc')
@@ -616,11 +219,10 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const transactions = ref<Transaction[]>([])
 
-// Filters
-const filters = ref({
+const filters = ref<Filters>({
   search: '',
-  statuses: [] as string[],
-  types: [] as string[],
+  statuses: [],
+  types: [],
   dateFrom: '',
   dateTo: ''
 })
@@ -687,6 +289,10 @@ const toggleSidebar = () => {
   isSidebarExpanded.value = !isSidebarExpanded.value
 }
 
+const updateFilters = (newFilters: Filters) => {
+  filters.value = newFilters
+}
+
 const resetFilters = () => {
   filters.value = {
     search: '',
@@ -717,12 +323,6 @@ const updateStatus = (id: string, status: 'Accepted' | 'Rejected'): void => {
       selectedTransaction.value = null
     }
     showToastNotification(`Transaction ${status.toLowerCase()} successfully!`)
-  }
-}
-
-const closeModalIfClickedOutside = (event: Event) => {
-  if (event.target === event.currentTarget) {
-    selectedTransaction.value = null
   }
 }
 
@@ -763,7 +363,7 @@ onMounted(() => {
       date: new Date(Date.now() - 86400000 * 2).toISOString(),
       status: 'Pending',
       amount: 45000,
-      paymentMethod: 'Bank Transfer',
+      paymentMethod: 'Cash on Delivery',
       deliveryMethod: 'Pickup',
       message: 'I would like to visit your farm to see the cattle before finalizing the purchase.'
     },
@@ -809,55 +409,9 @@ onMounted(() => {
       date: new Date(Date.now() - 86400000 * 10).toISOString(),
       status: 'Completed',
       amount: 24000,
-      paymentMethod: 'GCash',
-        deliveryMethod: 'Pickup',
-      message: 'Looking for quality breeding goats. Please contact me.'
-    },
-    {
-      id: 'TXN-78904',
-      livestock: {
-        id: 4,
-        type: 'Chicken',
-        breed: 'Rhode Island Red',
-        description: 'Laying hens, 6 months old',
-        image: 'https://images.unsplash.com/photo-1589923186200-85bae8f239d9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-      },
-      buyer: {
-        id: 104,
-        name: 'Elena Rodriguez',
-        contact: '+63 920 111 2222',
-        address: '321 Poultry Ave, Laguna',
-        avatar: 'https://randomuser.me/api/portraits/women/33.jpg'
-      },
-      date: new Date(Date.now() - 86400000 * 3).toISOString(),
-      status: 'Pending',
-      amount: 8000,
-      paymentMethod: 'GCash',
-      deliveryMethod: 'Delivery',
-      message: 'Interested in 20 hens for egg production.'
-    },
-    {
-      id: 'TXN-78905',
-      livestock: {
-        id: 5,
-        type: 'Sheep',
-        breed: 'Dorper',
-        description: 'Dorper sheep known for excellent meat quality',
-        image: 'https://images.unsplash.com/photo-1593369196682-6d8ec3ff3d0f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-      },
-      buyer: {
-        id: 105,
-        name: 'Roberto Cruz',
-        contact: '+63 921 456 2345',
-        address: '654 Wool St, Benguet',
-        avatar: 'https://randomuser.me/api/portraits/men/55.jpg'
-      },
-      date: new Date(Date.now() - 86400000 * 7).toISOString(),
-      status: 'Rejected',
-      amount: 30000,
       paymentMethod: 'Cash on Delivery',
       deliveryMethod: 'Pickup',
-      message: 'Interested in your sheep but the price is too high. Can you lower it?'
+      message: 'Looking for quality breeding goats. Please contact me.'
     }
   ]
 })
