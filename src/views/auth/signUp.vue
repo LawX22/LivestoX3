@@ -510,15 +510,21 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="!isVerificationCodeComplete" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': isVerificationCodeComplete,
-                    'bg-gray-400 cursor-not-allowed': !isVerificationCodeComplete
+                  <button type="submit" :disabled="!isVerificationCodeComplete || isLoading" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': isVerificationCodeComplete && !isLoading,
+                    'bg-gray-400 cursor-not-allowed': !isVerificationCodeComplete || isLoading
                   }"
                     class="text-white py-2 px-6 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span v-if="isLoading" class="mr-2">
+                      <svg class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    <svg v-else class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    Create My Account
+                    {{ isLoading ? 'Creating Account...' : 'Create My Account' }}
                   </button>
                 </div>
               </form>
@@ -542,7 +548,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { SignUpForm, User } from '../../services/user'
 
 const router = useRouter()
 
@@ -560,6 +565,11 @@ const toasts = ref<Toast[]>([])
 const addToast = (toast: Omit<Toast, 'id'>) => {
   const id = Math.random().toString(36).substr(2, 9)
   toasts.value.push({ ...toast, id })
+  
+  // Auto-remove toast after 5 seconds
+  setTimeout(() => {
+    removeToast(id)
+  }, 5000)
 }
 
 const removeToast = (id: string) => {
@@ -577,6 +587,20 @@ const phoneError = ref('')
 const isCodeSent = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+const isLoading = ref(false)
+
+// Form interface
+interface SignUpForm {
+  firstName: string
+  lastName: string
+  username: string
+  email: string
+  phoneNumber: string
+  gender: string
+  password: string
+  confirmPassword: string
+  verificationCode: string
+}
 
 const form = ref<SignUpForm>({
   firstName: '',
@@ -674,7 +698,7 @@ const handleCodeInput = (position: number, event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.value) {
     if (position < 6) {
-      const nextInput = document.querySelector(`input:nth-child(${position + 1})`) as HTMLInputElement
+      const nextInput = input.parentElement?.children[position] as HTMLInputElement
       nextInput?.focus()
     }
   }
@@ -682,7 +706,7 @@ const handleCodeInput = (position: number, event: Event) => {
 
 const handleCodeDelete = (position: number, event: KeyboardEvent) => {
   if (event.key === 'Backspace' && position > 1 && !verificationCode.value[position - 1]) {
-    const prevInput = document.querySelector(`input:nth-child(${position - 1})`) as HTMLInputElement
+    const prevInput = (event.target as HTMLInputElement).parentElement?.children[position - 2] as HTMLInputElement
     prevInput?.focus()
   }
 }
@@ -696,10 +720,11 @@ const goToNextStep = () => {
 const goToPrevStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
+    verificationError.value = ''
   }
 }
 
-const sendVerificationCode = () => {
+const sendVerificationCode = async () => {
   if (passwordMismatch.value || !isPasswordValid.value || !form.value.phoneNumber || phoneError.value) return
 
   // Validate phone number is complete
@@ -708,107 +733,93 @@ const sendVerificationCode = () => {
     return
   }
 
-  // Show success toast
-  addToast({
-    type: 'success',
-    title: 'Verification Code Sent!',
-    content: `A 6-digit verification code has been sent to ${form.value.email}. Please check your inbox and spam folder.`
-  })
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Show success toast
+    addToast({
+      type: 'success',
+      title: 'Verification Code Sent!',
+      content: `A 6-digit verification code has been sent to ${form.value.email}. Please check your inbox and spam folder.`
+    })
 
-  console.log('Verification code sent to', form.value.email)
-  isCodeSent.value = true
-  goToNextStep()
-}
-
-
-const generateUniqueUserId = (existingIds: string[]): string => {
-  let id = ''
-  let isUnique = false
-
-  while (!isUnique) {
-    id = Math.floor(100000 + Math.random() * 900000).toString()
-    isUnique = !existingIds.includes(id)
+    console.log('Verification code would be sent to:', form.value.email)
+    isCodeSent.value = true
+    goToNextStep()
+  } catch (error) {
+    console.error('Error sending verification code:', error)
+    addToast({
+      type: 'error',
+      title: 'Failed to Send Code',
+      content: 'Unable to send verification code. Please try again later.'
+    })
   }
-
-  return id
 }
 
-const generatePublicId = (firstName: string, lastName: string): string => {
-  const base = `${firstName}.${lastName}`.toLowerCase().replace(/\s+/g, '')
-  const random = Math.floor(100 + Math.random() * 900)
-  return `${base}.${random}`
-}
-
-const handleSignUp = () => {
-  if (!isVerificationCodeComplete.value) {
+const handleSignUp = async () => {
+  if (!isVerificationCodeComplete.value || isLoading.value) {
     verificationError.value = 'Please enter the complete 6-digit verification code'
     return
   }
 
-  // Combine verification code
-  form.value.verificationCode = verificationCode.value.join('')
+  isLoading.value = true
+  verificationError.value = ''
 
-  // Simulate verification code validation (in real app, this would be verified server-side)
-  if (form.value.verificationCode.length !== 6) {
-    verificationError.value = 'Invalid verification code. Please enter all 6 digits.'
-    return
-  }
+  try {
+    // Combine verification code
+    form.value.verificationCode = verificationCode.value.join('')
 
-  // Check if passwords match
-  if (form.value.password !== form.value.confirmPassword) {
-    verificationError.value = 'Passwords do not match'
-    return
-  }
-
-  // Check if email already exists
-  const userIds = JSON.parse(localStorage.getItem('userIds') || '[]')
-  for (const id of userIds) {
-    const existing = localStorage.getItem(`user_${id}`)
-    if (existing) {
-      const user: User = JSON.parse(existing)
-      if (user.email === form.value.email) {
-        verificationError.value = 'This email address is already registered'
-        return
-      }
+    // Validate verification code format
+    if (form.value.verificationCode.length !== 6) {
+      verificationError.value = 'Invalid verification code. Please enter all 6 digits.'
+      return
     }
+
+    // Check if passwords match
+    if (form.value.password !== form.value.confirmPassword) {
+      verificationError.value = 'Passwords do not match'
+      return
+    }
+
+    // Mock API delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Show success toast
+    addToast({
+      type: 'success',
+      title: 'Account Created Successfully!',
+      content: 'Your account has been created and verified. You can now sign in with your credentials.'
+    })
+
+    console.log('Account would be created with:', {
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
+      username: form.value.username,
+      email: form.value.email,
+      phoneNumber: `+63${form.value.phoneNumber}`,
+      gender: form.value.gender
+    })
+
+    // Redirect after a short delay to show the success toast
+    setTimeout(() => {
+      router.push('/signin')
+    }, 2000)
+
+  } catch (error: any) {
+    console.error('Sign up error:', error)
+    
+    // Handle specific error cases
+    if (error.message?.includes('email already exists')) {
+      verificationError.value = 'This email address is already registered'
+    } else if (error.message?.includes('invalid verification code')) {
+      verificationError.value = 'Invalid verification code. Please check and try again.'
+    } else if (error.message?.includes('username already taken')) {
+      verificationError.value = 'This username is already taken. Please choose another.'
+    } else {
+      verificationError.value = 'Failed to create account. Please try again later.'
+    }
+  } finally {
+    isLoading.value = false
   }
-
-  // Create new user according to User interface
-  const userId = generateUniqueUserId(userIds)
-  const publicId = generatePublicId(form.value.firstName, form.value.lastName)
-  const createdAt = new Date().toISOString()
-
-  const newUser: User = {
-    userId,
-    publicId,
-    email: form.value.email,
-    password: form.value.password,
-    role: 'Buyer', // Default role
-    username: form.value.username,
-    firstName: form.value.firstName,
-    lastName: form.value.lastName,
-    phoneNumber: `+63${form.value.phoneNumber}`,
-    gender: form.value.gender as 'Male' | 'Female' | 'Other', // Cast to match enum
-    createdAt,
-    isVerified: true,
-    isBanned: false
-  }
-
-  // Save to localStorage
-  localStorage.setItem(`user_${userId}`, JSON.stringify(newUser))
-  userIds.push(userId)
-  localStorage.setItem('userIds', JSON.stringify(userIds))
-
-  // Show success toast and redirect
-  addToast({
-    type: 'success',
-    title: 'Account Created Successfully!',
-    content: 'Your account has been created and verified. You can now sign in with your credentials.'
-  })
-
-  // Redirect after a short delay to show the success toast
-  setTimeout(() => {
-    router.push('/signin')
-  }, 2000)
 }
 </script>
