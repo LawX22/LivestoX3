@@ -363,80 +363,120 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import type { 
+  CartItem, 
+  UserInfo, 
+  Address, 
+  PickupLocation, 
+  DeliveryMethod, 
+  PaymentMethod, 
+  FormErrors
+} from '../../services/cart'
 
 const router = useRouter()
 
-// Interfaces
-interface CheckoutItem {
-  id: number; type: string; breed: string; weight: number; quantity: number; maxQuantity: number
-  age: string; gender: string; status: string; price: number; deliveryOptions: string[]
-  images: string[]; description: string; dateAdded: string; location: string
-  farmer: { id: number; name: string; farmName?: string; contact: string; address: string; avatar: string }
-}
-interface UserInfo { firstName: string; lastName: string; email: string; phone: string }
-interface Address { name: string; street: string; city: string; province: string; postalCode: string }
-interface PickupLocation { name: string; address: string; hours: string; distance: string }
-interface Errors { address?: string; city?: string; province?: string; postalCode?: string; termsAgreed?: string }
-
-// Refs
-const checkoutItems = ref<CheckoutItem[]>([])
-const userInfo = ref<UserInfo>({ firstName: 'Juan', lastName: 'Dela Cruz', email: 'juan.delacruz@example.com', phone: '+63 912 345 6789' })
+// Refs with typed interfaces
+const checkoutItems = ref<CartItem[]>([])
+const userInfo = ref<UserInfo>({ 
+  firstName: 'Juan', 
+  lastName: 'Dela Cruz', 
+  email: 'juan.delacruz@example.com', 
+  phone: '+63 912 345 6789' 
+})
 const deliveryMethod = ref<string>('delivery')
-const selectedAddressIndex = ref(0)
-const selectedPickupIndex = ref(0)
+const selectedAddressIndex = ref<number>(0)
+const selectedPickupIndex = ref<number>(0)
 const paymentMethod = ref<string>('cod')
-const discount = ref(0)
-const termsAgreed = ref(false)
-const isProcessingOrder = ref(false)
-const showSuccessModal = ref(false)
-const orderId = ref('')
-const errors = ref<Errors>({})
-const showAddressForm = ref(false)
-const newAddress = ref<Address>({ name: '', street: '', city: '', province: '', postalCode: '' })
+const discount = ref<number>(0)
+const termsAgreed = ref<boolean>(false)
+const isProcessingOrder = ref<boolean>(false)
+const showSuccessModal = ref<boolean>(false)
+const orderId = ref<string>('')
+const errors = ref<FormErrors>({})
+const showAddressForm = ref<boolean>(false)
+const newAddress = ref<Address>({ 
+  name: '', 
+  street: '', 
+  city: '', 
+  province: '', 
+  postalCode: '' 
+})
 
-// Constants
-const phProvinces = ['Davao', 'Manila', 'Cebu']
-const userAddresses = ref<Address[]>([{ name: 'Home', street: '123 Mango Street, Barangay Lahug', city: 'Cebu City', province: 'Cebu', postalCode: '6000' }])
-const pickupLocations = ref<PickupLocation[]>([{ name: 'Main Farm - Quezon City', address: '123 Agriculture Road, Barangay Farming, Quezon City', hours: 'Mon-Sat: 8:00 AM - 5:00 PM', distance: '5 km from your location' }])
-const shippingCost = ref(500)
-const codFee = ref(50)
+// Constants with proper typing
+const phProvinces: string[] = ['Davao', 'Manila', 'Cebu']
+const userAddresses = ref<Address[]>([{ 
+  name: 'Home', 
+  street: '123 Mango Street, Barangay Lahug', 
+  city: 'Cebu City', 
+  province: 'Cebu', 
+  postalCode: '6000' 
+}])
 
-// Data arrays
-const deliveryMethods = [
-  { value: 'delivery', label: 'Home Delivery', description: "We'll deliver to your selected address", icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { value: 'pickup', label: 'Pickup', description: 'Pick up from our nearest farm location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' }
+const pickupLocations = ref<PickupLocation[]>([{ 
+  name: 'Main Farm - Quezon City', 
+  address: '123 Agriculture Road, Barangay Farming, Quezon City', 
+  hours: 'Mon-Sat: 8:00 AM - 5:00 PM', 
+  distance: '5 km from your location' 
+}])
+
+const shippingCost: number = 500
+const codFee: number = 50
+
+// Data arrays with proper typing
+const deliveryMethods: DeliveryMethod[] = [
+  { 
+    value: 'delivery', 
+    label: 'Home Delivery', 
+    description: "We'll deliver to your selected address", 
+    icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' 
+  },
+  { 
+    value: 'pickup', 
+    label: 'Pickup', 
+    description: 'Pick up from our nearest farm location', 
+    icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' 
+  }
 ]
 
-const paymentMethods = [
+const paymentMethods: PaymentMethod[] = [
   { value: 'cod', label: 'Cash on Delivery', disabled: false },
   { value: 'card', label: 'Credit/Debit Card (Coming Soon)', disabled: true },
   { value: 'gcash', label: 'GCash (Coming Soon)', disabled: true },
   { value: 'bank', label: 'Bank Transfer (Coming Soon)', disabled: true }
 ]
 
-// Computed properties
-const selectedAddress = computed(() => userAddresses.value[selectedAddressIndex.value])
-const selectedPickup = computed(() => pickupLocations.value[selectedPickupIndex.value])
-const subtotal = computed(() => checkoutItems.value.reduce((total, item) => total + (item.price * item.quantity), 0))
-const totalPrice = computed(() => {
+// Computed properties with proper return types
+const selectedAddress = computed((): Address | undefined => userAddresses.value[selectedAddressIndex.value])
+const selectedPickup = computed((): PickupLocation | undefined => pickupLocations.value[selectedPickupIndex.value])
+const subtotal = computed((): number => checkoutItems.value.reduce((total, item) => total + (item.price * item.quantity), 0))
+const totalPrice = computed((): number => {
   let total = subtotal.value
-  if (deliveryMethod.value === 'delivery') total += shippingCost.value
-  if (paymentMethod.value === 'cod') total += codFee.value
+  if (deliveryMethod.value === 'delivery') total += shippingCost
+  if (paymentMethod.value === 'cod') total += codFee
   return total - discount.value
 })
 
-// Methods
-const formatLabel = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')
-const loadCheckoutItems = () => {
+// Methods with proper typing
+const formatLabel = (key: string): string => key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')
+
+const loadCheckoutItems = (): void => {
   const savedItems = localStorage.getItem('checkoutItems')
-  if (savedItems) checkoutItems.value = JSON.parse(savedItems)
-  else router.push('/cart')
+  if (savedItems) {
+    checkoutItems.value = JSON.parse(savedItems)
+  } else {
+    router.push('/cart')
+  }
 }
 
-const selectAddress = (index: number) => { selectedAddressIndex.value = index; showAddressForm.value = false }
-const saveAddress = () => {
+const selectAddress = (index: number): void => { 
+  selectedAddressIndex.value = index; 
+  showAddressForm.value = false 
+}
+
+const saveAddress = (): void => {
   if (!newAddress.value.name || !newAddress.value.street || !newAddress.value.city || !newAddress.value.province || !newAddress.value.postalCode) {
-    alert('Please fill in all address fields'); return
+    alert('Please fill in all address fields'); 
+    return
   }
   userAddresses.value.push({ ...newAddress.value })
   selectedAddressIndex.value = userAddresses.value.length - 1
@@ -444,28 +484,45 @@ const saveAddress = () => {
   showAddressForm.value = false
 }
 
-const cancelAddAddress = () => {
+const cancelAddAddress = (): void => {
   showAddressForm.value = false
   newAddress.value = { name: '', street: '', city: '', province: '', postalCode: '' }
 }
 
 const validateForm = (): boolean => {
-  errors.value = {}; let isValid = true
+  errors.value = {}; 
+  let isValid = true
   if (deliveryMethod.value === 'delivery') {
     if (userAddresses.value.length === 0 && !showAddressForm.value) {
-      errors.value.address = 'Please add a delivery address'; isValid = false
+      errors.value.address = 'Please add a delivery address'; 
+      isValid = false
     } else if (userAddresses.value.length > 0 && selectedAddress.value) {
-      if (!selectedAddress.value.street.trim()) { errors.value.address = 'Address is required'; isValid = false }
-      if (!selectedAddress.value.city.trim()) { errors.value.city = 'City is required'; isValid = false }
-      if (!selectedAddress.value.province) { errors.value.province = 'Province is required'; isValid = false }
-      if (!selectedAddress.value.postalCode.trim()) { errors.value.postalCode = 'Postal code is required'; isValid = false }
+      if (!selectedAddress.value.street.trim()) { 
+        errors.value.address = 'Address is required'; 
+        isValid = false 
+      }
+      if (!selectedAddress.value.city.trim()) { 
+        errors.value.city = 'City is required'; 
+        isValid = false 
+      }
+      if (!selectedAddress.value.province) { 
+        errors.value.province = 'Province is required'; 
+        isValid = false 
+      }
+      if (!selectedAddress.value.postalCode.trim()) { 
+        errors.value.postalCode = 'Postal code is required'; 
+        isValid = false 
+      }
     }
   }
-  if (!termsAgreed.value) { errors.value.termsAgreed = 'You must agree to the terms and conditions'; isValid = false }
+  if (!termsAgreed.value) { 
+    errors.value.termsAgreed = 'You must agree to the terms and conditions'; 
+    isValid = false 
+  }
   return isValid
 }
 
-const placeOrder = () => {
+const placeOrder = (): void => {
   if (!validateForm()) return
   isProcessingOrder.value = true
   orderId.value = 'ORD-' + Math.floor(100000 + Math.random() * 900000)
@@ -476,9 +533,9 @@ const placeOrder = () => {
   }, 2000)
 }
 
-const goBackToCart = () => router.push('/carts')
-const goTomyPurchase = () => router.push('/transactions')
-const goToMarketplace = () => router.push('/marketplace')
+const goBackToCart = (): void => { void router.push('/carts') }
+const goTomyPurchase = (): void => { void router.push('/transactions') } 
+const goToMarketplace = (): void => { void router.push('/marketplace') } 
 
 onMounted(() => loadCheckoutItems())
 </script>

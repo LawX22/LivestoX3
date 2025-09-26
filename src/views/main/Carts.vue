@@ -1,4 +1,4 @@
-<!-- Carts.vue -->
+<!-- Cart.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -249,43 +249,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-
-interface CartItem {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  maxQuantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  dateAdded: string;
-  farmer: {
-    id: number;
-    name: string;
-    farmName?: string;
-    contact: string;
-    address: string;
-    avatar: string;
-  };
-  location: string;
-}
+import type { CartItem } from '../../services/cart';
 
 const router = useRouter();
+
+// Refs with typed interfaces
 const cartItems = ref<CartItem[]>([]);
-const isProcessingOrder = ref(false);
-const showToast = ref(false);
-const toastMessage = ref('');
+const isProcessingOrder = ref<boolean>(false);
+const showToast = ref<boolean>(false);
+const toastMessage = ref<string>('');
 const selectedItems = ref<number[]>([]);
 const scrollContainer = ref<HTMLElement | null>(null);
 
-// Example data function
-const getExampleCartItems = (): CartItem[] => [
+// Sample cart items data (replaces localStorage)
+const sampleCartItems: CartItem[] = [
   {
     id: 1,
     type: 'Cattle',
@@ -342,44 +319,34 @@ const getExampleCartItems = (): CartItem[] => [
   }
 ];
 
-// Computed properties
-const subtotal = computed(() => {
+// Computed properties with proper return types
+const subtotal = computed((): number => {
   return cartItems.value
     .filter(item => selectedItems.value.includes(item.id))
     .reduce((total, item) => total + (item.price * item.quantity), 0);
 });
 
-const totalPrice = computed(() => {
+const totalPrice = computed((): number => {
   return subtotal.value;
 });
 
-const totalSelectedItems = computed(() => {
+const totalSelectedItems = computed((): number => {
   return cartItems.value
     .filter(item => selectedItems.value.includes(item.id))
     .reduce((total, item) => total + item.quantity, 0);
 });
 
-const allItemsSelected = computed(() => {
+const allItemsSelected = computed((): boolean => {
   return selectedItems.value.length === cartItems.value.length && cartItems.value.length > 0;
 });
 
-// Methods
-const loadCartItems = () => {
-  const savedCart = localStorage.getItem('livestockCart');
-  if (savedCart) {
-    cartItems.value = JSON.parse(savedCart);
-  } else {
-    // Load example data if no cart exists
-    cartItems.value = getExampleCartItems();
-    saveCartItems();
-  }
+// Methods with proper typing
+const loadCartItems = (): void => {
+  // Load sample data instead of localStorage
+  cartItems.value = [...sampleCartItems];
 };
 
-const saveCartItems = () => {
-  localStorage.setItem('livestockCart', JSON.stringify(cartItems.value));
-};
-
-const updateQuantity = (id: number, newQuantity: number) => {
+const updateQuantity = (id: number, newQuantity: number): void => {
   const item = cartItems.value.find(item => item.id === id);
   if (item) {
     // Ensure quantity is within valid range
@@ -387,7 +354,6 @@ const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity > item.maxQuantity) newQuantity = item.maxQuantity;
     
     item.quantity = newQuantity;
-    saveCartItems();
     
     showToast.value = true;
     toastMessage.value = 'Quantity updated';
@@ -395,12 +361,11 @@ const updateQuantity = (id: number, newQuantity: number) => {
   }
 };
 
-const removeFromCart = (id: number) => {
+const removeFromCart = (id: number): void => {
   const index = cartItems.value.findIndex(item => item.id === id);
   if (index !== -1) {
     const removedItem = cartItems.value[index];
     cartItems.value.splice(index, 1);
-    saveCartItems();
     
     // Remove from selected items if it was selected
     const selectedIndex = selectedItems.value.indexOf(id);
@@ -411,21 +376,10 @@ const removeFromCart = (id: number) => {
     showToast.value = true;
     toastMessage.value = `${removedItem.type} removed from cart`;
     setTimeout(() => showToast.value = false, 3000);
-    
-    // If cart is empty after deletion, load example data
-    if (cartItems.value.length === 0) {
-      setTimeout(() => {
-        cartItems.value = getExampleCartItems();
-        saveCartItems();
-        showToast.value = true;
-        toastMessage.value = 'Example items loaded';
-        setTimeout(() => showToast.value = false, 3000);
-      }, 1500);
-    }
   }
 };
 
-const toggleItemSelection = (id: number) => {
+const toggleItemSelection = (id: number): void => {
   const index = selectedItems.value.indexOf(id);
   if (index === -1) {
     selectedItems.value.push(id);
@@ -434,7 +388,7 @@ const toggleItemSelection = (id: number) => {
   }
 };
 
-const toggleAllItemsSelection = () => {
+const toggleAllItemsSelection = (): void => {
   if (allItemsSelected.value) {
     // Deselect all items
     selectedItems.value = [];
@@ -444,7 +398,7 @@ const toggleAllItemsSelection = () => {
   }
 };
 
-const proceedToCheckout = () => {
+const proceedToCheckout = (): void => {
   if (selectedItems.value.length === 0) return;
   
   isProcessingOrder.value = true;
@@ -452,15 +406,17 @@ const proceedToCheckout = () => {
   // Get selected items data
   const selectedItemsData = cartItems.value.filter(item => selectedItems.value.includes(item.id));
   
-  // Store selected items in localStorage for checkout page
-  localStorage.setItem('checkoutItems', JSON.stringify(selectedItemsData));
-  
   // Simulate processing delay
   setTimeout(() => {
     isProcessingOrder.value = false;
     
-    // Navigate to checkout page
-    router.push('/checkOut');
+    // Navigate to checkout page with selected items as query parameter
+    router.push({
+      path: '/checkOut',
+      query: {
+        items: JSON.stringify(selectedItemsData.map(item => item.id))
+      }
+    });
   }, 1000);
 };
 
