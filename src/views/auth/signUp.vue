@@ -368,8 +368,8 @@
                     </button>
                   </label>
                   <div class="relative">
-                    <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required
-                      placeholder="Create a strong password"
+                    <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required minlength="6"
+                      placeholder="Create a password"
                       class="w-full px-3 py-2 pr-9 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300" />
                     <button @click="showPassword = !showPassword" type="button"
                       class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-500 hover:text-green-600 transition-colors duration-200">
@@ -381,9 +381,59 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.543 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     </button>
+                  </div>
+                  <!-- Password strength indicator -->
+                  <div v-if="form.password.length > 0" class="mt-2 space-y-1">
+                    <div class="text-xs">
+                      <span class="font-medium text-gray-700">Password Strength:</span>
+                      <span v-if="passwordStrength === 'strong'" class="text-green-600 font-semibold"> Strong ✓</span>
+                      <span v-else-if="passwordStrength === 'moderate'" class="text-amber-600 font-semibold"> Moderate</span>
+                      <span v-else class="text-red-600 font-semibold"> Weak</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                      <div :class="[
+                        'h-1.5 rounded-full transition-all duration-300',
+                        passwordStrength === 'strong' ? 'bg-green-500 w-full' :
+                        passwordStrength === 'moderate' ? 'bg-amber-500 w-2/3' :
+                        'bg-red-500 w-1/3'
+                      ]"></div>
+                    </div>
+                    <!-- Warning if password is weak -->
+                    <div v-if="passwordStrength !== 'strong'" class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div class="flex items-start">
+                        <svg class="w-3 h-3 text-amber-500 mr-1.5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
+                        </svg>
+                        <div class="text-xs text-amber-700">
+                          <p class="font-medium">Consider making your password stronger:</p>
+                          <ul class="mt-1 space-y-0.5 text-xs">
+                            <li v-if="!hasMinLength" class="flex items-center">
+                              <svg class="w-2.5 h-2.5 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                              </svg>
+                              Use at least 8 characters
+                            </li>
+                            <li v-if="!hasNumber" class="flex items-center">
+                              <svg class="w-2.5 h-2.5 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                              </svg>
+                              Add at least 1 number
+                            </li>
+                            <li v-if="!hasSpecialChar" class="flex items-center">
+                              <svg class="w-2.5 h-2.5 text-amber-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                              </svg>
+                              Add special characters (!@#$%^&*) for better security
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -419,9 +469,9 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="passwordMismatch || !isPasswordValid || !form.phoneNumber" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700': !passwordMismatch && isPasswordValid && form.phoneNumber,
-                    'bg-gray-400 cursor-not-allowed': passwordMismatch || !isPasswordValid || !form.phoneNumber
+                  <button type="submit" :disabled="passwordMismatch || form.password.length < 6 || !form.phoneNumber" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700': !passwordMismatch && form.password.length >= 6 && form.phoneNumber,
+                    'bg-gray-400 cursor-not-allowed': passwordMismatch || form.password.length < 6 || !form.phoneNumber
                   }"
                     class="text-white py-2 px-4 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     Send Verification Code
@@ -614,14 +664,31 @@ const form = ref<SignUpForm>({
   verificationCode: ''
 })
 
-// Password validation
+// Relaxed password validation - only require minimum length of 6 characters
 const hasMinLength = computed(() => form.value.password.length >= 8)
 const hasNumber = computed(() => /\d/.test(form.value.password))
 const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(form.value.password))
-const isPasswordValid = computed(() => hasMinLength.value && hasNumber.value && hasSpecialChar.value)
+
+// Password strength calculation
+const passwordStrength = computed(() => {
+  const password = form.value.password
+  if (password.length < 6) return 'weak'
+  
+  let score = 0
+  if (password.length >= 8) score += 1
+  if (/\d/.test(password)) score += 1
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1
+  if (/[a-z]/.test(password)) score += 1
+  if (/[A-Z]/.test(password)) score += 1
+  
+  if (score >= 4) return 'strong'
+  if (score >= 2) return 'moderate'
+  return 'weak'
+})
+
 const passwordMismatch = computed(() => form.value.password !== form.value.confirmPassword && form.value.confirmPassword.length > 0)
 
-// MODIFIED: Check if at least one digit is entered in verification code (required but allows any content)
+// Check if at least one digit is entered in verification code
 const isVerificationCodeValid = computed(() => {
   return verificationCode.value.some(digit => digit.trim() !== '')
 })
@@ -651,13 +718,14 @@ const showEmailVerificationToast = () => {
 const showPasswordRequirementsToast = () => {
   addToast({
     type: 'info',
-    title: 'Password Requirements',
-    content: 'Create a strong password that meets all the requirements below:',
+    title: 'Password Guidelines',
+    content: 'Create a password that works for you. While any password with at least 6 characters will work, we recommend:',
     list: [
       'At least 8 characters long',
       'Contains at least 1 number (0-9)',
       'Contains at least 1 special character (!@#$%^&*)',
-      'Mix of uppercase and lowercase letters (recommended)'
+      'Mix of uppercase and lowercase letters',
+      'Avoid common words or personal information'
     ]
   })
 }
@@ -727,7 +795,8 @@ const goToPrevStep = () => {
 }
 
 const sendVerificationCode = async () => {
-  if (passwordMismatch.value || !isPasswordValid.value || !form.value.phoneNumber || phoneError.value) return
+  // Only check basic requirements: password length and matching confirmation
+  if (passwordMismatch.value || form.value.password.length < 6 || !form.value.phoneNumber || phoneError.value) return
 
   // Validate phone number is complete
   if (form.value.phoneNumber.length !== 10) {
@@ -779,12 +848,17 @@ const handleSignUp = async () => {
       return
     }
 
+    // Check minimum password length (6 characters)
+    if (form.value.password.length < 6) {
+      verificationError.value = 'Password must be at least 6 characters long'
+      return
+    }
+
     // Mock API delay
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    // MODIFIED: Always proceed regardless of verification code content
+    // Always proceed regardless of verification code content
     // In real implementation, you would validate the code against the server
-    // but for now, we just check that something was entered and proceed
 
     // Show success toast
     addToast({
@@ -800,6 +874,7 @@ const handleSignUp = async () => {
       email: form.value.email,
       phoneNumber: `+63${form.value.phoneNumber}`,
       gender: form.value.gender,
+      passwordStrength: passwordStrength.value,
       verificationCode: form.value.verificationCode
     })
 
