@@ -469,10 +469,10 @@
               <form @submit.prevent="handleSignUp" class="space-y-5">
                 <div>
                   <label class="block text-xs font-semibold text-gray-700 mb-3 text-center">Enter 6-Digit Verification
-                    Code</label>
+                    Code *</label>
                   <div class="flex justify-center space-x-2 mb-2">
                     <input v-for="n in 6" :key="n" v-model="verificationCode[n - 1]" @input="handleCodeInput(n, $event)"
-                      @keydown.delete="handleCodeDelete(n, $event)" type="text" maxlength="1"
+                      @keydown.delete="handleCodeDelete(n, $event)" type="text" maxlength="1" required
                       class="w-12 h-12 text-center text-lg font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300 shadow-sm" />
                   </div>
                   <p class="text-xs text-gray-500 text-center">Enter the code exactly as received in your email</p>
@@ -510,9 +510,9 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="isLoading" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': !isLoading,
-                    'bg-gray-400 cursor-not-allowed': isLoading
+                  <button type="submit" :disabled="isLoading || !isVerificationCodeValid" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': !isLoading && isVerificationCodeValid,
+                    'bg-gray-400 cursor-not-allowed': isLoading || !isVerificationCodeValid
                   }"
                     class="text-white py-2 px-6 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     <span v-if="isLoading" class="mr-2">
@@ -621,8 +621,10 @@ const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(form.value.p
 const isPasswordValid = computed(() => hasMinLength.value && hasNumber.value && hasSpecialChar.value)
 const passwordMismatch = computed(() => form.value.password !== form.value.confirmPassword && form.value.confirmPassword.length > 0)
 
-// Verification code handling - MODIFIED: Always return true to bypass verification
-const isVerificationCodeComplete = computed(() => true) // Changed from checking if all digits are filled
+// MODIFIED: Check if at least one digit is entered in verification code (required but allows any content)
+const isVerificationCodeValid = computed(() => {
+  return verificationCode.value.some(digit => digit.trim() !== '')
+})
 
 // Toast Functions
 const showPhoneToast = () => {
@@ -757,8 +759,10 @@ const sendVerificationCode = async () => {
 }
 
 const handleSignUp = async () => {
-  // MODIFIED: Removed the verification code check
-  if (isLoading.value) {
+  if (isLoading.value || !isVerificationCodeValid.value) {
+    if (!isVerificationCodeValid.value) {
+      verificationError.value = 'Please enter at least one digit of the verification code'
+    }
     return
   }
 
@@ -766,7 +770,7 @@ const handleSignUp = async () => {
   verificationError.value = ''
 
   try {
-    // Combine verification code (even if incomplete)
+    // Combine verification code
     form.value.verificationCode = verificationCode.value.join('')
 
     // Check if passwords match
@@ -777,6 +781,10 @@ const handleSignUp = async () => {
 
     // Mock API delay
     await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // MODIFIED: Always proceed regardless of verification code content
+    // In real implementation, you would validate the code against the server
+    // but for now, we just check that something was entered and proceed
 
     // Show success toast
     addToast({
@@ -791,7 +799,8 @@ const handleSignUp = async () => {
       username: form.value.username,
       email: form.value.email,
       phoneNumber: `+63${form.value.phoneNumber}`,
-      gender: form.value.gender
+      gender: form.value.gender,
+      verificationCode: form.value.verificationCode
     })
 
     // Redirect after a short delay to show the success toast
