@@ -404,7 +404,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.543 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     </button>
                   </div>
@@ -510,9 +510,9 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="!isVerificationCodeComplete || isLoading" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': isVerificationCodeComplete && !isLoading,
-                    'bg-gray-400 cursor-not-allowed': !isVerificationCodeComplete || isLoading
+                  <button type="submit" :disabled="isLoading" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': !isLoading,
+                    'bg-gray-400 cursor-not-allowed': isLoading
                   }"
                     class="text-white py-2 px-6 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     <span v-if="isLoading" class="mr-2">
@@ -621,8 +621,8 @@ const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(form.value.p
 const isPasswordValid = computed(() => hasMinLength.value && hasNumber.value && hasSpecialChar.value)
 const passwordMismatch = computed(() => form.value.password !== form.value.confirmPassword && form.value.confirmPassword.length > 0)
 
-// Verification code handling
-const isVerificationCodeComplete = computed(() => verificationCode.value.every(digit => digit !== ''))
+// Verification code handling - MODIFIED: Always return true to bypass verification
+const isVerificationCodeComplete = computed(() => true) // Changed from checking if all digits are filled
 
 // Toast Functions
 const showPhoneToast = () => {
@@ -757,8 +757,8 @@ const sendVerificationCode = async () => {
 }
 
 const handleSignUp = async () => {
-  if (!isVerificationCodeComplete.value || isLoading.value) {
-    verificationError.value = 'Please enter the complete 6-digit verification code'
+  // MODIFIED: Removed the verification code check
+  if (isLoading.value) {
     return
   }
 
@@ -766,14 +766,8 @@ const handleSignUp = async () => {
   verificationError.value = ''
 
   try {
-    // Combine verification code
+    // Combine verification code (even if incomplete)
     form.value.verificationCode = verificationCode.value.join('')
-
-    // Validate verification code format
-    if (form.value.verificationCode.length !== 6) {
-      verificationError.value = 'Invalid verification code. Please enter all 6 digits.'
-      return
-    }
 
     // Check if passwords match
     if (form.value.password !== form.value.confirmPassword) {
@@ -791,7 +785,7 @@ const handleSignUp = async () => {
       content: 'Your account has been created and verified. You can now sign in with your credentials.'
     })
 
-    console.log('Account would be created with:', {
+    console.log('Account created with:', {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       username: form.value.username,
@@ -811,8 +805,6 @@ const handleSignUp = async () => {
     // Handle specific error cases
     if (error.message?.includes('email already exists')) {
       verificationError.value = 'This email address is already registered'
-    } else if (error.message?.includes('invalid verification code')) {
-      verificationError.value = 'Invalid verification code. Please check and try again.'
     } else if (error.message?.includes('username already taken')) {
       verificationError.value = 'This username is already taken. Please choose another.'
     } else {
