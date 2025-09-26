@@ -147,22 +147,6 @@
                                 </button>
                             </div>
 
-                            <!-- Enhanced Bookmark Button -->
-                            <button v-if="currentUser" @click="toggleBookmark" :disabled="isBookmarking"
-                                class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 backdrop-blur-sm border shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
-                                :class="{
-                                    'bg-amber-400/30 text-amber-100 border-amber-300/30': question.isBookmarked,
-                                    'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white border-white/15': !question.isBookmarked
-                                }">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 transition-transform group-hover:scale-110"
-                                    :fill="question.isBookmarked ? 'currentColor' : 'none'" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                </svg>
-                            </button>
-
                             <!-- Enhanced Close Button -->
                             <button @click="$emit('close')"
                                 class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-200 backdrop-blur-sm border border-white/15 shadow-lg group">
@@ -392,7 +376,6 @@ const emit = defineEmits<{
 const tempAnswer = ref('');
 const isSubmittingAnswer = ref(false);
 const isVoting = ref(false);
-const isBookmarking = ref(false);
 const isLoadingAnswers = ref(false);
 
 // Computed
@@ -460,28 +443,6 @@ const downvoteQuestion = async () => {
         emit('showToast', 'Failed to vote. Please try again.');
     } finally {
         isVoting.value = false;
-    }
-};
-
-const toggleBookmark = async () => {
-    if (!props.currentUser || isBookmarking.value) return;
-
-    try {
-        isBookmarking.value = true;
-        const isBookmarked = await forumService.toggleBookmark(props.question.id, props.currentUser.email);
-        
-        const updatedQuestion = { ...props.question };
-        updatedQuestion.isBookmarked = isBookmarked;
-        
-        emit('updateQuestion', updatedQuestion);
-        
-        const action = isBookmarked ? 'bookmarked' : 'removed from bookmarks';
-        emit('showToast', `Question ${action}`);
-    } catch (error) {
-        console.error('Failed to toggle bookmark:', error);
-        emit('showToast', 'Failed to bookmark question. Please try again.');
-    } finally {
-        isBookmarking.value = false;
     }
 };
 
