@@ -1,4 +1,4 @@
-<!-- livestockCard.vue -->
+<!-- LivestockCard.vue -->
 <template>
   <!-- Card View (Default) -->
   <div v-if="displayMode === 'card'"
@@ -219,6 +219,39 @@
             </div>
           </div>
         </div>
+
+        <!-- Quantity Management Section (only show if originalQuantity exists) -->
+        <div v-if="animal.originalQuantity !== undefined && !animal.isAuction" class="mt-3 border-t pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-gray-600">Stock Management</span>
+            <span class="text-xs text-gray-500">{{ animal.quantity }}/{{ animal.originalQuantity }}</span>
+          </div>
+          
+          <!-- Progress bar -->
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+            <div 
+              :class="`h-1.5 rounded-full transition-all duration-300 ${getStockProgressColor(animal.quantity, animal.originalQuantity)}`"
+              :style="`width: ${Math.max((animal.quantity / animal.originalQuantity) * 100, 3)}%`"
+            ></div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="flex gap-1">
+            <button 
+              @click="handleQuickSale"
+              :disabled="animal.quantity === 0"
+              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Sold 1
+            </button>
+            <button 
+              @click="handleRestock"
+              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors"
+            >
+              Restock
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -266,7 +299,7 @@
       
       <!-- ID -->
       <td class="px-4 py-3">
-        <div class="text-sm text-gray-600 font-mono">{{ animal.id.substring(0, 8) }}...</div>
+        <div class="text-sm text-gray-600 font-mono">{{ animal.id }}...</div>
       </td>
       
       <!-- Title & Basic Info -->
@@ -345,69 +378,40 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from 'vue';
+import { computed } from 'vue';
+import type { Animal, QuantityUpdateData } from '../../services/animal';
 
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: string;
-  title: string;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status?: string;
-  healthStatus?: string[];
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-  startingBid?: number;
-  currentBid?: number;
-  bidCount?: number;
-  endTime?: string;
-  duration?: string;
-  auctionStartTime?: string;
-}
-
-// Props
-const props = defineProps<{
+// Props interface
+interface Props {
   animal: Animal;
   isSidebarExpanded?: boolean;
   weightUnit?: string;
   displayMode?: 'card' | 'table';
   showTableHeader?: boolean;
-}>();
+}
 
-// Emits
-defineEmits(['openModal']);
+// Emits interface
+interface Emits {
+  (e: 'openModal', animal: Animal): void;
+  (e: 'quantityUpdate', data: QuantityUpdateData): void;
+}
 
-// Default props values
-const isSidebarExpanded = props.isSidebarExpanded ?? false;
-const weightUnit = props.weightUnit ?? 'kg';
-const displayMode = props.displayMode ?? 'table'; // Changed default to 'table'
-const showTableHeader = props.showTableHeader ?? false;
+const props = withDefaults(defineProps<Props>(), {
+  isSidebarExpanded: false,
+  weightUnit: 'kg',
+  displayMode: 'card',
+  showTableHeader: false
+});
+
+const emit = defineEmits<Emits>();
 
 // Computed property to auto-generate status
-const computedStatus = computed(() => {
+const computedStatus = computed((): string => {
   if (props.animal.status) {
     return props.animal.status;
   }
 
-  const { quantity, isAuction, endTime } = props.animal;
+  const { quantity, isAuction, endTime, originalQuantity } = props.animal;
 
   if (isAuction) {
     if (endTime) {
@@ -422,7 +426,7 @@ const computedStatus = computed(() => {
 
   if (quantity === 0) {
     return 'Out of Stock';
-  } else if (quantity <= 3) {
+  } else if (originalQuantity && quantity <= originalQuantity * 0.3) {
     return 'Low Stock';
   } else {
     return 'Available';
@@ -430,7 +434,7 @@ const computedStatus = computed(() => {
 });
 
 // Methods
-const getStatusClass = (status: string) => {
+const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Available':
     case 'In Stock':
@@ -448,7 +452,7 @@ const getStatusClass = (status: string) => {
   }
 };
 
-const getTypeBadgeClassForImage = (type: string) => {
+const getTypeBadgeClassForImage = (type: string): string => {
   switch (type) {
     case 'Cattle':
       return 'bg-green-500/90 text-white';
@@ -469,7 +473,7 @@ const getTypeBadgeClassForImage = (type: string) => {
   }
 };
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string): string => {
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
@@ -496,18 +500,50 @@ const getTimeRemaining = (endTime?: string): string => {
   }
 };
 
+// Stock management methods
+const getStockProgressColor = (current: number, original: number): string => {
+  const percentage = (current / original) * 100;
+  if (percentage <= 10) return 'bg-red-500';
+  if (percentage <= 30) return 'bg-yellow-500';
+  return 'bg-green-500';
+};
+
+const handleQuickSale = (): void => {
+  if (props.animal.quantity > 0) {
+    const newQuantity = Math.max(0, props.animal.quantity - 1);
+    const updateData: QuantityUpdateData = {
+      animalId: props.animal.id.toString(),
+      newQuantity,
+      operation: 'sold'
+    };
+    emit('quantityUpdate', updateData);
+  }
+};
+
+const handleRestock = (): void => {
+  // Simple restock - add 5 items or restore to original quantity, whichever is smaller
+  const originalQty = props.animal.originalQuantity || props.animal.quantity;
+  const newQuantity = Math.min(originalQty, props.animal.quantity + 5);
+  const updateData: QuantityUpdateData = {
+    animalId: props.animal.id.toString(),
+    newQuantity,
+    operation: 'restocked'
+  };
+  emit('quantityUpdate', updateData);
+};
+
 // Enhanced inventory management functions
-const getInventoryStatus = (quantity: number): string => {
+const getInventoryStatus = (quantity: number, originalQuantity?: number): string => {
   if (quantity === 0) return 'Out of Stock';
-  if (quantity <= 3) return 'Low Stock';
+  if (originalQuantity && quantity <= originalQuantity * 0.3) return 'Low Stock';
   if (quantity <= 10) return 'Available';
   return 'In Stock';
 };
 
-const getInventoryAlert = (quantity: number): { show: boolean; message: string; type: string } => {
+const getInventoryAlert = (quantity: number, originalQuantity?: number): { show: boolean; message: string; type: string } => {
   if (quantity === 0) {
     return { show: true, message: 'Out of stock', type: 'error' };
-  } else if (quantity <= 3) {
+  } else if (originalQuantity && quantity <= originalQuantity * 0.3) {
     return { show: true, message: `Only ${quantity} left in stock`, type: 'warning' };
   }
   return { show: false, message: '', type: '' };
@@ -523,7 +559,7 @@ const createListingWithStatus = (animalData: Partial<Animal>): Animal => {
   return baseAnimal;
 };
 
-// Export helper function for use in parent components
+// Export helper functions for use in parent components
 defineExpose({
   createListingWithStatus,
   getInventoryStatus,

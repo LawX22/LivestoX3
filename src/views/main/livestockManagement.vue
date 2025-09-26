@@ -572,131 +572,17 @@ import AuctionDetailsModal from '../../components/LivestockManagement/AuctionDet
 import LivestockCard from '../../components/LivestockManagement/LivestockCard.vue';
 import CreateListingModal from '../../components/LivestockManagement/CreateListingModal.vue';
 import CreateAuctionModal from '../../components/LivestockManagement/CreateAuctionModal.vue';
+import type { Animal, Farmer, Filters, ServiceUser, CreateListingForm, CreateAuctionForm, QuantityUpdateData, AuctionBidData } from '../../services/animal';
 
 // Mock user service for demonstration
-const getCurrentUser = () => ({
+const getCurrentUser = (): ServiceUser | null => ({
   role: 'Farmer',
   name: 'John Doe',
   email: 'john@example.com'
 });
 
-interface ServiceUser {
-  email?: string;
-  name?: string;
-  displayName?: string;
-  role?: string;
-  isVerified?: boolean;
-  [key: string]: any;
-}
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: string;
-  title: string;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  originalQuantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  healthStatus: string[];
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-  startingBid?: number;
-  currentBid?: number;
-  bidCount?: number;
-  endTime?: string;
-  duration?: string;
-  auctionStartTime?: string;
-  reservePrice?: number;
-  bidIncrement?: number;
-  paymentTerms?: string;
-  additionalTerms?: string;
-}
-
-interface Filters {
-  search: string;
-  types: string[];
-  breeds: string[];
-  locations: string[];
-  priceRanges: string[];
-  genders: string[];
-  healthStatuses: string[];
-  auctionStatuses: string[];
-  endTimeRanges: string[];
-  bidCountMin: number | null;
-  bidCountMax: number | null;
-  startingBidRanges: string[];
-  auctionDurations: string[];
-  bidActivities: string[];
-}
-
-interface CreateListingForm {
-  title: string;
-  type: string;
-  breed: string;
-  gender: string;
-  age: string;
-  weight: number | null;
-  quantity: number | null;
-  status: string;
-  healthStatus: string[];
-  price: number | null;
-  location: string;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-}
-
-interface CreateAuctionForm {
-  title: string;
-  type: string;
-  breed: string;
-  gender: string;
-  age: string;
-  weight: number | null;
-  weightUnit: string;
-  quantity: number | null;
-  startingBid: number | null;
-  reservePrice: number | null;
-  duration: string;
-  bidIncrement: number | null;
-  healthStatus: string[];
-  location: string;
-  paymentTerms: string;
-  deliveryOptions: string[];
-  additionalTerms: string;
-  images: string[];
-  description: string;
-  isAuction: boolean;
-}
-
-// Generate a unique ID using a simple UUID v4 implementation
-const generateUniqueId = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-};
-
 const router = useRouter();
-const rawUser = getCurrentUser() as ServiceUser | null;
+const rawUser = getCurrentUser();
 const currentUser = rawUser
   ? {
       ...rawUser,
@@ -766,7 +652,7 @@ const farmerMaria: Farmer = {
 const updateAnimalStatus = (animal: Animal): string => {
   if (animal.quantity === 0) {
     return 'Out of Stock';
-  } else if (animal.quantity <= animal.originalQuantity * 0.3) {
+  } else if (animal.originalQuantity && animal.quantity <= animal.originalQuantity * 0.3) {
     return 'Low Stock';
   } else {
     return 'Available';
@@ -775,10 +661,11 @@ const updateAnimalStatus = (animal: Animal): string => {
 
 // Function to check for status changes and show alerts
 const checkForStatusChange = (animal: Animal, oldQuantity: number, newQuantity: number) => {
+  const originalQty = animal.originalQuantity || animal.quantity;
   const oldStatus = oldQuantity === 0 ? 'Out of Stock' : 
-                  oldQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
+                  oldQuantity <= originalQty * 0.3 ? 'Low Stock' : 'Available';
   const newStatus = newQuantity === 0 ? 'Out of Stock' : 
-                  newQuantity <= animal.originalQuantity * 0.3 ? 'Low Stock' : 'Available';
+                  newQuantity <= originalQty * 0.3 ? 'Low Stock' : 'Available';
   
   if (oldStatus !== newStatus) {
     let message = '';
@@ -792,7 +679,7 @@ const checkForStatusChange = (animal: Animal, oldQuantity: number, newQuantity: 
     
     if (message) {
       lowStockMessage.value = message;
-      alertAnimalId.value = animal.id;
+      alertAnimalId.value = animal.id.toString();
       showLowStockAlert.value = true;
     }
   }
@@ -801,7 +688,7 @@ const checkForStatusChange = (animal: Animal, oldQuantity: number, newQuantity: 
 // Updated animal data with originalQuantity tracking
 const animals = ref<Animal[]>([
   {
-    id: generateUniqueId(),
+    id: 1,
     title: 'Premium Angus Cattle - Young Bulls',
     type: 'Cattle',
     breed: 'Angus',
@@ -825,83 +712,45 @@ const animals = ref<Animal[]>([
     isAuction: false
   },
   {
-    id: generateUniqueId(),
-    title: 'Auction - Native Goats (Breeding Pair)',
-    type: 'Goat',
-    breed: 'Native',
-    weight: 70,
-    quantity: 2,
-    originalQuantity: 2,
-    age: '12 months',
+    id: 6,
+    title: 'Landrace Pigs',
+    type: 'Pig',
+    breed: 'Landrace',
+    weight: 95,
+    quantity: 3,
+    originalQuantity: 3,
+    age: '5-7 months',
     gender: 'Mixed',
     status: 'Available',
-    healthStatus: ['Healthy', 'Vet Checked'],
+    healthStatus: ['Vaccinated', 'Healthy'],
     price: 0,
     deliveryOptions: ['pickup'],
     images: [
-      'https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+      'https://media.istockphoto.com/id/140462837/photo/cute-pig-leaning-on-railing-of-his-cot.jpg?s=612x612&w=0&k=20&c=wX4-WVElHzIvfJoppwRZOgHKu3geSc3zReM_17lcwVc='
     ],
-    description: 'A strong breeding pair of native goats. Perfect for starting or expanding your herd.',
-    datePosted: new Date().toISOString(),
-    farmer: farmerMaria,
-    location: 'Batangas',
+    description: 'High-quality Landrace pigs, excellent for commercial production. Well-fed and healthy.',
+    datePosted: new Date(Date.now() - 43200000).toISOString(),
+    farmer: {
+      id: 7,
+      name: 'Elena Morales',
+      farmName: 'Morales Hog Farm',
+      contact: '+63 926 333 4444',
+      email: 'elena@moraleshogfarm.com',
+      address: '777 Swine Valley, Barangay Pork, Tarlac',
+      avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
+    },
+    location: 'Tarlac',
     isAuction: true,
-    startingBid: 5000,
-    currentBid: 6500,
-    bidCount: 7,
-    auctionStartTime: new Date().toISOString(),
-    endTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-    duration: '2 days',
-    reservePrice: 8000,
+    startingBid: 24000,
+    currentBid: 28500,
+    bidCount: 5,
+    endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
+    duration: '3-7d',
+    auctionStartTime: new Date(Date.now() - 345600000).toISOString(), // Started 4 days ago
+    reservePrice: 22000,
     bidIncrement: 500,
-    paymentTerms: '3days',
-    additionalTerms: 'Must arrange pickup within 7 days of auction end.'
-  },
-  {
-    id: generateUniqueId(),
-    title: 'Native Chickens - Free Range',
-    type: 'Poultry',
-    breed: 'Native',
-    weight: 1.5,
-    quantity: 25,
-    originalQuantity: 100,
-    age: '4-6 months',
-    gender: 'Mixed',
-    status: 'Low Stock',
-    healthStatus: ['Healthy', 'Free Range'],
-    price: 350,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Free-range native chickens, perfect for backyard raising or commercial purposes.',
-    datePosted: new Date(Date.now() - 86400000).toISOString(),
-    farmer: farmerMaria,
-    location: 'Laguna',
-    isAuction: false
-  },
-  {
-    id: generateUniqueId(),
-    title: 'Brown Swiss Dairy Cows',
-    type: 'Cattle',
-    breed: 'Brown Swiss',
-    weight: 600,
-    quantity: 0,
-    originalQuantity: 8,
-    age: '2-3 years',
-    gender: 'Female',
-    status: 'Out of Stock',
-    healthStatus: ['Healthy', 'Excellent Milk Production'],
-    price: 85000,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://images.unsplash.com/photo-1516467508483-a7212febe31a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'High-quality dairy cows with excellent milk production. Perfect for dairy farming.',
-    datePosted: new Date(Date.now() - 172800000).toISOString(),
-    farmer: farmerMaria,
-    location: 'Batangas',
-    isAuction: false
+    paymentTerms: '50% deposit, 50% upon delivery',
+    additionalTerms: 'Must be picked up within 3 days after auction ends'
   }
 ]);
 
@@ -1010,8 +859,9 @@ const currentFilteredAnimals = computed(() => {
     const matchesLocation = filters.value.locations.length === 0 || filters.value.locations.includes(animal.location);
     const matchesGender = filters.value.genders.length === 0 || filters.value.genders.includes(animal.gender);
     
-    const matchesHealthStatus = filters.value.healthStatuses.length === 0 || 
-      filters.value.healthStatuses.some(status => animal.healthStatus?.includes(status));
+    const healthStatuses = Array.isArray(filters.value.healthStatuses) ? filters.value.healthStatuses : [];
+    const matchesHealthStatus = healthStatuses.length === 0 || 
+      healthStatuses.some(status => animal.healthStatus?.includes(status));
 
     let matchesPrice = true;
     if (filters.value.priceRanges.length > 0) {
@@ -1194,8 +1044,8 @@ const closeCreateAuctionModal = () => {
 };
 
 // Quantity update handler - This is the main function that handles stock changes
-const handleQuantityUpdate = (data: { animalId: string; newQuantity: number; operation: string }) => {
-  const animalIndex = animals.value.findIndex(a => a.id === data.animalId);
+const handleQuantityUpdate = (data: QuantityUpdateData) => {
+  const animalIndex = animals.value.findIndex(a => String(a.id) === data.animalId);
   if (animalIndex !== -1) {
     const animal = animals.value[animalIndex];
     const oldQuantity = animal.quantity;
@@ -1239,7 +1089,7 @@ const closeLowStockAlert = () => {
 };
 
 const goToListing = () => {
-  const animal = animals.value.find(a => a.id === alertAnimalId.value);
+  const animal = animals.value.find(a => String(a.id) === alertAnimalId.value);
   if (animal) {
     openModal(animal);
   }
@@ -1249,7 +1099,7 @@ const goToListing = () => {
 const handleListingCreated = (listingData: CreateListingForm) => {
   // Generate new animal from form data with user-provided title and unique ID
   const newAnimal: Animal = {
-    id: generateUniqueId(),
+    id: Math.max(...animals.value.map(a => a.id)) + 1, // Generate unique ID
     title: listingData.title,
     type: listingData.type,
     breed: listingData.breed,
@@ -1297,7 +1147,7 @@ const handleAuctionCreated = (auctionData: CreateAuctionForm) => {
 
   // Generate new auction from form data
   const newAuction: Animal = {
-    id: generateUniqueId(),
+    id: Math.max(...animals.value.map(a => a.id)) + 1, // Generate unique ID
     title: auctionData.title,
     type: auctionData.type,
     breed: auctionData.breed,
@@ -1346,8 +1196,8 @@ const handleAuctionDraft = (auctionData: CreateAuctionForm) => {
   closeCreateAuctionModal();
 };
 
-const handlePlaceBid = (bidData: { animalId: string; amount: number }) => {
-  const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
+const handlePlaceBid = (bidData: AuctionBidData) => {
+  const animalIndex = animals.value.findIndex(a => String(a.id) === bidData.animalId);
   if (animalIndex !== -1) {
     animals.value[animalIndex].currentBid = bidData.amount;
     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;

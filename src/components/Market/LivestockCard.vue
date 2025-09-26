@@ -1,3 +1,4 @@
+<!-- LivestockCard.vue -->
 <template>
   <div
     class="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg border border-white/60 hover:border-green-300/60 transition-all duration-300 bg-white/95 backdrop-blur-sm flex flex-col h-full group">
@@ -115,7 +116,7 @@
         <!-- Left Side - Title -->
         <div class="flex-1 pr-3">
           <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2">
-            {{ generateEngagingTitle(animal) }}
+            {{ animal.title }}
           </h3>
         </div>
 
@@ -141,6 +142,13 @@
             <span class="truncate max-w-[100px]">{{ animal.location }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-3">
+        <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+          {{ animal.description }}
+        </p>
       </div>
 
       <!-- Compact Stats Section -->

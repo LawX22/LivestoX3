@@ -1,3 +1,4 @@
+<!-- AnimalDetialsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -29,7 +30,7 @@
               </svg>
             </div>
             <div class="min-w-0">
-              <h1 class="text-xl font-bold text-white truncate">{{ generateEngagingTitle(animal) }}</h1>
+              <h1 class="text-xl font-bold text-white truncate">{{ animal.title || getModalTitle(animal) }}</h1>
               <p class="text-green-100 text-sm opacity-90 truncate">
                 {{ animal.farmer.farmName || animal.farmer.name }} • {{ formatLocation(animal) }}
               </p>
@@ -759,23 +760,16 @@ const emailFarmer = () => {
   }
 };
 
-// Generate engaging titles
-const generateEngagingTitle = (animal: Animal): string => {
-  const { type, breed, status, gender, age } = animal;
-  const titles = [
-    `Premium ${breed} ${type} Ready for New Home!`,
-    `Healthy ${breed} ${type} - ${status} Now!`,
-    `Quality ${breed} ${type} - ${gender} ${age}`,
-    `Farm-Fresh ${breed} ${type} - Direct from Farmer`,
-    `Exceptional ${breed} ${type} - Limited Availability`,
-    `Premium ${type} Stock - ${breed} Breed Excellence`,
-    `${breed} ${type} - Raised with Care & Expertise`,
-    `Healthy ${gender} ${breed} ${type} - Ready Now!`,
-    `Top-Quality ${breed} ${type} - ${status}`,
-    `Farm-Raised ${breed} ${type} - Healthy & Strong`
-  ];
-
-  return titles[animal.id % titles.length];
+// Generate modal title - prioritizing animal.title, fallback to generated title
+const getModalTitle = (animal: Animal): string => {
+  // If animal already has a title, use it
+  if (animal.title) {
+    return animal.title;
+  }
+  
+  // Otherwise generate a descriptive title for the modal
+  const { type, breed, gender, age } = animal;
+  return `${breed} ${type} - ${gender} ${age}`;
 };
 
 // Badge class for type

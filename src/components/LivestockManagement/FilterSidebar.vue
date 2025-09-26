@@ -67,7 +67,7 @@
               <span v-for="location in localFilters.locations" :key="location" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ location }}</span>
               <span v-for="priceRange in localFilters.priceRanges" :key="priceRange" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ formatPriceRange(priceRange) }}</span>
               <span v-for="gender in localFilters.genders" :key="gender" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ gender }}</span>
-              <span v-for="health in localFilters.healthStatuses" :key="health" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ health }}</span>
+              <span v-for="health in localFilters.healthStatuses || []" :key="health" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ health }}</span>
               <!-- Auction-specific filters -->
               <span v-for="status in localFilters.auctionStatuses" :key="status" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ status }}</span>
               <span v-for="timeRange in localFilters.endTimeRanges" :key="timeRange" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ formatTimeRange(timeRange) }}</span>
@@ -375,26 +375,15 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { 
+  Filters,
+  PriceRange,
+  TimeRange,
+  AuctionDuration
+} from '../../services/animal';
 
-interface Filters {
-  search: string;
-  types: string[];
-  breeds: string[];
-  locations: string[];
-  priceRanges: string[];
-  genders: string[];
-  healthStatuses: string[];
-  // Auction-specific filters
-  auctionStatuses: string[];
-  endTimeRanges: string[];
-  bidCountMin: number | null;
-  bidCountMax: number | null;
-  startingBidRanges: string[];
-  auctionDurations: string[];
-  bidActivities: string[];
-}
-
-const props = defineProps<{
+// Define props interface for better type safety
+interface Props {
   isExpanded: boolean;
   filters: Filters;
   activeTab: 'normal' | 'auction';
@@ -402,13 +391,17 @@ const props = defineProps<{
   uniqueBreeds: string[];
   uniqueLocations: string[];
   uniqueHealthStatuses: string[];
-}>();
+}
 
-const emit = defineEmits<{
-  toggleSidebar: [];
-  filtersChanged: [filters: Filters];
-  resetFilters: [];
-}>();
+// Define emits interface
+interface Emits {
+  (e: 'toggleSidebar'): void;
+  (e: 'filtersChanged', filters: Filters): void;
+  (e: 'resetFilters'): void;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 // Local copy of filters to avoid direct mutation
 const localFilters = ref<Filters>({ ...props.filters });
@@ -423,8 +416,8 @@ watch(localFilters, (newFilters) => {
   emit('filtersChanged', { ...newFilters });
 }, { deep: true });
 
-// Filter options
-const priceRanges = ref([
+// Filter options with proper typing
+const priceRanges = ref<PriceRange[]>([
   { label: 'Below ₱5K', value: '0-5000' },
   { label: '₱5K - ₱20K', value: '5000-20000' },
   { label: '₱20K - ₱50K', value: '20000-50000' },
@@ -432,12 +425,12 @@ const priceRanges = ref([
   { label: 'Above ₱100K', value: '100000+' }
 ]);
 
-const genders = ref(['Male', 'Female', 'Mixed']);
+const genders = ref<string[]>(['Male', 'Female', 'Mixed']);
 
 // Auction-specific filter options
-const auctionStatuses = ref(['Live', 'Ending Soon', 'New Listing', 'Hot Auction']);
+const auctionStatuses = ref<string[]>(['Live', 'Ending Soon', 'New Listing', 'Hot Auction']);
 
-const endTimeRanges = ref([
+const endTimeRanges = ref<TimeRange[]>([
   { label: 'Ending in 1 hour', value: '0-1h' },
   { label: 'Ending in 3 hours', value: '0-3h' },
   { label: 'Ending in 6 hours', value: '0-6h' },
@@ -446,7 +439,7 @@ const endTimeRanges = ref([
   { label: 'More than 1 day', value: '24h+' }
 ]);
 
-const startingBidRanges = ref([
+const startingBidRanges = ref<PriceRange[]>([
   { label: 'Below ₱10K', value: '0-10000' },
   { label: '₱10K - ₱30K', value: '10000-30000' },
   { label: '₱30K - ₱60K', value: '30000-60000' },
@@ -454,14 +447,14 @@ const startingBidRanges = ref([
   { label: 'Above ₱100K', value: '100000+' }
 ]);
 
-const auctionDurations = ref([
+const auctionDurations = ref<AuctionDuration[]>([
   { label: 'Quick (1-3 days)', value: '1-3d' },
   { label: 'Standard (3-7 days)', value: '3-7d' },
   { label: 'Extended (1-2 weeks)', value: '7-14d' },
   { label: 'Long term (2+ weeks)', value: '14d+' }
 ]);
 
-const bidActivities = ref(['High Activity (10+ bids)', 'Moderate Activity (5-10 bids)', 'Low Activity (1-5 bids)', 'No Bids Yet']);
+const bidActivities = ref<string[]>(['High Activity (10+ bids)', 'Moderate Activity (5-10 bids)', 'Low Activity (1-5 bids)', 'No Bids Yet']);
 
 // Computed properties
 const hasActiveFilters = computed(() => {
@@ -471,7 +464,7 @@ const hasActiveFilters = computed(() => {
     localFilters.value.locations.length > 0 || 
     localFilters.value.priceRanges.length > 0 || 
     localFilters.value.genders.length > 0 ||
-    localFilters.value.healthStatuses.length > 0 ||
+    (localFilters.value.healthStatuses && localFilters.value.healthStatuses.length > 0) ||
     // Auction filters
     localFilters.value.auctionStatuses.length > 0 ||
     localFilters.value.endTimeRanges.length > 0 ||
@@ -483,11 +476,11 @@ const hasActiveFilters = computed(() => {
 });
 
 // Methods
-const toggleSidebar = () => {
+const toggleSidebar = (): void => {
   emit('toggleSidebar');
 };
 
-const resetFilters = () => {
+const resetFilters = (): void => {
   localFilters.value = {
     search: '',
     types: [],
@@ -507,7 +500,7 @@ const resetFilters = () => {
   emit('resetFilters');
 };
 
-const handleLocationChange = (event: Event) => {
+const handleLocationChange = (event: Event): void => {
   const target = event.target as HTMLSelectElement;
   const selectedLocation = target.value;
   
@@ -519,13 +512,13 @@ const handleLocationChange = (event: Event) => {
   target.value = '';
 };
 
-const removeLocation = (locationToRemove: string) => {
+const removeLocation = (locationToRemove: string): void => {
   localFilters.value.locations = localFilters.value.locations.filter(
     location => location !== locationToRemove
   );
 };
 
-const formatPriceRange = (range: string) => {
+const formatPriceRange = (range: string): string => {
   switch (range) {
     case '0-5000': return 'Below ₱5K';
     case '5000-20000': return '₱5K - ₱20K';
@@ -536,7 +529,7 @@ const formatPriceRange = (range: string) => {
   }
 };
 
-const formatTimeRange = (range: string) => {
+const formatTimeRange = (range: string): string => {
   switch (range) {
     case '0-1h': return 'Ending in 1 hour';
     case '0-3h': return 'Ending in 3 hours';
@@ -547,5 +540,4 @@ const formatTimeRange = (range: string) => {
     default: return range;
   }
 };
-
 </script>

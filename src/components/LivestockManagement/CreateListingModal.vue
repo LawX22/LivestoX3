@@ -37,7 +37,7 @@
                 <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
                   <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                   </svg>
                   Livestock Images
                 </h3>
@@ -260,7 +260,7 @@
                       <input v-model.number="form.weight" type="number" min="0" step="0.1"
                         :class="`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.weight ? 'border-red-300' : 'border-gray-300'}`"
                         placeholder="Weight" required />
-                      <select v-model="form.weightUnit"
+                      <select v-model="weightUnit"
                         class="w-16 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white">
                         <option value="kg">kg</option>
                         <option value="lbs">lbs</option>
@@ -311,7 +311,7 @@
                     Total Value: <span class="text-sm font-bold">₱{{ ((form.price || 0) * (form.quantity || 0)).toLocaleString() }}</span>
                   </p>
                   <p class="text-xs text-green-600 mt-0.5">
-                    Weight per unit: {{ form.weight || 0 }} {{ form.weightUnit }}
+                    Weight per unit: {{ form.weight || 0 }} {{ weightUnit }}
                   </p>
                 </div>
               </div>
@@ -363,13 +363,6 @@
             <!-- Action Buttons - Sticky at the bottom -->
             <div class="sticky bottom-0 pt-4 bg-gray-50 mt-auto">
               <div class="flex gap-3 justify-center">
-                <button type="button" @click="closeModal"
-                  class="px-4 py-2 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancel
-                </button>
                 <button type="submit" :disabled="isSubmitting"
                   class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
                   <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -391,421 +384,363 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue'
 
-interface CreateListingForm {
-    title: string;
-    type: string;
-    breed: string;
-    gender: string;
-    age: string;
-    weight: number | null;
-    weightUnit: string;
-    quantity: number | null;
-    status: string;
-    healthStatus: string[];
-    price: number | null;
-    location: string;
-    deliveryOptions: string[];
-    images: string[];
-    description: string;
-}
-
+// Interfaces
 interface FormErrors {
-    [key: string]: string;
+  [key: string]: string
 }
 
 interface UserAddress {
-    id: number;
-    label: string;
-    location: string;
-    address: string;
-    isDefault: boolean;
+  id: number
+  label: string
+  location: string
+  address: string
+  isDefault: boolean
 }
 
-interface Props {
-    isOpen: boolean;
+interface DeliveryOption {
+  value: string
+  label: string
+  description: string
 }
+
+interface CreateListingForm {
+  title: string
+  type: string
+  breed: string
+  weight: number
+  quantity: number
+  age: string
+  gender: string
+  status: string
+  healthStatus: string[]
+  price: number
+  deliveryOptions: string[]
+  images: string[]
+  description: string
+  location: string
+}
+
+// Props and Emits
+const props = defineProps<{
+  isOpen: boolean
+}>()
 
 const emit = defineEmits<{
-    close: [];
-    created: [listing: CreateListingForm];
-    draft: [listing: CreateListingForm];
-}>();
-
-defineProps<Props>();
+  close: []
+  created: [listing: CreateListingForm]
+  draft: [listing: CreateListingForm]
+}>()
 
 // Reactive data
-const isSubmitting = ref(false);
-const selectedImageIndex = ref(0);
-const availableBreeds = ref<string[]>([]);
+const isSubmitting = ref(false)
+const selectedImageIndex = ref(0)
+const availableBreeds = ref<string[]>([])
+const weightUnit = ref('kg')
 
 const form = reactive<CreateListingForm>({
+  title: '',
+  type: '',
+  breed: '',
+  gender: '',
+  age: '',
+  weight: 0,
+  quantity: 1,
+  status: 'Available',
+  healthStatus: [],
+  price: 0,
+  location: '',
+  deliveryOptions: [],
+  images: [],
+  description: ''
+})
+
+const errors = ref<FormErrors>({})
+
+// User addresses based on unified farmer data
+const userAddresses = ref<UserAddress[]>([
+  {
+    id: 1,
+    label: 'Santos Ranch - Main Farm',
+    location: 'Pampanga',
+    address: '123 Poultry Lane, Barangay Fowl, Pampanga',
+    isDefault: true
+  },
+  {
+    id: 2,
+    label: 'Santos Ranch - Secondary Location',
+    location: 'Bulacan',
+    address: '456 Santos Extension, Barangay Ranch, Bulacan',
+    isDefault: false
+  }
+])
+
+// Options
+const healthOptions: readonly string[] = [
+  'Healthy & Vaccinated',
+  'Vet Certified',
+  'Dewormed',
+  'Disease Free',
+  'Quarantined',
+  'Breeding Ready',
+  'Pregnant',
+  'Recently Treated',
+  'Special Care Needed'
+] as const
+
+const deliveryOptions: readonly DeliveryOption[] = [
+  {
+    value: 'pickup',
+    label: 'Buyer Pickup',
+    description: 'Buyer arranges pickup from farm location'
+  },
+  {
+    value: 'delivery',
+    label: 'Farm Delivery',
+    description: 'We deliver to buyer location (additional fees may apply)'
+  },
+  {
+    value: 'meetup',
+    label: 'Meetup Point',
+    description: 'Meet at agreed location between farm and buyer'
+  }
+] as const
+
+// Breed mapping based on animal type
+const breedsByAnimalType: Record<string, readonly string[]> = {
+  'Cattle': [
+    'Angus', 'Holstein', 'Brahman', 'Charolais', 'Simmental', 'Hereford',
+    'Limousin', 'Wagyu', 'Native/Local Breed', 'Crossbred', 'Other'
+  ] as const,
+
+  'Goat': [
+    'Boer', 'Nubian', 'Saanen', 'Alpine', 'LaMancha', 'Toggenburg',
+    'Nigerian Dwarf', 'Kiko', 'Spanish', 'Native/Local Breed', 'Crossbred', 'Other'
+  ] as const,
+
+  'Pig': [
+    'Yorkshire', 'Landrace', 'Duroc', 'Hampshire', 'Berkshire', 'Chester White',
+    'Poland China', 'Pietrain', 'Large White', 'Native/Local Breed', 'Crossbred', 'Other'
+  ] as const,
+
+  'Chicken': [
+    'Rhode Island Red', 'Leghorn', 'Plymouth Rock', 'Brahma', 'Orpington', 'Wyandotte',
+    'Sussex', 'Marans', 'Australorp', 'Native/Local Breed', 'Broiler', 'Layer',
+    'Dual Purpose', 'Other'
+  ] as const,
+
+  'Duck': [
+    'Pekin', 'Mallard', 'Rouen', 'Khaki Campbell', 'Runner', 'Muscovy',
+    'Call Duck', 'Cayuga', 'Swedish Blue', 'Native/Local Breed', 'Other'
+  ] as const,
+
+  'Carabao': [
+    'Murrah', 'Nili-Ravi', 'Surti', 'Jaffarabadi',
+    'Native Carabao', 'Crossbred', 'Other'
+  ] as const,
+
+  'Sheep': [
+    'Dorper', 'Merino', 'Suffolk', 'Hampshire', 'Romney', 'Border Leicester',
+    'Corriedale', 'Rambouillet', 'Katahdin', 'Native/Local Breed', 'Crossbred', 'Other'
+  ] as const,
+
+  'Horse': [
+    'Arabian', 'Thoroughbred', 'Quarter Horse', 'Paint', 'Appaloosa', 'Mustang',
+    'Clydesdale', 'Percheron', 'Friesian', 'Native/Local Breed', 'Other'
+  ] as const,
+
+  'Other': [
+    'Mixed Breed', 'Crossbred', 'Unspecified', 'Other'
+  ] as const
+}
+
+// Methods
+const updateAvailableBreeds = (): void => {
+  if (form.type && breedsByAnimalType[form.type]) {
+    availableBreeds.value = [...breedsByAnimalType[form.type]]
+  } else {
+    availableBreeds.value = []
+  }
+  // Reset breed selection when animal type changes
+  form.breed = ''
+}
+
+const validateForm = (): boolean => {
+  errors.value = {}
+  let isValid = true
+
+  if (!form.title || form.title.length < 5) {
+    errors.value.title = 'Title must be at least 5 characters'
+    isValid = false
+  }
+
+  if (form.title.length > 100) {
+    errors.value.title = 'Title must be less than 100 characters'
+    isValid = false
+  }
+
+  if (!form.type) {
+    errors.value.type = 'Animal type is required'
+    isValid = false
+  }
+
+  if (!form.breed) {
+    errors.value.breed = 'Breed is required'
+    isValid = false
+  }
+
+  if (!form.gender) {
+    errors.value.gender = 'Gender is required'
+    isValid = false
+  }
+
+  if (!form.age) {
+    errors.value.age = 'Age is required'
+    isValid = false
+  }
+
+  if (!form.weight || form.weight <= 0) {
+    errors.value.weight = 'Valid weight is required'
+    isValid = false
+  }
+
+  if (!form.quantity || form.quantity <= 0) {
+    errors.value.quantity = 'Valid quantity is required'
+    isValid = false
+  }
+
+  if (!form.price || form.price <= 0) {
+    errors.value.price = 'Valid price is required'
+    isValid = false
+  }
+
+  if (!form.location) {
+    errors.value.location = 'Location is required'
+    isValid = false
+  }
+
+  if (!form.description || form.description.length < 10) {
+    errors.value.description = 'Description must be at least 10 characters'
+    isValid = false
+  }
+
+  if (form.description.length > 1000) {
+    errors.value.description = 'Description must be less than 1000 characters'
+    isValid = false
+  }
+
+  return isValid
+}
+
+const handleSubmit = async (): Promise<void> => {
+  if (!validateForm()) {
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Emit the created event with form data
+    emit('created', { ...form })
+
+    // Reset form
+    resetForm()
+
+    // Close modal
+    closeModal()
+  } catch (error) {
+    console.error('Error creating listing:', error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const closeModal = (): void => {
+  resetForm()
+  emit('close')
+}
+
+const resetForm = (): void => {
+  Object.assign(form, {
     title: '',
     type: '',
     breed: '',
     gender: '',
     age: '',
-    weight: null,
-    weightUnit: 'kg',
-    quantity: null,
-    status: '',
+    weight: 0,
+    quantity: 1,
+    status: 'Available',
     healthStatus: [],
-    price: null,
+    price: 0,
     location: '',
     deliveryOptions: [],
     images: [],
     description: ''
-});
+  })
+  
+  weightUnit.value = 'kg'
+  errors.value = {}
+  selectedImageIndex.value = 0
+  availableBreeds.value = []
+}
 
-const errors = ref<FormErrors>({});
+const handleImageUpload = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
 
-// User addresses based on unified farmer data
-const userAddresses = ref<UserAddress[]>([
-    {
-        id: 1,
-        label: 'Santos Ranch - Main Farm',
-        location: 'Pampanga',
-        address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-        isDefault: true
-    },
-    {
-        id: 2,
-        label: 'Santos Ranch - Secondary Location',
-        location: 'Bulacan',
-        address: '456 Santos Extension, Barangay Ranch, Bulacan',
-        isDefault: false
-    }
-]);
-
-// Options
-const healthOptions = [
-    'Healthy & Vaccinated',
-    'Vet Certified',
-    'Dewormed',
-    'Disease Free',
-    'Quarantined',
-    'Breeding Ready',
-    'Pregnant',
-    'Recently Treated',
-    'Special Care Needed'
-];
-
-const deliveryOptions = [
-    {
-        value: 'pickup',
-        label: 'Buyer Pickup',
-        description: 'Buyer arranges pickup from farm location'
-    },
-    {
-        value: 'delivery',
-        label: 'Farm Delivery',
-        description: 'We deliver to buyer location (additional fees may apply)'
-    },
-    {
-        value: 'meetup',
-        label: 'Meetup Point',
-        description: 'Meet at agreed location between farm and buyer'
-    }
-];
-
-// Breed mapping based on animal type
-const breedsByAnimalType: { [key: string]: string[] } = {
-    'Cattle': [
-        'Angus',
-        'Holstein',
-        'Brahman',
-        'Charolais',
-        'Simmental',
-        'Hereford',
-        'Limousin',
-        'Wagyu',
-        'Native/Local Breed',
-        'Crossbred',
-        'Other'
-    ],
-    'Goat': [
-        'Boer',
-        'Nubian',
-        'Saanen',
-        'Alpine',
-        'LaMancha',
-        'Toggenburg',
-        'Nigerian Dwarf',
-        'Kiko',
-        'Spanish',
-        'Native/Local Breed',
-        'Crossbred',
-        'Other'
-    ],
-    'Pig': [
-        'Yorkshire',
-        'Landrace',
-        'Duroc',
-        'Hampshire',
-        'Berkshire',
-        'Chester White',
-        'Poland China',
-        'Pietrain',
-        'Large White',
-        'Native/Local Breed',
-        'Crossbred',
-        'Other'
-    ],
-    'Chicken': [
-        'Rhode Island Red',
-        'Leghorn',
-        'Plymouth Rock',
-        'Brahma',
-        'Orpington',
-        'Wyandotte',
-        'Sussex',
-        'Marans',
-        'Australorp',
-        'Native/Local Breed',
-        'Broiler',
-        'Layer',
-        'Dual Purpose',
-        'Other'
-    ],
-    'Duck': [
-        'Pekin',
-        'Mallard',
-        'Rouen',
-        'Khaki Campbell',
-        'Runner',
-        'Muscovy',
-        'Call Duck',
-        'Cayuga',
-        'Swedish Blue',
-        'Native/Local Breed',
-        'Other'
-    ],
-    'Carabao': [
-        'Murrah',
-        'Nili-Ravi',
-        'Surti',
-        'Jaffarabadi',
-        'Native Carabao',
-        'Crossbred',
-        'Other'
-    ],
-    'Sheep': [
-        'Dorper',
-        'Merino',
-        'Suffolk',
-        'Hampshire',
-        'Romney',
-        'Border Leicester',
-        'Corriedale',
-        'Rambouillet',
-        'Katahdin',
-        'Native/Local Breed',
-        'Crossbred',
-        'Other'
-    ],
-    'Horse': [
-        'Arabian',
-        'Thoroughbred',
-        'Quarter Horse',
-        'Paint',
-        'Appaloosa',
-        'Mustang',
-        'Clydesdale',
-        'Percheron',
-        'Friesian',
-        'Native/Local Breed',
-        'Other'
-    ],
-    'Other': [
-        'Mixed Breed',
-        'Crossbred',
-        'Unspecified',
-        'Other'
-    ]
-};
-
-// Methods
-const updateAvailableBreeds = () => {
-    if (form.type && breedsByAnimalType[form.type]) {
-        availableBreeds.value = breedsByAnimalType[form.type];
-    } else {
-        availableBreeds.value = [];
-    }
-    // Reset breed selection when animal type changes
-    form.breed = '';
-};
-
-const validateForm = (): boolean => {
-    errors.value = {};
-    let isValid = true;
-
-    if (!form.title || form.title.length < 5) {
-        errors.value.title = 'Title must be at least 5 characters';
-        isValid = false;
+  Array.from(files).forEach(file => {
+    if (form.images.length >= 5) {
+      alert('Maximum 5 images allowed')
+      return
     }
 
-    if (form.title.length > 100) {
-        errors.value.title = 'Title must be less than 100 characters';
-        isValid = false;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB')
+      return
     }
 
-    if (!form.type) {
-        errors.value.type = 'Animal type is required';
-        isValid = false;
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        form.images.push(e.target.result as string)
+      }
     }
+    reader.readAsDataURL(file)
+  })
 
-    if (!form.breed) {
-        errors.value.breed = 'Breed is required';
-        isValid = false;
-    }
+  // Clear the input value to allow re-uploading the same file
+  target.value = ''
+}
 
-    if (!form.gender) {
-        errors.value.gender = 'Gender is required';
-        isValid = false;
-    }
+const removeImage = (index: number): void => {
+  form.images.splice(index, 1)
+  if (selectedImageIndex.value >= form.images.length) {
+    selectedImageIndex.value = Math.max(0, form.images.length - 1)
+  }
+}
 
-    if (!form.age) {
-        errors.value.age = 'Age is required';
-        isValid = false;
-    }
+const previousImage = (): void => {
+  selectedImageIndex.value = selectedImageIndex.value > 0
+    ? selectedImageIndex.value - 1
+    : form.images.length - 1
+}
 
-    if (!form.weight || form.weight <= 0) {
-        errors.value.weight = 'Valid weight is required';
-        isValid = false;
-    }
-
-    if (!form.quantity || form.quantity <= 0) {
-        errors.value.quantity = 'Valid quantity is required';
-        isValid = false;
-    }
-
-    if (!form.price || form.price <= 0) {
-        errors.value.price = 'Valid price is required';
-        isValid = false;
-    }
-
-    if (!form.location) {
-        errors.value.location = 'Location is required';
-        isValid = false;
-    }
-
-    if (!form.description || form.description.length < 10) {
-        errors.value.description = 'Description must be at least 10 characters';
-        isValid = false;
-    }
-
-    if (form.description.length > 1000) {
-        errors.value.description = 'Description must be less than 1000 characters';
-        isValid = false;
-    }
-
-    return isValid;
-};
-
-const handleSubmit = async () => {
-    if (!validateForm()) {
-        return;
-    }
-
-    isSubmitting.value = true;
-
-    try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Emit the created event with form data
-        emit('created', { ...form });
-
-        // Reset form
-        resetForm();
-
-        // Close modal
-        closeModal();
-    } catch (error) {
-        console.error('Error creating listing:', error);
-    } finally {
-        isSubmitting.value = false;
-    }
-};
-
-const closeModal = () => {
-    resetForm();
-    emit('close');
-};
-
-const resetForm = () => {
-    Object.assign(form, {
-        title: '',
-        type: '',
-        breed: '',
-        gender: '',
-        age: '',
-        weight: null,
-        weightUnit: 'kg',
-        quantity: null,
-        status: '',
-        healthStatus: [],
-        price: null,
-        location: '',
-        deliveryOptions: [],
-        images: [],
-        description: ''
-    });
-    errors.value = {};
-    selectedImageIndex.value = 0;
-    availableBreeds.value = [];
-};
-
-const handleImageUpload = (event: Event) => {
-    const files = (event.target as HTMLInputElement).files;
-    if (!files) return;
-
-    Array.from(files).forEach(file => {
-        if (form.images.length >= 5) {
-            alert('Maximum 5 images allowed');
-            return;
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (e.target?.result) {
-                form.images.push(e.target.result as string);
-            }
-        };
-        reader.readAsDataURL(file);
-    });
-};
-
-const removeImage = (index: number) => {
-    form.images.splice(index, 1);
-    if (selectedImageIndex.value >= form.images.length) {
-        selectedImageIndex.value = Math.max(0, form.images.length - 1);
-    }
-};
-
-const previousImage = () => {
-    selectedImageIndex.value = selectedImageIndex.value > 0
-        ? selectedImageIndex.value - 1
-        : form.images.length - 1;
-};
-
-const nextImage = () => {
-    selectedImageIndex.value = selectedImageIndex.value < form.images.length - 1
-        ? selectedImageIndex.value + 1
-        : 0;
-};
+const nextImage = (): void => {
+  selectedImageIndex.value = selectedImageIndex.value < form.images.length - 1
+    ? selectedImageIndex.value + 1
+    : 0
+}
 
 // Initialize user's default location when component mounts
 onMounted(() => {
-    const defaultAddress = userAddresses.value.find(addr => addr.isDefault);
-    if (defaultAddress) {
-        form.location = defaultAddress.location;
-    }
-});
+  const defaultAddress = userAddresses.value.find(addr => addr.isDefault)
+  if (defaultAddress) {
+    form.location = defaultAddress.location
+  }
+})
 </script>

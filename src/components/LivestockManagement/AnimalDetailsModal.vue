@@ -38,7 +38,7 @@
                 <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center justify-center gap-2">
                   <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
                   </svg>
                   Livestock Images
                 </h3>
@@ -150,7 +150,7 @@
                   </div>
 
                   <!-- Health Status -->
-                  <div v-if="animal.healthStatus" class="border-t border-gray-200 pt-4">
+                  <div v-if="animal.healthStatus && animal.healthStatus.length > 0" class="border-t border-gray-200 pt-4">
                     <label class="block text-xs font-semibold text-gray-700 mb-2">Health Status</label>
                     <div class="flex flex-wrap gap-2">
                       <span v-for="(status, index) in animal.healthStatus" :key="index"
@@ -225,8 +225,9 @@
                   <img :src="animal.farmer.avatar" :alt="animal.farmer.name" class="w-12 h-12 rounded-full object-cover border-2 border-amber-200">
                   <div>
                     <h4 class="text-sm font-bold text-gray-900">{{ animal.farmer.name }}</h4>
-                    <p class="text-xs text-gray-600">{{ animal.farmer.farmName }}</p>
+                    <p v-if="animal.farmer.farmName" class="text-xs text-gray-600">{{ animal.farmer.farmName }}</p>
                     <p class="text-xs text-gray-500">{{ animal.farmer.contact }}</p>
+                    <p v-if="animal.farmer.email" class="text-xs text-gray-500">{{ animal.farmer.email }}</p>
                   </div>
                 </div>
                 <div class="mt-3 text-sm text-gray-700">
@@ -554,54 +555,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, type PropType } from 'vue';
+import { ref, reactive } from 'vue';
+import type { Animal } from '../../services/animal';
 
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
+const props = defineProps<{
+  animal?: Animal | null;
+}>();
 
-interface Animal {
-  id: string;
-  title: string;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  healthStatus: string[];
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-}
-
-const props = defineProps({
-  animal: {
-    type: Object as PropType<Animal | null>,
-    default: null
-  }
-});
-
-const emit = defineEmits(['close', 'edit', 'delete', 'save']);
+const emit = defineEmits<{
+  close: [];
+  edit: [animal: Animal];
+  delete: [animal: Animal];
+  save: [animal: Partial<Animal>];
+}>();
 
 const selectedImageIndex = ref(0);
 const editSelectedImageIndex = ref(0);
 const showEditModal = ref(false);
 
-// Edit form data
-const editForm = reactive({
-  id: '',
+// Edit form data with proper typing
+const editForm = reactive<{
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  breed: string;
+  gender: string;
+  age: string;
+  weight: number;
+  quantity: number;
+  status: string;
+  healthStatus: string[];
+  price: number;
+  deliveryOptions: string[];
+  images: string[];
+  location: string;
+}>({
+  id: 0,
   title: '',
   description: '',
   type: '',
@@ -611,29 +601,29 @@ const editForm = reactive({
   weight: 0,
   quantity: 1,
   status: 'Available',
-  healthStatus: [] as string[],
+  healthStatus: [],
   price: 0,
-  deliveryOptions: [] as string[],
-  images: [] as string[],
+  deliveryOptions: [],
+  images: [],
   location: '',
 });
 
 // Options for dropdowns
-const healthStatusOptions = [
+const healthStatusOptions: readonly string[] = [
   'Vaccinated',
   'Dewormed', 
   'Health Certificate',
   'Pregnant',
   'Lactating'
-];
+] as const;
 
-const deliveryOptionsMap = [
+const deliveryOptionsMap: readonly { value: string; label: string }[] = [
   { value: 'pickup', label: 'Buyer Pickup' },
   { value: 'delivery', label: 'Farm Delivery' },
   { value: 'meetup', label: 'Meetup Point' }
-];
+] as const;
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -642,7 +632,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const formatDeliveryOption = (option: string) => {
+const formatDeliveryOption = (option: string): string => {
   const optionsMap: Record<string, string> = {
     'pickup': 'Buyer Pickup',
     'delivery': 'Farm Delivery',
@@ -651,42 +641,42 @@ const formatDeliveryOption = (option: string) => {
   return optionsMap[option] || option;
 };
 
-const nextImage = () => {
-  if (props.animal) {
+const nextImage = (): void => {
+  if (props.animal && props.animal.images) {
     selectedImageIndex.value = selectedImageIndex.value < props.animal.images.length - 1
       ? selectedImageIndex.value + 1
       : 0;
   }
 };
 
-const previousImage = () => {
-  if (props.animal) {
+const previousImage = (): void => {
+  if (props.animal && props.animal.images) {
     selectedImageIndex.value = selectedImageIndex.value > 0
       ? selectedImageIndex.value - 1
       : props.animal.images.length - 1;
   }
 };
 
-const nextEditImage = () => {
+const nextEditImage = (): void => {
   editSelectedImageIndex.value = editSelectedImageIndex.value < editForm.images.length - 1
     ? editSelectedImageIndex.value + 1
     : 0;
 };
 
-const previousEditImage = () => {
+const previousEditImage = (): void => {
   editSelectedImageIndex.value = editSelectedImageIndex.value > 0
     ? editSelectedImageIndex.value - 1
     : editForm.images.length - 1;
 };
 
-const removeImage = (index: number) => {
+const removeImage = (index: number): void => {
   editForm.images.splice(index, 1);
   if (editSelectedImageIndex.value >= editForm.images.length) {
     editSelectedImageIndex.value = Math.max(0, editForm.images.length - 1);
   }
 };
 
-const openEditModal = () => {
+const openEditModal = (): void => {
   if (props.animal) {
     // Populate edit form with current animal data
     Object.assign(editForm, {
@@ -700,7 +690,7 @@ const openEditModal = () => {
       weight: props.animal.weight,
       quantity: props.animal.quantity,
       status: props.animal.status,
-      healthStatus: [...props.animal.healthStatus],
+      healthStatus: props.animal.healthStatus ? [...props.animal.healthStatus] : [],
       price: props.animal.price,
       deliveryOptions: [...props.animal.deliveryOptions],
       images: [...props.animal.images],
@@ -711,12 +701,12 @@ const openEditModal = () => {
   }
 };
 
-const closeEditModal = () => {
+const closeEditModal = (): void => {
   showEditModal.value = false;
 };
 
-const handleSave = () => {
-  // Emit the edited data
+const handleSave = (): void => {
+  // Emit the edited data with proper typing
   emit('save', { ...editForm });
   closeEditModal();
 };

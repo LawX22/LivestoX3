@@ -1,3 +1,4 @@
+// animal.ts
 export interface Farmer {
   id: number;
   name: string;
@@ -10,13 +11,16 @@ export interface Farmer {
 
 export interface Animal {
   id: number;
+  title: string; 
   type: string;
   breed: string;
   weight: number;
   quantity: number;
+  originalQuantity?: number; 
   age: string;
   gender: string;
   status: string;
+  healthStatus?: string[];
   price: number;
   deliveryOptions: string[];
   images: string[];
@@ -31,6 +35,10 @@ export interface Animal {
   endTime?: string;
   duration?: string;
   auctionStartTime?: string;
+  reservePrice?: number; 
+  bidIncrement?: number; 
+  paymentTerms?: string; 
+  additionalTerms?: string; 
 }
 
 export interface Filters {
@@ -40,6 +48,7 @@ export interface Filters {
   locations: string[];
   priceRanges: string[];
   genders: string[];
+  healthStatuses?: string[]; 
   auctionStatuses: string[];
   endTimeRanges: string[];
   bidCountMin: number | null;
@@ -111,4 +120,54 @@ export interface MessageTemplate {
   title: string;
   preview: string;
   template: string;
+}
+
+// New interfaces for livestock management forms
+export interface CreateListingForm {
+  title: string;
+  type: string;
+  breed: string;
+  weight: number;
+  quantity: number;
+  age: string;
+  gender: string;
+  status: string;
+  healthStatus: string[];
+  price: number;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+  location: string;
+}
+
+export interface CreateAuctionForm {
+  title: string;
+  type: string;
+  breed: string;
+  weight: number;
+  quantity: number;
+  age: string;
+  gender: string;
+  healthStatus: string[];
+  startingBid: number;
+  reservePrice?: number;
+  bidIncrement: number;
+  duration: string;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+  location: string;
+  paymentTerms: string;
+  additionalTerms?: string;
+}
+
+export interface QuantityUpdateData {
+  animalId: string;
+  newQuantity: number;
+  operation: 'sold' | 'restocked' | 'updated';
+}
+
+export interface AuctionBidData {
+  animalId: string;
+  amount: number;
 }

@@ -277,7 +277,7 @@
                                         </div>
 
                                         <!-- Health Status -->
-                                        <div v-if="animal.healthStatus" class="border-t border-gray-200 pt-4">
+                                        <div v-if="animal.healthStatus && animal.healthStatus.length > 0" class="border-t border-gray-200 pt-4">
                                             <label class="block text-xs font-semibold text-gray-700 mb-2">Health Status</label>
                                             <div class="flex flex-wrap gap-2">
                                                 <span v-for="(status, index) in animal.healthStatus" :key="index"
@@ -297,6 +297,29 @@
                                                 </span>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Farmer Information -->
+                                <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                    <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Farmer Information
+                                    </h3>
+
+                                    <div class="flex items-center gap-3">
+                                        <img :src="animal.farmer.avatar" :alt="animal.farmer.name" class="w-12 h-12 rounded-full object-cover border-2 border-amber-200">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-gray-900">{{ animal.farmer.name }}</h4>
+                                            <p v-if="animal.farmer.farmName" class="text-xs text-gray-600">{{ animal.farmer.farmName }}</p>
+                                            <p class="text-xs text-gray-500">{{ animal.farmer.contact }}</p>
+                                            <p v-if="animal.farmer.email" class="text-xs text-gray-500">{{ animal.farmer.email }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 text-sm text-gray-700">
+                                        <p>{{ animal.farmer.address }}</p>
                                     </div>
                                 </div>
 
@@ -509,7 +532,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -520,50 +542,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
+import type { Animal, Farmer, Bid, User } from '../../services/animal';
 
-interface Farmer {
-    id: number;
-    name: string;
-    farmName?: string;
-    contact: string;
-    address: string;
-    avatar: string;
-}
+type BidType = 'manual' | 'auto' | 'proxy' | 'snipe';
 
-interface Animal {
-    id: string;
-    title: string;
-    type: string;
-    breed: string;
-    weight: number;
-    quantity: number;
-    age: string;
-    gender: string;
-    status?: string;
-    healthStatus?: string[];
-    price: number;
-    deliveryOptions: string[];
-    images: string[];
-    description: string;
-    datePosted: string;
-    farmer: Farmer;
-    location: string;
-    isAuction?: boolean;
-    startingBid?: number;
-    currentBid?: number;
-    bidCount?: number;
-    endTime?: string;
-    duration?: string;
-    auctionStartTime?: string;
-}
-
-interface Bid {
-    id: string;
-    amount: number;
+interface ExtendedBid extends Bid {
     bidderName: string;
     bidderId?: string;
-    timestamp: Date;
-    bidType?: 'manual' | 'auto' | 'proxy' | 'snipe';
+    bidType?: BidType;
     increment?: number;
 }
 
@@ -572,14 +558,17 @@ const props = defineProps<{
     isOpen: boolean;
 }>();
 
+const emit = defineEmits<{
+    close: [];
+}>();
 
 const selectedImageIndex = ref(0);
-const bidHistory = ref<Bid[]>([]);
-const activeTab = ref('details');
+const bidHistory = ref<ExtendedBid[]>([]);
+const activeTab = ref<'details' | 'bids'>('details');
 let timerInterval: number | null = null;
 
 // Computed properties
-const computedStatus = computed(() => {
+const computedStatus = computed((): string => {
     if (!props.animal) return '';
 
     if (props.animal.status) {
@@ -608,24 +597,24 @@ const computedStatus = computed(() => {
     }
 });
 
-const minBidAmount = computed(() => {
+const minBidAmount = computed((): number => {
     if (!props.animal) return 0;
     const current = props.animal.currentBid || props.animal.startingBid || 0;
     return current + (current * 0.05); // 5% increment
 });
 
-const activeBidders = computed(() => {
+const activeBidders = computed((): string[] => {
     const uniqueBidders = [...new Set(bidHistory.value.map(bid => bid.bidderName))];
     return uniqueBidders;
 });
 
-const averageBid = computed(() => {
+const averageBid = computed((): number => {
     if (bidHistory.value.length === 0) return 0;
     const total = bidHistory.value.reduce((sum, bid) => sum + bid.amount, 0);
     return Math.round(total / bidHistory.value.length);
 });
 
-const highestIncrement = computed(() => {
+const highestIncrement = computed((): number => {
     if (bidHistory.value.length < 2) return 0;
     let highest = 0;
     for (let i = 0; i < bidHistory.value.length - 1; i++) {
@@ -635,15 +624,15 @@ const highestIncrement = computed(() => {
     return highest;
 });
 
-const bidFrequency = computed(() => {
+const bidFrequency = computed((): number => {
     if (bidHistory.value.length === 0) return 0;
     const firstBid = bidHistory.value[bidHistory.value.length - 1];
     const lastBid = bidHistory.value[0];
-    const timeDiff = (lastBid.timestamp.getTime() - firstBid.timestamp.getTime()) / (1000 * 60 * 60); // hours
+    const timeDiff = (new Date(lastBid.timestamp).getTime() - new Date(firstBid.timestamp).getTime()) / (1000 * 60 * 60); // hours
     return timeDiff > 0 ? Math.round(bidHistory.value.length / timeDiff) : 0;
 });
 
-const competitionLevel = computed(() => {
+const competitionLevel = computed((): string => {
     const bidCount = bidHistory.value.length;
     const uniqueBidders = activeBidders.value.length;
     
@@ -655,7 +644,7 @@ const competitionLevel = computed(() => {
 });
 
 // Methods
-const getStatusClass = (status: string) => {
+const getStatusClass = (status: string): string => {
     switch (status) {
         case 'Available':
         case 'In Stock':
@@ -673,7 +662,7 @@ const getStatusClass = (status: string) => {
     }
 };
 
-const getBidTypeClass = (bidType: string) => {
+const getBidTypeClass = (bidType: string): string => {
     switch (bidType) {
         case 'manual':
             return 'bg-blue-100 text-blue-800';
@@ -688,7 +677,7 @@ const getBidTypeClass = (bidType: string) => {
     }
 };
 
-const getCompetitionColor = (level: string) => {
+const getCompetitionColor = (level: string): string => {
     switch (level) {
         case 'No Activity':
             return 'text-gray-500';
@@ -705,7 +694,7 @@ const getCompetitionColor = (level: string) => {
     }
 };
 
-const formatBidType = (bidType: string) => {
+const formatBidType = (bidType: string): string => {
     const types: Record<string, string> = {
         'manual': 'Manual',
         'auto': 'Auto Bid',
@@ -715,7 +704,7 @@ const formatBidType = (bidType: string) => {
     return types[bidType] || 'Manual';
 };
 
-const formatDeliveryOption = (option: string) => {
+const formatDeliveryOption = (option: string): string => {
     const optionsMap: Record<string, string> = {
         'pickup': 'Buyer Pickup',
         'delivery': 'Farm Delivery',
@@ -747,8 +736,9 @@ const getTimeRemaining = (endTime?: string): string => {
     }
 };
 
-const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const formatTime = (date: string | Date): string => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const formatDate = (dateString: string): string => {
@@ -760,21 +750,22 @@ const formatDate = (dateString: string): string => {
     });
 };
 
-const formatDateShort = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { 
+const formatDateShort = (date: string | Date): string => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
     });
 };
 
-const nextImage = () => {
+const nextImage = (): void => {
     if (!props.animal) return;
     selectedImageIndex.value = selectedImageIndex.value < props.animal.images.length - 1
         ? selectedImageIndex.value + 1
         : 0;
 };
 
-const previousImage = () => {
+const previousImage = (): void => {
     if (!props.animal) return;
     selectedImageIndex.value = selectedImageIndex.value > 0
         ? selectedImageIndex.value - 1
@@ -782,13 +773,13 @@ const previousImage = () => {
 };
 
 // Generate more detailed mock bid data
-const generateMockBids = (animal: Animal): Bid[] => {
+const generateMockBids = (animal: Animal): ExtendedBid[] => {
     if (!animal.isAuction) return [];
     
-    const bidTypes: ('manual' | 'auto' | 'proxy' | 'snipe')[] = ['manual', 'auto', 'proxy', 'snipe'];
+    const bidTypes: BidType[] = ['manual', 'auto', 'proxy', 'snipe'];
     const bidderNames = ['CattleKing', 'LivestockLover', 'FarmPro23', 'RanchMaster', 'AgroExpert', 'BarnBoss', 'PastureKing'];
     
-    const bids: Bid[] = [];
+    const bids: ExtendedBid[] = [];
     const startingAmount = animal.startingBid || 10000;
     let currentAmount = startingAmount;
     
@@ -799,12 +790,18 @@ const generateMockBids = (animal: Animal): Bid[] => {
         const increment = Math.floor(Math.random() * (currentAmount * 0.15)) + (currentAmount * 0.05);
         currentAmount += increment;
         
-        const bid: Bid = {
-            id: `bid_${i + 1}`,
+        const bid: ExtendedBid = {
+            id: i + 1,
             amount: currentAmount,
+            timestamp: new Date(Date.now() - (bidCount - i) * Math.random() * 60 * 60 * 1000).toISOString(), // Random times in past hours
+            user: {
+                id: i + 1,
+                name: bidderNames[Math.floor(Math.random() * bidderNames.length)],
+                email: `user${i + 1}@example.com`,
+                avatar: `https://via.placeholder.com/40x40.png?text=${bidderNames[Math.floor(Math.random() * bidderNames.length)].charAt(0)}`
+            },
             bidderName: bidderNames[Math.floor(Math.random() * bidderNames.length)],
             bidderId: `B${String(i + 1).padStart(3, '0')}`,
-            timestamp: new Date(Date.now() - (bidCount - i) * Math.random() * 60 * 60 * 1000), // Random times in past hours
             bidType: bidTypes[Math.floor(Math.random() * bidTypes.length)],
             increment: i > 0 ? increment : undefined
         };

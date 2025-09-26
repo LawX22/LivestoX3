@@ -1,3 +1,4 @@
+<!-- Marketplace.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -56,8 +57,8 @@
             <p class="text-green-100 text-sm opacity-90 truncate">
               {{
                 isFarmerView
-                  ? "Discover quality livestock from verified farmers"
-                  : "Browse premium livestock from verified farmers"
+                  ? "Manage your livestock listings and auctions"
+                  : "Discover quality livestock from verified farmers"
               }}
             </p>
           </div>
@@ -403,7 +404,7 @@
     </div>
   </div>
 </template>
-  
+
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -413,7 +414,7 @@ import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
 import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
 import LivestockCard from '../../components/Market/LivestockCard.vue';
-import { getCurrentUser} from '../../services/user';
+import { getCurrentUser } from '../../services/user';
 import type { Animal, Filters, ServiceUser, BidData, MessageData } from '../../services/animal';
 
 // Props to determine view mode
@@ -422,6 +423,7 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+
 // Ensure currentUser has a 'name' property for ContactFarmerModal compatibility
 const rawUser = getCurrentUser() as ServiceUser | null;
 const currentUser = rawUser
@@ -431,6 +433,7 @@ const currentUser = rawUser
       email: rawUser.email || ''
     }
   : null;
+
 const hasPendingUpgrade = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
@@ -468,7 +471,7 @@ const filters = ref<Filters>({
   locations: [],
   priceRanges: [],
   genders: [],
-  // New auction filters
+  healthStatuses: [],
   auctionStatuses: [],
   endTimeRanges: [],
   bidCountMin: null,
@@ -478,21 +481,23 @@ const filters = ref<Filters>({
   bidActivities: []
 });
 
-// Sample animal data with more auction items
+// Sample animal data with proper interface compliance
 const animals = ref<Animal[]>([
   {
     id: 1,
+    title: 'Premium Angus Cattle',
     type: 'Cattle',
     breed: 'Angus',
     weight: 450,
     quantity: 5,
+    originalQuantity: 5,
     age: '18-24 months',
     gender: 'Male',
     status: 'Available',
+    healthStatus: ['Vaccinated', 'Dewormed', 'Healthy'],
     price: 45000,
     deliveryOptions: ['pickup', 'delivery'],
     images: [
-      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
       'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
     ],
     description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed.',
@@ -502,22 +507,25 @@ const animals = ref<Animal[]>([
       name: 'Maria Santos',
       farmName: 'Santos Ranch',
       contact: '+63 921 777 8888',
+      email: 'maria@santosranch.com',
       address: '123 Poultry Lane, Barangay Fowl, Pampanga',
       avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
     },
     location: 'Pampanga',
     isAuction: false
   },
-  // Auction items with enhanced data
   {
     id: 6,
+    title: 'Landrace Pigs',
     type: 'Pig',
     breed: 'Landrace',
     weight: 95,
     quantity: 3,
+    originalQuantity: 3,
     age: '5-7 months',
     gender: 'Mixed',
     status: 'Available',
+    healthStatus: ['Vaccinated', 'Healthy'],
     price: 0,
     deliveryOptions: ['pickup'],
     images: [
@@ -530,6 +538,7 @@ const animals = ref<Animal[]>([
       name: 'Elena Morales',
       farmName: 'Morales Hog Farm',
       contact: '+63 926 333 4444',
+      email: 'elena@moraleshogfarm.com',
       address: '777 Swine Valley, Barangay Pork, Tarlac',
       avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
     },
@@ -540,7 +549,11 @@ const animals = ref<Animal[]>([
     bidCount: 5,
     endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
     duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 345600000).toISOString() // Started 4 days ago
+    auctionStartTime: new Date(Date.now() - 345600000).toISOString(), // Started 4 days ago
+    reservePrice: 22000,
+    bidIncrement: 500,
+    paymentTerms: '50% deposit, 50% upon delivery',
+    additionalTerms: 'Must be picked up within 3 days after auction ends'
   }
 ]);
 
@@ -614,6 +627,7 @@ const currentFilteredAnimals = computed(() => {
     // Search filter
     const searchLower = filters.value.search.toLowerCase();
     const matchesSearch = !filters.value.search ||
+      animal.title.toLowerCase().includes(searchLower) ||
       animal.type.toLowerCase().includes(searchLower) ||
       animal.breed.toLowerCase().includes(searchLower) ||
       animal.description.toLowerCase().includes(searchLower) ||
@@ -636,6 +650,11 @@ const currentFilteredAnimals = computed(() => {
     const matchesGender = filters.value.genders.length === 0 || 
       filters.value.genders.includes(animal.gender);
 
+    // Health status filter (multi-select)
+    const healthStatuses = Array.isArray(filters.value.healthStatuses) ? filters.value.healthStatuses : [];
+    const matchesHealthStatus = healthStatuses.length === 0 || 
+      healthStatuses.some(status => (Array.isArray(animal.healthStatus) ? animal.healthStatus : []).includes(status));
+
     // Price range filter (multi-select) - adjusted for auctions
     let matchesPrice = true;
     if (filters.value.priceRanges.length > 0) {
@@ -650,7 +669,7 @@ const currentFilteredAnimals = computed(() => {
       });
     }
 
-    // NEW: Auction-specific filters (only apply when viewing auctions)
+    // Auction-specific filters (only apply when viewing auctions)
     if (activeTab.value === 'auction' && animal.isAuction) {
       // Auction Status filter
       if (filters.value.auctionStatuses.length > 0) {
@@ -723,7 +742,8 @@ const currentFilteredAnimals = computed(() => {
       }
     }
 
-    return matchesSearch && matchesType && matchesBreed && matchesLocation && matchesPrice && matchesGender;
+    return matchesSearch && matchesType && matchesBreed && matchesLocation && 
+           matchesPrice && matchesGender && matchesHealthStatus;
   });
 
   // Sorting - enhanced for auctions
@@ -735,7 +755,7 @@ const currentFilteredAnimals = computed(() => {
         return new Date(a.datePosted).getTime() - new Date(b.datePosted).getTime();
       case 'price':
         const aPrice = a.isAuction ? (a.currentBid || a.startingBid || 0) : a.price;
-        const bPrice = b.isAuction? (b.currentBid || b.startingBid || 0) : b.price;
+        const bPrice = b.isAuction ? (b.currentBid || b.startingBid || 0) : b.price;
         return aPrice - bPrice;
       case 'price-desc':
         const aPriceDesc = a.isAuction ? (a.currentBid || a.startingBid || 0) : a.price;
@@ -749,7 +769,6 @@ const currentFilteredAnimals = computed(() => {
       case 'bids':
         return (b.bidCount || 0) - (a.bidCount || 0);
       case 'bidActivity':
-        // Sort by bid activity (bids per hour)
         const aActivity = a.bidCount || 0;
         const bActivity = b.bidCount || 0;
         return bActivity - aActivity;
@@ -757,14 +776,6 @@ const currentFilteredAnimals = computed(() => {
         return a.type.localeCompare(b.type);
       case 'type-desc':
         return b.type.localeCompare(a.type);
-      case 'breed':
-        return a.breed.localeCompare(b.breed);
-      case 'breed-desc':
-        return b.breed.localeCompare(a.breed);
-      case 'quantity':
-        return a.quantity - b.quantity;
-      case 'quantity-desc':
-        return b.quantity - a.quantity;
       default:
         return 0;
     }
@@ -820,8 +831,6 @@ const closeContactModal = () => {
 };
 
 const sendMessage = (messageData: MessageData) => {
-  // Here you would typically send the message to a backend service
-  // For now, we'll just show a success notification
   showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
   closeContactModal();
 };
@@ -840,7 +849,7 @@ const resetFilters = () => {
     locations: [],
     priceRanges: [],
     genders: [],
-    // Reset auction filters
+    healthStatuses: [],
     auctionStatuses: [],
     endTimeRanges: [],
     bidCountMin: null,
@@ -866,10 +875,8 @@ const redirectToLogin = () => {
 };
 
 const handlePlaceBid = (bidData: BidData) => {
-  // Find the animal in the list
   const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
   if (animalIndex !== -1) {
-    // Update the animal's bid information
     animals.value[animalIndex].currentBid = bidData.amount;
     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
     
