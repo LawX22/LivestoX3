@@ -1,4 +1,3 @@
-<!-- FilterSidebar.vue -->
 <template>
   <div :class="`${isExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
     <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
@@ -23,7 +22,7 @@
         <div class="flex justify-between items-center p-3 border-b border-green-100/50">
           <h2 class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
             <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             Filters
           </h2>
@@ -342,23 +341,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-
-interface Filters {
-  search: string;
-  types: string[];
-  breeds: string[];
-  locations: string[];
-  priceRanges: string[];
-  genders: string[];
-  // Auction-specific filters
-  auctionStatuses: string[];
-  endTimeRanges: string[];
-  bidCountMin: number | null;
-  bidCountMax: number | null;
-  startingBidRanges: string[];
-  auctionDurations: string[];
-  bidActivities: string[];
-}
+import type { Filters, PriceRange, TimeRange, AuctionDuration } from '../../services/animal';
 
 const props = defineProps<{
   isExpanded: boolean;
@@ -389,7 +372,7 @@ watch(localFilters, (newFilters) => {
 }, { deep: true });
 
 // Filter options
-const priceRanges = ref([
+const priceRanges = ref<PriceRange[]>([
   { label: 'Below ₱5K', value: '0-5000' },
   { label: '₱5K - ₱20K', value: '5000-20000' },
   { label: '₱20K - ₱50K', value: '20000-50000' },
@@ -402,7 +385,7 @@ const genders = ref(['Male', 'Female', 'Mixed']);
 // Auction-specific filter options
 const auctionStatuses = ref(['Live', 'Ending Soon', 'New Listing', 'Hot Auction']);
 
-const endTimeRanges = ref([
+const endTimeRanges = ref<TimeRange[]>([
   { label: 'Ending in 1 hour', value: '0-1h' },
   { label: 'Ending in 3 hours', value: '0-3h' },
   { label: 'Ending in 6 hours', value: '0-6h' },
@@ -411,7 +394,7 @@ const endTimeRanges = ref([
   { label: 'More than 1 day', value: '24h+' }
 ]);
 
-const startingBidRanges = ref([
+const startingBidRanges = ref<PriceRange[]>([
   { label: 'Below ₱10K', value: '0-10000' },
   { label: '₱10K - ₱30K', value: '10000-30000' },
   { label: '₱30K - ₱60K', value: '30000-60000' },
@@ -419,7 +402,7 @@ const startingBidRanges = ref([
   { label: 'Above ₱100K', value: '100000+' }
 ]);
 
-const auctionDurations = ref([
+const auctionDurations = ref<AuctionDuration[]>([
   { label: 'Quick (1-3 days)', value: '1-3d' },
   { label: 'Standard (3-7 days)', value: '3-7d' },
   { label: 'Extended (1-2 weeks)', value: '7-14d' },
@@ -504,5 +487,4 @@ const formatTimeRange = (range: string) => {
     default: return range;
   }
 };
-
 </script>

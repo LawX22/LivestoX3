@@ -1,4 +1,3 @@
-<!-- LivestockCard.vue -->
 <template>
   <div
     class="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg border border-white/60 hover:border-green-300/60 transition-all duration-300 bg-white/95 backdrop-blur-sm flex flex-col h-full group">
@@ -236,40 +235,7 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-  startingBid?: number;
-  currentBid?: number;
-  bidCount?: number;
-  endTime?: string;
-  duration?: string;
-  auctionStartTime?: string;
-}
+import type { Animal } from '../../services/animal';
 
 // Props
 const props = defineProps<{
@@ -281,7 +247,6 @@ const props = defineProps<{
 // Default props values
 const isSidebarExpanded = props.isSidebarExpanded ?? false;
 const weightUnit = props.weightUnit ?? 'kg';
-
 
 // Methods
 const getStatusClass = (status: string) => {

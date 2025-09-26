@@ -1,4 +1,3 @@
-<!-- ContactFarmerModal.vue -->
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click="$emit('close')">
     <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300" @click.stop>
@@ -170,50 +169,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-}
-
-interface User {
-  email: string;
-  name: string;
-  role?: string;
-}
-
-interface MessageTemplate {
-  id: string;
-  title: string;
-  preview: string;
-  template: string;
-}
+import type { Animal, ServiceUser, MessageTemplate } from '../../services/animal';
 
 const props = defineProps<{
   animal: Animal;
-  currentUser: User | null;
+  currentUser: ServiceUser | null;
 }>();
 
 const emit = defineEmits<{

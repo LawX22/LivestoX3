@@ -1,4 +1,3 @@
-<!-- AuctionDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div v-if="isOpen" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -318,7 +317,7 @@
                   <div class="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200/60">
                     <div class="flex items-center gap-2 mb-2">
                       <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2 2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Description:</span>
                     </div>
@@ -856,63 +855,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-  email?: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-  startingBid?: number;
-  currentBid?: number;
-  bidCount?: number;
-  endTime?: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  avatar: string;
-}
-
-interface Bid {
-  id: number;
-  amount: number;
-  timestamp: string;
-  user: User;
-  previousBid?: number;
-}
-
-interface ServiceUser {
-  email?: string;
-  name?: string;
-  displayName?: string;
-  role?: string;
-  isVerified?: boolean;
-  [key: string]: any;
-}
+import type { Animal, ServiceUser, Bid, User } from '../../services/animal'; 
 
 const props = defineProps<{
   animal: Animal;

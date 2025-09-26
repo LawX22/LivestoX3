@@ -1,4 +1,3 @@
-<!-- AnimalDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -58,7 +57,7 @@
               <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div>
@@ -589,51 +588,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ContactFarmerModal from './ContactFarmerModal.vue';
 import { getCurrentUser } from '../../services/user';
-
-interface ServiceUser {
-  email?: string;
-  name?: string;
-  displayName?: string;
-  role?: string;
-  isVerified?: boolean;
-  [key: string]: any;
-}
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  email?: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-}
-
-interface CartItem {
-  id: number;
-  animal: Animal;
-  quantity: number;
-  totalPrice: number;
-  dateAdded: string;
-}
+import type { Animal, ServiceUser, CartItem, MessageData } from '../../services/animal';
 
 // Props
 const props = defineProps<{
@@ -709,7 +664,7 @@ const closeContactModal = () => {
   isContactModalOpen.value = false;
 };
 
-const sendMessage = (messageData: { message: string; contactMethod: string }) => {
+const sendMessage = (messageData: MessageData) => {
   showToastNotification(
     `Message sent to ${props.animal.farmer.farmName || props.animal.farmer.name} via ${messageData.contactMethod}`,
     'success'

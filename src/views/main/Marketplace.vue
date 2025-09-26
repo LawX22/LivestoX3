@@ -1,4 +1,3 @@
-<!-- Marketplace.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -160,7 +159,7 @@
               >
                 <path
                   fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 018 8zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                   clip-rule="evenodd"
                 />
               </svg>
@@ -415,66 +414,7 @@ import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
 import LivestockCard from '../../components/Market/LivestockCard.vue';
 import { getCurrentUser} from '../../services/user';
-
-interface ServiceUser {
-  email?: string;
-  name?: string;
-  displayName?: string;
-  role?: string;
-  isVerified?: boolean;
-  [key: string]: any;
-}
-
-interface Farmer {
-  id: number;
-  name: string;
-  farmName?: string;
-  contact: string;
-  address: string;
-  avatar: string;
-}
-
-interface Animal {
-  id: number;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: Farmer;
-  location: string;
-  isAuction?: boolean;
-  startingBid?: number;
-  currentBid?: number;
-  bidCount?: number;
-  endTime?: string;
-  duration?: string;
-  auctionStartTime?: string;
-}
-
-interface Filters {
-  search: string;
-  types: string[];
-  breeds: string[];
-  locations: string[];
-  priceRanges: string[];
-  genders: string[];
-  // New auction-specific filters
-  auctionStatuses: string[];
-  endTimeRanges: string[];
-  bidCountMin: number | null;
-  bidCountMax: number | null;
-  startingBidRanges: string[];
-  auctionDurations: string[];
-  bidActivities: string[];
-}
+import type { Animal, Filters, ServiceUser, BidData, MessageData } from '../../services/animal';
 
 // Props to determine view mode
 const props = defineProps<{
@@ -601,72 +541,6 @@ const animals = ref<Animal[]>([
     endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
     duration: '3-7d',
     auctionStartTime: new Date(Date.now() - 345600000).toISOString() // Started 4 days ago
-  },
-  {
-    id: 7,
-    type: 'Cattle',
-    breed: 'Holstein',
-    weight: 520,
-    quantity: 2,
-    age: '2-3 years',
-    gender: 'Female',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1516467508483-a7212febe31a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Premium Holstein dairy cows, excellent milk production. Vaccinated and health certified.',
-    datePosted: new Date(Date.now() - 86400000).toISOString(),
-    farmer: {
-      id: 8,
-      name: 'Roberto Cruz',
-      farmName: 'Cruz Dairy Farm',
-      contact: '+63 917 555 6666',
-      address: '456 Milk Road, Barangay Dairy, Bataan',
-      avatar: 'https://randomuser.me/api/portraits/men/45.jpg'
-    },
-    location: 'Bataan',
-    isAuction: true,
-    startingBid: 55000,
-    currentBid: 72000,
-    bidCount: 12,
-    endTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-    duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 518400000).toISOString() // Started 6 days ago
-  },
-  {
-    id: 9,
-    type: 'Chicken',
-    breed: 'Rhode Island Red',
-    weight: 2.5,
-    quantity: 50,
-    age: '6 months',
-    gender: 'Female',
-    status: 'Available',
-    price: 0,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Productive laying hens, excellent egg layers. Healthy and disease-free.',
-    datePosted: new Date(Date.now() - 259200000).toISOString(),
-    farmer: {
-      id: 10,
-      name: 'Jose Ramirez',
-      farmName: 'Ramirez Poultry',
-      contact: '+63 918 888 0000',
-      address: '321 Feather Street, Barangay Poultry, Nueva Ecija',
-      avatar: 'https://randomuser.me/api/portraits/men/78.jpg'
-    },
-    location: 'Nueva Ecija',
-    isAuction: true,
-    startingBid: 15000,
-    currentBid: 22500,
-    bidCount: 18,
-    endTime: new Date(Date.now() + 21600000).toISOString(), // 6 hours from now
-    duration: '7-14d',
-    auctionStartTime: new Date(Date.now() - 777600000).toISOString() // Started 9 days ago
   }
 ]);
 
@@ -945,7 +819,7 @@ const closeContactModal = () => {
   selectedAnimalForContact.value = null;
 };
 
-const sendMessage = (messageData: { message: string; contactMethod: string }) => {
+const sendMessage = (messageData: MessageData) => {
   // Here you would typically send the message to a backend service
   // For now, we'll just show a success notification
   showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
@@ -991,7 +865,7 @@ const redirectToLogin = () => {
   router.push('/signin');
 };
 
-const handlePlaceBid = (bidData: { animalId: number; amount: number }) => {
+const handlePlaceBid = (bidData: BidData) => {
   // Find the animal in the list
   const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
   if (animalIndex !== -1) {
