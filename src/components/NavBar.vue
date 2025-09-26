@@ -133,7 +133,7 @@
 
         <!-- Show My Purchases only for buyers in main navbar -->
         <li v-if="user.role.toLowerCase() === 'buyer'">
-          <router-link to="/myPurchases"
+          <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
             <div class="flex items-center gap-1.5 px-1 py-1.5">
@@ -562,7 +562,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="user.role.toLowerCase() === 'buyer'" to="/myPurchases"
+              <router-link v-if="user.role.toLowerCase() === 'buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div

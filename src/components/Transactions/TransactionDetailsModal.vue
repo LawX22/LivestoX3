@@ -1,3 +1,4 @@
+<!-- TransactionDetailsModal.vue -->
 <template>
   <div v-if="transaction" class="fixed inset-0 overflow-hidden z-50">
     <div class="absolute inset-0 overflow-hidden">
@@ -12,7 +13,9 @@
           <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
             <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
               <div class="flex items-start justify-between">
-                <h2 class="text-lg font-medium text-gray-900">Transaction Details</h2>
+                <h2 class="text-lg font-medium text-gray-900">
+                  {{ isFarmerView ? 'Transaction Details' : 'Order Details' }}
+                </h2>
                 <div class="ml-3 h-7 flex items-center">
                   <button 
                     @click="$emit('close')"
@@ -28,6 +31,7 @@
 
               <div class="mt-8">
                 <div class="flow-root">
+                  <!-- Livestock Information -->
                   <div class="border-b border-gray-200 pb-6">
                     <div class="flex items-center">
                       <div class="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden border border-gray-200">
@@ -47,29 +51,41 @@
                     </div>
                   </div>
 
+                  <!-- Person Information (Buyer for Farmer, Seller for Buyer) -->
                   <div class="py-6 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer Information</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                      {{ isFarmerView ? 'Buyer Information' : 'Seller Information' }}
+                    </h3>
                     <div class="flex items-start">
                       <div class="flex-shrink-0">
-                        <img class="h-12 w-12 rounded-full border border-gray-200" :src="transaction.buyer.avatar" alt="">
+                        <img class="h-12 w-12 rounded-full border border-gray-200" :src="getPersonData(transaction).avatar" alt="">
                       </div>
                       <div class="ml-4">
-                        <h4 class="text-sm font-medium text-gray-900">{{ transaction.buyer.name }}</h4>
-                        <p class="text-sm text-gray-500">{{ transaction.buyer.contact }}</p>
-                        <p class="text-sm text-gray-500">{{ transaction.buyer.address }}</p>
+                        <h4 class="text-sm font-medium text-gray-900">{{ getPersonData(transaction).name }}</h4>
+                        <p v-if="isFarmerView" class="text-sm text-gray-500">{{ getPersonData(transaction).contact }}</p>
+                        <p v-if="isFarmerView" class="text-sm text-gray-500">{{ getPersonData(transaction).address }}</p>
+                        <p v-if="!isFarmerView" class="text-sm text-gray-500">{{ getPersonData(transaction).farm }}</p>
+                        <p v-if="!isFarmerView" class="text-sm text-gray-500">{{ getPersonData(transaction).contact }}</p>
                       </div>
                     </div>
                   </div>
 
+                  <!-- Transaction/Order Details -->
                   <div class="py-6 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Details</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                      {{ isFarmerView ? 'Transaction Details' : 'Order Details' }}
+                    </h3>
                     <dl class="space-y-4">
                       <div class="flex items-center justify-between">
-                        <dt class="text-sm text-gray-600">Transaction ID</dt>
+                        <dt class="text-sm text-gray-600">
+                          {{ isFarmerView ? 'Transaction ID' : 'Order ID' }}
+                        </dt>
                         <dd class="text-sm font-medium text-gray-900">{{ transaction.id }}</dd>
                       </div>
                       <div class="flex items-center justify-between">
-                        <dt class="text-sm text-gray-600">Date</dt>
+                        <dt class="text-sm text-gray-600">
+                          {{ isFarmerView ? 'Date' : 'Order Date' }}
+                        </dt>
                         <dd class="text-sm font-medium text-gray-900">{{ formatDate(transaction.date) }}</dd>
                       </div>
                       <div class="flex items-center justify-between">
@@ -88,47 +104,93 @@
                         <dt class="text-sm text-gray-600">Delivery Method</dt>
                         <dd class="text-sm font-medium text-gray-900">{{ transaction.deliveryMethod }}</dd>
                       </div>
+                      
+                      <!-- Buyer-specific fields -->
+                      <template v-if="!isFarmerView">
+                        <div v-if="getBuyerTransaction(transaction)?.trackingNumber" class="flex items-center justify-between">
+                          <dt class="text-sm text-gray-600">Tracking Number</dt>
+                          <dd class="text-sm font-medium text-gray-900">{{ getBuyerTransaction(transaction)?.trackingNumber }}</dd>
+                        </div>
+                        <div v-if="getBuyerTransaction(transaction)?.estimatedDelivery" class="flex items-center justify-between">
+                          <dt class="text-sm text-gray-600">Estimated Delivery</dt>
+                          <dd class="text-sm font-medium text-gray-900">{{ getBuyerTransaction(transaction)?.estimatedDelivery ? formatDate(getBuyerTransaction(transaction)!.estimatedDelivery ?? '') : '' }}</dd>
+                        </div>
+                      </template>
                     </dl>
                   </div>
 
+                  <!-- Message Section -->
                   <div class="py-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Buyer's Message</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                      {{ isFarmerView ? "Buyer's Message" : "Your Message" }}
+                    </h3>
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <p class="text-sm text-gray-700">{{ transaction.message || "No message provided by the buyer." }}</p>
+                      <p class="text-sm text-gray-700">
+                        {{ transaction.message || (isFarmerView ? "No message provided by the buyer." : "No message provided.") }}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            <!-- Action Buttons -->
             <div class="border-t border-gray-200 px-4 py-6 sm:px-6">
               <div class="flex justify-between text-base font-medium text-gray-900 mb-2">
                 <p>Total</p>
                 <p>₱{{ transaction.amount.toLocaleString() }}</p>
               </div>
               <p class="mt-0.5 text-sm text-gray-500 mb-4">Shipping and taxes calculated at checkout.</p>
+              
               <div class="flex space-x-3">
-                <button 
-                  v-if="transaction.status === 'Pending'"
-                  @click="$emit('update-status', transaction.id, 'Accepted')"
-                  class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
-                >
-                  Accept Offer
-                </button>
-                <button 
-                  v-if="transaction.status === 'Pending'"
-                  @click="$emit('update-status', transaction.id, 'Rejected')"
-                  class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
-                >
-                  Reject Offer
-                </button>
-                <button 
-                  v-if="transaction.status !== 'Pending'"
-                  @click="$emit('close')"
-                  class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
-                >
-                  Close
-                </button>
+                <!-- Farmer View Actions -->
+                <template v-if="isFarmerView">
+                  <button 
+                    v-if="transaction.status === 'Pending'"
+                    @click="$emit('updateStatus', transaction.id, 'Accepted')"
+                    class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
+                  >
+                    Accept Offer
+                  </button>
+                  <button 
+                    v-if="transaction.status === 'Pending'"
+                    @click="$emit('updateStatus', transaction.id, 'Rejected')"
+                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
+                  >
+                    Reject Offer
+                  </button>
+                  <button 
+                    v-if="transaction.status !== 'Pending'"
+                    @click="$emit('close')"
+                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
+                  >
+                    Close
+                  </button>
+                </template>
+
+                <!-- Buyer View Actions -->
+                <template v-else>
+                  <button 
+                    v-if="transaction.status === 'Pending'"
+                    @click="$emit('cancelOrder', transaction.id)"
+                    class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
+                  >
+                    Cancel Order
+                  </button>
+                  <button 
+                    v-if="transaction.status === 'Shipped'"
+                    @click="$emit('confirmDelivery', transaction.id)"
+                    class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
+                  >
+                    Confirm Delivery
+                  </button>
+                  <button 
+                    @click="$emit('close')"
+                    class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
+                  >
+                    Close
+                  </button>
+                </template>
               </div>
             </div>
           </div>
@@ -139,41 +201,18 @@
 </template>
 
 <script setup lang="ts">
-interface Livestock {
-  id: number
-  type: string
-  breed: string
-  description: string
-  image: string
-}
-
-interface Buyer {
-  id: number
-  name: string
-  contact: string
-  address: string
-  avatar: string
-}
-
-interface Transaction {
-  id: string
-  livestock: Livestock
-  buyer: Buyer
-  date: string
-  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
-  amount: number
-  paymentMethod: string
-  deliveryMethod: string
-  message?: string
-}
+import type { FarmerTransaction, BuyerTransaction, Transaction } from '../../services/transactions'
 
 interface Props {
   transaction: Transaction | null
+  isFarmerView: boolean
 }
 
 interface Emits {
   (e: 'close'): void
-  (e: 'update-status', id: string, status: 'Accepted' | 'Rejected'): void
+  (e: 'updateStatus', id: string, status: 'Accepted' | 'Rejected'): void
+  (e: 'cancelOrder', id: string): void
+  (e: 'confirmDelivery', id: string): void
 }
 
 defineProps<Props>()
@@ -185,6 +224,30 @@ const closeModalIfClickedOutside = (event: Event) => {
   }
 }
 
+const getPersonData = (transaction: Transaction) => {
+  if ('buyer' in transaction) {
+    // Farmer view - show buyer info
+    return {
+      name: transaction.buyer.name,
+      contact: transaction.buyer.contact,
+      address: transaction.buyer.address,
+      avatar: transaction.buyer.avatar
+    }
+  } else {
+    // Buyer view - show seller info
+    return {
+      name: transaction.seller.name,
+      contact: transaction.seller.contact,
+      farm: transaction.seller.farm,
+      avatar: transaction.seller.avatar
+    }
+  }
+}
+
+const getBuyerTransaction = (transaction: Transaction): BuyerTransaction | null => {
+  return 'seller' in transaction ? transaction : null
+}
+
 const formatDate = (dateString: string): string => {
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
   return new Date(dateString).toLocaleDateString(undefined, options)
@@ -194,8 +257,10 @@ const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300'
     case 'Accepted': return 'bg-blue-100 text-blue-800 border-blue-300'
+    case 'Shipped': return 'bg-purple-100 text-purple-800 border-purple-300'
     case 'Completed': return 'bg-green-100 text-green-800 border-green-300'
     case 'Rejected': return 'bg-red-100 text-red-800 border-red-300'
+    case 'Cancelled': return 'bg-red-100 text-red-800 border-red-300'
     default: return 'bg-gray-100 text-gray-800 border-gray-300'
   }
 }

@@ -17,7 +17,6 @@ import LandingPage from '../views/main/landingPage.vue';
 import AboutUs from '../views/main/AboutUs.vue';
 import Dashboard from '../views/main/Dashboard.vue';
 import Transactions from '../views/main/Transactions.vue';
-import myPurchases from '../views/main/myPurchases.vue';
 import Marketplace from '../views/main/Marketplace.vue';
 import Forum from '../views/main/Forum.vue';
 import Messages from '../views/main/Messages.vue';
@@ -53,7 +52,6 @@ const routes = [
   { path: '/AboutUs', component: AboutUs, name: 'AboutUs' },
   { path: '/dashboard', component: Dashboard, name: 'Dashboard' },
   { path: '/transactions', component: Transactions, name: 'Transactions' },
-  { path: '/myPurchases', component: myPurchases, name: 'myPurchases' },
   { path: '/marketplace', component: Marketplace, name: 'Marketplace' },
   { path: '/forum', component: Forum, name: 'Forum' },
   { path: '/messages', component: Messages, name: 'Messages' },

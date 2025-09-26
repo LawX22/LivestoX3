@@ -477,7 +477,7 @@ const placeOrder = () => {
 }
 
 const goBackToCart = () => router.push('/carts')
-const goTomyPurchase = () => router.push('/myPurchases')
+const goTomyPurchase = () => router.push('/transactions')
 const goToMarketplace = () => router.push('/marketplace')
 
 onMounted(() => loadCheckoutItems())

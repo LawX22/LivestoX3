@@ -1,3 +1,4 @@
+<!-- FiltersSidebar.vue -->
 <template>
   <div :class="`${isExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
     <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
@@ -46,7 +47,13 @@
           <!-- Search -->
           <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
             <div class="relative">
-              <input v-model="localFilters.search" type="text" class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 focus:border-green-500" placeholder="Search..." />
+              <input 
+                v-model="localFilters.search" 
+                type="text" 
+                class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 focus:border-green-500" 
+                placeholder="Search..." 
+                @input="updateFilters"
+              />
               <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                 <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -63,6 +70,7 @@
               </span>
               <span v-for="status in localFilters.statuses" :key="status" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ status }}</span>
               <span v-for="type in localFilters.types" :key="type" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ type }}</span>
+              <span v-if="isBuyerView" v-for="seller in localFilters.sellers" :key="seller" class="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] rounded-full font-medium">{{ seller }}</span>
             </div>
           </div>
         </div>
@@ -85,6 +93,7 @@
                     :value="status" 
                     v-model="localFilters.statuses" 
                     class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                    @change="updateFilters"
                   >
                   <span class="truncate">{{ status }}</span>
                 </label>
@@ -106,8 +115,31 @@
                     :value="type" 
                     v-model="localFilters.types" 
                     class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                    @change="updateFilters"
                   >
                   <span class="truncate">{{ type }}</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Seller Filter (Only for Buyer View) -->
+            <div v-if="isBuyerView && uniqueSellers.length > 0" class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
+              <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Sellers
+              </h3>
+              <div class="space-y-1 max-h-32 overflow-y-auto">
+                <label v-for="seller in uniqueSellers" :key="seller" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-blue-50/50 p-1 rounded cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    :value="seller" 
+                    v-model="localFilters.sellers" 
+                    class="h-3 w-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    @change="updateFilters"
+                  >
+                  <span class="truncate">{{ seller }}</span>
                 </label>
               </div>
             </div>
@@ -123,11 +155,21 @@
               <div class="space-y-2">
                 <div>
                   <label class="text-xs text-gray-600 block mb-1">From</label>
-                  <input v-model="localFilters.dateFrom" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
+                  <input 
+                    v-model="localFilters.dateFrom" 
+                    type="date" 
+                    class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" 
+                    @change="updateFilters"
+                  />
                 </div>
                 <div>
                   <label class="text-xs text-gray-600 block mb-1">To</label>
-                  <input v-model="localFilters.dateTo" type="date" class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" />
+                  <input 
+                    v-model="localFilters.dateTo" 
+                    type="date" 
+                    class="w-full text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500/50" 
+                    @change="updateFilters"
+                  />
                 </div>
               </div>
             </div>
@@ -140,21 +182,16 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-
-interface Filters {
-  search: string
-  statuses: string[]
-  types: string[]
-  dateFrom: string
-  dateTo: string
-}
+import type { Filters } from '../../services/transactions'
 
 interface Props {
   isExpanded: boolean
   filters: Filters
   statusOptions: string[]
   uniqueTypes: string[]
+  uniqueSellers: string[]
   hasActiveFilters: boolean
+  isBuyerView: boolean
 }
 
 interface Emits {
@@ -166,15 +203,15 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Local copy of filters for two-way binding
 const localFilters = ref<Filters>({ ...props.filters })
 
-// Watch for changes in local filters and emit updates
-watch(localFilters, (newFilters) => {
-  emit('update:filters', { ...newFilters })
-}, { deep: true })
-
-// Watch for changes in parent filters and update local filters
+// Update local filters when props change
 watch(() => props.filters, (newFilters) => {
   localFilters.value = { ...newFilters }
 }, { deep: true })
+
+const updateFilters = () => {
+  emit('update:filters', { ...localFilters.value })
+}
 </script>

@@ -288,7 +288,7 @@
                     <h3 class="text-lg font-semibold text-white">Your Recent Purchases</h3>
                     <p class="mt-1 text-xs text-emerald-100">Track your livestock purchases</p>
                   </div>
-                  <router-link to="/myPurchases"
+                  <router-link to="/transactions"
                     class="text-xs font-medium text-white hover:text-emerald-100 flex items-center">
                     View All
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24"
@@ -438,7 +438,7 @@
                     <p class="text-xs font-medium text-gray-700 mt-2">Browse Livestock</p>
                   </router-link>
 
-                  <router-link to="/myPurchases" class="bg-emerald-50 hover:bg-emerald-100 rounded-lg p-4 text-center transition-colors">
+                  <router-link to="/transactions" class="bg-emerald-50 hover:bg-emerald-100 rounded-lg p-4 text-center transition-colors">
                     <div class="bg-emerald-100 text-emerald-600 p-2 rounded-full inline-flex">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
