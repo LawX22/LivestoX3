@@ -120,15 +120,15 @@
             <!-- Upvote Button - Always show, enable for authenticated users -->
             <button 
               @click="handleUpvote"
-              :disabled="!currentUser || isVoting"
+              :disabled="!authStore.isAuthenticated || isVoting"
               class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 shadow-sm"
               :class="{
                 'bg-gradient-to-br from-green-100 to-green-200 text-green-700': question.userVote === 'up',
-                'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-green-50 hover:to-green-100': question.userVote !== 'up' && currentUser,
-                'bg-gray-100 text-gray-400 cursor-not-allowed': !currentUser,
+                'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-green-50 hover:to-green-100': question.userVote !== 'up' && authStore.isAuthenticated,
+                'bg-gray-100 text-gray-400 cursor-not-allowed': !authStore.isAuthenticated,
                 'opacity-50 cursor-wait': isVoting
               }"
-              :title="!currentUser ? 'Login to vote' : (question.userVote === 'up' ? 'Remove upvote' : 'Upvote')"
+              :title="!authStore.isAuthenticated ? 'Login to vote' : (question.userVote === 'up' ? 'Remove upvote' : 'Upvote')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="2">
@@ -144,15 +144,15 @@
             <!-- Downvote Button - Always show, enable for authenticated users -->
             <button 
               @click="handleDownvote"
-              :disabled="!currentUser || isVoting"
+              :disabled="!authStore.isAuthenticated || isVoting"
               class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 shadow-sm"
               :class="{
                 'bg-gradient-to-br from-red-100 to-red-200 text-red-700': question.userVote === 'down',
-                'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-red-50 hover:to-red-100': question.userVote !== 'down' && currentUser,
-                'bg-gray-100 text-gray-400 cursor-not-allowed': !currentUser,
+                'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-red-50 hover:to-red-100': question.userVote !== 'down' && authStore.isAuthenticated,
+                'bg-gray-100 text-gray-400 cursor-not-allowed': !authStore.isAuthenticated,
                 'opacity-50 cursor-wait': isVoting
               }"
-              :title="!currentUser ? 'Login to vote' : (question.userVote === 'down' ? 'Remove downvote' : 'Downvote')"
+              :title="!authStore.isAuthenticated ? 'Login to vote' : (question.userVote === 'down' ? 'Remove downvote' : 'Downvote')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="2">
@@ -161,7 +161,7 @@
             </button>
 
             <!-- Login prompt for non-authenticated users -->
-            <div v-if="!currentUser" class="text-xs text-gray-500 text-center px-2 mt-1">
+            <div v-if="!authStore.isAuthenticated" class="text-xs text-gray-500 text-center px-2 mt-1">
               <p>Login to vote</p>
             </div>
           </div>
@@ -258,7 +258,7 @@
             </button>
 
             <!-- Bookmark Button -->
-            <button v-if="currentUser" @click="$emit('toggleBookmark', question)"
+            <button v-if="authStore.isAuthenticated" @click="$emit('toggleBookmark', question)"
               class="w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-300 shadow-md cursor-pointer"
               :class="bookmarkButtonClass" 
               :aria-label="bookmarkAriaLabel">
@@ -653,9 +653,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { auth } from '../../services/auth-service'
-import type { ModalUser } from '../../services/auth-service'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 
 // Define props interface
 interface ForumQuestion {
@@ -689,12 +688,6 @@ interface ForumQuestion {
   }>
 }
 
-interface User {
-  id?: number
-  email: string
-  role: 'Farmer' | 'Buyer'
-}
-
 // Props
 const props = defineProps<{
   question: ForumQuestion
@@ -711,6 +704,9 @@ const emit = defineEmits([
   'showToast'
 ])
 
+// Auth store
+const authStore = useAuthStore()
+
 // Reactive state
 const showActionsMenu = ref(false)
 const showEditModal = ref(false)
@@ -718,8 +714,6 @@ const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
 const isVoting = ref(false)
-const currentUser = ref<ModalUser | null>(null)
-const isLoadingUser = ref(false)
 
 const editForm = ref({
   title: '',
@@ -727,25 +721,6 @@ const editForm = ref({
   category: '',
   urgency: '',
   visibility: 'all'
-})
-
-// Load user when component mounts
-const loadUser = async (): Promise<void> => {
-  try {
-    isLoadingUser.value = true
-    const user = await auth.getUser()
-    currentUser.value = user
-  } catch (error) {
-    console.error('Failed to load user:', error)
-    currentUser.value = null
-  } finally {
-    isLoadingUser.value = false
-  }
-}
-
-// Watch for user changes
-onMounted(() => {
-  loadUser()
 })
 
 // Computed properties
@@ -866,7 +841,7 @@ const viewsText = computed(() => {
 
 // Check if current user owns this post (for edit/delete permissions)
 const isOwnPost = computed(() => {
-  return currentUser.value && currentUser.value.email === props.question.userEmail
+  return authStore.isAuthenticated && authStore.userEmail === props.question.userEmail
 })
 
 // Only show edit/delete options for post owner
@@ -885,30 +860,30 @@ const isEditFormValid = computed(() => {
   )
 })
 
-// NEW: Vote handling methods
+// Vote handling methods
 const handleUpvote = async () => {
-  if (!currentUser.value || isVoting.value) return
+  if (!authStore.isAuthenticated || isVoting.value) return
   
   isVoting.value = true
   try {
     emit('upvote', props.question)
   } catch (error) {
     console.error('Error handling upvote:', error)
-    emit('showToast', { type: 'error', message: 'Failed to vote. Please try again.' })
+    emit('showToast', 'Failed to vote. Please try again.')
   } finally {
     isVoting.value = false
   }
 }
 
 const handleDownvote = async () => {
-  if (!currentUser.value || isVoting.value) return
+  if (!authStore.isAuthenticated || isVoting.value) return
   
   isVoting.value = true
   try {
     emit('downvote', props.question)
   } catch (error) {
     console.error('Error handling downvote:', error)
-    emit('showToast', { type: 'error', message: 'Failed to vote. Please try again.' })
+    emit('showToast', 'Failed to vote. Please try again.')
   } finally {
     isVoting.value = false
   }
@@ -952,7 +927,7 @@ const submitEdit = async () => {
     closeEditModal()
   } catch (error) {
     console.error('Error updating question:', error)
-    emit('showToast', { type: 'error', message: 'Failed to update question. Please try again.' })
+    emit('showToast', 'Failed to update question. Please try again.')
   } finally {
     isSubmitting.value = false
   }
@@ -977,7 +952,7 @@ const confirmDelete = async () => {
     closeDeleteModal()
   } catch (error) {
     console.error('Error deleting question:', error)
-    emit('showToast', { type: 'error', message: 'Failed to delete question. Please try again.' })
+    emit('showToast', 'Failed to delete question. Please try again.')
   } finally {
     isDeleting.value = false
   }

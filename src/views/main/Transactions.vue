@@ -1,3 +1,4 @@
+<!-- Transactions.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -233,7 +234,7 @@
     <!-- Info Modal Component -->
     <InfoModal
       :show="showInfoModal"
-      :current-user-role="currentUser?.role"
+      :current-user-role="authStore.userRole"
       @close="showInfoModal = false"
     />
 
@@ -266,23 +267,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import NavBar from '@/components/NavBar.vue'
 import FiltersSidebar from '@/components/Transactions/FilterSidebar.vue'
 import TransactionDetailsModal from '@/components/Transactions/TransactionDetailsModal.vue'
 import TransactionsTable from '@/components/Transactions/TransactionsTable.vue'
 import InfoModal from '@/components/Transactions/InfoModal.vue'
 import type { FarmerTransaction, BuyerTransaction, Transaction, Filters } from '@/services/transactions'
-import { auth } from '@/services/auth-service'
-import type { User } from '@/services/auth-service'
-import { supabase } from '@/supabase'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-// User state using auth-service
-const currentUser = ref<User | null>(null)
-const userIsFarmer = ref(false)
-const userIsBuyer = ref(false)
-const userIsAdmin = ref(false)
+// User state computed from authStore
+const userIsFarmer = computed(() => authStore.userRole === 'farmer')
+const userIsBuyer = computed(() => authStore.userRole === 'buyer' || authStore.userRole === 'user')
+const userIsAdmin = computed(() => authStore.userRole === 'admin')
 
 // Reactive state
 const currentView = ref<'farmer' | 'buyer'>('buyer')
@@ -305,39 +304,6 @@ const filters = ref<Filters>({
 // Sample data - both sets are loaded for farmers and admins
 const farmerTransactions = ref<FarmerTransaction[]>([])
 const buyerTransactions = ref<BuyerTransaction[]>([])
-
-// Load user data using auth-service
-const loadUser = async () => {
-  try {
-    const user = await auth.getCurrentUser()
-    currentUser.value = user
-    
-    if (currentUser.value) {
-      // Determine user role and set appropriate flags
-      userIsFarmer.value = currentUser.value.role === 'farmer'
-      userIsBuyer.value = currentUser.value.role === 'buyer'
-      
-      // Set initial view based on user role
-      if (userIsFarmer.value || userIsAdmin.value) {
-        currentView.value = 'farmer' // Farmers and Admins see farmer view by default
-      } else {
-        currentView.value = 'buyer' // Buyers see buyer view only
-      }
-      
-      console.log(`User detected: ${currentUser.value.email} (${currentUser.value.role})`)
-    } else {
-      // Fallback if no user is logged in
-      console.warn('No user logged in. Defaulting to buyer view.')
-      userIsBuyer.value = true
-      currentView.value = 'buyer'
-    }
-  } catch (error) {
-    console.error('Error loading user in Transactions:', error)
-    currentUser.value = null
-    userIsBuyer.value = true
-    currentView.value = 'buyer'
-  }
-}
 
 // Computed properties
 const currentTransactions = computed(() => {
@@ -541,114 +507,77 @@ const loadTransactionData = () => {
         paymentMethod: 'Cash on Delivery',
         deliveryMethod: 'Pickup',
         message: 'I would like to visit your farm to see the cattle before finalizing the purchase.'
-      },
-      {
-        id: 'TXN-78902',
-        livestock: {
-          id: 2,
-          type: 'Goat',
-          breed: 'Boer',
-          description: 'Premium Boer goats, 1 year old',
-          image: 'https://images.unsplash.com/photo-1551986784-294b14e8ee93?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-        },
-        buyer: {
-          id: 102,
-          name: 'Maria Santos',
-          contact: '+63 918 765 4321',
-          address: '456 Oak St, Cebu City',
-          avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 5).toISOString(),
-        status: 'Completed',
-        amount: 15000,
-        paymentMethod: 'Bank Transfer',
-        deliveryMethod: 'Delivery'
       }
     ]
   }
 
-  // Load buyer transactions (purchases) - all users can have purchases
+  // Load buyer transactions (purchases) - available to all user types
   buyerTransactions.value = [
     {
-      id: 'ORD-45123',
+      id: 'ORD-56789',
       livestock: {
-        id: 3,
-        type: 'Pig',
-        breed: 'Duroc',
-        description: 'High-quality Duroc pigs, 6 months old',
-        image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+        id: 5,
+        type: 'Cattle',
+        breed: 'Holstein',
+        description: 'Dairy cattle, excellent milk production',
+        image: 'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
       },
       seller: {
         id: 201,
-        name: 'Roberto Reyes',
-        contact: '+63 917 555 1234',
-        avatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-        farm: 'Reyes Family Farm',
-        address: 'Tarlac, Philippines'
+        name: 'Green Valley Farm',
+        farm: 'Green Valley Dairy',
+        contact: '+63 917 555 0123',
+        address: 'Km 15 National Highway, Laguna',
+        avatar: 'https://randomuser.me/api/portraits/men/78.jpg'
       },
       date: new Date(Date.now() - 86400000 * 1).toISOString(),
-      status: 'Shipped',
-      amount: 25000,
+      status: 'Pending',
+      amount: 85000,
       paymentMethod: 'Cash on Delivery',
       deliveryMethod: 'Delivery',
-      message: 'Please handle with care during transport.',
-      trackingNumber: 'TRK-789456123',
-      estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString()
-    },
-    {
-      id: 'ORD-45124',
-      livestock: {
-        id: 4,
-        type: 'Chicken',
-        breed: 'Rhode Island Red',
-        description: 'Free-range chickens, 4 months old',
-        image: 'https://images.unsplash.com/photo-1589923188657-1c6c0d4f1c3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-      },
-      seller: {
-        id: 202,
-        name: 'Lorna Dimatulac',
-        contact: '+63 919 888 7777',
-        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-        farm: 'Dimatulac Poultry Farm',
-        address: 'Bulacan, Philippines'
-      },
-      date: new Date(Date.now() - 86400000 * 7).toISOString(),
-      status: 'Completed',
-      amount: 8000,
-      paymentMethod: 'GCash',
-      deliveryMethod: 'Pickup'
+      estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString(),
+      trackingNumber: 'TRK-2024-002'
     }
   ]
+}
 
-  // If user is only a buyer (not farmer or admin), clear farmer transactions
+// Set initial view based on user role
+const setInitialView = () => {
   if (userIsBuyer.value && !userIsFarmer.value && !userIsAdmin.value) {
-    farmerTransactions.value = []
+    // Pure buyers can only see buyer view
+    currentView.value = 'buyer'
+  } else if (userIsFarmer.value || userIsAdmin.value) {
+    // Farmers and admins default to farmer view but can switch
+    currentView.value = 'farmer'
+  } else {
+    // Default to buyer view
+    currentView.value = 'buyer'
   }
 }
 
-// Initialize data and user detection
-onMounted(async () => {
-  await loadUser()
+// Watch for auth changes and reload data
+watch(() => authStore.user, () => {
+  setInitialView()
   loadTransactionData()
+}, { immediate: false })
 
-  // Listen for auth state changes
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      loadUser()
-      loadTransactionData()
-    } else if (event === 'SIGNED_OUT') {
-      currentUser.value = null
-      userIsFarmer.value = false
-      userIsBuyer.value = false
-      userIsAdmin.value = false
-      currentView.value = 'buyer'
-      loadTransactionData()
-    }
-  })
+// Lifecycle
+onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+  
+  setInitialView()
+  loadTransactionData()
 })
 
-// Watch for user changes to reload transaction data
-watch(currentUser, () => {
-  loadTransactionData()
+// Auto-hide toast after 4 seconds
+watch(showToast, (newVal) => {
+  if (newVal) {
+    setTimeout(() => {
+      showToast.value = false
+    }, 4000)
+  }
 })
 </script>

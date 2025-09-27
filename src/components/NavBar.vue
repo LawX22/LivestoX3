@@ -42,7 +42,7 @@
 
     <ul class="hidden md:flex gap-6 text-sm font-medium items-center">
       <!-- Show Home and About Us only for guests -->
-      <template v-if="!user">
+      <template v-if="!authStore.user">
         <li>
           <router-link to="/"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -112,9 +112,9 @@
       </li>
 
       <!-- Additional links for logged-in users -->
-      <template v-if="user">
+      <template v-if="authStore.user">
         <!-- Show Transactions only for farmers in main navbar -->
-        <li v-if="user.role && user.role.toLowerCase() === 'farmer'">
+        <li v-if="authStore.userRole === 'farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -132,7 +132,7 @@
         </li>
 
         <!-- Show My Purchases only for buyers in main navbar -->
-        <li v-if="user.role && user.role.toLowerCase() === 'buyer'">
+        <li v-if="authStore.userRole === 'buyer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -170,7 +170,7 @@
     <!-- Right: Auth or User Info -->
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Notification and Message Icons (only shown when logged in) -->
-      <template v-if="user">
+      <template v-if="authStore.user">
         <!-- Cart Button -->
         <div class="relative">
           <router-link to="/carts"
@@ -184,11 +184,12 @@
               </svg>
               <span
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                3
+                {{ authStore.cartCount }}
               </span>
             </div>
           </router-link>
         </div>
+        
         <!-- Notification Dropdown -->
         <div class="relative" ref="notificationRef">
           <button @click="toggleNotificationDropdown"
@@ -200,9 +201,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              <span v-if="unreadNotifications > 0"
+              <span v-if="authStore.unreadNotifications > 0"
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ unreadNotifications }}
+                {{ authStore.unreadNotifications }}
               </span>
             </div>
           </button>
@@ -214,17 +215,17 @@
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Notifications
-                <span v-if="unreadNotifications > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
-                  {{ unreadNotifications }} new
+                <span v-if="authStore.unreadNotifications > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
+                  {{ authStore.unreadNotifications }} new
                 </span>
               </h3>
             </div>
 
             <div class="max-h-80 overflow-y-auto">
-              <!-- Notification Item 1 -->
-              <a href="#"
+              <!-- Notification Items -->
+              <a v-for="notification in authStore.recentNotifications" :key="notification.id" href="#"
                 class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('notification', 1)">
+                @click.prevent="markAsRead('notification', notification.id)">
                 <div class="flex-shrink-0">
                   <div
                     class="w-12 h-12 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
@@ -236,10 +237,10 @@
                 </div>
                 <div class="ml-4 flex-1">
                   <p class="text-sm font-semibold text-gray-900 mb-1">
-                    Order #1234 has been confirmed
+                    {{ notification.title }}
                   </p>
                   <p class="text-xs text-gray-600 mb-2">
-                    Your recent order has been confirmed by the seller.
+                    {{ notification.message }}
                   </p>
                   <p class="text-xs text-green-600 font-medium flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
@@ -247,74 +248,22 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    2 hours ago
+                    {{ formatTime(notification.timestamp) }}
                   </p>
                 </div>
               </a>
 
-              <!-- Notification Item 2 -->
-              <a href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('notification', 2)">
-                <div class="flex-shrink-0">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
+              <!-- Empty State -->
+              <div v-if="authStore.recentNotifications.length === 0" class="px-6 py-8 text-center">
+                <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
                 </div>
-                <div class="ml-4 flex-1">
-                  <p class="text-sm font-semibold text-gray-900 mb-1">
-                    Reminder: Payment due
-                  </p>
-                  <p class="text-xs text-gray-600 mb-2">
-                    Your payment for order #1234 is due tomorrow.
-                  </p>
-                  <p class="text-xs text-blue-600 font-medium flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    1 day ago
-                  </p>
-                </div>
-              </a>
-
-              <!-- Notification Item 3 -->
-              <a href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('notification', 3)">
-                <div class="flex-shrink-0">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="ml-4 flex-1">
-                  <p class="text-sm font-semibold text-gray-900 mb-1">
-                    New marketplace feature
-                  </p>
-                  <p class="text-xs text-gray-600 mb-2">
-                    Check out our new livestock tracking feature!
-                  </p>
-                  <p class="text-xs text-yellow-600 font-medium flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    3 days ago
-                  </p>
-                </div>
-              </a>
+                <p class="text-sm text-gray-500">No notifications yet</p>
+              </div>
             </div>
 
             <div class="bg-gray-50">
@@ -338,9 +287,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <span v-if="unreadMessages > 0"
+              <span v-if="authStore.unreadMessages > 0"
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ unreadMessages }}
+                {{ authStore.unreadMessages }}
               </span>
             </div>
           </button>
@@ -352,96 +301,52 @@
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Messages
-                <span v-if="unreadMessages > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
-                  {{ unreadMessages }} new
+                <span v-if="authStore.unreadMessages > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
+                  {{ authStore.unreadMessages }} new
                 </span>
               </h3>
             </div>
 
             <div class="max-h-80 overflow-y-auto">
-              <!-- Message Item 1 -->
-              <a href="#"
+              <!-- Message Items -->
+              <a v-for="message in authStore.recentMessages" :key="message.id" href="#"
                 class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('message', 1)">
+                @click.prevent="markAsRead('message', message.id)">
                 <div class="flex-shrink-0 mr-4">
                   <div
                     class="w-12 h-12 rounded-xl bg-gradient-to-r from-gray-400 to-gray-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <span class="text-sm font-bold text-white">JD</span>
+                    <span class="text-sm font-bold text-white">{{ getInitials(message.sender_name) }}</span>
                   </div>
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="flex justify-between items-start mb-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">John Doe</p>
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ message.sender_name }}</p>
                     <span class="text-xs text-green-600 font-medium whitespace-nowrap ml-2 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      30 min ago
+                      {{ formatTime(message.timestamp) }}
                     </span>
                   </div>
                   <p class="text-xs text-gray-600 truncate">
-                    Hi there! I'm interested in your livestock. Can we discuss the price?
+                    {{ message.content }}
                   </p>
                 </div>
               </a>
 
-              <!-- Message Item 2 -->
-              <a href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('message', 2)">
-                <div class="flex-shrink-0 mr-4">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <span class="text-sm font-bold text-white">AS</span>
-                  </div>
+              <!-- Empty State -->
+              <div v-if="authStore.recentMessages.length === 0" class="px-6 py-8 text-center">
+                <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex justify-between items-start mb-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">Agri Suppliers</p>
-                    <span class="text-xs text-blue-600 font-medium whitespace-nowrap ml-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      2 hours ago
-                    </span>
-                  </div>
-                  <p class="text-xs text-gray-600 truncate">
-                    Your order #1234 has been shipped. Tracking number: XYZ123
-                  </p>
-                </div>
-              </a>
-
-              <!-- Message Item 3 -->
-              <a href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('message', 3)">
-                <div class="flex-shrink-0 mr-4">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-400 to-purple-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <span class="text-sm font-bold text-white">LS</span>
-                  </div>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex justify-between items-start mb-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">Livestock Support</p>
-                    <span class="text-xs text-purple-600 font-medium whitespace-nowrap ml-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      1 day ago
-                    </span>
-                  </div>
-                  <p class="text-xs text-gray-600 truncate">
-                    Your support ticket #4567 has been resolved. Please let us know if you need anything else.
-                  </p>
-                </div>
-              </a>
+                <p class="text-sm text-gray-500">No messages yet</p>
+              </div>
             </div>
 
             <div class="bg-gray-50">
@@ -456,7 +361,7 @@
       </template>
 
       <!-- Logged in -->
-      <template v-if="user">
+      <template v-if="authStore.user">
         <div>
           <div
             class="flex items-center cursor-pointer gap-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 px-4 py-2 rounded-xl transition-all duration-300 group border border-transparent hover:border-green-200"
@@ -466,7 +371,7 @@
               <div
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <span class="text-sm font-bold text-white">
-                  {{ getInitials(user.firstName, user.lastName) }}
+                  {{ authStore.userInitials }}
                 </span>
               </div>
               <div
@@ -477,11 +382,11 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ user.firstName || 'User' }} {{ user.lastName || 'Name' }}
+                {{ authStore.userFullName }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
-                {{ user.role?.toLowerCase() || 'user' }}
+                {{ authStore.userRole }}
               </p>
             </div>
 
@@ -508,15 +413,15 @@
                     <div
                       class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <span class="text-base font-bold text-white">
-                        {{ getInitials(user.firstName, user.lastName) }}
+                        {{ authStore.userInitials }}
                       </span>
                     </div>
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ user.firstName || 'User' }} {{ user.lastName || 'Name' }}
+                      {{ authStore.userFullName }}
                     </p>
-                    <p class="text-xs text-green-100 truncate mb-2">{{ user.email }}</p>
+                    <p class="text-xs text-green-100 truncate mb-2">{{ authStore.userEmail }}</p>
                     <p
                       class="text-xs text-white font-medium flex items-center group-hover:translate-x-1 transition-transform duration-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
@@ -547,7 +452,7 @@
               </router-link>
 
               <!-- Show Transactions only for farmers in dropdown -->
-              <router-link v-if="user.role && user.role.toLowerCase() === 'farmer'" to="/transactions"
+              <router-link v-if="authStore.userRole === 'farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -562,7 +467,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="user.role && user.role.toLowerCase() === 'buyer'" to="/transactions"
+              <router-link v-if="authStore.userRole === 'buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -594,8 +499,8 @@
             </div>
 
             <div class="border-t border-gray-200 p-2">
-              <button @click="confirmLogout"
-                class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 text-left rounded-xl group">
+              <button @click="showLogoutModal = true"
+                class="flex cursor-pointer items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 text-left rounded-xl group">
                 <div
                   class="w-8 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
@@ -640,61 +545,51 @@
   </nav>
 
   <!-- Logout Confirmation Modal -->
-  <div v-if="showLogoutModal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] transition-opacity duration-300">
-    <div
-      class="bg-white rounded-2xl p-8 max-w-md w-mx-4 shadow-2xl transform transition-transform duration-300 scale-100">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-center mb-6">
-        <div class="w-16 h-16 bg-gradient-to-r from-red-400 to-pink-500 rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  <div v-if="showLogoutModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <!-- Dimmer glass backdrop that blocks clicks -->
+    <div class="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300" @click="showLogoutModal = false"></div>
+    
+    <!-- Simple Modal -->
+    <div class="relative bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-sm" @click.stop>
+      <!-- Modal Content -->
+      <div class="p-6 text-center">
+        <div class="w-12 h-12 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </div>
-      </div>
-
-      <!-- Modal Content -->
-      <div class="text-center mb-8">
-        <h3 class="text-xl font-bold text-gray-900 mb-3">Sign Out Confirmation</h3>
-        <p class="text-gray-600 text-sm leading-relaxed">
-          Are you sure you want to sign out? You'll need to sign in again to access your account and continue using
-          LivestoX.
+        
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">
+          Sign out?
+        </h3>
+        <p class="text-sm text-gray-600 mb-6">
+          Are you sure you want to sign out?
         </p>
-      </div>
-
-      <!-- Modal Actions -->
-      <div class="flex gap-3">
-        <button @click="cancelLogout"
-          class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-200">
-          Cancel
-        </button>
-        <button @click="performLogout"
-          class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-pink-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-200 shadow-lg hover:shadow-xl">
-          <span class="flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+        
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button @click="showLogoutModal = false"
+            class="flex-1 cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+            Cancel
+          </button>
+          
+          <button @click="handleLogout"
+            class="flex-1 cursor-pointer px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200">
             Sign Out
-          </span>
-        </button>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { auth } from '@/services/auth-service';
-import type { User } from '@/services/auth-service';
-import { supabase } from '@/supabase';
+import { useAuthStore } from "@/stores/authStore";
 
 const router = useRouter();
-const user = ref<User | null>(null);
+const authStore = useAuthStore();
 
 const showDropdown = ref(false);
 const showNotificationDropdown = ref(false);
@@ -703,133 +598,125 @@ const showLogoutModal = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
-const unreadNotifications = ref(3);
-const unreadMessages = ref(1);
 
-// Load user data
-const loadUser = async () => {
-  try {
-    const currentUser = await auth.getCurrentUser();
-    user.value = currentUser;
-  } catch (error) {
-    console.error('Error loading user in NavBar:', error);
-    user.value = null;
-  }
-};
-
-onMounted(() => {
-  loadUser();
+onMounted(async () => {
+  // Initialize auth session
+  await authStore.getSession();
   
-  // Listen for auth state changes
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      loadUser();
-    } else if (event === 'SIGNED_OUT') {
-      user.value = null;
-    }
-  });
-
+  // Add event listeners
   document.addEventListener("click", handleClickOutside);
+  document.addEventListener("keydown", handleKeyDown);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("keydown", handleKeyDown);
 });
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Close modal with Escape key
+  if (event.key === "Escape") {
+    showLogoutModal.value = false;
+    showDropdown.value = false;
+    showNotificationDropdown.value = false;
+    showMessageDropdown.value = false;
+  }
+};
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
+  // Close other dropdowns when opening this one
   if (showDropdown.value) {
     showNotificationDropdown.value = false;
     showMessageDropdown.value = false;
   }
-}
+};
 
 const toggleNotificationDropdown = () => {
   showNotificationDropdown.value = !showNotificationDropdown.value;
+  // Close other dropdowns when opening this one
   if (showNotificationDropdown.value) {
     showDropdown.value = false;
     showMessageDropdown.value = false;
   }
-}
+};
 
 const toggleMessageDropdown = () => {
   showMessageDropdown.value = !showMessageDropdown.value;
+  // Close other dropdowns when opening this one
   if (showMessageDropdown.value) {
     showDropdown.value = false;
     showNotificationDropdown.value = false;
   }
-}
+};
 
 const closeDropdown = () => {
   showDropdown.value = false;
-}
+};
 
 const closeNotificationDropdown = () => {
   showNotificationDropdown.value = false;
-}
+};
 
 const closeMessageDropdown = () => {
   showMessageDropdown.value = false;
-}
+};
 
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as Node;
 
+  // Close dropdown if clicked outside
   if (dropdownRef.value && !dropdownRef.value.contains(target)) {
     showDropdown.value = false;
   }
 
+  // Close notification dropdown if clicked outside
   if (notificationRef.value && !notificationRef.value.contains(target)) {
     showNotificationDropdown.value = false;
   }
 
+  // Close message dropdown if clicked outside
   if (messageRef.value && !messageRef.value.contains(target)) {
     showMessageDropdown.value = false;
   }
-}
+};
 
-const markAsRead = (type: "notification" | "message", id: number) => {
+const markAsRead = async (type: "notification" | "message", id: string | number) => {
   if (type === "notification") {
-    console.log(`Marking notification ${id} as read`);
-    unreadNotifications.value = Math.max(0, unreadNotifications.value - 1);
+    await authStore.markNotificationAsRead(id);
     closeNotificationDropdown();
   } else {
-    console.log(`Marking message ${id} as read`);
-    unreadMessages.value = Math.max(0, unreadMessages.value - 1);
+    await authStore.markMessageAsRead(id);
     closeMessageDropdown();
   }
-}
+};
 
-// Logout confirmation methods
-const confirmLogout = () => {
-  showLogoutModal.value = true;
-  showDropdown.value = false;
-}
+const formatTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+  
+  if (diffInHours < 1) {
+    return 'Just now';
+  } else if (diffInHours < 24) {
+    return `${diffInHours} hours ago`;
+  } else {
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  }
+};
 
-const cancelLogout = () => {
-  showLogoutModal.value = false;
-}
+const getInitials = (name: string) => {
+  return name.split(' ').map(part => part.charAt(0)).join('').toUpperCase().substring(0, 2);
+};
 
-const performLogout = async () => {
+const handleLogout = async () => {
   try {
-    await auth.signOut();
-    user.value = null;
+    await authStore.logout();
     showLogoutModal.value = false;
+    showDropdown.value = false;
     router.push("/");
   } catch (error) {
-    console.error('Error signing out:', error);
-    showLogoutModal.value = false;
+    console.error("Logout failed:", error);
   }
-}
-
-const getInitials = (firstName?: string, lastName?: string) => {
-  const first = firstName?.charAt(0) || '';
-  const last = lastName?.charAt(0) || '';
-  
-  if (!first && !last) {
-    return 'U'; // Default initial if no name
-  }
-  
-  return `${first}${last}`.toUpperCase();
-}
+};
 </script>

@@ -51,15 +51,15 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="isSubmitting || isLoadingUser" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center">
+        <div v-if="isSubmitting" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center">
           <div class="text-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-            <p class="text-sm text-gray-600">{{ isLoadingUser ? 'Loading user...' : 'Posting your question...' }}</p>
+            <p class="text-sm text-gray-600">Posting your question...</p>
           </div>
         </div>
 
         <!-- User Not Logged In Message -->
-        <div v-if="!isLoadingUser && !currentUser" class="p-8 text-center">
+        <div v-if="!authStore.isAuthenticated" class="p-8 text-center">
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -76,7 +76,7 @@
         </div>
 
         <!-- Form Content -->
-        <div v-else-if="currentUser" class="p-4 overflow-y-auto" style="max-height: calc(95vh - 80px);">
+        <div v-else class="p-4 overflow-y-auto" style="max-height: calc(95vh - 80px);">
           <form @submit.prevent="handleSubmit" class="space-y-3">
             <!-- User Info Banner -->
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
@@ -87,7 +87,7 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="text-xs text-green-800">Posting as <span class="font-semibold">{{ currentUser.email }}</span> ({{ currentUser.role }})</p>
+                  <p class="text-xs text-green-800">Posting as <span class="font-semibold">{{ authStore.userEmail }}</span> ({{ authStore.userRole }})</p>
                 </div>
               </div>
             </div>
@@ -322,11 +322,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import { forumService } from '../../services/forumService'
-import { auth } from '../../services/auth-service'
 import type { NewQuestion } from '../../services/forumService'
-import type { ModalUser } from '../../services/auth-service'
 
 // Type definitions
 interface QuestionForm {
@@ -348,10 +347,11 @@ const emits = defineEmits<{
   (e: 'showToast', message: string): void;
 }>();
 
+// Auth store
+const authStore = useAuthStore();
+
 // State
 const isSubmitting = ref(false);
-const isLoadingUser = ref(false);
-const currentUser = ref<ModalUser | null>(null);
 const question = ref<QuestionForm>({
   title: '',
   description: '',
@@ -360,28 +360,11 @@ const question = ref<QuestionForm>({
   visibility: 'all'
 });
 
-// Load user when component mounts or modal opens
-const loadUser = async (): Promise<void> => {
-  if (!props.visible) return;
-  
-  try {
-    isLoadingUser.value = true;
-    const user = await auth.getUser();
-    currentUser.value = user;
-  } catch (error) {
-    console.error('Failed to load user:', error);
-    currentUser.value = null;
-  } finally {
-    isLoadingUser.value = false;
-  }
-};
-
-// Watch for visibility changes to load user and reset form
+// Watch for visibility changes to reset form
 watch(
   () => props.visible,
   (val) => {
     if (val) {
-      loadUser();
       // Reset form when modal opens
       question.value = {
         title: '',
@@ -414,7 +397,7 @@ const closeModal = (): void => {
 };
 
 const handleSubmit = async (): Promise<void> => {
-  if (!isFormValid.value || isSubmitting.value || !currentUser.value) return;
+  if (!isFormValid.value || isSubmitting.value || !authStore.isAuthenticated) return;
 
   try {
     isSubmitting.value = true;
@@ -431,8 +414,8 @@ const handleSubmit = async (): Promise<void> => {
     // Submit to Supabase via forumService
     const createdQuestion = await forumService.createQuestion(
       newQuestionData,
-      currentUser.value.email,
-      currentUser.value.role
+      authStore.userEmail,
+      authStore.userRole
     );
 
     // Emit the created question to parent

@@ -1,13 +1,6 @@
 <!-- UnifiedDashboard.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
-    <!-- Loading State -->
-    <div v-if="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
-        <p class="mt-4 text-emerald-600 font-medium">Loading dashboard...</p>
-      </div>
-    </div>
 
     <!-- Error State -->
     <div v-if="error" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -22,8 +15,8 @@
             <button @click="retryLoad" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700">
               Try Again
             </button>
-            <button @click="goToLogin" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
-              Go to Login
+            <button @click="resetDashboard" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+              Reset
             </button>
           </div>
         </div>
@@ -31,7 +24,7 @@
     </div>
 
     <!-- Main Dashboard Content -->
-    <div v-if="!loading && !error && user">
+    <div v-if="!error && user">
       <!-- Sticky NavBar -->
       <div class="fixed top-0 left-0 right-0 z-50">
         <NavBar />
@@ -88,15 +81,6 @@
                 </div>
               </div>
 
-              <!-- Dashboard Type Toggle (only show if user has multiple roles) -->
-              <div v-if="canToggleRole" class="flex items-center space-x-2">
-                <button 
-                  @click="toggleDashboardType"
-                  class="text-xs font-medium text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-md border border-white/30">
-                  Switch to {{ dashboardType === 'farmer' ? 'Buyer' : 'Farmer' }}
-                </button>
-              </div>
-
               <!-- Right side - User info and refresh button -->
               <div class="flex items-center space-x-4">
                 <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
@@ -127,7 +111,6 @@
             :refreshing="refreshing"
             :time-range="timeRange"
             @refresh="refreshData"
-            @toggle-role="toggleDashboardType"
             @time-range-change="setTimeRange"
           />
           <BuyerDashboard
@@ -140,7 +123,6 @@
             :refreshing="refreshing"
             :time-range="timeRange"
             @refresh="refreshData"
-            @toggle-role="toggleDashboardType"
             @time-range-change="setTimeRange"
           />
         </div>
@@ -152,12 +134,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import NavBar from '@/components/NavBar.vue'
 import FarmerDashboard from '@/components/Dashboard/FarmerDashboard.vue'
 import BuyerDashboard from '@/components/Dashboard/BuyerDashboard.vue'
-import type { User, Stats, TableItem, Message } from '@/services/dashboard'
-import { auth } from '@/services/auth-service'
-import { supabase } from '@/supabase'
+
+// Import types from the external dashboard service
+import type { 
+  User, 
+  Stats, 
+  TableItem, 
+  Message, 
+} from '@/services/dashboard'
 
 // Props
 interface Props {
@@ -169,30 +157,53 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // State
-const loading = ref(true)
+const loading = ref(false)
 const error = ref<string | null>(null)
 const refreshing = ref(false)
-const user = ref<User | null>(null)
-const dashboardType = ref<'farmer' | 'buyer'>(props.userType)
 const timeRange = ref('monthly')
 const stats = ref<Stats>({})
 const tableData = ref<TableItem[]>([])
 const messages = ref<Message[]>([])
 const lastUpdated = ref(new Date().toLocaleString())
 
-// Router
+// Router and Store
 const router = useRouter()
+const authStore = useAuthStore()
 
-// Computed Properties
-const userRole = computed(() => user.value?.role || 'farmer')
-const userName = computed(() => {
-  if (user.value?.first_name && user.value?.last_name) {
-    return `${user.value.first_name} ${user.value.last_name}`
+// Transform authStore user to dashboard User type
+const user = computed<User | null>(() => {
+  if (!authStore.user || !authStore.isAuthenticated) return null
+  
+  return {
+    id: authStore.userId || '',
+    email: authStore.userEmail || '',
+    role: (authStore.userRole as 'farmer' | 'buyer' | 'both') || 'farmer',
+    first_name: authStore.userMetadata?.first_name || authStore.userMetadata?.firstName || '',
+    last_name: authStore.userMetadata?.last_name || authStore.userMetadata?.lastName || '',
+    username: authStore.userName || authStore.userMetadata?.username || '',
+    created_at: authStore.user.created_at || ''
   }
-  return user.value?.username || user.value?.email?.split('@')[0] || 'User'
 })
 
-const canToggleRole = computed(() => user.value?.role === 'both')
+// Computed Properties - FIXED: Now properly determines dashboard type based on user role
+const userRole = computed(() => user.value?.role || 'farmer')
+
+// Determine dashboard type based on user role, not props
+const dashboardType = computed<'farmer' | 'buyer'>(() => {
+  if (!user.value) return 'farmer'
+  
+  // If user has both roles, use the prop or default to farmer
+  if (user.value.role === 'both') {
+    return props.userType
+  }
+  
+  // Otherwise use the user's actual role
+  return user.value.role === 'buyer' ? 'buyer' : 'farmer'
+})
+
+const userName = computed(() => {
+  return authStore.userDisplayName || 'User'
+})
 
 const dashboardTitle = computed(() => {
   return dashboardType.value === 'farmer' ? 'Farmer Dashboard' : 'Buyer Dashboard'
@@ -214,13 +225,6 @@ const setTimeRange = (range: string) => {
   loadAnalyticsData()
 }
 
-const toggleDashboardType = () => {
-  if (canToggleRole.value) {
-    dashboardType.value = dashboardType.value === 'farmer' ? 'buyer' : 'farmer'
-    loadDashboardData()
-  }
-}
-
 const refreshData = async () => {
   refreshing.value = true
   try {
@@ -236,30 +240,15 @@ const retryLoad = () => {
   loadDashboardData()
 }
 
-const goToLogin = () => {
-  router.push('/login')
+const resetDashboard = () => {
+  error.value = null
+  stats.value = {}
+  tableData.value = []
+  messages.value = []
+  loadDashboardData()
 }
 
 // Data Loading Functions
-const getCurrentUser = async (): Promise<User | null> => {
-  try {
-    const currentUser = await auth.getCurrentUser()
-    
-    if (!currentUser) {
-      console.log('No user found, redirecting to login')
-      router.push('/login')
-      return null
-    }
-
-    return currentUser
-  } catch (err) {
-    console.error('Error getting current user:', err)
-    // Redirect to login on error
-    router.push('/login')
-    return null
-  }
-}
-
 const loadStats = async () => {
   try {
     // Simulate API call
@@ -382,16 +371,29 @@ const loadMessages = async () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 200))
     
-    messages.value = [
-      {
-        id: '1',
-        name: 'John Buyer',
-        message: 'Interested in your Angus cattle. Are they available for immediate purchase?',
-        time: '2 hours ago',
-        avatar: '/api/placeholder/32/32',
-        unread: true
-      }
-    ]
+    if (dashboardType.value === 'farmer') {
+      messages.value = [
+        {
+          id: '1',
+          name: 'John Buyer',
+          message: 'Interested in your Angus cattle. Are they available for immediate purchase?',
+          time: '2 hours ago',
+          avatar: '/api/placeholder/32/32',
+          unread: true
+        }
+      ]
+    } else {
+      messages.value = [
+        {
+          id: '1',
+          name: 'Farm Fresh',
+          message: 'Your Angus cattle order has been confirmed. Expected delivery: Jan 20',
+          time: '1 hour ago',
+          avatar: '/api/placeholder/32/32',
+          unread: true
+        }
+      ]
+    }
   } catch (err) {
     console.error('Error loading messages:', err)
     messages.value = []
@@ -400,26 +402,12 @@ const loadMessages = async () => {
 
 const loadAnalyticsData = () => {
   // This would load chart data based on timeRange
+  console.log(`Loading analytics data for ${timeRange.value}`)
 }
 
 const loadDashboardData = async () => {
   try {
-    loading.value = true
     error.value = null
-
-    // Get current user using auth service
-    const currentUser = await getCurrentUser()
-    if (!currentUser) {
-      error.value = 'Unable to load user data. Please try logging in again.'
-      return
-    }
-
-    user.value = currentUser
-
-    // Set dashboard type based on user role if not explicitly set
-    if (currentUser.role !== 'both') {
-      dashboardType.value = currentUser.role
-    }
 
     // Load all dashboard data
     await Promise.all([
@@ -431,31 +419,28 @@ const loadDashboardData = async () => {
   } catch (err) {
     console.error('Dashboard loading error:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load dashboard'
-  } finally {
-    loading.value = false
   }
 }
 
-// Watchers
+// Watchers - FIXED: Now watches the computed dashboardType instead of reactive ref
 watch(dashboardType, () => {
-  if (!loading.value && user.value) {
+  if (user.value) {
     loadDashboardData()
   }
 })
+
+// Watch for user changes to reload data
+watch(user, (newUser) => {
+  if (newUser) {
+    loadDashboardData()
+  }
+}, { immediate: true })
 
 // Lifecycle
 onMounted(() => {
-  loadDashboardData()
-})
-
-// Auth state change listener
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state changed:', event, session)
-  if (event === 'SIGNED_OUT' || !session) {
-    router.push('/login')
-  } else if (event === 'SIGNED_IN') {
-    // Reload dashboard when user signs in
+  if (user.value) {
     loadDashboardData()
   }
 })
+
 </script>

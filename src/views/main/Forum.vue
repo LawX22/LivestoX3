@@ -39,7 +39,7 @@
         <!-- Right side - Dynamic Content Area -->
         <div class="flex-1 flex justify-end min-w-0">
           <!-- Guest Mode Notice -->
-          <div v-if="!currentUser" class="flex items-center gap-3 max-w-full">
+          <div v-if="!authStore.isAuthenticated" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-amber-100/80 text-amber-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-amber-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -69,7 +69,7 @@
           </div>
 
           <!-- Buyer Actions -->
-          <div v-else-if="currentUser?.role === 'buyer'" class="flex items-center gap-3 max-w-full">
+          <div v-else-if="authStore.userRole === 'buyer'" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-green-100/80 text-green-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-green-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -92,7 +92,7 @@
               class="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0118 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
                   clip-rule="evenodd" />
               </svg>
               Guide
@@ -100,7 +100,7 @@
           </div>
 
           <!-- Farmer Actions -->
-          <div v-else-if="currentUser?.role === 'farmer'" class="flex items-center gap-3 max-w-full">
+          <div v-else-if="authStore.userRole === 'farmer'" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-green-100/80 text-green-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-green-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -133,173 +133,19 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex-1 flex items-center justify-center">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Loading forum questions...</p>
-      </div>
-    </div>
-
     <!-- Main Content with Sidebar -->
-    <div v-else class="flex flex-1 overflow-hidden">
-      <!-- Enhanced Filters Sidebar with Collapse/Expand -->
-      <div
-        :class="`${isSidebarExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
-        <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
-
-        <!-- Toggle Button -->
-        <div @click="toggleSidebar"
-          class="absolute inset-0 flex items-center justify-center cursor-pointer group z-20 bg-green-50/30 transition-colors duration-200"
-          v-if="!isSidebarExpanded">
-          <div
-            class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-md">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
-            </svg>
-          </div>
-        </div>
-
-        <div class="relative h-full flex flex-col">
-          <!-- Expanded View -->
-          <div v-if="isSidebarExpanded" class="h-full flex flex-col">
-            <!-- Header with integrated close button -->
-            <div class="flex justify-between items-center p-3 border-b border-green-100/50">
-              <h2
-                class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zM3 10h18M3 16h18M3 22h18" />
-                </svg>
-                Filters
-              </h2>
-              <div class="flex gap-1">
-                <button @click="resetFilters"
-                  class="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Reset
-                </button>
-                <button @click="toggleSidebar"
-                  class="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium transition cursor-pointer flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Sticky Search & Active Filters -->
-            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-green-100/50 p-3 shadow-sm">
-              <!-- Search -->
-              <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100 mb-2">
-                <div class="relative">
-                  <input v-model="filters.search" type="text"
-                    class="block w-full pl-8 pr-2 py-1.5 border border-green-200 rounded-md text-xs bg-green-50/30 focus:ring-2 focus:ring-green-500/50 cursor-text"
-                    placeholder="Search..." />
-                  <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                    <svg class="h-3 w-3 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                      viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Active Filters -->
-              <div v-if="hasActiveFilters"
-                class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-md p-2 border border-green-200">
-                <div class="flex flex-wrap gap-1">
-                  <span v-if="filters.search"
-                    class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">
-                    "{{ filters.search }}"
-                  </span>
-                  <span v-for="category in filters.categories" :key="category"
-                    class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ category
-                    }}</span>
-                  <span v-if="filters.urgency"
-                    class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{
-                    filters.urgency }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Scrollable Filters Area -->
-            <div class="flex-1 overflow-y-auto p-3">
-              <!-- Compact Filter Group -->
-              <div class="space-y-3">
-                <!-- Category Checkboxes -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    Categories
-                  </h3>
-                  <div class="space-y-1">
-                    <label v-for="category in categories" :key="category"
-                      class="flex items-center gap-1.5 text-xs text-gray-700 p-1 rounded cursor-pointer">
-                      <input type="checkbox" :value="category" v-model="filters.categories"
-                        class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer">
-                      <span class="truncate">{{ category }}</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Urgency Filter -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Urgency
-                  </h3>
-                  <div class="space-y-1">
-                    <label v-for="urgency in urgencyLevels" :key="urgency"
-                      class="flex items-center gap-1.5 text-xs text-gray-700 p-1 rounded cursor-pointer">
-                      <input type="radio" :value="urgency" v-model="filters.urgency"
-                        class="h-3 w-3 text-green-600 rounded-full border-gray-300 focus:ring-green-500 cursor-pointer">
-                      <span class="truncate">{{ urgency }}</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Forum Stats -->
-                <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
-                  <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                    <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Forum Stats
-                  </h3>
-                  <div class="space-y-1">
-                    <div class="flex justify-between items-center">
-                      <span class="text-xs text-gray-600">Questions:</span>
-                      <span class="text-xs font-bold text-green-600">{{ forumQuestions.length }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                      <span class="text-xs text-gray-600">Answers:</span>
-                      <span class="text-xs font-bold text-green-600">{{ totalAnswers }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                      <span class="text-xs text-gray-600">Active Users:</span>
-                      <span class="text-xs font-bold text-green-600">{{ activeUsers }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Enhanced Filters Sidebar Component -->
+      <FilterSidebar
+        :is-expanded="isSidebarExpanded"
+        :filters="filters"
+        :categories="categories"
+        :urgency-levels="urgencyLevels"
+        :forum-stats="forumStats"
+        @update:is-expanded="handleSidebarToggle"
+        @update:filters="handleFiltersUpdate"
+        @reset-filters="resetFilters"
+      />
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden">
@@ -316,7 +162,7 @@
               </div>
               <div>
                 <h3 class="text-sm font-bold text-gray-800">
-                  {{ filteredQuestions.length }} {{ filteredQuestions.length === 1 ? 'Question' : 'Questions' }} Found
+                  {{ isLoadingQuestions ? 'Loading...' : `${filteredQuestions.length} ${filteredQuestions.length === 1 ? 'Question' : 'Questions'} Found` }}
                 </h3>
               </div>
             </div>
@@ -339,13 +185,108 @@
         <!-- SCROLLABLE Questions Area -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-3">
-            <!-- Compact Card View -->
-            <div v-if="filteredQuestions.length > 0" class="space-y-4">
+            <!-- Loading Skeleton Cards -->
+            <div v-if="isLoadingQuestions" class="space-y-4">
+              <div
+                v-for="n in 5"
+                :key="`skeleton-${n}`"
+                class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 p-4 shadow-lg animate-pulse"
+              >
+                <!-- Header Section Skeleton -->
+                <div class="flex items-start gap-3 mb-4">
+                  <!-- Avatar Skeleton -->
+                  <div class="w-10 h-10 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 rounded-full relative overflow-hidden">
+                    <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                  </div>
+                  
+                  <!-- User Info Skeleton -->
+                  <div class="flex-1 space-y-2">
+                    <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-1/3 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                    <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-1/4 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Urgency Badge Skeleton -->
+                  <div class="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-16 relative overflow-hidden">
+                    <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                  </div>
+                </div>
+
+                <!-- Content Section Skeleton -->
+                <div class="space-y-3">
+                  <!-- Title Skeleton -->
+                  <div class="h-5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-3/4 relative overflow-hidden">
+                    <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                  </div>
+                  
+                  <!-- Description Skeleton -->
+                  <div class="space-y-2">
+                    <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-full relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                    <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-5/6 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                    <div class="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-4/6 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                  </div>
+
+                  <!-- Tags/Category Skeleton -->
+                  <div class="flex flex-wrap gap-2 pt-2">
+                    <div class="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-20 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                    <div class="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-16 relative overflow-hidden">
+                      <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                    </div>
+                  </div>
+
+                  <!-- Stats and Actions Skeleton -->
+                  <div class="flex items-center justify-between pt-4">
+                    <!-- Stats Skeleton -->
+                    <div class="flex items-center gap-4">
+                      <div class="flex items-center gap-1">
+                        <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-8 relative overflow-hidden">
+                          <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-8 relative overflow-hidden">
+                          <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <div class="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-8 relative overflow-hidden">
+                          <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons Skeleton -->
+                    <div class="flex items-center gap-2">
+                      <div class="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-20 relative overflow-hidden">
+                        <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                      </div>
+                      <div class="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-md w-8 relative overflow-hidden">
+                        <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actual Forum Cards -->
+            <div v-else-if="filteredQuestions.length > 0" class="space-y-4">
               <ForumCard 
                 v-for="question in sortedQuestions" 
                 :key="question.id" 
                 :question="question"
-                :currentUser="currentUser"
+                :currentUser="currentUserForForum"
                 @upvote="upvoteQuestion"
                 @downvote="downvoteQuestion" 
                 @openComments="openCommentsModal"
@@ -356,7 +297,7 @@
             </div>
 
             <!-- Enhanced Empty State -->
-            <div v-if="filteredQuestions.length === 0" class="flex flex-col items-center justify-center py-16">
+            <div v-else-if="!isLoadingQuestions && filteredQuestions.length === 0" class="flex flex-col items-center justify-center py-16">
               <div
                 class="bg-gradient-to-br from-white/95 to-gray-50/60 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/80 max-w-md text-center shadow-2xl">
                 <div
@@ -370,7 +311,7 @@
                 <h3 class="text-xl font-bold text-gray-800 mb-3">No questions found</h3>
                 <p class="text-sm text-gray-600 mb-6 leading-relaxed">We couldn't find any questions matching your
                   current search criteria. Try adjusting your filters or ask a new question.</p>
-                <button v-if="currentUser" @click="showModal = true"
+                <button v-if="authStore.isAuthenticated" @click="showModal = true"
                   class="px-6 py-3 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 text-white rounded-xl text-sm font-bold transition-all duration-300 shadow-xl flex items-center gap-2 mx-auto transform cursor-pointer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -396,7 +337,7 @@
     <AskQuestionModal 
       v-if="showModal" 
       :visible="showModal" 
-      :currentUser="currentUser"
+      :currentUser="currentUserForForum"
       @submit="handlePostQuestion" 
       @close="showModal = false"
       @showToast="showToastNotification"
@@ -407,7 +348,7 @@
       v-if="showCommentsModal" 
       :visible="showCommentsModal" 
       :question="selectedQuestion!"
-      :currentUser="currentUser" 
+      :currentUser="currentUserForForum" 
       @close="showCommentsModal = false" 
       @updateQuestion="handleUpdateQuestion"
       @signin="handleSignin" 
@@ -691,24 +632,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import NavBar from '../../components/NavBar.vue';
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import CommentsModal from '../../components/Forum/CommentsModal.vue';
 import ForumCard from '../../components/Forum/ForumCard.vue';
-import { auth } from '@/services/auth-service';
-import type { User } from '@/services/auth-service';
+import FilterSidebar from '../../components/Forum/FilterSidebar.vue'; 
 import { forumService } from '../../services/forumService';
 import type { ForumQuestion, ForumAnswer, NewQuestion } from '../../services/forumService';
-import { supabase } from '@/supabase';
 
-// Router setup
+// Router and store setup
 const router = useRouter();
-
-// User state using auth service
-const currentUser = ref<User | null>(null);
+const authStore = useAuthStore();
 
 // State
-const isLoading = ref(true);
 const showModal = ref(false);
 const showBuyerGuide = ref(false);
 const showFarmerGuide = ref(false);
@@ -719,6 +656,9 @@ const showCommentsModal = ref(false);
 const selectedQuestion = ref<ForumQuestion | null>(null);
 const isSidebarExpanded = ref(true);
 const sortBy = ref('newest');
+
+// Loading state for skeleton
+const isLoadingQuestions = ref(true);
 
 const categories = ['Poultry', 'Swine', 'Cattle', 'Goat', 'Sheep', 'Feed', 'Health', 'Equipment'];
 const urgencyLevels = ['Low', 'Normal', 'High', 'Critical'];
@@ -732,16 +672,26 @@ const filters = ref({
 // Forum questions from Supabase
 const forumQuestions = ref<ForumQuestion[]>([]);
 
-// Load user data using auth service
-const loadUser = async () => {
-  try {
-    const user = await auth.getCurrentUser();
-    currentUser.value = user;
-  } catch (error) {
-    console.error('Error loading user in Forum:', error);
-    currentUser.value = null;
-  }
-};
+// Computed property for forum stats
+const forumStats = computed(() => ({
+  totalQuestions: forumQuestions.value.length,
+  totalAnswers: totalAnswers.value,
+  activeUsers: activeUsers.value
+}));
+
+// Computed property to convert authStore user to legacy format for compatibility
+const currentUserForForum = computed(() => {
+  if (!authStore.isAuthenticated || !authStore.user) return null;
+  
+  return {
+    id: authStore.user.id,
+    email: authStore.userEmail,
+    role: authStore.userRole,
+    firstName: authStore.userMetadata.firstName || authStore.userMetadata.first_name || '',
+    lastName: authStore.userMetadata.lastName || authStore.userMetadata.last_name || '',
+    fullName: authStore.userDisplayName
+  };
+});
 
 // Ensure all answers have the required 'id' property from ForumAnswer interface
 function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
@@ -755,29 +705,21 @@ function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
 }
 
 // Helper function to construct user's full name
-function constructUserFullName(user: User): string {
-  if (user.fullName && user.fullName.trim()) {
-    return user.fullName;
-  }
+function constructUserFullName(): string {
+  if (!authStore.isAuthenticated) return 'Unknown User';
   
-  const firstName = user.firstName || '';
-  const lastName = user.lastName || '';
+  const firstName = authStore.userMetadata.firstName || authStore.userMetadata.first_name || '';
+  const lastName = authStore.userMetadata.lastName || authStore.userMetadata.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
   
-  return fullName || 'Unknown User';
+  return fullName || authStore.userDisplayName || 'User';
 }
 
 // Computed properties
-const hasActiveFilters = computed(() => {
-  return filters.value.search !== '' ||
-    filters.value.categories.length > 0 ||
-    filters.value.urgency !== '';
-});
-
 const filteredQuestions = computed(() => {
   return forumQuestions.value.filter(question => {
     // Visibility filter based on user role
-    if (question.visibility === 'farmers' && (!currentUser.value || currentUser.value.role !== 'farmer')) {
+    if (question.visibility === 'farmers' && (!authStore.isAuthenticated || authStore.userRole !== 'farmer')) {
       return false;
     }
 
@@ -841,19 +783,32 @@ const activeUsers = computed(() => {
 
 const loadQuestions = async () => {
   try {
-    isLoading.value = true;
-    const questions = await forumService.getQuestions(currentUser.value?.email);
+    isLoadingQuestions.value = true;
+    
+    // Add minimum loading time for better UX (1 second)
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const questions = await forumService.getQuestions(authStore.userEmail);
+    
+    // Wait for minimum loading time
+    await minLoadingTime;
+    
     forumQuestions.value = normalizeAnswers(questions);
   } catch (error) {
     console.error('Failed to load questions:', error);
     showToastNotification('Failed to load questions. Please try again.');
   } finally {
-    isLoading.value = false;
+    isLoadingQuestions.value = false;
   }
 };
 
-const toggleSidebar = () => {
-  isSidebarExpanded.value = !isSidebarExpanded.value;
+// FilterSidebar event handlers
+const handleSidebarToggle = (expanded: boolean) => {
+  isSidebarExpanded.value = expanded;
+};
+
+const handleFiltersUpdate = (updatedFilters: typeof filters.value) => {
+  filters.value = { ...updatedFilters };
 };
 
 const resetFilters = () => {
@@ -901,22 +856,22 @@ const handleSignin = () => {
 };
 
 const handlePostQuestion = async (questionData: NewQuestion) => {
-  if (!currentUser.value) return;
+  if (!authStore.isAuthenticated) return;
 
   try {
     // Create the question using the forum service
     const newQuestion = await forumService.createQuestion(
       questionData, 
-      currentUser.value.email, 
-      currentUser.value.role
+      authStore.userEmail, 
+      authStore.userRole
     );
     
     // Add user's name information to the question data
     const enrichedQuestion = {
       ...newQuestion,
-      userFirstName: currentUser.value.firstName || '',
-      userLastName: currentUser.value.lastName || '',
-      userFullName: constructUserFullName(currentUser.value)
+      userFirstName: authStore.userMetadata.firstName || authStore.userMetadata.first_name || '',
+      userLastName: authStore.userMetadata.lastName || authStore.userMetadata.last_name || '',
+      userFullName: constructUserFullName()
     };
 
     // Add the question to our local array
@@ -930,10 +885,10 @@ const handlePostQuestion = async (questionData: NewQuestion) => {
 };
 
 const upvoteQuestion = async (question: ForumQuestion) => {
-  if (!currentUser.value || question.userEmail === currentUser.value.email) return;
+  if (!authStore.isAuthenticated || question.userEmail === authStore.userEmail) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, currentUser.value.email, 'up');
+    const result = await forumService.voteQuestion(question.id, authStore.userEmail, 'up');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -947,9 +902,9 @@ const upvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![currentUser.value.email] = result.userVote;
+        forumQuestions.value[index].userVotes![authStore.userEmail] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![currentUser.value.email];
+        delete forumQuestions.value[index].userVotes![authStore.userEmail];
       }
     }
   } catch (error) {
@@ -959,10 +914,10 @@ const upvoteQuestion = async (question: ForumQuestion) => {
 };
 
 const downvoteQuestion = async (question: ForumQuestion) => {
-  if (!currentUser.value || question.userEmail === currentUser.value.email) return;
+  if (!authStore.isAuthenticated || question.userEmail === authStore.userEmail) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, currentUser.value.email, 'down');
+    const result = await forumService.voteQuestion(question.id, authStore.userEmail, 'down');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -976,9 +931,9 @@ const downvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![currentUser.value.email] = result.userVote;
+        forumQuestions.value[index].userVotes![authStore.userEmail] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![currentUser.value.email];
+        delete forumQuestions.value[index].userVotes![authStore.userEmail];
       }
     }
   } catch (error) {
@@ -989,14 +944,14 @@ const downvoteQuestion = async (question: ForumQuestion) => {
 
 // Handler methods for edit and delete with proper database operations
 const handleEditQuestion = async (eventData: { questionId: number; updates: Partial<ForumQuestion> }) => {
-  if (!currentUser.value) return;
+  if (!authStore.isAuthenticated) return;
   
   try {
     const { questionId, updates } = eventData;
     
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== currentUser.value.email) {
+    if (!question || question.userEmail !== authStore.userEmail) {
       showToastNotification('You can only edit your own questions.');
       return;
     }
@@ -1038,12 +993,12 @@ const handleEditQuestion = async (eventData: { questionId: number; updates: Part
 };
 
 const handleDeleteQuestion = async (questionId: number) => {
-  if (!currentUser.value) return;
+  if (!authStore.isAuthenticated) return;
   
   try {
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== currentUser.value.email) {
+    if (!question || question.userEmail !== authStore.userEmail) {
       showToastNotification('You can only delete your own questions.');
       return;
     }
@@ -1072,20 +1027,12 @@ const handleDeleteQuestion = async (questionId: number) => {
 
 // Lifecycle hooks
 onMounted(async () => {
-  // Load user first, then questions
-  await loadUser();
+  // Get current session first if not already loaded
+  if (!authStore.session) {
+    await authStore.getSession();
+  }
+  
+  // Load questions
   await loadQuestions();
-
-  // Listen for auth state changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      await loadUser();
-      await loadQuestions();
-    } else if (event === 'SIGNED_OUT') {
-      currentUser.value = null;
-      // Reload questions to apply proper visibility filters
-      await loadQuestions();
-    }
-  });
 });
 </script>
