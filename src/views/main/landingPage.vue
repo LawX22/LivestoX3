@@ -527,7 +527,7 @@ const hideGrid = () => {
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
-  img.src = 'https://via.placeholder.com/400x200/10B981/047857?text=Livestock'
+  img.src = 'https://placehold.co/400x200/10B981/047857?text=Livestock'
 }
 
 const bestSellers = [
@@ -550,7 +550,7 @@ const bestSellers = [
     name: 'Boer Goat',
     description: 'Great for meat production and easy to maintain.',
     price: 4500,
-    image: 'https://via.placeholder.com/400x200/10B981/047857?text=Goat',
+    image: 'https://placehold.co/400x200/10B981/047857?text=Goat',
   },
 ]
 

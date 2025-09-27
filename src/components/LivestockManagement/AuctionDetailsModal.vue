@@ -542,7 +542,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import type { Animal, Farmer, Bid, User } from '../../services/animal';
+import type { Animal, Bid } from '../../services/animal';
 
 type BidType = 'manual' | 'auto' | 'proxy' | 'snipe';
 
@@ -558,9 +558,9 @@ const props = defineProps<{
     isOpen: boolean;
 }>();
 
-const emit = defineEmits<{
-    close: [];
-}>();
+// const emit = defineEmits<{
+//     close: [];
+// }>();
 
 const selectedImageIndex = ref(0);
 const bidHistory = ref<ExtendedBid[]>([]);
@@ -798,8 +798,9 @@ const generateMockBids = (animal: Animal): ExtendedBid[] => {
                 id: i + 1,
                 name: bidderNames[Math.floor(Math.random() * bidderNames.length)],
                 email: `user${i + 1}@example.com`,
-                avatar: `https://via.placeholder.com/40x40.png?text=${bidderNames[Math.floor(Math.random() * bidderNames.length)].charAt(0)}`
-            },
+avatar: `https://placehold.co/40x40.png?text=${
+  bidderNames[Math.floor(Math.random() * bidderNames.length)].charAt(0)
+}`            },
             bidderName: bidderNames[Math.floor(Math.random() * bidderNames.length)],
             bidderId: `B${String(i + 1).padStart(3, '0')}`,
             bidType: bidTypes[Math.floor(Math.random() * bidTypes.length)],

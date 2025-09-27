@@ -191,7 +191,7 @@
             <div class="flex items-center">
               <div class="relative">
                 <router-link :to="`/userProfile/${getOtherUser(conversation).id}`" @click.stop class="block">
-                  <img :src="getOtherUser(conversation).avatar || 'https://via.placeholder.com/40'" alt="Profile"
+                  <img :src="getOtherUser(conversation).avatar || 'https://placehold.co/40'" alt="Profile"
                     class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
                 </router-link>
                 <!-- Online Status -->
@@ -257,7 +257,7 @@
           <div class="flex items-center justify-between">
             <router-link :to="`/userProfile/${getOtherUser(selectedConversation).id}`" class="flex items-center group">
               <div class="relative">
-                <img :src="getOtherUser(selectedConversation).avatar || 'https://via.placeholder.com/40'" alt="Profile"
+                <img :src="getOtherUser(selectedConversation).avatar || 'https://placehold.co/40'" alt="Profile"
                   class="w-12 h-12 rounded-full object-cover border-2 border-green-200 shadow-sm" />
                 <div v-if="selectedConversation.isOnline"
                   class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
@@ -301,7 +301,7 @@
         <div v-if="selectedConversation?.listing"
           class="mx-6 mt-4 bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/50 p-4 shadow-sm">
           <div class="flex items-center">
-            <img :src="selectedConversation.listing.images[0] || 'https://via.placeholder.com/80'" alt="Listing"
+            <img :src="selectedConversation.listing.images[0] || 'https://placehold.co/80'" alt="Listing"
               class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
             <div class="ml-4 flex-1">
               <h4 class="font-semibold text-gray-800 mb-1">

@@ -422,8 +422,7 @@ interface CreateListingForm {
   location: string
 }
 
-// Props and Emits
-const props = defineProps<{
+defineProps<{
   isOpen: boolean
 }>()
 

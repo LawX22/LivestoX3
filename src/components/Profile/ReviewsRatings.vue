@@ -85,7 +85,7 @@
             <div class="flex items-center">
               <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
                 <img 
-                  :src="review.reviewer.avatar || 'https://via.placeholder.com/48?text=User'" 
+                  :src="review.reviewer.avatar || 'https://placehold.co/48?text=User'" 
                   class="w-full h-full object-cover"
                   alt="Reviewer avatar"
                 >

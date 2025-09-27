@@ -557,7 +557,7 @@ interface CreateAuctionForm {
 }
 
 // Props and Emits
-const props = defineProps<{
+defineProps<{
   isOpen: boolean
 }>()
 
