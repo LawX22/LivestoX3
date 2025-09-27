@@ -416,6 +416,7 @@ import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue
 import LivestockCard from '../../components/Market/LivestockCard.vue';
 import { getCurrentUser } from '../../services/user';
 import type { Animal, Filters, ServiceUser, BidData, MessageData } from '../../services/animal';
+import { livestock } from '@/services/livestock-Service';
 
 // Props to determine view mode
 const props = defineProps<{
@@ -482,80 +483,53 @@ const filters = ref<Filters>({
 });
 
 // Sample animal data with proper interface compliance
-const animals = ref<Animal[]>([
-  {
-    id: 1,
-    title: 'Premium Angus Cattle',
-    type: 'Cattle',
-    breed: 'Angus',
-    weight: 450,
-    quantity: 5,
-    originalQuantity: 5,
-    age: '18-24 months',
-    gender: 'Male',
-    status: 'Available',
-    healthStatus: ['Vaccinated', 'Dewormed', 'Healthy'],
-    price: 45000,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed.',
-    datePosted: new Date().toISOString(),
-    farmer: {
-      id: 2,
-      name: 'Maria Santos',
-      farmName: 'Santos Ranch',
-      contact: '+63 921 777 8888',
-      email: 'maria@santosranch.com',
-      address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-      avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
-    },
-    location: 'Pampanga',
-    isAuction: false
-  },
-  {
-    id: 6,
-    title: 'Landrace Pigs',
-    type: 'Pig',
-    breed: 'Landrace',
-    weight: 95,
-    quantity: 3,
-    originalQuantity: 3,
-    age: '5-7 months',
-    gender: 'Mixed',
-    status: 'Available',
-    healthStatus: ['Vaccinated', 'Healthy'],
-    price: 0,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://media.istockphoto.com/id/140462837/photo/cute-pig-leaning-on-railing-of-his-cot.jpg?s=612x612&w=0&k=20&c=wX4-WVElHzIvfJoppwRZOgHKu3geSc3zReM_17lcwVc='
-    ],
-    description: 'High-quality Landrace pigs, excellent for commercial production. Well-fed and healthy.',
-    datePosted: new Date(Date.now() - 43200000).toISOString(),
-    farmer: {
-      id: 7,
-      name: 'Elena Morales',
-      farmName: 'Morales Hog Farm',
-      contact: '+63 926 333 4444',
-      email: 'elena@moraleshogfarm.com',
-      address: '777 Swine Valley, Barangay Pork, Tarlac',
-      avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
-    },
-    location: 'Tarlac',
-    isAuction: true,
-    startingBid: 24000,
-    currentBid: 28500,
-    bidCount: 5,
-    endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
-    duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 345600000).toISOString(), // Started 4 days ago
-    reservePrice: 22000,
-    bidIncrement: 500,
-    paymentTerms: '50% deposit, 50% upon delivery',
-    additionalTerms: 'Must be picked up within 3 days after auction ends'
+const animals = ref<Animal[]>([]);
+
+const getPublicListing = async () => {
+  const { data } = await livestock.getForMarket();
+
+  if (!data) {
+    console.error("No data found");
+    return [];
   }
-]);
+
+  const format = data.map((item) => {
+    return {
+      ...item,
+      id: item.id,
+      title: item.title,
+      type: item.category,
+      breed: item.breed,
+      weight: 450,
+      quantity: 5,
+      originalQuantity: 5,
+      age: item.age,
+      gender: item.gender,
+      status: item.status,
+      healthStatus: item.health_status,
+      price: 45000,
+      deliveryOptions: item.delivery_options,
+      images: item.image_url,
+      description: item.description,
+      datePosted: item.listed_date,
+      farmer: {
+        id: item.farms.user_id,
+        name: item.farms.farm_name,
+        farmName: item.farms.owner_name,
+        contact: item.farms.phone_number,
+        email: item.farms.email,
+        address: item.farms.location,
+        avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
+      },
+      location: item.location,
+      isAuction: item.auction
+    }
+  })
+
+  animals.value = format;
+};
+
+onMounted(() => getPublicListing());
 
 // Computed properties
 const normalListings = computed(() => animals.value.filter(animal => !animal.isAuction));
@@ -623,7 +597,7 @@ const getBidActivityCategory = (animal: Animal): string => {
 const currentFilteredAnimals = computed(() => {
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   
-  let filtered = currentAnimals.filter(animal => {
+  const filtered = currentAnimals.filter(animal => {
     // Search filter
     const searchLower = filters.value.search.toLowerCase();
     const matchesSearch = !filters.value.search ||

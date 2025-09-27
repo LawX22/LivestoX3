@@ -3,23 +3,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import BuyerDashboard from '../../components/Dashboard/BuyerDashboard.vue';
-import FarmerDashboard from '../../components/Dashboard/FarmerDashboard.vue';
-import { useRouter } from 'vue-router';
+import { ref, watchEffect } from 'vue'
+import BuyerDashboard from '@/components/Dashboard/BuyerDashboard.vue'
+import FarmerDashboard from '@/components/Dashboard/FarmerDashboard.vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authContext'
 
-const dashboardComponent = ref();
-const router = useRouter();
+const dashboardComponent = ref()
+const router = useRouter()
+const authStore = useAuthStore()
 
-onMounted(() => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+watchEffect(() => {
+  const user = authStore.user
+
+  if (!user) return
 
   if (user.role === 'Buyer') {
-    dashboardComponent.value = BuyerDashboard;
+    dashboardComponent.value = BuyerDashboard
   } else if (user.role === 'Farmer') {
-    dashboardComponent.value = FarmerDashboard;
+    dashboardComponent.value = FarmerDashboard
   } else {
-    router.push('/signin');
+    router.push('/signin')
   }
-});
+})
 </script>
