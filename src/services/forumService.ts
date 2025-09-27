@@ -54,7 +54,7 @@ class ForumService {
       
       const { data, error } = await supabase
         .from('users')
-        .select('user_first_name, user_last_name')
+        .select('first_name, last_name')
         .eq('email', userEmail)
         .single()
       
@@ -70,8 +70,8 @@ class ForumService {
 
       console.log('Raw user data:', data)
       
-      const firstName = data.user_first_name || ''
-      const lastName = data.user_last_name || ''
+      const firstName = data.first_name || ''
+      const lastName = data.last_name || ''
       
       console.log('Processed user details:', { firstName, lastName })
       
@@ -169,7 +169,7 @@ class ForumService {
       // Fetch all user details in one query using correct field names
       const { data: usersData, error } = await supabase
         .from('users')
-        .select('email, user_first_name, user_last_name')
+        .select('email, first_name, last_name')
         .in('email', Array.from(userEmails))
 
       if (error) {
@@ -181,8 +181,8 @@ class ForumService {
       // Create a lookup map
       const userLookup: { [email: string]: { firstName: string, lastName: string } } = {}
       usersData?.forEach(user => {
-        const firstName = user.user_first_name || ''
-        const lastName = user.user_last_name || ''
+        const firstName = user.first_name || ''
+        const lastName = user.last_name || ''
         
         userLookup[user.email] = {
           firstName,
@@ -466,13 +466,8 @@ class ForumService {
   }
 
   // Update a question with improved error handling
-  async updateQuestion(questionId: number, updateData: Partial<NewQuestion>, userEmail?: string): Promise<Partial<ForumQuestion>> {
+  async updateQuestion(questionId: number, updateData: Partial<NewQuestion>): Promise<Partial<ForumQuestion>> {
     try {
-      // Validate required fields
-      if (!updateData.title || !updateData.category || !updateData.urgency || !updateData.visibility) {
-        throw new Error('Missing required fields for question update')
-      }
-
       console.log('Updating question:', questionId, updateData)
 
       // First, check if the question exists and get its current data
@@ -493,24 +488,14 @@ class ForumService {
 
       console.log('Existing question found:', existingQuestion)
 
-      // Prepare update data - only include fields that are actually changing
+      // Prepare update data
       const updatePayload: any = {}
       
-      if (updateData.title !== existingQuestion.title) {
-        updatePayload.title = updateData.title
-      }
-      if (updateData.description !== existingQuestion.description) {
-        updatePayload.description = updateData.description || null
-      }
-      if (updateData.category !== existingQuestion.category) {
-        updatePayload.category = updateData.category
-      }
-      if (updateData.urgency !== existingQuestion.urgency) {
-        updatePayload.urgency = updateData.urgency
-      }
-      if (updateData.visibility !== existingQuestion.visibility) {
-        updatePayload.visibility = updateData.visibility
-      }
+      if (updateData.title !== undefined) updatePayload.title = updateData.title
+      if (updateData.description !== undefined) updatePayload.description = updateData.description
+      if (updateData.category !== undefined) updatePayload.category = updateData.category
+      if (updateData.urgency !== undefined) updatePayload.urgency = updateData.urgency
+      if (updateData.visibility !== undefined) updatePayload.visibility = updateData.visibility
 
       // If no changes, return existing data with user info
       if (Object.keys(updatePayload).length === 0) {
@@ -534,7 +519,7 @@ class ForumService {
       console.log('Update payload:', updatePayload)
 
       // Update the question in database
-      const { error: updateError, count } = await supabase
+      const { error: updateError } = await supabase
         .from('forum_questions')
         .update(updatePayload)
         .eq('id', questionId)
@@ -543,8 +528,6 @@ class ForumService {
         console.error('Supabase update error:', updateError)
         throw new Error(`Update failed: ${updateError.message}`)
       }
-
-      console.log('Update completed, affected rows:', count)
 
       // Get the updated question data
       const { data: updatedData, error: selectError } = await supabase
@@ -596,14 +579,14 @@ class ForumService {
   }
 
   // Delete a question with proper cascading and error handling
-  async deleteQuestion(questionId: number, userEmail?: string): Promise<void> {
+  async deleteQuestion(questionId: number): Promise<void> {
     try {
       console.log('Deleting question:', questionId)
 
-      // First, check if the question exists and optionally verify ownership
+      // First, check if the question exists
       const { data: existingQuestion, error: checkError } = await supabase
         .from('forum_questions')
-        .select('id, user_email')
+        .select('id')
         .eq('id', questionId)
         .single()
 
@@ -811,7 +794,7 @@ class ForumService {
   }
 
   // Increment view count
-  async incrementViews(questionId: number, userEmail?: string): Promise<number> {
+  async incrementViews(questionId: number): Promise<number> {
     try {
       // Simple increment for now - you can add more sophisticated view tracking later
       const { data: currentData } = await supabase
@@ -855,127 +838,6 @@ class ForumService {
     } catch (error) {
       console.error('Error checking question ownership:', error)
       return false
-    }
-  }
-
-  // Method to repair vote counts in case they get out of sync
-  async repairVoteCounts(): Promise<void> {
-    try {
-      console.log('Starting vote count repair...')
-      
-      // Get all questions
-      const { data: questions, error: questionsError } = await supabase
-        .from('forum_questions')
-        .select('id')
-
-      if (questionsError) {
-        console.error('Error fetching questions for repair:', questionsError)
-        return
-      }
-
-      if (!questions) return
-
-      // Repair each question's vote counts
-      for (const question of questions) {
-        await this.syncQuestionVoteCounts(question.id)
-      }
-
-      console.log(`Repaired vote counts for ${questions.length} questions`)
-    } catch (error) {
-      console.error('Error repairing vote counts:', error)
-    }
-  }
-
-  // Debug method to check what fields exist in your users table
-  async debugUsersTable(): Promise<void> {
-    try {
-      console.log('=== DEBUGGING USERS TABLE ===')
-      
-      // Get the first user to see what fields are available
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .limit(1)
-
-      if (error) {
-        console.error('Error fetching users for debug:', error)
-        return
-      }
-
-      if (data && data.length > 0) {
-        console.log('Sample user record fields:', Object.keys(data[0]))
-        console.log('Sample user record:', data[0])
-      } else {
-        console.log('No users found in table')
-      }
-    } catch (error) {
-      console.error('Exception during debug:', error)
-    }
-  }
-
-  // Debug method to check vote data integrity
-  async debugVotes(questionId?: number): Promise<void> {
-    try {
-      console.log('=== DEBUGGING VOTES ===')
-      
-      if (questionId) {
-        console.log(`Debugging votes for question ${questionId}`)
-        
-        // Get votes from votes table
-        const { data: votes, error: votesError } = await supabase
-          .from('forum_votes')
-          .select('*')
-          .eq('question_id', questionId)
-
-        if (votesError) {
-          console.error('Error fetching votes:', votesError)
-          return
-        }
-
-        console.log('Votes from forum_votes table:', votes)
-
-        // Get question data
-        const { data: question, error: questionError } = await supabase
-          .from('forum_questions')
-          .select('id, upvotes, downvotes')
-          .eq('id', questionId)
-          .single()
-
-        if (questionError) {
-          console.error('Error fetching question:', questionError)
-          return
-        }
-
-        console.log('Question vote counts:', question)
-
-        // Calculate real counts
-        const realUpvotes = votes?.filter(v => v.vote_type === 'up').length || 0
-        const realDownvotes = votes?.filter(v => v.vote_type === 'down').length || 0
-
-        console.log('Real vote counts:', { upvotes: realUpvotes, downvotes: realDownvotes })
-        console.log('Stored vote counts:', { upvotes: question?.upvotes, downvotes: question?.downvotes })
-        
-        if (question?.upvotes !== realUpvotes || question?.downvotes !== realDownvotes) {
-          console.log('⚠️ Vote counts are out of sync!')
-        } else {
-          console.log('✅ Vote counts are in sync')
-        }
-      } else {
-        // Debug all votes
-        const { data: allVotes, error } = await supabase
-          .from('forum_votes')
-          .select('*')
-          .limit(10)
-
-        if (error) {
-          console.error('Error fetching all votes:', error)
-          return
-        }
-
-        console.log('Sample votes data:', allVotes)
-      }
-    } catch (error) {
-      console.error('Exception during vote debug:', error)
     }
   }
 }

@@ -653,7 +653,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { auth } from '../../services/auth-service'
+import type { ModalUser } from '../../services/auth-service'
 
 // Define props interface
 interface ForumQuestion {
@@ -696,7 +698,6 @@ interface User {
 // Props
 const props = defineProps<{
   question: ForumQuestion
-  currentUser?: User | null
 }>()
 
 // Emits - Updated with new vote handlers
@@ -716,7 +717,9 @@ const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
-const isVoting = ref(false) // NEW: Track voting state
+const isVoting = ref(false)
+const currentUser = ref<ModalUser | null>(null)
+const isLoadingUser = ref(false)
 
 const editForm = ref({
   title: '',
@@ -724,6 +727,25 @@ const editForm = ref({
   category: '',
   urgency: '',
   visibility: 'all'
+})
+
+// Load user when component mounts
+const loadUser = async (): Promise<void> => {
+  try {
+    isLoadingUser.value = true
+    const user = await auth.getUser()
+    currentUser.value = user
+  } catch (error) {
+    console.error('Failed to load user:', error)
+    currentUser.value = null
+  } finally {
+    isLoadingUser.value = false
+  }
+}
+
+// Watch for user changes
+onMounted(() => {
+  loadUser()
 })
 
 // Computed properties
@@ -844,7 +866,7 @@ const viewsText = computed(() => {
 
 // Check if current user owns this post (for edit/delete permissions)
 const isOwnPost = computed(() => {
-  return props.currentUser && props.currentUser.email === props.question.userEmail
+  return currentUser.value && currentUser.value.email === props.question.userEmail
 })
 
 // Only show edit/delete options for post owner
@@ -865,7 +887,7 @@ const isEditFormValid = computed(() => {
 
 // NEW: Vote handling methods
 const handleUpvote = async () => {
-  if (!props.currentUser || isVoting.value) return
+  if (!currentUser.value || isVoting.value) return
   
   isVoting.value = true
   try {
@@ -879,7 +901,7 @@ const handleUpvote = async () => {
 }
 
 const handleDownvote = async () => {
-  if (!props.currentUser || isVoting.value) return
+  if (!currentUser.value || isVoting.value) return
   
   isVoting.value = true
   try {

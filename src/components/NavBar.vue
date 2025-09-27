@@ -114,7 +114,7 @@
       <!-- Additional links for logged-in users -->
       <template v-if="user">
         <!-- Show Transactions only for farmers in main navbar -->
-        <li v-if="user.role.toLowerCase() === 'farmer'">
+        <li v-if="user.role && user.role.toLowerCase() === 'farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -132,7 +132,7 @@
         </li>
 
         <!-- Show My Purchases only for buyers in main navbar -->
-        <li v-if="user.role.toLowerCase() === 'buyer'">
+        <li v-if="user.role && user.role.toLowerCase() === 'buyer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -477,11 +477,11 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ user.firstName }} {{ user.lastName }}
+                {{ user.firstName || 'User' }} {{ user.lastName || 'Name' }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
-                {{ user.role.toLowerCase() }}
+                {{ user.role?.toLowerCase() || 'user' }}
               </p>
             </div>
 
@@ -514,7 +514,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ user.firstName }} {{ user.lastName }}
+                      {{ user.firstName || 'User' }} {{ user.lastName || 'Name' }}
                     </p>
                     <p class="text-xs text-green-100 truncate mb-2">{{ user.email }}</p>
                     <p
@@ -547,7 +547,7 @@
               </router-link>
 
               <!-- Show Transactions only for farmers in dropdown -->
-              <router-link v-if="user.role.toLowerCase() === 'farmer'" to="/transactions"
+              <router-link v-if="user.role && user.role.toLowerCase() === 'farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -562,7 +562,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="user.role.toLowerCase() === 'buyer'" to="/transactions"
+              <router-link v-if="user.role && user.role.toLowerCase() === 'buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -594,7 +594,7 @@
             </div>
 
             <div class="border-t border-gray-200 p-2">
-              <button @click="logout"
+              <button @click="confirmLogout"
                 class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 text-left rounded-xl group">
                 <div
                   class="w-8 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
@@ -638,41 +638,96 @@
       </template>
     </div>
   </nav>
+
+  <!-- Logout Confirmation Modal -->
+  <div v-if="showLogoutModal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] transition-opacity duration-300">
+    <div
+      class="bg-white rounded-2xl p-8 max-w-md w-mx-4 shadow-2xl transform transition-transform duration-300 scale-100">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-16 h-16 bg-gradient-to-r from-red-400 to-pink-500 rounded-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="text-center mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Sign Out Confirmation</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          Are you sure you want to sign out? You'll need to sign in again to access your account and continue using
+          LivestoX.
+        </p>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex gap-3">
+        <button @click="cancelLogout"
+          class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-200">
+          Cancel
+        </button>
+        <button @click="performLogout"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-pink-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-200 shadow-lg hover:shadow-xl">
+          <span class="flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign Out
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+import { auth } from '@/services/auth-service';
+import type { User } from '@/services/auth-service';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
-const user = ref<{
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-} | null>(null);
+const user = ref<User | null>(null);
 
 const showDropdown = ref(false);
 const showNotificationDropdown = ref(false);
 const showMessageDropdown = ref(false);
+const showLogoutModal = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
-const unreadNotifications = ref(3); // Example count
-const unreadMessages = ref(1); // Example count
+const unreadNotifications = ref(3);
+const unreadMessages = ref(1);
+
+// Load user data
+const loadUser = async () => {
+  try {
+    const currentUser = await auth.getCurrentUser();
+    user.value = currentUser;
+  } catch (error) {
+    console.error('Error loading user in NavBar:', error);
+    user.value = null;
+  }
+};
 
 onMounted(() => {
-  // Check if user is logged in
-  const savedUser = localStorage.getItem("user");
-  if (savedUser) {
-    const parsedUser = JSON.parse(savedUser);
-    user.value = {
-      firstName: parsedUser.firstName || "User",
-      lastName: parsedUser.lastName || "Name",
-      email: parsedUser.email || "",
-      role: parsedUser.role || "User",
-    };
-  }
+  loadUser();
+  
+  // Listen for auth state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      loadUser();
+    } else if (event === 'SIGNED_OUT') {
+      user.value = null;
+    }
+  });
 
   document.addEventListener("click", handleClickOutside);
 });
@@ -683,7 +738,6 @@ onBeforeUnmount(() => {
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
-  // Close other dropdowns when opening this one
   if (showDropdown.value) {
     showNotificationDropdown.value = false;
     showMessageDropdown.value = false;
@@ -692,7 +746,6 @@ const toggleDropdown = () => {
 
 const toggleNotificationDropdown = () => {
   showNotificationDropdown.value = !showNotificationDropdown.value;
-  // Close other dropdowns when opening this one
   if (showNotificationDropdown.value) {
     showDropdown.value = false;
     showMessageDropdown.value = false;
@@ -701,7 +754,6 @@ const toggleNotificationDropdown = () => {
 
 const toggleMessageDropdown = () => {
   showMessageDropdown.value = !showMessageDropdown.value;
-  // Close other dropdowns when opening this one
   if (showMessageDropdown.value) {
     showDropdown.value = false;
     showNotificationDropdown.value = false;
@@ -723,17 +775,14 @@ const closeMessageDropdown = () => {
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as Node;
 
-  // Close dropdown if clicked outside
   if (dropdownRef.value && !dropdownRef.value.contains(target)) {
     showDropdown.value = false;
   }
 
-  // Close notification dropdown if clicked outside
   if (notificationRef.value && !notificationRef.value.contains(target)) {
     showNotificationDropdown.value = false;
   }
 
-  // Close message dropdown if clicked outside
   if (messageRef.value && !messageRef.value.contains(target)) {
     showMessageDropdown.value = false;
   }
@@ -741,26 +790,46 @@ const handleClickOutside = (event: MouseEvent) => {
 
 const markAsRead = (type: "notification" | "message", id: number) => {
   if (type === "notification") {
-    // In a real app, you would mark the notification as read via API
     console.log(`Marking notification ${id} as read`);
     unreadNotifications.value = Math.max(0, unreadNotifications.value - 1);
     closeNotificationDropdown();
   } else {
-    // In a real app, you would mark the message as read via API
     console.log(`Marking message ${id} as read`);
     unreadMessages.value = Math.max(0, unreadMessages.value - 1);
     closeMessageDropdown();
   }
 }
 
-const logout = () => {
-  localStorage.removeItem("user");
-  user.value = null;
+// Logout confirmation methods
+const confirmLogout = () => {
+  showLogoutModal.value = true;
   showDropdown.value = false;
-  router.push("/");
 }
 
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
+const cancelLogout = () => {
+  showLogoutModal.value = false;
+}
+
+const performLogout = async () => {
+  try {
+    await auth.signOut();
+    user.value = null;
+    showLogoutModal.value = false;
+    router.push("/");
+  } catch (error) {
+    console.error('Error signing out:', error);
+    showLogoutModal.value = false;
+  }
+}
+
+const getInitials = (firstName?: string, lastName?: string) => {
+  const first = firstName?.charAt(0) || '';
+  const last = lastName?.charAt(0) || '';
+  
+  if (!first && !last) {
+    return 'U'; // Default initial if no name
+  }
+  
+  return `${first}${last}`.toUpperCase();
 }
 </script>

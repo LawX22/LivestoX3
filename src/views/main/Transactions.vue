@@ -264,16 +264,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import NavBar from '../../components/NavBar.vue'
-import FiltersSidebar from '../../components/Transactions/FilterSidebar.vue'
-import TransactionDetailsModal from '../../components/Transactions/TransactionDetailsModal.vue'
-import TransactionsTable from '../../components/Transactions/TransactionsTable.vue'
-import InfoModal from '../../components/Transactions/InfoModal.vue'
-import type { FarmerTransaction, BuyerTransaction, Transaction, Filters } from '../../services/transactions'
-import { getCurrentUser, seedDefaultUsers, type User } from '../../services/user'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import NavBar from '@/components/NavBar.vue'
+import FiltersSidebar from '@/components/Transactions/FilterSidebar.vue'
+import TransactionDetailsModal from '@/components/Transactions/TransactionDetailsModal.vue'
+import TransactionsTable from '@/components/Transactions/TransactionsTable.vue'
+import InfoModal from '@/components/Transactions/InfoModal.vue'
+import type { FarmerTransaction, BuyerTransaction, Transaction, Filters } from '@/services/transactions'
+import { auth } from '@/services/auth-service'
+import type { User } from '@/services/auth-service'
+import { supabase } from '@/supabase'
 
-// User account type (determined from user.ts)
+const router = useRouter()
+
+// User state using auth-service
 const currentUser = ref<User | null>(null)
 const userIsFarmer = ref(false)
 const userIsBuyer = ref(false)
@@ -300,6 +305,39 @@ const filters = ref<Filters>({
 // Sample data - both sets are loaded for farmers and admins
 const farmerTransactions = ref<FarmerTransaction[]>([])
 const buyerTransactions = ref<BuyerTransaction[]>([])
+
+// Load user data using auth-service
+const loadUser = async () => {
+  try {
+    const user = await auth.getCurrentUser()
+    currentUser.value = user
+    
+    if (currentUser.value) {
+      // Determine user role and set appropriate flags
+      userIsFarmer.value = currentUser.value.role === 'farmer'
+      userIsBuyer.value = currentUser.value.role === 'buyer'
+      
+      // Set initial view based on user role
+      if (userIsFarmer.value || userIsAdmin.value) {
+        currentView.value = 'farmer' // Farmers and Admins see farmer view by default
+      } else {
+        currentView.value = 'buyer' // Buyers see buyer view only
+      }
+      
+      console.log(`User detected: ${currentUser.value.email} (${currentUser.value.role})`)
+    } else {
+      // Fallback if no user is logged in
+      console.warn('No user logged in. Defaulting to buyer view.')
+      userIsBuyer.value = true
+      currentView.value = 'buyer'
+    }
+  } catch (error) {
+    console.error('Error loading user in Transactions:', error)
+    currentUser.value = null
+    userIsBuyer.value = true
+    currentView.value = 'buyer'
+  }
+}
 
 // Computed properties
 const currentTransactions = computed(() => {
@@ -455,7 +493,9 @@ const cancelOrder = (id: string): void => {
     const index = buyerTransactions.value.findIndex(t => t.id === id)
     if (index !== -1) {
       buyerTransactions.value[index].status = 'Cancelled'
-      selectedTransaction.value = null
+      if (selectedTransaction.value?.id === id) {
+        selectedTransaction.value = null
+      }
       showToastNotification('Order cancelled successfully!')
     }
   }
@@ -466,41 +506,16 @@ const confirmDelivery = (id: string): void => {
     const index = buyerTransactions.value.findIndex(t => t.id === id)
     if (index !== -1) {
       buyerTransactions.value[index].status = 'Completed'
-      selectedTransaction.value = null
+      if (selectedTransaction.value?.id === id) {
+        selectedTransaction.value = null
+      }
       showToastNotification('Delivery confirmed successfully!')
     }
   }
 }
 
-// Initialize data and user detection
-onMounted(() => {
-  // Seed default users if not already seeded
-  seedDefaultUsers()
-  
-  // Get current user from localStorage
-  currentUser.value = getCurrentUser()
-  
-  if (currentUser.value) {
-    // Determine user role and set appropriate flags
-    userIsFarmer.value = currentUser.value.role === 'Farmer'
-    userIsBuyer.value = currentUser.value.role === 'Buyer'
-    userIsAdmin.value = currentUser.value.role === 'Admin'
-    
-    // Set initial view based on user role
-    if (userIsFarmer.value || userIsAdmin.value) {
-      currentView.value = 'farmer' // Farmers and Admins see farmer view by default
-    } else {
-      currentView.value = 'buyer' // Buyers see buyer view only
-    }
-    
-    console.log(`User detected: ${currentUser.value.username} (${currentUser.value.role})`)
-  } else {
-    // Fallback if no user is logged in
-    console.warn('No user logged in. Defaulting to buyer view.')
-    userIsBuyer.value = true
-    currentView.value = 'buyer'
-  }
-
+// Load transaction data
+const loadTransactionData = () => {
   // Load farmer transactions (sales) - only for farmers and admins
   if (userIsFarmer.value || userIsAdmin.value) {
     farmerTransactions.value = [
@@ -609,5 +624,31 @@ onMounted(() => {
   if (userIsBuyer.value && !userIsFarmer.value && !userIsAdmin.value) {
     farmerTransactions.value = []
   }
+}
+
+// Initialize data and user detection
+onMounted(async () => {
+  await loadUser()
+  loadTransactionData()
+
+  // Listen for auth state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      loadUser()
+      loadTransactionData()
+    } else if (event === 'SIGNED_OUT') {
+      currentUser.value = null
+      userIsFarmer.value = false
+      userIsBuyer.value = false
+      userIsAdmin.value = false
+      currentView.value = 'buyer'
+      loadTransactionData()
+    }
+  })
+})
+
+// Watch for user changes to reload transaction data
+watch(currentUser, () => {
+  loadTransactionData()
 })
 </script>

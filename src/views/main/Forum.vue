@@ -39,7 +39,7 @@
         <!-- Right side - Dynamic Content Area -->
         <div class="flex-1 flex justify-end min-w-0">
           <!-- Guest Mode Notice -->
-          <div v-if="!currentUser?.email" class="flex items-center gap-3 max-w-full">
+          <div v-if="!currentUser" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-amber-100/80 text-amber-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-amber-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -69,7 +69,7 @@
           </div>
 
           <!-- Buyer Actions -->
-          <div v-else-if="currentUser?.role === 'Buyer'" class="flex items-center gap-3 max-w-full">
+          <div v-else-if="currentUser?.role === 'buyer'" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-green-100/80 text-green-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-green-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -100,7 +100,7 @@
           </div>
 
           <!-- Farmer Actions -->
-          <div v-else-if="currentUser?.role === 'Farmer'" class="flex items-center gap-3 max-w-full">
+          <div v-else-if="currentUser?.role === 'farmer'" class="flex items-center gap-3 max-w-full">
             <div
               class="bg-green-100/80 text-green-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-green-200 shadow-md">
               <div class="flex items-center min-w-0">
@@ -695,24 +695,17 @@ import NavBar from '../../components/NavBar.vue';
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import CommentsModal from '../../components/Forum/CommentsModal.vue';
 import ForumCard from '../../components/Forum/ForumCard.vue';
-import { getCurrentUser } from '../../services/user';
+import { auth } from '@/services/auth-service';
+import type { User } from '@/services/auth-service';
 import { forumService } from '../../services/forumService';
-import type { ForumQuestion, ForumAnswer } from '../../services/forumService';
-
-// Define interfaces to ensure type safety
-interface User {
-  email: string;
-  role: 'Farmer' | 'Buyer';
-  firstName?: string;
-  lastName?: string;
-  fullName?: string;
-}
+import type { ForumQuestion, ForumAnswer, NewQuestion } from '../../services/forumService';
+import { supabase } from '@/supabase';
 
 // Router setup
 const router = useRouter();
 
-// Get current user
-const currentUser = getCurrentUser() as User | null;
+// User state using auth service
+const currentUser = ref<User | null>(null);
 
 // State
 const isLoading = ref(true);
@@ -738,6 +731,17 @@ const filters = ref({
 
 // Forum questions from Supabase
 const forumQuestions = ref<ForumQuestion[]>([]);
+
+// Load user data using auth service
+const loadUser = async () => {
+  try {
+    const user = await auth.getCurrentUser();
+    currentUser.value = user;
+  } catch (error) {
+    console.error('Error loading user in Forum:', error);
+    currentUser.value = null;
+  }
+};
 
 // Ensure all answers have the required 'id' property from ForumAnswer interface
 function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
@@ -773,7 +777,7 @@ const hasActiveFilters = computed(() => {
 const filteredQuestions = computed(() => {
   return forumQuestions.value.filter(question => {
     // Visibility filter based on user role
-    if (question.visibility === 'farmers' && (!currentUser || currentUser.role !== 'Farmer')) {
+    if (question.visibility === 'farmers' && (!currentUser.value || currentUser.value.role !== 'farmer')) {
       return false;
     }
 
@@ -838,7 +842,7 @@ const activeUsers = computed(() => {
 const loadQuestions = async () => {
   try {
     isLoading.value = true;
-    const questions = await forumService.getQuestions(currentUser?.email);
+    const questions = await forumService.getQuestions(currentUser.value?.email);
     forumQuestions.value = normalizeAnswers(questions);
   } catch (error) {
     console.error('Failed to load questions:', error);
@@ -896,22 +900,27 @@ const handleSignin = () => {
   router.push('/signin');
 };
 
-const handlePostQuestion = async (questionData: ForumQuestion) => {
-  if (!currentUser) return;
+const handlePostQuestion = async (questionData: NewQuestion) => {
+  if (!currentUser.value) return;
 
   try {
+    // Create the question using the forum service
+    const newQuestion = await forumService.createQuestion(
+      questionData, 
+      currentUser.value.email, 
+      currentUser.value.role
+    );
+    
     // Add user's name information to the question data
-    const enrichedQuestionData = {
-      ...questionData,
-      userFirstName: currentUser.firstName || '',
-      userLastName: currentUser.lastName || '',
-      userFullName: constructUserFullName(currentUser),
-      userRole: currentUser.role,
-      userEmail: currentUser.email
+    const enrichedQuestion = {
+      ...newQuestion,
+      userFirstName: currentUser.value.firstName || '',
+      userLastName: currentUser.value.lastName || '',
+      userFullName: constructUserFullName(currentUser.value)
     };
 
-    // The question is already created by the modal, just add it to our local array
-    forumQuestions.value.unshift(enrichedQuestionData);
+    // Add the question to our local array
+    forumQuestions.value.unshift(enrichedQuestion);
     showModal.value = false;
     showToastNotification('Your question has been posted successfully!');
   } catch (error) {
@@ -921,10 +930,10 @@ const handlePostQuestion = async (questionData: ForumQuestion) => {
 };
 
 const upvoteQuestion = async (question: ForumQuestion) => {
-  if (!currentUser || question.userEmail === currentUser.email) return;
+  if (!currentUser.value || question.userEmail === currentUser.value.email) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, currentUser.email, 'up');
+    const result = await forumService.voteQuestion(question.id, currentUser.value.email, 'up');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -938,9 +947,9 @@ const upvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![currentUser.email] = result.userVote;
+        forumQuestions.value[index].userVotes![currentUser.value.email] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![currentUser.email];
+        delete forumQuestions.value[index].userVotes![currentUser.value.email];
       }
     }
   } catch (error) {
@@ -950,10 +959,10 @@ const upvoteQuestion = async (question: ForumQuestion) => {
 };
 
 const downvoteQuestion = async (question: ForumQuestion) => {
-  if (!currentUser || question.userEmail === currentUser.email) return;
+  if (!currentUser.value || question.userEmail === currentUser.value.email) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, currentUser.email, 'down');
+    const result = await forumService.voteQuestion(question.id, currentUser.value.email, 'down');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -967,9 +976,9 @@ const downvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![currentUser.email] = result.userVote;
+        forumQuestions.value[index].userVotes![currentUser.value.email] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![currentUser.email];
+        delete forumQuestions.value[index].userVotes![currentUser.value.email];
       }
     }
   } catch (error) {
@@ -978,16 +987,16 @@ const downvoteQuestion = async (question: ForumQuestion) => {
   }
 };
 
-// FIXED: Handler methods for edit and delete with proper database operations
+// Handler methods for edit and delete with proper database operations
 const handleEditQuestion = async (eventData: { questionId: number; updates: Partial<ForumQuestion> }) => {
-  if (!currentUser) return;
+  if (!currentUser.value) return;
   
   try {
     const { questionId, updates } = eventData;
     
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== currentUser.email) {
+    if (!question || question.userEmail !== currentUser.value.email) {
       showToastNotification('You can only edit your own questions.');
       return;
     }
@@ -1008,14 +1017,11 @@ const handleEditQuestion = async (eventData: { questionId: number; updates: Part
       forumQuestions.value[index] = {
         ...forumQuestions.value[index],
         ...updatedQuestion,
-        // Preserve user name information
+        // Preserve user name information and answers
         userFirstName: forumQuestions.value[index].userFirstName,
         userLastName: forumQuestions.value[index].userLastName,
         userFullName: forumQuestions.value[index].userFullName,
-        answers: forumQuestions.value[index].answers.map((a, idx) => ({
-          ...a,
-          id: (a as any).id ?? idx
-        }))
+        answers: forumQuestions.value[index].answers
       };
       
       // Update selected question if it's the one being edited
@@ -1032,12 +1038,12 @@ const handleEditQuestion = async (eventData: { questionId: number; updates: Part
 };
 
 const handleDeleteQuestion = async (questionId: number) => {
-  if (!currentUser) return;
+  if (!currentUser.value) return;
   
   try {
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== currentUser.email) {
+    if (!question || question.userEmail !== currentUser.value.email) {
       showToastNotification('You can only delete your own questions.');
       return;
     }
@@ -1065,7 +1071,21 @@ const handleDeleteQuestion = async (questionId: number) => {
 };
 
 // Lifecycle hooks
-onMounted(() => {
-  loadQuestions();
+onMounted(async () => {
+  // Load user first, then questions
+  await loadUser();
+  await loadQuestions();
+
+  // Listen for auth state changes
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      await loadUser();
+      await loadQuestions();
+    } else if (event === 'SIGNED_OUT') {
+      currentUser.value = null;
+      // Reload questions to apply proper visibility filters
+      await loadQuestions();
+    }
+  });
 });
 </script>
