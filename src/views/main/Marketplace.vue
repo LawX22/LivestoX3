@@ -416,7 +416,7 @@ import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue
 import LivestockCard from '../../components/Market/LivestockCard.vue';
 import { getCurrentUser } from '../../services/user';
 import type { Animal, Filters, ServiceUser, BidData, MessageData } from '../../services/animal';
-import { livestock } from '@/services/livestock-Service';
+import { livestock } from '@/services/livestock-service';
 
 // Props to determine view mode
 const props = defineProps<{
