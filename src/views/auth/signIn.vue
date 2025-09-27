@@ -381,7 +381,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { defaultUsers, type User } from '../../services/user'
+import { auth } from '@/services/auth-service'
 
 const router = useRouter()
 
@@ -505,88 +505,25 @@ onUnmounted(() => {
   stopAutoSlide()
 })
 
-// Sign in function
-const handleSignIn = () => {
+const handleSignIn = async () => {
   isLoading.value = true
 
-  // Simulate loading delay
-  setTimeout(() => {
-    const userIds: string[] = JSON.parse(localStorage.getItem('userIds') || '[]')
-    const localUsers: User[] = userIds
-      .map(id => {
-        const data = localStorage.getItem(`user_${id}`)
-        return data ? JSON.parse(data) : null
-      })
-      .filter(Boolean)
-
-    // Combine default users and local users
-    const users: User[] = [...defaultUsers, ...localUsers]
-
-    const user = users.find(u => u.email === email.value && u.password === password.value)
-
-    if (!user) {
-      addToast({
-        type: 'error',
-        title: 'Sign In Failed',
-        content: 'Invalid email or password. Please check your credentials and try again.',
-        list: [
-          'Verify your email address is correct',
-          'Check if your password is correct',
-          'Make sure caps lock is off',
-          'Contact support if you continue having issues'
-        ]
-      })
-      isLoading.value = false
-      return
-    }
-
-    // Check if banned
-    if (user.isBanned) {
-      const now = new Date()
-      const banEnd = user.bannedUntil ? new Date(user.bannedUntil) : null
-
-      if (banEnd && now < banEnd) {
-        const remainingDays = Math.ceil((banEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        addToast({
-          type: 'error',
-          title: 'Account Suspended',
-          content: `Your account is temporarily suspended. Please try again in ${remainingDays} day(s).`,
-          list: [
-            'Contact support for more information',
-            'Review our terms of service',
-            'Wait for the suspension period to end'
-          ]
-        })
-        isLoading.value = false
-        return
-      } else {
-        user.isBanned = false
-        user.bannedUntil = ''
-        localStorage.setItem(`user_${user.userId}`, JSON.stringify(user))
-      }
-    }
-
-    // Save current session
-    localStorage.setItem('authUserId', user.userId)
-    localStorage.setItem('user', JSON.stringify(user))
-
-    // Show success toast
+  const { error } = await auth.signIn(email.value, password.value)
+  if (error) {
     addToast({
-      type: 'success',
-      title: 'Welcome Back!',
-      content: `Successfully signed in as ${user.firstName} ${user.lastName}`
+      type: 'error',
+      title: 'Sign In Failed',
+      content: 'Invalid email or password. Please check your credentials and try again.',
+      list: [
+        'Verify your email address is correct',
+        'Check if your password is correct',
+        'Make sure caps lock is off',
+        'Contact support if you continue having issues'
+      ]
     })
-
-    // Redirect based on role after a short delay
-    setTimeout(() => {
-      if (user.role === 'Admin') {
-        router.push('/adminDashboard')
-      } else {
-        router.push('/dashboard')
-      }
-    }, 1500)
-
     isLoading.value = false
-  }, 1000)
+    return
+  }
+  router.push('/dashboard')
 }
 </script>

@@ -390,21 +390,24 @@
                     <div class="text-xs">
                       <span class="font-medium text-gray-700">Password Strength:</span>
                       <span v-if="passwordStrength === 'strong'" class="text-green-600 font-semibold"> Strong ✓</span>
-                      <span v-else-if="passwordStrength === 'moderate'" class="text-amber-600 font-semibold"> Moderate</span>
+                      <span v-else-if="passwordStrength === 'moderate'" class="text-amber-600 font-semibold">
+                        Moderate</span>
                       <span v-else class="text-red-600 font-semibold"> Weak</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-1.5">
                       <div :class="[
                         'h-1.5 rounded-full transition-all duration-300',
                         passwordStrength === 'strong' ? 'bg-green-500 w-full' :
-                        passwordStrength === 'moderate' ? 'bg-amber-500 w-2/3' :
-                        'bg-red-500 w-1/3'
+                          passwordStrength === 'moderate' ? 'bg-amber-500 w-2/3' :
+                            'bg-red-500 w-1/3'
                       ]"></div>
                     </div>
                     <!-- Warning if password is weak -->
-                    <div v-if="passwordStrength !== 'strong'" class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div v-if="passwordStrength !== 'strong'"
+                      class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
                       <div class="flex items-start">
-                        <svg class="w-3 h-3 text-amber-500 mr-1.5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <svg class="w-3 h-3 text-amber-500 mr-1.5 mt-0.5 flex-shrink-0" fill="currentColor"
+                          viewBox="0 0 20 20">
                           <path fill-rule="evenodd"
                             d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                             clip-rule="evenodd" />
@@ -414,19 +417,25 @@
                           <ul class="mt-1 space-y-0.5 text-xs">
                             <li v-if="!hasMinLength" class="flex items-center">
                               <svg class="w-2.5 h-2.5 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clip-rule="evenodd" />
                               </svg>
                               Use at least 8 characters
                             </li>
                             <li v-if="!hasNumber" class="flex items-center">
                               <svg class="w-2.5 h-2.5 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clip-rule="evenodd" />
                               </svg>
                               Add at least 1 number
                             </li>
                             <li v-if="!hasSpecialChar" class="flex items-center">
                               <svg class="w-2.5 h-2.5 text-amber-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                  clip-rule="evenodd" />
                               </svg>
                               Add special characters (!@#$%^&*) for better security
                             </li>
@@ -469,10 +478,11 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="passwordMismatch || form.password.length < 6 || !form.phoneNumber" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700': !passwordMismatch && form.password.length >= 6 && form.phoneNumber,
-                    'bg-gray-400 cursor-not-allowed': passwordMismatch || form.password.length < 6 || !form.phoneNumber
-                  }"
+                  <button type="submit" :disabled="passwordMismatch || form.password.length < 6 || !form.phoneNumber"
+                    :class="{
+                      'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700': !passwordMismatch && form.password.length >= 6 && form.phoneNumber,
+                      'bg-gray-400 cursor-not-allowed': passwordMismatch || form.password.length < 6 || !form.phoneNumber
+                    }"
                     class="text-white py-2 px-4 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     Send Verification Code
                     <svg class="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -519,10 +529,10 @@
               <form @submit.prevent="handleSignUp" class="space-y-5">
                 <div>
                   <label class="block text-xs font-semibold text-gray-700 mb-3 text-center">Enter 6-Digit Verification
-                    Code *</label>
+                    Code</label>
                   <div class="flex justify-center space-x-2 mb-2">
                     <input v-for="n in 6" :key="n" v-model="verificationCode[n - 1]" @input="handleCodeInput(n, $event)"
-                      @keydown.delete="handleCodeDelete(n, $event)" type="text" maxlength="1" required
+                      @keydown.delete="handleCodeDelete(n, $event)" type="text" maxlength="1"
                       class="w-12 h-12 text-center text-lg font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300 shadow-sm" />
                   </div>
                   <p class="text-xs text-gray-500 text-center">Enter the code exactly as received in your email</p>
@@ -560,15 +570,19 @@
                     </svg>
                     Back
                   </button>
-                  <button type="submit" :disabled="isLoading || !isVerificationCodeValid" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': !isLoading && isVerificationCodeValid,
-                    'bg-gray-400 cursor-not-allowed': isLoading || !isVerificationCodeValid
+                  <button type="submit" :disabled="isLoading" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg': !isLoading,
+                    'bg-gray-400 cursor-not-allowed': isLoading
                   }"
                     class="text-white py-2 px-6 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     <span v-if="isLoading" class="mr-2">
-                      <svg class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                       </svg>
                     </span>
                     <svg v-else class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -596,6 +610,7 @@
 </template>
 
 <script setup lang="ts">
+import { auth } from '@/services/auth-service'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -615,7 +630,7 @@ const toasts = ref<Toast[]>([])
 const addToast = (toast: Omit<Toast, 'id'>) => {
   const id = Math.random().toString(36).substr(2, 9)
   toasts.value.push({ ...toast, id })
-  
+
   // Auto-remove toast after 5 seconds
   setTimeout(() => {
     removeToast(id)
@@ -673,25 +688,20 @@ const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(form.value.p
 const passwordStrength = computed(() => {
   const password = form.value.password
   if (password.length < 6) return 'weak'
-  
+
   let score = 0
   if (password.length >= 8) score += 1
   if (/\d/.test(password)) score += 1
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1
   if (/[a-z]/.test(password)) score += 1
   if (/[A-Z]/.test(password)) score += 1
-  
+
   if (score >= 4) return 'strong'
   if (score >= 2) return 'moderate'
   return 'weak'
 })
 
 const passwordMismatch = computed(() => form.value.password !== form.value.confirmPassword && form.value.confirmPassword.length > 0)
-
-// Check if at least one digit is entered in verification code
-const isVerificationCodeValid = computed(() => {
-  return verificationCode.value.some(digit => digit.trim() !== '')
-})
 
 // Toast Functions
 const showPhoneToast = () => {
@@ -805,8 +815,17 @@ const sendVerificationCode = async () => {
   }
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
+    auth.signUp(form.value.email, form.value.password, {
+      firstname: form.value.firstName,
+      lastname: form.value.lastName,
+      username: form.value.username,
+      phone: form.value.phoneNumber,
+      gender: form.value.gender,
+      role: "Buyer"
+    });
+
+
     // Show success toast
     addToast({
       type: 'success',
@@ -828,10 +847,8 @@ const sendVerificationCode = async () => {
 }
 
 const handleSignUp = async () => {
-  if (isLoading.value || !isVerificationCodeValid.value) {
-    if (!isVerificationCodeValid.value) {
-      verificationError.value = 'Please enter at least one digit of the verification code'
-    }
+  // MODIFIED: Removed the verification code check
+  if (isLoading.value) {
     return
   }
 
@@ -839,7 +856,7 @@ const handleSignUp = async () => {
   verificationError.value = ''
 
   try {
-    // Combine verification code
+    // Combine verification code (even if incomplete)
     form.value.verificationCode = verificationCode.value.join('')
 
     // Check if passwords match
@@ -854,11 +871,16 @@ const handleSignUp = async () => {
       return
     }
 
-    // Mock API delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    const { error } = await auth.verifyEmailOtp(form.value.email, form.value.verificationCode);
 
-    // Always proceed regardless of verification code content
-    // In real implementation, you would validate the code against the server
+    if (error) {
+      addToast({
+        type: 'error',
+        title: 'Verification Failed!',
+        content: 'There was an issue with your verification. Please try again.'
+      });
+      return;
+    }
 
     // Show success toast
     addToast({
@@ -867,25 +889,11 @@ const handleSignUp = async () => {
       content: 'Your account has been created and verified. You can now sign in with your credentials.'
     })
 
-    console.log('Account created with:', {
-      firstName: form.value.firstName,
-      lastName: form.value.lastName,
-      username: form.value.username,
-      email: form.value.email,
-      phoneNumber: `+63${form.value.phoneNumber}`,
-      gender: form.value.gender,
-      passwordStrength: passwordStrength.value,
-      verificationCode: form.value.verificationCode
-    })
-
-    // Redirect after a short delay to show the success toast
-    setTimeout(() => {
-      router.push('/signin')
-    }, 2000)
+    router.push('/signin');
 
   } catch (error: any) {
     console.error('Sign up error:', error)
-    
+
     // Handle specific error cases
     if (error.message?.includes('email already exists')) {
       verificationError.value = 'This email address is already registered'
