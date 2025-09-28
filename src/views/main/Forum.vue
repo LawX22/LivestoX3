@@ -687,8 +687,8 @@ const currentUserForForum = computed(() => {
     id: authStore.user.id,
     email: authStore.userEmail,
     role: authStore.userRole,
-    firstName: authStore.userMetadata.firstName || authStore.userMetadata.first_name || '',
-    lastName: authStore.userMetadata.lastName || authStore.userMetadata.last_name || '',
+    firstName: authStore.userMetadata?.firstname || '', 
+    lastName: authStore.userMetadata?.lastname || '',  
     fullName: authStore.userDisplayName
   };
 });
@@ -707,11 +707,12 @@ function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
 // Helper function to construct user's full name
 function constructUserFullName(): string {
   if (!authStore.isAuthenticated) return 'Unknown User';
-  
-  const firstName = authStore.userMetadata.firstName || authStore.userMetadata.first_name || '';
-  const lastName = authStore.userMetadata.lastName || authStore.userMetadata.last_name || '';
+
+  const firstName = authStore.userMetadata?.firstname || '';
+  const lastName = authStore.userMetadata?.lastname || '';
+
   const fullName = `${firstName} ${lastName}`.trim();
-  
+
   return fullName || authStore.userDisplayName || 'User';
 }
 
@@ -869,8 +870,8 @@ const handlePostQuestion = async (questionData: NewQuestion) => {
     // Add user's name information to the question data
     const enrichedQuestion = {
       ...newQuestion,
-      userFirstName: authStore.userMetadata.firstName || authStore.userMetadata.first_name || '',
-      userLastName: authStore.userMetadata.lastName || authStore.userMetadata.last_name || '',
+      firstName: authStore.userMetadata?.firstname || '', 
+      lastName: authStore.userMetadata?.lastname || '', 
       userFullName: constructUserFullName()
     };
 

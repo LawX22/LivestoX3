@@ -54,7 +54,7 @@ class ForumService {
       
       const { data, error } = await supabase
         .from('users')
-        .select('first_name, last_name')
+        .select('firstname, lastname')
         .eq('email', userEmail)
         .single()
       
@@ -70,8 +70,8 @@ class ForumService {
 
       console.log('Raw user data:', data)
       
-      const firstName = data.first_name || ''
-      const lastName = data.last_name || ''
+      const firstName = data.firstname || ''
+      const lastName = data.lastname || ''
       
       console.log('Processed user details:', { firstName, lastName })
       
@@ -169,7 +169,7 @@ class ForumService {
       // Fetch all user details in one query using correct field names
       const { data: usersData, error } = await supabase
         .from('users')
-        .select('email, first_name, last_name')
+        .select('email, firstname, lastname')
         .in('email', Array.from(userEmails))
 
       if (error) {
@@ -181,8 +181,8 @@ class ForumService {
       // Create a lookup map
       const userLookup: { [email: string]: { firstName: string, lastName: string } } = {}
       usersData?.forEach(user => {
-        const firstName = user.first_name || ''
-        const lastName = user.last_name || ''
+        const firstName = user.firstname || ''
+        const lastName = user.lastname || ''
         
         userLookup[user.email] = {
           firstName,

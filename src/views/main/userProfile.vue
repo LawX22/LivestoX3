@@ -580,8 +580,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import NavBar from '../../components/NavBar.vue'
 import AddressModal from '../../components/Profile/AddressModal.vue'
 import VerificationModal from '../../components/Profile/VerificationModal.vue'
@@ -635,9 +636,35 @@ interface VerificationRequest {
   submittedAt: string;
   rejectionReason?: string;
 }
-const router = useRouter()
 
-const user = ref<User | null>(null)
+const router = useRouter()
+const authStore = useAuthStore()
+
+// Use computed properties to get user data from authStore
+const user = computed(() => {
+  if (!authStore.user) return null
+
+  return {
+    userId: authStore.userId || '',
+    username: authStore.userName,
+    email: authStore.userEmail,
+    firstName: authStore.userMetadata?.firstname || '', 
+    lastName: authStore.userMetadata?.lastname || '',  
+    phoneNumber: authStore.userMetadata?.phone || '',
+    gender: authStore.userMetadata?.gender || '',
+    role: authStore.userRole,
+    isVerified: authStore.userMetadata?.isVerified || false,
+    createdAt: authStore.userMetadata?.created_at || new Date().toISOString(),
+    farmName: authStore.userMetadata?.farmName,
+    farmSize: authStore.userMetadata?.farmSize,
+    farmSizeUnit: authStore.userMetadata?.farmSizeUnit,
+    livestockTypes: authStore.userMetadata?.livestockTypes,
+    description: authStore.userMetadata?.description,
+    farmAddress: authStore.userMetadata?.farmAddress
+  } as User
+})
+
+
 const editableUser = ref<Partial<User>>({})
 const editing = ref(false)
 const upgradePending = ref(false)
@@ -654,16 +681,6 @@ const selectedIndex = ref<number | null>(null)
 const showVerificationModal = ref(false)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const profileInput = ref<HTMLInputElement | null>(null)
-
-// const bannerStyle = computed(() => {
-//   return bannerImage.value
-//     ? {
-//       backgroundImage: `url('${bannerImage.value}')`,
-//       backgroundSize: 'cover',
-//       backgroundPosition: 'center'
-//     }
-//     : {}
-// })
 
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '—'
@@ -717,6 +734,7 @@ const handleBannerUpload = (event: Event): void => {
     reader.onload = (e) => {
       const imageData = e.target?.result as string
       bannerImage.value = imageData
+      // Store in localStorage for persistence (remove this if you want to store in backend)
       localStorage.setItem(`bannerImage_${user.value?.userId}`, imageData)
     }
     reader.readAsDataURL(file)
@@ -732,6 +750,7 @@ const handleProfileUpload = (event: Event): void => {
     reader.onload = (e) => {
       const imageData = e.target?.result as string
       profileImage.value = imageData
+      // Store in localStorage for persistence (remove this if you want to store in backend)
       localStorage.setItem(`profileImage_${user.value?.userId}`, imageData)
     }
     reader.readAsDataURL(file)
@@ -740,15 +759,17 @@ const handleProfileUpload = (event: Event): void => {
 }
 
 const checkVerificationStatus = (userId: string): void => {
-  const userData = localStorage.getItem(`user_${userId}`)
-  if (userData) {
-    const userObj = JSON.parse(userData) as User
-    if (userObj.isVerified) {
-      verificationStatus.value = 'verified'
-      return
-    }
+  if (!authStore.userMetadata) {
+    verificationStatus.value = 'unverified'
+    return
   }
 
+  if (authStore.userMetadata.isVerified) {
+    verificationStatus.value = 'verified'
+    return
+  }
+
+  // Check verification requests from localStorage (you might want to move this to a proper database)
   const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
   const userVerification = verificationRequests.find(req => req.userId === userId)
 
@@ -763,50 +784,30 @@ const checkVerificationStatus = (userId: string): void => {
 }
 
 const loadUserData = (): void => {
-  const authUserId = localStorage.getItem('authUserId')
-  if (!authUserId) return
+  if (!authStore.user) return
 
-  const userData = localStorage.getItem(`user_${authUserId}`)
-  if (!userData) return
+  const userId = authStore.userId
+  if (!userId) return
 
   try {
-    const parsedUser = JSON.parse(userData) as User
-    user.value = parsedUser
-    editableUser.value = { ...parsedUser }
+    // Set editable user from authStore data
+    editableUser.value = { ...user.value } as Partial<User>
     delete editableUser.value.password
 
-    checkVerificationStatus(authUserId)
+    checkVerificationStatus(userId)
 
-    profileImage.value = localStorage.getItem(`profileImage_${authUserId}`)
-    bannerImage.value = localStorage.getItem(`bannerImage_${authUserId}`)
+    // Load images from localStorage (remove if using backend storage)
+    profileImage.value = localStorage.getItem(`profileImage_${userId}`)
+    bannerImage.value = localStorage.getItem(`bannerImage_${userId}`)
 
-    if (parsedUser.role === 'Farmer') {
-      const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-      const approvedRequest = upgradeRequests.find((req: any) =>
-        req.userId === authUserId && req.status === 'approved'
-      )
-
-      if (approvedRequest) {
-        user.value = {
-          ...user.value,
-          farmName: approvedRequest.farmDetails.farmName,
-          farmSize: approvedRequest.farmDetails.farmSize,
-          farmSizeUnit: approvedRequest.farmDetails.farmSizeUnit,
-          livestockTypes: approvedRequest.farmDetails.livestockTypes,
-          description: approvedRequest.farmDetails.description,
-          farmAddress: approvedRequest.farmAddress
-        } as User
-        editableUser.value = { ...user.value }
-        delete editableUser.value.password
-      }
-    }
-
+    // Check upgrade status from localStorage (you might want to move this to a proper database)
     const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
     upgradePending.value = upgradeRequests.some((req: any) =>
-      req.userId === authUserId && req.status === 'pending'
+      req.userId === userId && req.status === 'pending'
     )
 
-    const storedAddresses = localStorage.getItem(`addresses_${authUserId}`)
+    // Load addresses from localStorage (you might want to move this to a proper database)
+    const storedAddresses = localStorage.getItem(`addresses_${userId}`)
     if (storedAddresses) {
       addresses.value = JSON.parse(storedAddresses) as Address[]
     }
@@ -815,31 +816,33 @@ const loadUserData = (): void => {
   }
 }
 
-const handleProfileSave = (updatedUser: Partial<User>): void => {
-  if (!user.value) return
+const handleProfileSave = async (updatedUser: Partial<User>): Promise<void> => {
+  if (!authStore.user) return
 
-  const userId = user.value.userId
-  const originalUserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}') as User
+  try {
+    // Update user metadata in authStore (this would typically call an API to update the user)
+    const updatedMetadata = {
+      ...authStore.userMetadata,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      phone: updatedUser.phoneNumber,
+      gender: updatedUser.gender,
+      isVerified: verificationStatus.value === 'verified'
+    }
 
-  const newUserData: User = {
-    ...originalUserData,
-    username: updatedUser.username || originalUserData.username,
-    email: updatedUser.email || originalUserData.email,
-    firstName: updatedUser.firstName || originalUserData.firstName,
-    lastName: updatedUser.lastName || originalUserData.lastName,
-    phoneNumber: updatedUser.phoneNumber || originalUserData.phoneNumber,
-    gender: updatedUser.gender || originalUserData.gender,
-    isVerified: verificationStatus.value === 'verified',
-    userId: originalUserData.userId,
-    password: originalUserData.password,
-    role: originalUserData.role,
-    createdAt: originalUserData.createdAt
+    // Here you would typically call an API to update the user profile
+    // For now, we'll just update the local state
+    console.log('Profile update would be sent to API:', updatedMetadata)
+    
+    // If you have an updateUser method in your authStore, you would call it here:
+    // await authStore.updateUser(updatedMetadata)
+
+    editing.value = false
+  } catch (error) {
+    console.error('Error updating profile:', error)
   }
-
-  user.value = newUserData
-  localStorage.setItem(`user_${userId}`, JSON.stringify(newUserData))
-  editing.value = false
-  loadUserData()
 }
 
 const openAddressModal = (address: Address | null, index: number | null = null): void => {
@@ -855,9 +858,8 @@ const closeAddressModal = (): void => {
 }
 
 const handleAddressSave = (addressData: Address): void => {
-  if (!user.value) return
+  if (!authStore.userId) return
 
-  const userId = user.value.userId
   let updatedAddresses = [...addresses.value]
 
   if (selectedIndex.value !== null) {
@@ -873,19 +875,20 @@ const handleAddressSave = (addressData: Address): void => {
     }))
   }
 
-  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
+  // Store in localStorage (remove this if you want to store in backend)
+  localStorage.setItem(`addresses_${authStore.userId}`, JSON.stringify(updatedAddresses))
   addresses.value = updatedAddresses
   closeAddressModal()
 }
 
 const handleAddressDelete = (): void => {
-  if (!user.value || selectedIndex.value === null) return
+  if (!authStore.userId || selectedIndex.value === null) return
 
-  const userId = user.value.userId
   const updatedAddresses = [...addresses.value]
   updatedAddresses.splice(selectedIndex.value, 1)
 
-  localStorage.setItem(`addresses_${userId}`, JSON.stringify(updatedAddresses))
+  // Store in localStorage (remove this if you want to store in backend)
+  localStorage.setItem(`addresses_${authStore.userId}`, JSON.stringify(updatedAddresses))
   addresses.value = updatedAddresses
   closeAddressModal()
 }
@@ -899,11 +902,10 @@ const closeVerificationModal = (): void => {
 }
 
 const handleVerification = (verificationData: { idType: string; frontImage: string; backImage: string }): void => {
-  if (!user.value) return
+  if (!authStore.userId) return
 
-  const userId = user.value.userId
   const verificationRequest: VerificationRequest = {
-    userId,
+    userId: authStore.userId,
     idType: verificationData.idType,
     frontImage: verificationData.frontImage,
     backImage: verificationData.backImage,
@@ -911,8 +913,9 @@ const handleVerification = (verificationData: { idType: string; frontImage: stri
     submittedAt: new Date().toISOString()
   }
 
+  // Store in localStorage (remove this if you want to store in backend)
   const existingRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-  const filteredRequests = existingRequests.filter(req => req.userId !== userId)
+  const filteredRequests = existingRequests.filter(req => req.userId !== authStore.userId)
   filteredRequests.push(verificationRequest)
 
   localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
@@ -921,20 +924,6 @@ const handleVerification = (verificationData: { idType: string; frontImage: stri
   verificationRejectionReason.value = null
   closeVerificationModal()
 }
-
-// const removeProfile = (): void => {
-//   profileImage.value = null
-//   if (user.value) {
-//     localStorage.removeItem(`profileImage_${user.value.userId}`)
-//   }
-// }
-
-// const removeBanner = (): void => {
-//   bannerImage.value = null
-//   if (user.value) {
-//     localStorage.removeItem(`bannerImage_${user.value.userId}`)
-//   }
-// }
 
 onMounted(() => {
   loadUserData()

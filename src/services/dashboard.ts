@@ -3,8 +3,8 @@ export interface User {
   id: string
   email: string
   role: 'farmer' | 'buyer' | 'both'
-  first_name?: string
-  last_name?: string
+  firstname?: string
+  lastname?: string
   username?: string
   created_at?: string
 }
