@@ -42,6 +42,7 @@
             <button
               @click="closeModal"
               class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors duration-200"
+              :disabled="isSubmitting"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -78,7 +79,7 @@
         <!-- Form Content -->
         <div v-else class="p-4 overflow-y-auto" style="max-height: calc(95vh - 80px);">
           <form @submit.prevent="handleSubmit" class="space-y-3">
-            <!-- User Info Banner -->
+            <!-- User Info Banner - Fixed to show full name -->
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
               <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -87,7 +88,11 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="text-xs text-green-800">Posting as <span class="font-semibold">{{ authStore.userEmail }}</span> ({{ authStore.userRole }})</p>
+                  <p class="text-xs text-green-800">
+                    Posting as 
+                    <span class="font-semibold">{{ authStore.userDisplayName }}</span> 
+                    <span class="text-green-600">({{ authStore.userRole }})</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -109,6 +114,7 @@
                   placeholder="Summarize your question in a few words..."
                   required 
                   maxlength="150"
+                  :disabled="isSubmitting"
                 />
                 <div class="absolute bottom-2 right-2 text-xs text-gray-400">
                   {{ question.title.length }}/150
@@ -131,6 +137,7 @@
                   class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-300 resize-none bg-gradient-to-br from-gray-50 to-white placeholder-gray-400"
                   placeholder="Provide more details about your situation, location, current setup, symptoms, etc. The more information you provide, the better answers you'll receive."
                   maxlength="1000"
+                  :disabled="isSubmitting"
                 />
                 <div class="absolute bottom-2 right-2 text-xs text-gray-400">
                   {{ question.description ? question.description.length : 0 }}/1000
@@ -154,6 +161,7 @@
                     v-model="question.category" 
                     class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white appearance-none cursor-pointer"
                     required
+                    :disabled="isSubmitting"
                   >
                     <option disabled value="">Select category</option>
                     <option value="Poultry">🐔 Poultry</option>
@@ -187,6 +195,7 @@
                     v-model="question.urgency" 
                     class="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white appearance-none cursor-pointer"
                     required
+                    :disabled="isSubmitting"
                   >
                     <option disabled value="">Select urgency</option>
                     <option value="Low">🟢 Low Priority</option>
@@ -217,13 +226,15 @@
               <!-- Radio Button Style Selection -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <label class="relative flex items-center p-2 border-2 rounded-xl cursor-pointer transition-all duration-300" 
-                       :class="question.visibility === 'all' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300'">
+                       :class="question.visibility === 'all' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300'"
+                       @click="!isSubmitting && (question.visibility = 'all')">
                   <input 
                     type="radio" 
                     v-model="question.visibility" 
                     value="all" 
                     class="sr-only"
                     required
+                    :disabled="isSubmitting"
                   />
                   <div class="flex items-center gap-2">
                     <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all"
@@ -240,12 +251,14 @@
                 </label>
                 
                 <label class="relative flex items-center p-2 border-2 rounded-xl cursor-pointer transition-all duration-300" 
-                       :class="question.visibility === 'farmers' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300'">
+                       :class="question.visibility === 'farmers' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300'"
+                       @click="!isSubmitting && (question.visibility = 'farmers')">
                   <input 
                     type="radio" 
                     v-model="question.visibility" 
                     value="farmers" 
                     class="sr-only"
+                    :disabled="isSubmitting"
                   />
                   <div class="flex items-center gap-2">
                     <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all"
@@ -322,7 +335,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { forumService } from '../../services/forumService'
 import type { NewQuestion } from '../../services/forumService'
@@ -350,8 +363,11 @@ const emits = defineEmits<{
 // Auth store
 const authStore = useAuthStore();
 
-// State
+// State with better duplicate prevention
 const isSubmitting = ref(false);
+const hasSubmitted = ref(false);
+const submissionController = ref<AbortController | null>(null);
+
 const question = ref<QuestionForm>({
   title: '',
   description: '',
@@ -373,7 +389,15 @@ watch(
         urgency: '',
         visibility: 'all'
       };
+      // Reset submission state
       isSubmitting.value = false;
+      hasSubmitted.value = false;
+      
+      // Cancel any pending submission
+      if (submissionController.value) {
+        submissionController.value.abort();
+        submissionController.value = null;
+      }
     }
   }
 );
@@ -392,15 +416,37 @@ const isFormValid = computed(() => {
 
 // Methods
 const closeModal = (): void => {
-  if (isSubmitting.value) return; // Prevent closing while submitting
+  if (isSubmitting.value) {
+    // Cancel ongoing submission
+    if (submissionController.value) {
+      submissionController.value.abort();
+      submissionController.value = null;
+    }
+    isSubmitting.value = false;
+  }
   emits('close');
 };
 
 const handleSubmit = async (): Promise<void> => {
-  if (!isFormValid.value || isSubmitting.value || !authStore.isAuthenticated) return;
+  // Enhanced duplicate prevention
+  if (!isFormValid.value || isSubmitting.value || hasSubmitted.value || !authStore.isAuthenticated) {
+    console.log('Submission blocked:', {
+      isFormValid: isFormValid.value,
+      isSubmitting: isSubmitting.value,
+      hasSubmitted: hasSubmitted.value,
+      isAuthenticated: authStore.isAuthenticated
+    });
+    return;
+  }
 
   try {
     isSubmitting.value = true;
+    hasSubmitted.value = true;
+    
+    // Create abort controller for this submission
+    submissionController.value = new AbortController();
+
+    console.log('Starting form submission...');
 
     // Create the new question data
     const newQuestionData: NewQuestion = {
@@ -411,24 +457,60 @@ const handleSubmit = async (): Promise<void> => {
       visibility: question.value.visibility
     };
 
-    // Submit to Supabase via forumService
+    // Submit to Supabase via forumService - Fixed method signature
     const createdQuestion = await forumService.createQuestion(
       newQuestionData,
       authStore.userEmail,
       authStore.userRole
     );
 
-    // Emit the created question to parent
+    console.log('Question created successfully:', createdQuestion.id);
+
+    // Emit success to parent - parent will handle adding to list
     emits('submit', createdQuestion);
     emits('showToast', 'Your question has been posted successfully!');
     
-    // Close modal
-    closeModal();
-  } catch (error) {
+    // Close modal after small delay to show success
+    setTimeout(() => {
+      closeModal();
+    }, 100);
+
+  } catch (error: any) {
+    hasSubmitted.value = false; // Allow retry on error
+    
+    if (error.name === 'AbortError') {
+      console.log('Submission was cancelled');
+      return;
+    }
+    
     console.error('Failed to create question:', error);
     emits('showToast', 'Failed to post question. Please try again.');
   } finally {
     isSubmitting.value = false;
+    submissionController.value = null;
   }
 };
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (submissionController.value) {
+    submissionController.value.abort();
+  }
+});
+
+// Prevent form resubmission on Enter key
+onMounted(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && props.visible) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+  
+  window.addEventListener('keydown', handleKeyDown);
+  
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
+});
 </script>

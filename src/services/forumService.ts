@@ -47,14 +47,14 @@ export interface NewAnswer {
 }
 
 class ForumService {
-  // Helper method to get user details by email
-  private async getUserDetails(userEmail: string): Promise<{ firstName?: string, lastName?: string } | null> {
+  // Helper method to get user details by email with better error handling
+  private async getUserDetails(userEmail: string): Promise<{ firstName: string, lastName: string, fullName: string } | null> {
     try {
       console.log('Fetching user details for email:', userEmail)
       
       const { data, error } = await supabase
         .from('users')
-        .select('firstname, lastname')
+        .select('firstname, lastname, username, email')
         .eq('email', userEmail)
         .single()
       
@@ -68,16 +68,40 @@ class ForumService {
         return null
       }
 
-      console.log('Raw user data:', data)
+      console.log('Raw user data from database:', data)
       
-      const firstName = data.firstname || ''
-      const lastName = data.lastname || ''
+      // Extract names with proper fallbacks
+      const firstName = (data.firstname || '').trim()
+      const lastName = (data.lastname || '').trim()
+      const username = (data.username || '').trim()
+      const emailPrefix = userEmail.split('@')[0]
       
-      console.log('Processed user details:', { firstName, lastName })
+      // Create full name with multiple fallback options
+      let fullName = ''
+      
+      if (firstName && lastName) {
+        fullName = `${firstName} ${lastName}`
+      } else if (firstName) {
+        fullName = firstName
+      } else if (lastName) {
+        fullName = lastName
+      } else if (username) {
+        fullName = username
+      } else {
+        fullName = emailPrefix || 'Unknown User'
+      }
+      
+      console.log('Processed user details:', { 
+        firstName, 
+        lastName, 
+        fullName,
+        fallbackUsed: !firstName && !lastName 
+      })
       
       return {
-        firstName,
-        lastName
+        firstName: firstName || '',
+        lastName: lastName || '',
+        fullName: fullName
       }
     } catch (error) {
       console.error('Exception while fetching user details:', error)
@@ -129,7 +153,7 @@ class ForumService {
     }
   }
 
-  // Helper method to enrich questions and answers with user names
+  // FIXED: Helper method to enrich questions and answers with user names
   private async enrichWithUserNames(questions: any[]): Promise<ForumQuestion[]> {
     try {
       console.log('Starting to enrich questions with user names, count:', questions.length)
@@ -152,44 +176,67 @@ class ForumService {
 
       if (userEmails.size === 0) {
         console.log('No user emails found, returning questions without enrichment')
-        return questions.map(question => ({
-          ...question,
-          userFirstName: '',
-          userLastName: '',
-          userFullName: 'Unknown User',
-          answers: question.forum_answers?.map((answer: any) => ({
-            ...answer,
-            userFirstName: '',
-            userLastName: '',
-            userFullName: 'Unknown User'
-          })) || []
-        }))
+        return questions.map(question => this.mapQuestionWithFallbackNames(question))
       }
 
-      // Fetch all user details in one query using correct field names
+      // Fetch all user details in one query
       const { data: usersData, error } = await supabase
         .from('users')
-        .select('email, firstname, lastname')
+        .select('email, firstname, lastname, username')
         .in('email', Array.from(userEmails))
 
       if (error) {
         console.error('Error fetching users data:', error)
+        // Continue with fallback names if database query fails
+        return questions.map(question => this.mapQuestionWithFallbackNames(question))
       }
 
-      console.log('Fetched users data:', usersData)
+      console.log('Fetched users data from database:', usersData)
 
-      // Create a lookup map
-      const userLookup: { [email: string]: { firstName: string, lastName: string } } = {}
+      // Create a comprehensive lookup map
+      const userLookup: { [email: string]: { firstName: string, lastName: string, fullName: string } } = {}
+      
       usersData?.forEach(user => {
-        const firstName = user.firstname || ''
-        const lastName = user.lastname || ''
+        const firstName = (user.firstname || '').trim()
+        const lastName = (user.lastname || '').trim()
+        const username = (user.username || '').trim()
+        const emailPrefix = user.email.split('@')[0]
         
-        userLookup[user.email] = {
-          firstName,
-          lastName
+        // Create full name with proper fallbacks
+        let fullName = ''
+        
+        if (firstName && lastName) {
+          fullName = `${firstName} ${lastName}`
+        } else if (firstName) {
+          fullName = firstName
+        } else if (lastName) {
+          fullName = lastName
+        } else if (username) {
+          fullName = username
+        } else {
+          fullName = emailPrefix || 'Unknown User'
         }
         
-        console.log(`User lookup entry for ${user.email}:`, { firstName, lastName })
+        userLookup[user.email] = {
+          firstName: firstName || '',
+          lastName: lastName || '',
+          fullName: fullName
+        }
+        
+        console.log(`User lookup entry for ${user.email}:`, userLookup[user.email])
+      })
+
+      // Add fallback entries for emails not found in database
+      Array.from(userEmails).forEach(email => {
+        if (!userLookup[email]) {
+          const emailPrefix = email.split('@')[0]
+          userLookup[email] = {
+            firstName: '',
+            lastName: '',
+            fullName: emailPrefix || 'Unknown User'
+          }
+          console.log(`Fallback entry created for ${email}:`, userLookup[email])
+        }
       })
 
       console.log('Complete user lookup map:', userLookup)
@@ -224,12 +271,12 @@ class ForumService {
         })
       }
 
-      // Enrich questions and answers
+      // Enrich questions and answers with proper names
       return questions.map(question => {
-        const questionUser = userLookup[question.user_email] || { firstName: '', lastName: '' }
-        const questionFullName = `${questionUser.firstName} ${questionUser.lastName}`.trim() || 'Unknown User'
+        const questionUser = userLookup[question.user_email]
         
-        console.log(`Question ${question.id} user: ${question.user_email} -> ${questionFullName}`)
+        console.log(`Question ${question.id} user: ${question.user_email}`)
+        console.log(`Question user details:`, questionUser)
         
         // Use real-time vote counts instead of stored values
         const voteCounts = questionVoteCounts[question.id] || { upvotes: 0, downvotes: 0 }
@@ -240,32 +287,32 @@ class ForumService {
           description: question.description,
           userEmail: question.user_email,
           userRole: question.user_role,
-          userFirstName: questionUser.firstName,
-          userLastName: questionUser.lastName,
-          userFullName: questionFullName,
+          userFirstName: questionUser?.firstName || '',
+          userLastName: questionUser?.lastName || '',
+          userFullName: questionUser?.fullName || question.user_email.split('@')[0] || 'Unknown User',
           createdAt: question.created_at,
           category: question.category,
           urgency: question.urgency,
           visibility: question.visibility || 'all',
           views: question.views || 0,
-          upvotes: voteCounts.upvotes, // Use real-time count
-          downvotes: voteCounts.downvotes, // Use real-time count
+          upvotes: voteCounts.upvotes,
+          downvotes: voteCounts.downvotes,
           userVote: question.userVote || null,
           userVotes: questionUserVotes[question.id] || {},
           answers: question.forum_answers?.map((answer: any) => {
-            const answerUser = userLookup[answer.user_email] || { firstName: '', lastName: '' }
-            const answerFullName = `${answerUser.firstName} ${answerUser.lastName}`.trim() || 'Unknown User'
+            const answerUser = userLookup[answer.user_email]
             
-            console.log(`Answer ${answer.id} user: ${answer.user_email} -> ${answerFullName}`)
+            console.log(`Answer ${answer.id} user: ${answer.user_email}`)
+            console.log(`Answer user details:`, answerUser)
             
             return {
               id: answer.id,
               text: answer.text,
               userEmail: answer.user_email,
               userRole: answer.user_role,
-              userFirstName: answerUser.firstName,
-              userLastName: answerUser.lastName,
-              userFullName: answerFullName,
+              userFirstName: answerUser?.firstName || '',
+              userLastName: answerUser?.lastName || '',
+              userFullName: answerUser?.fullName || answer.user_email.split('@')[0] || 'Unknown User',
               createdAt: answer.created_at
             }
           }) || []
@@ -273,36 +320,43 @@ class ForumService {
       })
     } catch (error) {
       console.error('Error enriching with user names:', error)
-      // Return questions with empty user names instead of failing completely
-      return questions.map(question => ({
-        id: question.id,
-        title: question.title,
-        description: question.description,
-        userEmail: question.user_email,
-        userRole: question.user_role,
+      // Return questions with fallback names instead of failing completely
+      return questions.map(question => this.mapQuestionWithFallbackNames(question))
+    }
+  }
+
+  // Helper method to map questions with fallback names when database lookup fails
+  private mapQuestionWithFallbackNames(question: any): ForumQuestion {
+    const questionUserName = question.user_email?.split('@')[0] || 'Unknown User'
+    
+    return {
+      id: question.id,
+      title: question.title,
+      description: question.description,
+      userEmail: question.user_email,
+      userRole: question.user_role,
+      userFirstName: '',
+      userLastName: '',
+      userFullName: questionUserName,
+      createdAt: question.created_at,
+      category: question.category,
+      urgency: question.urgency,
+      visibility: question.visibility || 'all',
+      views: question.views || 0,
+      upvotes: question.upvotes || 0,
+      downvotes: question.downvotes || 0,
+      userVote: question.userVote || null,
+      userVotes: question.userVotes || {},
+      answers: question.forum_answers?.map((answer: any) => ({
+        id: answer.id,
+        text: answer.text,
+        userEmail: answer.user_email,
+        userRole: answer.user_role,
         userFirstName: '',
         userLastName: '',
-        userFullName: 'Unknown User',
-        createdAt: question.created_at,
-        category: question.category,
-        urgency: question.urgency,
-        visibility: question.visibility || 'all',
-        views: question.views || 0,
-        upvotes: question.upvotes || 0,
-        downvotes: question.downvotes || 0,
-        userVote: question.userVote || null,
-        userVotes: question.userVotes || {},
-        answers: question.forum_answers?.map((answer: any) => ({
-          id: answer.id,
-          text: answer.text,
-          userEmail: answer.user_email,
-          userRole: answer.user_role,
-          userFirstName: '',
-          userLastName: '',
-          userFullName: 'Unknown User',
-          createdAt: answer.created_at
-        })) || []
-      }))
+        userFullName: answer.user_email?.split('@')[0] || 'Unknown User',
+        createdAt: answer.created_at
+      })) || []
     }
   }
 
@@ -369,7 +423,7 @@ class ForumService {
     }
   }
 
-  // Create a new question (with user names)
+  // FIXED: Create a new question (with proper user names)
   async createQuestion(question: NewQuestion, userEmail: string, userRole: string): Promise<ForumQuestion> {
     try {
       console.log('Creating question for user:', userEmail)
@@ -397,7 +451,6 @@ class ForumService {
 
       // Get user details for the created question
       const userDetails = await this.getUserDetails(userEmail)
-      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
 
       return {
         id: data.id,
@@ -407,7 +460,7 @@ class ForumService {
         userRole: data.user_role,
         userFirstName: userDetails?.firstName || '',
         userLastName: userDetails?.lastName || '',
-        userFullName: fullName,
+        userFullName: userDetails?.fullName || userEmail.split('@')[0] || 'Unknown User',
         createdAt: data.created_at,
         category: data.category,
         urgency: data.urgency,
@@ -425,7 +478,7 @@ class ForumService {
     }
   }
 
-  // Add an answer to a question (with user names)
+  // FIXED: Add an answer to a question (with proper user names)
   async addAnswer(answer: NewAnswer, userEmail: string, userRole: string): Promise<ForumAnswer> {
     try {
       console.log('Adding answer for user:', userEmail)
@@ -447,7 +500,6 @@ class ForumService {
 
       // Get user details for the answer
       const userDetails = await this.getUserDetails(userEmail)
-      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
 
       return {
         id: data.id,
@@ -456,7 +508,7 @@ class ForumService {
         userRole: data.user_role,
         userFirstName: userDetails?.firstName || '',
         userLastName: userDetails?.lastName || '',
-        userFullName: fullName,
+        userFullName: userDetails?.fullName || userEmail.split('@')[0] || 'Unknown User',
         createdAt: data.created_at
       }
     } catch (error) {
@@ -501,7 +553,6 @@ class ForumService {
       if (Object.keys(updatePayload).length === 0) {
         console.log('No changes detected, returning existing data')
         const userDetails = await this.getUserDetails(existingQuestion.user_email)
-        const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
         
         return {
           id: existingQuestion.id,
@@ -512,7 +563,7 @@ class ForumService {
           visibility: existingQuestion.visibility,
           userFirstName: userDetails?.firstName || '',
           userLastName: userDetails?.lastName || '',
-          userFullName: fullName
+          userFullName: userDetails?.fullName || existingQuestion.user_email.split('@')[0] || 'Unknown User'
         }
       }
 
@@ -540,7 +591,6 @@ class ForumService {
         console.error('Error fetching updated data:', selectError)
         // Fallback: return the expected updated data based on our payload
         const userDetails = await this.getUserDetails(existingQuestion.user_email)
-        const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
         
         return {
           id: questionId,
@@ -551,7 +601,7 @@ class ForumService {
           visibility: updatePayload.visibility || existingQuestion.visibility,
           userFirstName: userDetails?.firstName || '',
           userLastName: userDetails?.lastName || '',
-          userFullName: fullName
+          userFullName: userDetails?.fullName || existingQuestion.user_email.split('@')[0] || 'Unknown User'
         }
       }
 
@@ -559,7 +609,6 @@ class ForumService {
 
       // Get user details for the updated question
       const userDetails = await this.getUserDetails(updatedData.user_email)
-      const fullName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}`.trim() : 'Unknown User'
 
       return {
         id: updatedData.id,
@@ -570,7 +619,7 @@ class ForumService {
         visibility: updatedData.visibility,
         userFirstName: userDetails?.firstName || '',
         userLastName: userDetails?.lastName || '',
-        userFullName: fullName
+        userFullName: userDetails?.fullName || updatedData.user_email.split('@')[0] || 'Unknown User'
       }
     } catch (error) {
       console.error('Error updating question:', error)

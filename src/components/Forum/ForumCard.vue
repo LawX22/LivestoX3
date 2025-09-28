@@ -732,17 +732,36 @@ const isUserActive = computed(() => {
   return diffInMinutes < 15 // Consider active if seen within 15 minutes
 })
 
+// FIXED: Updated displayUserName to properly handle user names
 const displayUserName = computed(() => {
-  // Use userFullName if available, otherwise construct from first/last name
-  if (props.question.userFullName && props.question.userFullName.trim()) {
-    return props.question.userFullName
+  // First priority: userFullName if it exists and is not empty/default
+  if (props.question.userFullName && 
+      props.question.userFullName.trim() && 
+      props.question.userFullName !== 'Unknown User' && 
+      props.question.userFullName !== 'User Name') {
+    return props.question.userFullName.trim()
   }
   
-  const firstName = props.question.userFirstName || ''
-  const lastName = props.question.userLastName || ''
-  const fullName = `${firstName} ${lastName}`.trim()
+  // Second priority: construct from first and last names
+  const firstName = (props.question.userFirstName || '').trim()
+  const lastName = (props.question.userLastName || '').trim()
   
-  return fullName || 'Unknown User'
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`
+  } else if (firstName) {
+    return firstName
+  } else if (lastName) {
+    return lastName
+  }
+  
+  // Third priority: extract from email
+  if (props.question.userEmail) {
+    const emailPrefix = props.question.userEmail.split('@')[0]
+    return emailPrefix || 'Unknown User'
+  }
+  
+  // Final fallback
+  return 'Unknown User'
 })
 
 const voteScoreClass = computed(() => {
@@ -802,21 +821,34 @@ const firstAnswerRole = computed(() => {
   return hasAnswers.value ? (props.question.answers[0].userRole || 'User') : ''
 })
 
+// FIXED: Updated firstAnswerUserName to properly handle user names
 const firstAnswerUserName = computed(() => {
   if (!hasAnswers.value) return ''
   
   const firstAnswer = props.question.answers[0]
   
-  // Use userFullName if available, otherwise construct from first/last name
-  if (firstAnswer.userFullName && firstAnswer.userFullName.trim()) {
-    return firstAnswer.userFullName
+  // First priority: userFullName if it exists and is not empty/default
+  if (firstAnswer.userFullName && 
+      firstAnswer.userFullName.trim() && 
+      firstAnswer.userFullName !== 'Unknown User' && 
+      firstAnswer.userFullName !== 'User Name') {
+    return firstAnswer.userFullName.trim()
   }
   
-  const firstName = firstAnswer.userFirstName || ''
-  const lastName = firstAnswer.userLastName || ''
-  const fullName = `${firstName} ${lastName}`.trim()
+  // Second priority: construct from first and last names
+  const firstName = (firstAnswer.userFirstName || '').trim()
+  const lastName = (firstAnswer.userLastName || '').trim()
   
-  return fullName || 'Unknown User'
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`
+  } else if (firstName) {
+    return firstName
+  } else if (lastName) {
+    return lastName
+  }
+  
+  // Final fallback
+  return 'Unknown User'
 })
 
 const truncatedFirstAnswer = computed(() => {

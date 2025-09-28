@@ -350,7 +350,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { forumService, type ForumQuestion, type ForumAnswer } from '../../services/forumService';
+import { forumService, type ForumQuestion } from '../../services/forumService';
 
 interface User {
     email: string;
