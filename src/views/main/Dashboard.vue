@@ -178,8 +178,8 @@ const user = computed<User | null>(() => {
     id: authStore.userId || '',
     email: authStore.userEmail || '',
     role: (authStore.userRole as 'farmer' | 'buyer' | 'both') || 'farmer',
-    firstname: authStore.userMetadata?.firstname || authStore.userMetadata?.firstName || '',
-    lastname: authStore.userMetadata?.lastname || authStore.userMetadata?.lastName || '',
+    firstName: authStore.userMetadata?.firstname || '', 
+    lastName: authStore.userMetadata?.lastname || '', 
     username: authStore.userName || authStore.userMetadata?.username || '',
     created_at: authStore.user.created_at || ''
   }
