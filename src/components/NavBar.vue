@@ -42,7 +42,7 @@
 
     <ul class="hidden md:flex gap-6 text-sm font-medium items-center">
       <!-- Show Home and About Us only for guests -->
-      <template v-if="!authStore.user">
+      <template v-if="!authStore.isAuthenticated">
         <li>
           <router-link to="/"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -112,7 +112,7 @@
       </li>
 
       <!-- Additional links for logged-in users -->
-      <template v-if="authStore.user">
+      <template v-if="authStore.isAuthenticated">
         <!-- Show Transactions only for farmers in main navbar -->
         <li v-if="authStore.userRole === 'farmer'">
           <router-link to="/transactions"
@@ -170,7 +170,7 @@
     <!-- Right: Auth or User Info -->
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Notification and Message Icons (only shown when logged in) -->
-      <template v-if="authStore.user">
+      <template v-if="authStore.isAuthenticated">
         <!-- Cart Button -->
         <div class="relative">
           <router-link to="/carts"
@@ -184,7 +184,7 @@
               </svg>
               <span
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ authStore.cartCount }}
+                {{ cartCount }}
               </span>
             </div>
           </router-link>
@@ -201,9 +201,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              <span v-if="authStore.unreadNotifications > 0"
+              <span v-if="unreadNotifications > 0"
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ authStore.unreadNotifications }}
+                {{ unreadNotifications }}
               </span>
             </div>
           </button>
@@ -215,15 +215,15 @@
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Notifications
-                <span v-if="authStore.unreadNotifications > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
-                  {{ authStore.unreadNotifications }} new
+                <span v-if="unreadNotifications > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
+                  {{ unreadNotifications }} new
                 </span>
               </h3>
             </div>
 
             <div class="max-h-80 overflow-y-auto">
               <!-- Notification Items -->
-              <a v-for="notification in authStore.recentNotifications" :key="notification.id" href="#"
+              <a v-for="notification in recentNotifications" :key="notification.id" href="#"
                 class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
                 @click.prevent="markAsRead('notification', notification.id)">
                 <div class="flex-shrink-0">
@@ -254,7 +254,7 @@
               </a>
 
               <!-- Empty State -->
-              <div v-if="authStore.recentNotifications.length === 0" class="px-6 py-8 text-center">
+              <div v-if="recentNotifications.length === 0" class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -287,9 +287,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <span v-if="authStore.unreadMessages > 0"
+              <span v-if="unreadMessages > 0"
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ authStore.unreadMessages }}
+                {{ unreadMessages }}
               </span>
             </div>
           </button>
@@ -301,15 +301,15 @@
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Messages
-                <span v-if="authStore.unreadMessages > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
-                  {{ authStore.unreadMessages }} new
+                <span v-if="unreadMessages > 0" class="ml-auto bg-white/20 text-xs px-2 py-1 rounded-full">
+                  {{ unreadMessages }} new
                 </span>
               </h3>
             </div>
 
             <div class="max-h-80 overflow-y-auto">
               <!-- Message Items -->
-              <a v-for="message in authStore.recentMessages" :key="message.id" href="#"
+              <a v-for="message in recentMessages" :key="message.id" href="#"
                 class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
                 @click.prevent="markAsRead('message', message.id)">
                 <div class="flex-shrink-0 mr-4">
@@ -337,7 +337,7 @@
               </a>
 
               <!-- Empty State -->
-              <div v-if="authStore.recentMessages.length === 0" class="px-6 py-8 text-center">
+              <div v-if="recentMessages.length === 0" class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -361,7 +361,7 @@
       </template>
 
       <!-- Logged in -->
-      <template v-if="authStore.user">
+      <template v-if="authStore.isAuthenticated">
         <div>
           <div
             class="flex items-center cursor-pointer gap-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 px-4 py-2 rounded-xl transition-all duration-300 group border border-transparent hover:border-green-200"
@@ -382,7 +382,7 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ authStore.userFullName }}
+                {{ authStore.userDisplayName }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
@@ -419,7 +419,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ authStore.userFullName }}
+                      {{ authStore.userDisplayName }}
                     </p>
                     <p class="text-xs text-green-100 truncate mb-2">{{ authStore.userEmail }}</p>
                     <p
@@ -586,11 +586,39 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
+// Notification, cart, and message state
+const cartCount = ref(3);
+const unreadNotifications = ref(2);
+const unreadMessages = ref(1);
+const recentNotifications = ref([
+  {
+    id: 1,
+    title: "Order Shipped",
+    message: "Your order #12345 has been shipped",
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+  },
+  {
+    id: 2,
+    title: "New Message",
+    message: "You have a new message from John Doe",
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() // 5 hours ago
+  }
+]);
+const recentMessages = ref([
+  {
+    id: 1,
+    sender_name: "John Doe",
+    content: "Hello, I'm interested in your product",
+    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+  }
+]);
+
+// UI state
 const showDropdown = ref(false);
 const showNotificationDropdown = ref(false);
 const showMessageDropdown = ref(false);
@@ -600,7 +628,7 @@ const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
-  // Initialize auth session
+  // Initialize auth store session
   await authStore.getSession();
   
   // Add event listeners
@@ -682,11 +710,20 @@ const handleClickOutside = (event: MouseEvent) => {
 };
 
 const markAsRead = async (type: "notification" | "message", id: string | number) => {
+  // Replace with your actual mark as read logic
   if (type === "notification") {
-    await authStore.markNotificationAsRead(id);
+    // Update local state
+    const notification = recentNotifications.value.find(n => n.id === id);
+    if (notification && unreadNotifications.value > 0) {
+      unreadNotifications.value--;
+    }
     closeNotificationDropdown();
   } else {
-    await authStore.markMessageAsRead(id);
+    // Update local state
+    const message = recentMessages.value.find(m => m.id === id);
+    if (message && unreadMessages.value > 0) {
+      unreadMessages.value--;
+    }
     closeMessageDropdown();
   }
 };
@@ -711,7 +748,16 @@ const getInitials = (name: string) => {
 
 const handleLogout = async () => {
   try {
+    // Use authStore logout
     await authStore.logout();
+    
+    // Reset notification counts
+    cartCount.value = 0;
+    unreadNotifications.value = 0;
+    unreadMessages.value = 0;
+    recentNotifications.value = [];
+    recentMessages.value = [];
+    
     showLogoutModal.value = false;
     showDropdown.value = false;
     router.push("/");
