@@ -10,8 +10,8 @@ import { auth } from '../services/auth-service';
 
 // Extended UserData interface for farm information
 interface ExtendedUserData extends UserData {
-  firstname?: string; // ✅ Supabase format
-  lastname?: string;  // ✅ Supabase format
+  firstname?: string; // 
+  lastname?: string;  // 
   username?: string;
   email?: string;
   role?: string;

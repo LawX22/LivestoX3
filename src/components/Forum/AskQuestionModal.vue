@@ -79,7 +79,7 @@
         <!-- Form Content -->
         <div v-else class="p-4 overflow-y-auto" style="max-height: calc(95vh - 80px);">
           <form @submit.prevent="handleSubmit" class="space-y-3">
-            <!-- User Info Banner - Fixed to show full name -->
+            <!-- User Info Banner -->
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
               <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -439,6 +439,13 @@ const handleSubmit = async (): Promise<void> => {
     return;
   }
 
+  // CRITICAL: Check if userId is available
+  if (!authStore.userId) {
+    console.error('User ID is not available in auth store');
+    emits('showToast', 'Authentication error. Please log in again.');
+    return;
+  }
+
   try {
     isSubmitting.value = true;
     hasSubmitted.value = true;
@@ -447,6 +454,8 @@ const handleSubmit = async (): Promise<void> => {
     submissionController.value = new AbortController();
 
     console.log('Starting form submission...');
+    console.log('User ID:', authStore.userId);
+    console.log('User Role:', authStore.userRole);
 
     // Create the new question data
     const newQuestionData: NewQuestion = {
@@ -457,10 +466,10 @@ const handleSubmit = async (): Promise<void> => {
       visibility: question.value.visibility
     };
 
-    // Submit to Supabase via forumService - Fixed method signature
+    // Submit to Supabase via forumService - FIXED: Use userId instead of userEmail
     const createdQuestion = await forumService.createQuestion(
       newQuestionData,
-      authStore.userEmail,
+      authStore.userId,  // Changed from authStore.userEmail
       authStore.userRole
     );
 

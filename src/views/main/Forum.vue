@@ -1,4 +1,3 @@
-<!-- Forum.vue -->
 <template>
   <div
     class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
@@ -418,6 +417,16 @@ import GuideModal from '../../components/Forum/GuideModal.vue';
 import { forumService } from '../../services/forumService';
 import type { ForumQuestion, ForumAnswer, NewQuestion } from '../../services/forumService';
 
+// Extended interfaces to include userEmail for compatibility
+interface ExtendedForumAnswer extends ForumAnswer {
+  userEmail?: string;
+}
+
+interface ExtendedForumQuestion extends ForumQuestion {
+  userEmail?: string;
+  answers: ExtendedForumAnswer[];
+}
+
 // Router and store setup
 const router = useRouter();
 const authStore = useAuthStore();
@@ -430,7 +439,7 @@ const showGuestGuide = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
 const showCommentsModal = ref(false);
-const selectedQuestion = ref<ForumQuestion | null>(null);
+const selectedQuestion = ref<ExtendedForumQuestion | null>(null);
 const isSidebarExpanded = ref(true);
 const sortBy = ref('newest');
 
@@ -447,7 +456,7 @@ const filters = ref({
 });
 
 // Forum questions from Supabase
-const forumQuestions = ref<ForumQuestion[]>([]);
+const forumQuestions = ref<ExtendedForumQuestion[]>([]);
 
 // Prevent duplicate submissions with more robust tracking
 const isSubmittingQuestion = ref(false);
@@ -466,7 +475,7 @@ const currentUserForForum = computed(() => {
   
   return {
     id: authStore.user.id,
-    email: authStore.userEmail,
+    email: authStore.user.email || '',
     role: authStore.userRole,
     firstName: authStore.userMetadata?.firstname || '', 
     lastName: authStore.userMetadata?.lastname || '',  
@@ -474,27 +483,22 @@ const currentUserForForum = computed(() => {
   };
 });
 
-// Ensure all answers have the required 'id' property from ForumAnswer interface
-function normalizeAnswers(questions: ForumQuestion[]): ForumQuestion[] {
-  return questions.map(q => ({
-    ...q,
-    answers: q.answers.map((a, idx) => ({
-      ...a,
-      id: (a as any).id ?? idx // fallback if missing
-    })) as ForumAnswer[]
-  }));
-}
-
-// Helper function to construct user's full name
-function constructUserFullName(): string {
-  if (!authStore.isAuthenticated) return 'Unknown User';
-
-  const firstName = authStore.userMetadata?.firstname || '';
-  const lastName = authStore.userMetadata?.lastname || '';
-
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  return fullName || authStore.userDisplayName || 'User';
+// Convert userId-based questions to userEmail-based for compatibility
+function convertToExtendedQuestions(questions: ForumQuestion[]): ExtendedForumQuestion[] {
+  return questions.map(q => {
+    // Create a mapping from userId to userEmail using the user data we have
+    const questionUserEmail = q.userId; // We'll use userId as email identifier
+    
+    return {
+      ...q,
+      userEmail: questionUserEmail,
+      answers: q.answers.map(a => ({
+        ...a,
+        userEmail: a.userId, // Use userId as email identifier for answers too
+        id: a.id
+      }))
+    } as ExtendedForumQuestion;
+  });
 }
 
 // Computed properties
@@ -551,13 +555,13 @@ const totalAnswers = computed(() => {
   return forumQuestions.value.reduce((total, question) => total + question.answers.length, 0);
 });
 
-// Active users: count unique userEmail from questions and answers
+// Active users: count unique user IDs from questions and answers
 const activeUsers = computed(() => {
   const userSet = new Set<string>();
   forumQuestions.value.forEach(q => {
-    if (q.userEmail) userSet.add(q.userEmail);
+    if (q.userId) userSet.add(q.userId);
     q.answers.forEach(a => {
-      if ((a as any).userEmail) userSet.add((a as any).userEmail);
+      if (a.userId) userSet.add(a.userId);
     });
   });
   return userSet.size;
@@ -570,12 +574,15 @@ const loadQuestions = async () => {
     // Add minimum loading time for better UX (1 second)
     const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
     
-    const questions = await forumService.getQuestions(authStore.userEmail);
+    // Use userId instead of email for the new service
+    const userId = authStore.user?.id;
+    const questions = await forumService.getQuestions(userId);
     
     // Wait for minimum loading time
     await minLoadingTime;
     
-    forumQuestions.value = normalizeAnswers(questions);
+    // Convert to extended format with userEmail for compatibility
+    forumQuestions.value = convertToExtendedQuestions(questions);
   } catch (error) {
     console.error('Failed to load questions:', error);
     showToastNotification('Failed to load questions. Please try again.');
@@ -608,17 +615,17 @@ const showToastNotification = (message: string) => {
   setTimeout(() => showToast.value = false, 4000);
 };
 
-const openCommentsModal = async (question: ForumQuestion) => {
+const openCommentsModal = async (question: ExtendedForumQuestion) => {
   selectedQuestion.value = question;
   showCommentsModal.value = true;
   
   // Increment view count in database
   try {
-    await forumService.incrementViews(question.id);
+    const newViews = await forumService.incrementViews(question.id);
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
     if (index !== -1) {
-      forumQuestions.value[index].views = (forumQuestions.value[index].views || 0) + 1;
+      forumQuestions.value[index].views = newViews;
     }
   } catch (error) {
     console.error('Failed to increment views:', error);
@@ -626,10 +633,11 @@ const openCommentsModal = async (question: ForumQuestion) => {
 };
 
 const handleUpdateQuestion = (updatedQuestion: ForumQuestion) => {
-  const index = forumQuestions.value.findIndex(q => q.id === updatedQuestion.id);
+  const extendedQuestion = convertToExtendedQuestions([updatedQuestion])[0];
+  const index = forumQuestions.value.findIndex(q => q.id === extendedQuestion.id);
   if (index !== -1) {
-    forumQuestions.value[index] = updatedQuestion;
-    selectedQuestion.value = updatedQuestion;
+    forumQuestions.value[index] = extendedQuestion;
+    selectedQuestion.value = extendedQuestion;
   }
 };
 
@@ -670,11 +678,14 @@ const handlePostQuestion = async (questionData: NewQuestion) => {
   }
 };
 
-const upvoteQuestion = async (question: ForumQuestion) => {
-  if (!authStore.isAuthenticated || question.userEmail === authStore.userEmail) return;
+const upvoteQuestion = async (question: ExtendedForumQuestion) => {
+  if (!authStore.isAuthenticated || !authStore.user?.id) return;
+  
+  // Don't allow voting on own questions
+  if (question.userId === authStore.user.id) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, authStore.userEmail, 'up');
+    const result = await forumService.voteQuestion(question.id, authStore.user.id, 'up');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -688,9 +699,9 @@ const upvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![authStore.userEmail] = result.userVote;
+        forumQuestions.value[index].userVotes![authStore.user.id] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![authStore.userEmail];
+        delete forumQuestions.value[index].userVotes![authStore.user.id];
       }
     }
   } catch (error) {
@@ -699,11 +710,14 @@ const upvoteQuestion = async (question: ForumQuestion) => {
   }
 };
 
-const downvoteQuestion = async (question: ForumQuestion) => {
-  if (!authStore.isAuthenticated || question.userEmail === authStore.userEmail) return;
+const downvoteQuestion = async (question: ExtendedForumQuestion) => {
+  if (!authStore.isAuthenticated || !authStore.user?.id) return;
+  
+  // Don't allow voting on own questions
+  if (question.userId === authStore.user.id) return;
 
   try {
-    const result = await forumService.voteQuestion(question.id, authStore.userEmail, 'down');
+    const result = await forumService.voteQuestion(question.id, authStore.user.id, 'down');
     
     // Update local state
     const index = forumQuestions.value.findIndex(q => q.id === question.id);
@@ -717,9 +731,9 @@ const downvoteQuestion = async (question: ForumQuestion) => {
         forumQuestions.value[index].userVotes = {};
       }
       if (result.userVote) {
-        forumQuestions.value[index].userVotes![authStore.userEmail] = result.userVote;
+        forumQuestions.value[index].userVotes![authStore.user.id] = result.userVote;
       } else {
-        delete forumQuestions.value[index].userVotes![authStore.userEmail];
+        delete forumQuestions.value[index].userVotes![authStore.user.id];
       }
     }
   } catch (error) {
@@ -730,14 +744,14 @@ const downvoteQuestion = async (question: ForumQuestion) => {
 
 // Handler methods for edit and delete with proper database operations
 const handleEditQuestion = async (eventData: { questionId: number; updates: Partial<ForumQuestion> }) => {
-  if (!authStore.isAuthenticated) return;
+  if (!authStore.isAuthenticated || !authStore.user?.id) return;
   
   try {
     const { questionId, updates } = eventData;
     
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== authStore.userEmail) {
+    if (!question || question.userId !== authStore.user.id) {
       showToastNotification('You can only edit your own questions.');
       return;
     }
@@ -758,11 +772,9 @@ const handleEditQuestion = async (eventData: { questionId: number; updates: Part
       forumQuestions.value[index] = {
         ...forumQuestions.value[index],
         ...updatedQuestion,
-        // Preserve user name information and answers
-        userFirstName: forumQuestions.value[index].userFirstName,
-        userLastName: forumQuestions.value[index].userLastName,
-        userFullName: forumQuestions.value[index].userFullName,
-        answers: forumQuestions.value[index].answers
+        // Preserve arrays and complex objects
+        answers: forumQuestions.value[index].answers,
+        userVotes: forumQuestions.value[index].userVotes
       };
       
       // Update selected question if it's the one being edited
@@ -779,12 +791,12 @@ const handleEditQuestion = async (eventData: { questionId: number; updates: Part
 };
 
 const handleDeleteQuestion = async (questionId: number) => {
-  if (!authStore.isAuthenticated) return;
+  if (!authStore.isAuthenticated || !authStore.user?.id) return;
   
   try {
     // First, check if user owns this question
     const question = forumQuestions.value.find(q => q.id === questionId);
-    if (!question || question.userEmail !== authStore.userEmail) {
+    if (!question || question.userId !== authStore.user.id) {
       showToastNotification('You can only delete your own questions.');
       return;
     }

@@ -70,7 +70,7 @@
                                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
-                                    <span class="font-semibold text-white/95 text-sm">{{ question.userRole }}</span>
+                                    <span class="font-semibold text-white/95 text-sm">{{ question.userFullName || question.userRole }}</span>
                                 </div>
 
                                 <!-- Date -->
@@ -117,7 +117,7 @@
                             <!-- Enhanced Voting Component -->
                             <div
                                 class="flex flex-col items-center gap-1 bg-white/10 rounded-xl p-2 backdrop-blur-sm border border-white/15 shadow-lg">
-                                <button v-if="currentUser" @click="upvoteQuestion" :disabled="isVoting || question.userEmail === currentUser.email"
+                                <button v-if="currentUser" @click="upvoteQuestion" :disabled="isVoting || isOwnQuestion"
                                     class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="{
                                         'bg-white/30 text-white shadow-md': question.userVote === 'up',
@@ -134,7 +134,7 @@
                                     {{ (question.upvotes || 0) - (question.downvotes || 0) }}
                                 </div>
 
-                                <button v-if="currentUser" @click="downvoteQuestion" :disabled="isVoting || question.userEmail === currentUser.email"
+                                <button v-if="currentUser" @click="downvoteQuestion" :disabled="isVoting || isOwnQuestion"
                                     class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="{
                                         'bg-white/30 text-white shadow-md': question.userVote === 'down',
@@ -189,14 +189,14 @@
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-2 mb-0.5">
-                                                <p class="font-bold text-gray-900 text-sm">{{ answer.userRole }}</p>
+                                                <p class="font-bold text-gray-900 text-sm">{{ answer.userFullName || answer.userRole }}</p>
                                                 <div v-if="answer.userRole === 'Veterinarian' || answer.userRole === 'Poultry Specialist' || answer.userRole === 'Agribusiness Consultant'"
                                                     class="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full border border-green-200 font-medium">
                                                     Expert
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2 text-xs text-gray-500">
-                                                <span>{{ answer.userEmail }}</span>
+                                                <span>{{ answer.userRole }}</span>
                                                 <span>•</span>
                                                 <span>{{ formatDate(answer.createdAt) }}</span>
                                             </div>
@@ -353,8 +353,12 @@ import { ref, computed } from 'vue';
 import { forumService, type ForumQuestion } from '../../services/forumService';
 
 interface User {
+    id: string;
     email: string;
     role: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
 }
 
 interface Props {
@@ -379,19 +383,24 @@ const isVoting = ref(false);
 const isLoadingAnswers = ref(false);
 
 // Computed
+const isOwnQuestion = computed(() => {
+    if (!props.currentUser) return false;
+    return props.question.userId === props.currentUser.id;
+});
+
 const canAnswer = computed(() => {
     if (!props.currentUser) return false;
-    if (props.currentUser.role === 'Buyer' && props.question.visibility === 'farmers') return false;
+    if (props.currentUser.role === 'buyer' && props.question.visibility === 'farmers') return false;
     return true;
 });
 
 // Methods
 const upvoteQuestion = async () => {
-    if (!props.currentUser || props.question.userEmail === props.currentUser.email || isVoting.value) return;
+    if (!props.currentUser || isOwnQuestion.value || isVoting.value) return;
 
     try {
         isVoting.value = true;
-        const result = await forumService.voteQuestion(props.question.id, props.currentUser.email, 'up');
+        const result = await forumService.voteQuestion(props.question.id, props.currentUser.id, 'up');
         
         // Update local question state
         const updatedQuestion = { ...props.question };
@@ -402,9 +411,9 @@ const upvoteQuestion = async () => {
         // Update userVotes object
         if (!updatedQuestion.userVotes) updatedQuestion.userVotes = {};
         if (result.userVote) {
-            updatedQuestion.userVotes[props.currentUser.email] = result.userVote;
+            updatedQuestion.userVotes[props.currentUser.id] = result.userVote;
         } else {
-            delete updatedQuestion.userVotes[props.currentUser.email];
+            delete updatedQuestion.userVotes[props.currentUser.id];
         }
         
         emit('updateQuestion', updatedQuestion);
@@ -417,11 +426,11 @@ const upvoteQuestion = async () => {
 };
 
 const downvoteQuestion = async () => {
-    if (!props.currentUser || props.question.userEmail === props.currentUser.email || isVoting.value) return;
+    if (!props.currentUser || isOwnQuestion.value || isVoting.value) return;
 
     try {
         isVoting.value = true;
-        const result = await forumService.voteQuestion(props.question.id, props.currentUser.email, 'down');
+        const result = await forumService.voteQuestion(props.question.id, props.currentUser.id, 'down');
         
         // Update local question state
         const updatedQuestion = { ...props.question };
@@ -432,9 +441,9 @@ const downvoteQuestion = async () => {
         // Update userVotes object
         if (!updatedQuestion.userVotes) updatedQuestion.userVotes = {};
         if (result.userVote) {
-            updatedQuestion.userVotes[props.currentUser.email] = result.userVote;
+            updatedQuestion.userVotes[props.currentUser.id] = result.userVote;
         } else {
-            delete updatedQuestion.userVotes[props.currentUser.email];
+            delete updatedQuestion.userVotes[props.currentUser.id];
         }
         
         emit('updateQuestion', updatedQuestion);
@@ -462,7 +471,7 @@ const submitAnswer = async () => {
                 questionId: props.question.id,
                 text: tempAnswer.value.trim()
             },
-            props.currentUser.email,
+            props.currentUser.id,
             props.currentUser.role
         );
 

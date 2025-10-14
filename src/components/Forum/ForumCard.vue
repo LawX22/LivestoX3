@@ -68,47 +68,46 @@
               </button>
 
               <!-- Dropdown Menu -->
-                <div
-                  v-if="showActionsMenu"
-                  @click.stop
-                  class="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-lg border border-gray-200 z-[1000] overflow-hidden animate-fade-in"
+              <div
+                v-if="showActionsMenu"
+                @click.stop
+                class="absolute right-0 top-10 w-44 bg-white rounded-xl shadow-lg border border-gray-200 z-[1000] overflow-hidden animate-fade-in"
+              >
+                <!-- Edit Button -->
+                <button
+                  @click="openEditModal"
+                  class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-blue-50 transition flex items-center gap-3"
                 >
-                  <!-- Edit Button -->
-                  <button
-                    @click="openEditModal"
-                    class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-blue-50 transition flex items-center gap-3"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                        class="h-4 w-4 text-blue-500" 
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" 
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                              m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9
-                              v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span>Edit Question</span>
-                  </button>
+                  <svg xmlns="http://www.w3.org/2000/svg" 
+                      class="h-4 w-4 text-blue-500" 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" 
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                            m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9
+                            v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit Question</span>
+                </button>
 
-                  <!-- Divider -->
-                  <div class="border-t border-gray-100"></div>
+                <!-- Divider -->
+                <div class="border-t border-gray-100"></div>
 
-                  <!-- Delete Button -->
-                  <button
-                    @click="openDeleteModal"
-                    class="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-3"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                        class="h-4 w-4 text-red-500" 
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" 
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
-                              a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
-                              m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    <span>Delete Question</span>
-                  </button>
-                </div>
-
+                <!-- Delete Button -->
+                <button
+                  @click="openDeleteModal"
+                  class="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-3"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" 
+                      class="h-4 w-4 text-red-500" 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" 
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                            a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
+                            m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Delete Question</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -664,8 +663,8 @@ interface ForumQuestion {
   category?: string
   urgency?: string
   visibility?: string
+  userId?: string
   userRole?: string
-  userEmail?: string
   userFirstName?: string
   userLastName?: string
   userFullName?: string
@@ -693,7 +692,7 @@ const props = defineProps<{
   question: ForumQuestion
 }>()
 
-// Emits - Updated with new vote handlers
+// Emits
 const emit = defineEmits([
   'upvote',
   'downvote', 
@@ -729,20 +728,18 @@ const isUserActive = computed(() => {
   const lastSeen = new Date(props.question.userLastSeen)
   const now = new Date()
   const diffInMinutes = (now.getTime() - lastSeen.getTime()) / (1000 * 60)
-  return diffInMinutes < 15 // Consider active if seen within 15 minutes
+  return diffInMinutes < 15
 })
 
-// FIXED: Updated displayUserName to properly handle user names
 const displayUserName = computed(() => {
-  // First priority: userFullName if it exists and is not empty/default
+  // First priority: use userFullName if it's valid
   if (props.question.userFullName && 
       props.question.userFullName.trim() && 
-      props.question.userFullName !== 'Unknown User' && 
-      props.question.userFullName !== 'User Name') {
+      props.question.userFullName !== 'Unknown User') {
     return props.question.userFullName.trim()
   }
   
-  // Second priority: construct from first and last names
+  // Second priority: construct from firstName and lastName
   const firstName = (props.question.userFirstName || '').trim()
   const lastName = (props.question.userLastName || '').trim()
   
@@ -752,12 +749,6 @@ const displayUserName = computed(() => {
     return firstName
   } else if (lastName) {
     return lastName
-  }
-  
-  // Third priority: extract from email
-  if (props.question.userEmail) {
-    const emailPrefix = props.question.userEmail.split('@')[0]
-    return emailPrefix || 'Unknown User'
   }
   
   // Final fallback
@@ -821,21 +812,19 @@ const firstAnswerRole = computed(() => {
   return hasAnswers.value ? (props.question.answers[0].userRole || 'User') : ''
 })
 
-// FIXED: Updated firstAnswerUserName to properly handle user names
 const firstAnswerUserName = computed(() => {
   if (!hasAnswers.value) return ''
   
   const firstAnswer = props.question.answers[0]
   
-  // First priority: userFullName if it exists and is not empty/default
+  // First priority: use userFullName if it's valid
   if (firstAnswer.userFullName && 
       firstAnswer.userFullName.trim() && 
-      firstAnswer.userFullName !== 'Unknown User' && 
-      firstAnswer.userFullName !== 'User Name') {
+      firstAnswer.userFullName !== 'Unknown User') {
     return firstAnswer.userFullName.trim()
   }
   
-  // Second priority: construct from first and last names
+  // Second priority: construct from firstName and lastName
   const firstName = (firstAnswer.userFirstName || '').trim()
   const lastName = (firstAnswer.userLastName || '').trim()
   
@@ -871,12 +860,10 @@ const viewsText = computed(() => {
   return `${views} ${views === 1 ? 'view' : 'views'}`
 })
 
-// Check if current user owns this post (for edit/delete permissions)
 const isOwnPost = computed(() => {
-  return authStore.isAuthenticated && authStore.userEmail === props.question.userEmail
+  return authStore.isAuthenticated && authStore.user?.id === props.question.userId
 })
 
-// Only show edit/delete options for post owner
 const canEditOrDelete = computed(() => {
   return isOwnPost.value
 })
