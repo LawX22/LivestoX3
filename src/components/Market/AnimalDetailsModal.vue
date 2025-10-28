@@ -1,4 +1,4 @@
-<!-- AnimalDetialsModal.vue -->
+<!-- AnimalDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -313,7 +313,7 @@
             <!-- Right Column - Purchase Options and Farmer Information (Narrower) -->
             <div class="lg:col-span-2 space-y-4">
               
-              <!-- Purchase Options Card - Removed sticky positioning -->
+              <!-- Purchase Options Card -->
               <div class="bg-white/95 backdrop-blur-sm rounded-xl p-4 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -409,7 +409,7 @@
                 </div>
               </div>
 
-              <!-- Farmer Information Card - Now follows naturally after Purchase Options -->
+              <!-- Farmer Information Card -->
               <div class="bg-white/95 backdrop-blur-sm rounded-xl p-4 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -585,11 +585,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 import ContactFarmerModal from './ContactFarmerModal.vue';
-import { getCurrentUser } from '../../services/user';
-import type { Animal, ServiceUser, CartItem, MessageData } from '../../services/animal';
+import type { Animal, CartItem, MessageData } from '../../services/animal';
 
 // Props
 const props = defineProps<{
@@ -605,15 +605,23 @@ const emit = defineEmits<{
 // Router
 const router = useRouter();
 
-// User state
-const rawUser = getCurrentUser() as ServiceUser | null;
-const currentUser = rawUser
-  ? {
-      ...rawUser,
-      name: rawUser.name || rawUser.displayName || rawUser.email || 'User',
-      email: rawUser.email || ''
-    }
-  : null;
+// Auth Store
+const authStore = useAuthStore();
+
+// Current User - Get from authStore instead of user.ts
+const currentUser = computed(() => {
+  if (!authStore.isAuthenticated || !authStore.user) {
+    return null;
+  }
+
+  return {
+    id: authStore.userId,
+    name: authStore.userFullName,
+    email: authStore.userEmail,
+    displayName: authStore.userDisplayName,
+    role: authStore.userRole
+  };
+});
 
 // State
 const currentImageIndex = ref(0);
@@ -707,7 +715,7 @@ const validateQuantity = () => {
 
 // Add to cart functionality
 const addToCart = async () => {
-  if (props.animal.status === 'Out of Stock' || !currentUser) {
+  if (props.animal.status === 'Out of Stock' || !currentUser.value) {
     return;
   }
 

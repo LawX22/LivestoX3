@@ -588,54 +588,15 @@ import AddressModal from '../../components/Profile/AddressModal.vue'
 import VerificationModal from '../../components/Profile/VerificationModal.vue'
 import ProfileInfoTab from '../../components/Profile/ProfileInfo.vue'
 import FarmInfoTab from '../../components/Profile/FarmInfo.vue'
-import LivestockPostsTab from '../../components/Profile/LivestockPosts .vue'
+import LivestockPostsTab from '../../components/Profile/LivestockPosts.vue'
 import ReviewsRatingsTab from '../../components/Profile/ReviewsRatings.vue'
-
-// Type definitions
-type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified'
-
-interface User {
-  userId: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  gender: string;
-  role: string;
-  isVerified: boolean;
-  createdAt: string;
-  password?: string;
-  farmName?: string;
-  farmSize?: string;
-  farmSizeUnit?: string;
-  livestockTypes?: string[];
-  description?: string;
-  farmAddress?: any;
-}
-
-interface Address {
-  fullName?: string;
-  label?: string;
-  phoneNumber?: string;
-  street?: string;
-  barangay?: string;
-  city?: string;
-  province?: string;
-  region?: string;
-  description?: string;
-  isDefault?: boolean;
-}
-
-interface VerificationRequest {
-  userId: string;
-  idType: string;
-  frontImage: string;
-  backImage: string;
-  status: VerificationStatus;
-  submittedAt: string;
-  rejectionReason?: string;
-}
+import type { 
+  User, 
+  Address, 
+  VerificationRequest, 
+  VerificationStatus,
+  VerificationData 
+} from '../../services/user'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -663,7 +624,6 @@ const user = computed(() => {
     farmAddress: authStore.userMetadata?.farmAddress
   } as User
 })
-
 
 const editableUser = ref<Partial<User>>({})
 const editing = ref(false)
@@ -901,7 +861,7 @@ const closeVerificationModal = (): void => {
   showVerificationModal.value = false
 }
 
-const handleVerification = (verificationData: { idType: string; frontImage: string; backImage: string }): void => {
+const handleVerification = (verificationData: VerificationData): void => {
   if (!authStore.userId) return
 
   const verificationRequest: VerificationRequest = {

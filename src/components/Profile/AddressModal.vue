@@ -274,8 +274,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { getCurrentUser } from '../../services/user'
+import { ref, watch, onBeforeUnmount } from 'vue'
 
 interface Address {
   fullName?: string
@@ -334,14 +333,6 @@ const resetForm = () => {
   label.value = 'Home'
   isDefault.value = false
 }
-
-onMounted(() => {
-  const user = getCurrentUser()
-  if (user) {
-    fullName.value = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
-    phoneNumber.value = user.phoneNumber ?? ''
-  }
-})
 
 watch(
   () => props.visible,
