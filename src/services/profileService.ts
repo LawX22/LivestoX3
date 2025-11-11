@@ -3,7 +3,29 @@ import { supabase } from '@/supabase'
 import type { User, ProfileDB, Address, VerificationStatus, VerificationData } from './user'
 import { dbProfileToUser, userToDbProfile } from './user'
 
+// Configuration
+const STORAGE_BUCKET = 'avatars'
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+
 export class ProfileService {
+  /**
+   * Validate image file
+   */
+  private static validateImageFile(file: File): { valid: boolean; error?: string } {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return { valid: false, error: 'File size must be less than 5MB' }
+    }
+
+    // Check file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return { valid: false, error: 'Only JPEG, PNG, WebP, and GIF images are allowed' }
+    }
+
+    return { valid: true }
+  }
+
   /**
    * Get user profile by user ID
    */
@@ -115,32 +137,119 @@ export class ProfileService {
   }
 
   /**
+   * Delete old image from storage
+   */
+  private static async deleteOldImage(imageUrl: string | null | undefined): Promise<void> {
+    if (!imageUrl) return
+
+    try {
+      // Extract file path from URL
+      const urlParts = imageUrl.split(`/${STORAGE_BUCKET}/`)
+      if (urlParts.length < 2) return
+
+      const filePath = urlParts[1]
+      
+      // Delete the old file
+      await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([filePath])
+    } catch (error) {
+      console.error('Error deleting old image:', error)
+      // Don't throw error, as this is not critical
+    }
+  }
+
+  /**
    * Upload profile picture
    */
   static async uploadProfilePicture(userId: string, file: File): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}-${Date.now()}.${fileExt}`
-      const filePath = `profile-pictures/${fileName}`
+      console.log('📸 Starting profile picture upload...')
+      console.log('File:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
+      
+      // Validate file
+      const validation = this.validateImageFile(file)
+      if (!validation.valid) {
+        console.error('❌ Validation failed:', validation.error)
+        return { success: false, error: validation.error }
+      }
+      console.log('✅ File validation passed')
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true })
+      // Get current profile to delete old picture
+      const profile = await this.getProfile(userId)
+      
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `${userId}-profile-${Date.now()}.${fileExt}`
+      const filePath = `profile-pictures/${fileName}`
+      
+      console.log('📤 Uploading to bucket:', STORAGE_BUCKET, 'path:', filePath)
+
+      // Upload new file - TRY DIRECTLY WITHOUT CHECKING IF BUCKET EXISTS
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        })
 
       if (uploadError) {
-        return { success: false, error: uploadError.message }
+        console.error('❌ Upload failed:', uploadError)
+        
+        // Provide helpful error message based on error type
+        if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+          return { 
+            success: false, 
+            error: `Storage bucket '${STORAGE_BUCKET}' not found. Please create it in Supabase Dashboard:\n1. Go to Storage\n2. Click 'New bucket'\n3. Name: ${STORAGE_BUCKET}\n4. Set as PUBLIC ✅\n5. Click Create` 
+          }
+        }
+        
+        if (uploadError.message.includes('policy')) {
+          return { 
+            success: false, 
+            error: 'Storage permission denied. Please add storage policies in Supabase Dashboard > Storage > avatars > Policies' 
+          }
+        }
+        
+        return { success: false, error: `Upload failed: ${uploadError.message}` }
       }
+      
+      console.log('✅ File uploaded successfully:', uploadData)
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath)
 
-      // Update profile with new picture URL
-      await this.updateProfile(userId, { profilePicture: publicUrl })
+      const publicUrl = urlData?.publicUrl
 
+      if (!publicUrl) {
+        console.error('❌ Failed to get public URL')
+        return { success: false, error: 'Failed to get public URL for uploaded image' }
+      }
+      console.log('✅ Public URL generated:', publicUrl)
+
+      // Update profile with new picture URL
+      console.log('💾 Updating profile in database...')
+      const updateResult = await this.updateProfile(userId, { profilePicture: publicUrl })
+      
+      if (!updateResult.success) {
+        console.error('❌ Profile update failed:', updateResult.error)
+        return { success: false, error: updateResult.error }
+      }
+      console.log('✅ Profile updated in database')
+
+      // Delete old profile picture if it exists
+      if (profile?.profilePicture) {
+        console.log('🗑️  Deleting old profile picture...')
+        await this.deleteOldImage(profile.profilePicture)
+      }
+
+      console.log('✨ Profile picture upload complete!')
       return { success: true, url: publicUrl }
     } catch (error) {
-      return { success: false, error: String(error) }
+      console.error('💥 Unexpected error in uploadProfilePicture:', error)
+      return { success: false, error: 'An unexpected error occurred while uploading your profile picture' }
     }
   }
 
@@ -149,28 +258,92 @@ export class ProfileService {
    */
   static async uploadBannerImage(userId: string, file: File): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}-${Date.now()}.${fileExt}`
-      const filePath = `banners/${fileName}`
+      console.log('🖼️  Starting banner upload...')
+      console.log('File:', file.name, 'Size:', Math.round(file.size / 1024), 'KB')
+      
+      // Validate file
+      const validation = this.validateImageFile(file)
+      if (!validation.valid) {
+        console.error('❌ Validation failed:', validation.error)
+        return { success: false, error: validation.error }
+      }
+      console.log('✅ File validation passed')
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true })
+      // Get current profile to delete old banner
+      const profile = await this.getProfile(userId)
+
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `${userId}-banner-${Date.now()}.${fileExt}`
+      const filePath = `banners/${fileName}`
+      
+      console.log('📤 Uploading to bucket:', STORAGE_BUCKET, 'path:', filePath)
+
+      // Upload new file - TRY DIRECTLY WITHOUT CHECKING IF BUCKET EXISTS
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type
+        })
 
       if (uploadError) {
-        return { success: false, error: uploadError.message }
+        console.error('❌ Upload failed:', uploadError)
+        
+        // Provide helpful error message based on error type
+        if (uploadError.message.includes('not found') || uploadError.message.includes('does not exist')) {
+          return { 
+            success: false, 
+            error: `Storage bucket '${STORAGE_BUCKET}' not found. Please create it in Supabase Dashboard:\n1. Go to Storage\n2. Click 'New bucket'\n3. Name: ${STORAGE_BUCKET}\n4. Set as PUBLIC ✅\n5. Click Create` 
+          }
+        }
+        
+        if (uploadError.message.includes('policy')) {
+          return { 
+            success: false, 
+            error: 'Storage permission denied. Please add storage policies in Supabase Dashboard > Storage > avatars > Policies' 
+          }
+        }
+        
+        return { success: false, error: `Upload failed: ${uploadError.message}` }
       }
+      
+      console.log('✅ File uploaded successfully:', uploadData)
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath)
 
-      // Update profile with new banner URL
-      await this.updateProfile(userId, { bannerImage: publicUrl })
+      const publicUrl = urlData?.publicUrl
 
+      if (!publicUrl) {
+        console.error('❌ Failed to get public URL')
+        return { success: false, error: 'Failed to get public URL for uploaded image' }
+      }
+      console.log('✅ Public URL generated:', publicUrl)
+
+      // Update profile with new banner URL
+      console.log('💾 Updating profile in database...')
+      const updateResult = await this.updateProfile(userId, { bannerImage: publicUrl })
+      
+      if (!updateResult.success) {
+        console.error('❌ Profile update failed:', updateResult.error)
+        return { success: false, error: updateResult.error }
+      }
+      console.log('✅ Profile updated in database')
+
+      // Delete old banner if it exists
+      if (profile?.bannerImage) {
+        console.log('🗑️  Deleting old banner...')
+        await this.deleteOldImage(profile.bannerImage)
+      }
+
+      console.log('✨ Banner upload complete!')
       return { success: true, url: publicUrl }
     } catch (error) {
-      return { success: false, error: String(error) }
+      console.error('💥 Unexpected error in uploadBannerImage:', error)
+      return { success: false, error: 'An unexpected error occurred while uploading your banner image' }
     }
   }
 

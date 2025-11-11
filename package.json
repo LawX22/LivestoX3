@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.53.0",
     "@tailwindcss/vite": "^4.1.11",
     "chart.js": "^4.5.0",
+    "philippines": "^1.0.0",
     "pinia": "^3.0.3",
     "primevue": "^4.3.7",
     "tailwindcss": "^4.1.11",

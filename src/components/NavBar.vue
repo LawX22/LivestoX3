@@ -368,7 +368,17 @@
             @click="toggleDropdown">
             <!-- Profile Image with enhanced styling -->
             <div class="relative">
-              <div
+              <!-- Profile Picture or Initials -->
+              <div v-if="userProfile?.profilePicture"
+                class="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
+                <img 
+                  :src="userProfile.profilePicture" 
+                  :alt="authStore.userDisplayName"
+                  class="w-full h-full object-cover"
+                  @error="handleImageError"
+                />
+              </div>
+              <div v-else
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <span class="text-sm font-bold text-white">
                   {{ authStore.userInitials }}
@@ -410,7 +420,17 @@
                   class="flex items-start text-white hover:text-green-100 transition-colors duration-200 group"
                   @click="closeDropdown">
                   <div class="mr-4">
-                    <div
+                    <!-- Profile Picture or Initials in Dropdown -->
+                    <div v-if="userProfile?.profilePicture"
+                      class="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
+                      <img 
+                        :src="userProfile.profilePicture" 
+                        :alt="authStore.userDisplayName"
+                        class="w-full h-full object-cover"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div v-else
                       class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <span class="text-base font-bold text-white">
                         {{ authStore.userInitials }}
@@ -584,12 +604,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
+import { ProfileService } from '@/services/profileService';
+import type { User } from '@/services/user';
 
 const router = useRouter();
 const authStore = useAuthStore();
+
+// User profile data
+const userProfile = ref<User | null>(null);
 
 // Notification, cart, and message state
 const cartCount = ref(3);
@@ -622,14 +647,43 @@ const recentMessages = ref([
 const showDropdown = ref(false);
 const showNotificationDropdown = ref(false);
 const showMessageDropdown = ref(false);
-const showLogoutModal = ref(false);
+const showLogoutModal = ref(false); 
 const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
+// Load user profile
+const loadUserProfile = async () => {
+  if (authStore.isAuthenticated && authStore.userId) {
+    const profile = await ProfileService.getProfile(authStore.userId);
+    if (profile) {
+      userProfile.value = profile;
+    }
+  }
+};
+
+// Handle image load error
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  target.style.display = 'none';
+  // This will cause the fallback initials to show
+};
+
+// Watch for auth changes to reload profile
+watch(() => authStore.isAuthenticated, async (isAuth) => {
+  if (isAuth) {
+    await loadUserProfile();
+  } else {
+    userProfile.value = null;
+  }
+});
+
 onMounted(async () => {
   // Initialize auth store session
   await authStore.getSession();
+  
+  // Load user profile if authenticated
+  await loadUserProfile();
   
   // Add event listeners
   document.addEventListener("click", handleClickOutside);
@@ -757,6 +811,7 @@ const handleLogout = async () => {
     unreadMessages.value = 0;
     recentNotifications.value = [];
     recentMessages.value = [];
+    userProfile.value = null;
     
     showLogoutModal.value = false;
     showDropdown.value = false;

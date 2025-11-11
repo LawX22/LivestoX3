@@ -18,7 +18,7 @@
         <button
           v-if="editing"
           @click="$emit('save-profile')"
-          class="inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          class="inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl cursor-pointer"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -50,29 +50,43 @@
           </div>
         </div>
 
-        <!-- Email -->
+        <!-- Email - ALWAYS NON-EDITABLE -->
         <div class="group">
           <label class="block text-sm font-semibold text-gray-700 mb-3">
             <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             Email Address
+            <span class="text-red-500 ml-1">*</span>
           </label>
+          
+          <!-- Email field is ALWAYS disabled and readonly - NO EDITING ALLOWED -->
           <div class="relative">
             <input
-              v-if="editing"
-              v-model="editableUser.email"
+              :value="userEmail"
               type="email"
-              class="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-300 shadow-sm hover:shadow-md hover:border-blue-300"
-              placeholder="Enter your email address"
+              disabled
+              readonly
+              class="w-full bg-gray-100 border-2 border-gray-300 rounded-xl px-4 py-3 pl-11 text-gray-600 cursor-not-allowed shadow-sm transition-all duration-300 min-h-12"
             />
-            <div v-else class="bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-800 font-medium shadow-sm hover:shadow-md transition-all duration-300 min-h-12 flex items-center justify-between">
-              <span>{{ user?.email || 'Not provided' }}</span>
-              <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            
+            <!-- Lock icon indicating field is secured and cannot be changed -->
+            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
           </div>
+          
+          <!-- Helper text explaining why email cannot be changed -->
+          <p class="text-xs text-gray-500 mt-2 flex items-center">
+            <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Email address cannot be changed for security reasons
+          </p>
         </div>
 
         <!-- First Name -->
@@ -328,6 +342,7 @@ defineProps<{
   editing: boolean
   verificationStatus: VerificationStatus
   upgradePending: boolean
+  userEmail: string  // ✅ ADD THIS PROP - Email passed separately and is NOT editable
 }>()
 
 const editableUser = defineModel<User>('editableUser', { required: true })
@@ -347,12 +362,4 @@ const formatDate = (dateString?: string | Date): string => {
   }
   return new Date(dateString).toLocaleDateString(undefined, options)
 }
-
-// const handleSaveProfile = () => {
-//   emit('save-profile')
-//   showSuccessMessage.value = true
-//   setTimeout(() => {
-//     showSuccessMessage.value = false
-//   }, 3000)
-// }
 </script>

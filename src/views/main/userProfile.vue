@@ -6,6 +6,15 @@
       <NavBar />
     </div>
 
+    <!-- Toast Notification (Success and Error) -->
+    <Toast 
+      :visible="showToast" 
+      :type="toastType"
+      :title="toastTitle"
+      :message="toastMessage"
+      @close="showToast = false" 
+    />
+
     <!-- Main content container with padding for navbar -->
     <div class="pt-16 relative">
       <!-- Floating Background Elements -->
@@ -31,11 +40,136 @@
         </svg>
       </div>
 
-      <!-- Loading State -->
+      <!-- Skeleton Loading State -->
       <div v-if="loading" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
-        <div class="text-center py-20">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p class="mt-4 text-gray-600">Loading profile...</p>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- Main Profile Skeleton -->
+          <div class="lg:col-span-3">
+            <!-- Profile Header Skeleton -->
+            <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/40 mb-6">
+              <!-- Banner Skeleton -->
+              <div class="relative h-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%]">
+                <!-- Profile Picture Skeleton -->
+                <div class="absolute -bottom-16 left-8 z-10">
+                  <div class="w-32 h-32 rounded-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] border-4 border-white"></div>
+                </div>
+                
+                <!-- Rating Badge Skeleton -->
+                <div class="absolute top-4 right-4">
+                  <div class="bg-white/95 rounded-2xl px-4 py-2 shadow-lg">
+                    <div class="h-5 w-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Profile Info Skeleton -->
+              <div class="px-8 pt-20 pb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <!-- Left Column Skeleton -->
+                  <div class="lg:col-span-2">
+                    <!-- Name Skeleton -->
+                    <div class="mb-6">
+                      <div class="h-10 w-64 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded mb-3"></div>
+                      <div class="h-6 w-40 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded mb-4"></div>
+                      
+                      <!-- Rating Stars Skeleton -->
+                      <div class="flex items-center gap-6 mb-4">
+                        <div class="h-5 w-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                        <div class="h-4 w-56 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                      </div>
+
+                      <!-- Contact Info Skeleton -->
+                      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div class="h-4 w-64 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                        <div class="h-4 w-48 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right Column Skeleton - Buttons -->
+                  <div class="lg:col-span-1">
+                    <div class="space-y-3">
+                      <div class="h-12 w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-xl"></div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="h-10 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-xl"></div>
+                        <div class="h-10 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-xl"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Details Skeleton -->
+            <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
+              <!-- Tabs Skeleton -->
+              <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
+                <div class="flex space-x-4">
+                  <div class="h-10 w-40 bg-white/20 rounded-lg"></div>
+                  <div class="h-10 w-36 bg-white/10 rounded-lg"></div>
+                  <div class="h-10 w-32 bg-white/10 rounded-lg"></div>
+                  <div class="h-10 w-44 bg-white/10 rounded-lg"></div>
+                </div>
+              </div>
+
+              <!-- Content Skeleton -->
+              <div class="p-8 space-y-6">
+                <div class="h-6 w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                <div class="h-6 w-5/6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                <div class="h-6 w-4/6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                  <div class="space-y-4">
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                  </div>
+                  <div class="space-y-4">
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                    <div class="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar Skeleton -->
+          <div class="space-y-6">
+            <!-- Verification Card Skeleton -->
+            <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
+              <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
+                <div class="h-6 w-48 bg-white/30 rounded"></div>
+              </div>
+              <div class="p-6 space-y-4">
+                <div class="h-20 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-lg"></div>
+              </div>
+            </div>
+
+            <!-- Addresses Card Skeleton -->
+            <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/50">
+              <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
+                <div class="h-6 w-32 bg-white/30 rounded mb-2"></div>
+                <div class="h-4 w-48 bg-white/20 rounded"></div>
+              </div>
+              <div class="p-6 space-y-4">
+                <!-- Address Item Skeleton -->
+                <div class="border border-gray-200 rounded-xl p-4">
+                  <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-lg"></div>
+                    <div class="flex-1 space-y-2">
+                      <div class="h-5 w-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                      <div class="h-4 w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                      <div class="h-4 w-5/6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Address Button Skeleton -->
+                <div class="h-10 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded-lg mt-6"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -241,7 +375,7 @@
                           </div>
                         </div>
 
-                        <!-- Contact Info -->
+                        <!-- Contact Info - Email is NOT editable, shown here -->
                         <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
                           <div class="flex items-center">
                             <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor"
@@ -330,10 +464,15 @@
                 </nav>
               </div>
 
-              <!-- Profile Info Tab -->
-              <ProfileInfoTab v-if="activeTab === 'profile'" :user="user" v-model:editable-user="editableUser"
-                :editing="editing" :verificationStatus="user.verificationStatus || 'unverified'" 
-                @save-profile="saveProfile" :upgradePending="upgradePending" />
+              <!-- Profile Info Tab - Pass userEmail separately to make it read-only -->
+              <ProfileInfoTab v-if="activeTab === 'profile'" 
+                :user="user" 
+                v-model:editable-user="editableUser"
+                :editing="editing" 
+                :verificationStatus="user.verificationStatus || 'unverified'"
+                :userEmail="user.email"
+                @save-profile="saveProfile" 
+                :upgradePending="upgradePending" />
 
               <!-- Farm Info Tab -->
               <FarmInfoTab v-if="activeTab === 'farmer'" :user="user" :editableUser="editableUser" :editing="editing"
@@ -615,6 +754,7 @@ import ProfileInfoTab from '../../components/Profile/ProfileInfo.vue'
 import FarmInfoTab from '../../components/Profile/FarmInfo.vue'
 import LivestockPostsTab from '../../components/Profile/LivestockPosts.vue'
 import ReviewsRatingsTab from '../../components/Profile/ReviewsRatings.vue'
+import Toast from '../../components/Profile/Toast.vue'
 import type { 
   User, 
   Address, 
@@ -643,7 +783,20 @@ const uploadingProfile = ref(false)
 const uploadingBanner = ref(false)
 const profileDetailsSection = ref<HTMLElement | null>(null)
 
+// Toast notification state
+const showToast = ref(false)
+const toastType = ref<'success' | 'error'>('success')
+const toastTitle = ref('Success!')
+const toastMessage = ref('Operation completed successfully.')
+
 // Methods
+const displayToast = (type: 'success' | 'error', title: string, message: string) => {
+  toastType.value = type
+  toastTitle.value = title
+  toastMessage.value = message
+  showToast.value = true
+}
+
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '—'
   const options: Intl.DateTimeFormatOptions = {
@@ -663,22 +816,15 @@ const formatAddress = (addr: Address): string => {
 
 const toggleEdit = async (): Promise<void> => {
   if (editing.value && user.value) {
-    // Don't include addresses in editableUser as they're managed separately
-    const { addresses, ...userWithoutAddresses } = user.value
+    const { addresses, email, ...userWithoutAddresses } = user.value
     editableUser.value = { ...userWithoutAddresses }
   }
   
   editing.value = !editing.value
 
-  // If entering edit mode, scroll to profile details section
   if (editing.value) {
-    // Make sure profile tab is active
     activeTab.value = 'profile'
-    
-    // Wait for next tick to ensure DOM is updated
     await nextTick()
-    
-    // Scroll to the profile details section
     if (profileDetailsSection.value) {
       profileDetailsSection.value.scrollIntoView({ 
         behavior: 'smooth', 
@@ -692,21 +838,19 @@ const saveProfile = async (): Promise<void> => {
   if (!user.value || !editableUser.value) return
 
   try {
-    // Don't send addresses or email with profile update
     const { addresses: _, email, ...profileData } = editableUser.value
     const result = await ProfileService.updateProfile(user.value.userId, profileData)
     
     if (result.success) {
-      // Reload profile data
       await loadUserData()
       editing.value = false
-      alert('Profile updated successfully!')
+      displayToast('success', 'Profile Updated!', 'Your profile information has been successfully updated.')
     } else {
-      alert(`Error updating profile: ${result.error}`)
+      displayToast('error', 'Update Failed', result.error || 'Failed to update profile. Please try again.')
     }
   } catch (error) {
     console.error('Error saving profile:', error)
-    alert('Failed to save profile')
+    displayToast('error', 'Error Occurred', 'An unexpected error occurred while saving your profile.')
   }
 }
 
@@ -736,15 +880,14 @@ const handleBannerUpload = async (event: Event): Promise<void> => {
       const result = await ProfileService.uploadBannerImage(user.value.userId, file)
       
       if (result.success && result.url) {
-        // Reload profile to get updated banner
         await loadUserData()
-        alert('Banner image uploaded successfully!')
+        displayToast('success', 'Banner Updated!', 'Your cover photo has been successfully uploaded.')
       } else {
-        alert(`Error uploading banner: ${result.error}`)
+        displayToast('error', 'Upload Failed', result.error || 'Failed to upload banner image. Please try again.')
       }
     } catch (error) {
       console.error('Error uploading banner:', error)
-      alert('Failed to upload banner image')
+      displayToast('error', 'Upload Error', 'An unexpected error occurred while uploading your banner.')
     } finally {
       uploadingBanner.value = false
     }
@@ -763,15 +906,14 @@ const handleProfileUpload = async (event: Event): Promise<void> => {
       const result = await ProfileService.uploadProfilePicture(user.value.userId, file)
       
       if (result.success && result.url) {
-        // Reload profile to get updated picture
         await loadUserData()
-        alert('Profile picture uploaded successfully!')
+        displayToast('success', 'Profile Picture Updated!', 'Your profile picture has been successfully uploaded.')
       } else {
-        alert(`Error uploading profile picture: ${result.error}`)
+        displayToast('error', 'Upload Failed', result.error || 'Failed to upload profile picture. Please try again.')
       }
     } catch (error) {
       console.error('Error uploading profile picture:', error)
-      alert('Failed to upload profile picture')
+      displayToast('error', 'Upload Error', 'An unexpected error occurred while uploading your profile picture.')
     } finally {
       uploadingProfile.value = false
     }
@@ -785,10 +927,8 @@ const loadUserData = async (): Promise<void> => {
   error.value = null
 
   try {
-    // Initialize auth if not already done
     await authStore.initialize()
 
-    // Check if user is authenticated
     if (!authStore.user) {
       console.log('No authenticated user found')
       loading.value = false
@@ -804,19 +944,16 @@ const loadUserData = async (): Promise<void> => {
 
     console.log('Loading profile for user:', userId)
 
-    // Load profile from Supabase (includes addresses from separate table)
     const profile = await ProfileService.getProfile(userId)
     
     if (profile) {
       console.log('Profile loaded successfully:', profile)
       user.value = profile
       
-      // Create editableUser without addresses and email
       const { addresses: _, email, ...userWithoutAddresses } = profile
       editableUser.value = { ...userWithoutAddresses }
       delete editableUser.value.password
       
-      // Set addresses from the loaded profile
       addresses.value = profile.addresses || []
     } else {
       error.value = 'Failed to load profile'
@@ -848,14 +985,10 @@ const handleAddressSave = async (addressData: Address): Promise<void> => {
   try {
     let result: { success: boolean; error?: string; data?: Address }
 
-    // Check if we're updating an existing address or adding a new one
     if (selectedIndex.value !== null && addresses.value[selectedIndex.value]?.id) {
-      // Update existing address
       const addressId = addresses.value[selectedIndex.value].id!
       
-      // Handle default address logic
       if (addressData.isDefault) {
-        // First, unset all other defaults
         const otherAddresses = addresses.value.filter((_, idx) => idx !== selectedIndex.value)
         for (const addr of otherAddresses) {
           if (addr.isDefault && addr.id) {
@@ -867,32 +1000,28 @@ const handleAddressSave = async (addressData: Address): Promise<void> => {
       result = await ProfileService.updateAddress(addressId, user.value.userId, addressData)
       
       if (result.success) {
-        // Update local state
         addresses.value[selectedIndex.value] = { ...addressData, id: addressId }
       }
     } else {
-      // Add new address
       result = await ProfileService.addAddress(user.value.userId, addressData)
       
       if (result.success && result.data) {
-        // Add to local state
         addresses.value.push(result.data)
       }
     }
 
     if (result.success) {
-      // Update user object
       if (user.value) {
         user.value.addresses = [...addresses.value]
       }
       closeAddressModal()
-      alert('Address saved successfully!')
+      displayToast('success', 'Address Saved!', 'Your address has been successfully saved.')
     } else {
-      alert(`Error saving address: ${result.error}`)
+      displayToast('error', 'Save Failed', result.error || 'Failed to save address. Please try again.')
     }
   } catch (error) {
     console.error('Error saving address:', error)
-    alert('Failed to save address')
+    displayToast('error', 'Save Error', 'An unexpected error occurred while saving your address.')
   }
 }
 
@@ -901,7 +1030,7 @@ const handleAddressDelete = async (): Promise<void> => {
   
   const addressToDelete = addresses.value[selectedIndex.value]
   if (!addressToDelete.id) {
-    alert('Cannot delete address without ID')
+    displayToast('error', 'Delete Failed', 'Cannot delete address without ID.')
     return
   }
 
@@ -909,21 +1038,19 @@ const handleAddressDelete = async (): Promise<void> => {
     const result = await ProfileService.deleteAddress(addressToDelete.id, user.value.userId)
     
     if (result.success) {
-      // Remove from local state
       addresses.value.splice(selectedIndex.value, 1)
       
-      // Update user object
       if (user.value) {
         user.value.addresses = [...addresses.value]
       }
       closeAddressModal()
-      alert('Address deleted successfully!')
+      displayToast('success', 'Address Deleted!', 'Your address has been successfully removed.')
     } else {
-      alert(`Error deleting address: ${result.error}`)
+      displayToast('error', 'Delete Failed', result.error || 'Failed to delete address. Please try again.')
     }
   } catch (error) {
     console.error('Error deleting address:', error)
-    alert('Failed to delete address')
+    displayToast('error', 'Delete Error', 'An unexpected error occurred while deleting your address.')
   }
 }
 
@@ -942,20 +1069,18 @@ const handleVerification = async (verificationData: VerificationData): Promise<v
     const result = await ProfileService.submitVerification(user.value.userId, verificationData)
     
     if (result.success) {
-      // Reload profile to get updated verification status
       await loadUserData()
       closeVerificationModal()
-      alert('Verification submitted successfully! We will review your request.')
+      displayToast('success', 'Verification Submitted!', 'Your verification request has been submitted and is under review.')
     } else {
-      alert(`Error submitting verification: ${result.error}`)
+      displayToast('error', 'Submission Failed', result.error || 'Failed to submit verification. Please try again.')
     }
   } catch (error) {
     console.error('Error submitting verification:', error)
-    alert('Failed to submit verification')
+    displayToast('error', 'Submission Error', 'An unexpected error occurred while submitting your verification.')
   }
 }
 
-// Watch for auth state changes
 watch(() => authStore.user, (newUser) => {
   if (newUser && !loading.value) {
     console.log('Auth state changed, reloading profile')
@@ -967,9 +1092,9 @@ watch(() => authStore.user, (newUser) => {
   }
 }, { immediate: false })
 
-// Initial load
 onMounted(async () => {
   console.log('Component mounted, loading user data')
   await loadUserData()
 })
 </script>
+
