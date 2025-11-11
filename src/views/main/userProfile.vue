@@ -31,8 +31,28 @@
         </svg>
       </div>
 
-      <div class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
-        <div v-if="user" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Loading State -->
+      <div v-if="loading" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
+        <div class="text-center py-20">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          <p class="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
+        <div class="bg-red-100 border-l-4 border-red-500 rounded-lg p-6 text-center">
+          <div class="text-red-800 mb-4">{{ error }}</div>
+          <button @click="loadUserData" 
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition cursor-pointer">
+            Retry
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div v-else-if="user" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <!-- Main Profile Card -->
           <div class="lg:col-span-3">
             <!-- Enhanced Profile Header with Larger Images and Ratings -->
@@ -43,9 +63,9 @@
                 <!-- Banner with increased height -->
                 <div class="relative h-48 overflow-hidden group cursor-pointer" @click="triggerBannerUpload">
                   <!-- Default Banner or Custom Image -->
-                  <div v-if="bannerImage"
+                  <div v-if="user.bannerImage"
                     class="absolute inset-0 bg-center bg-cover transform group-hover:scale-105 transition-transform duration-700"
-                    :style="{ backgroundImage: `url('${bannerImage}')` }">
+                    :style="{ backgroundImage: `url('${user.bannerImage}')` }">
                     <!-- Enhanced gradient overlay -->
                     <div class="absolute inset-0 bg-gradient-to-br from-green-600/70 via-emerald-600/60 to-teal-600/70">
                     </div>
@@ -80,7 +100,7 @@
                   </div>
 
                   <!-- Banner hover overlay -->
-                  <div v-if="bannerImage"
+                  <div v-if="user.bannerImage"
                     class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                     <div class="text-center text-white">
                       <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -90,6 +110,15 @@
                         </svg>
                       </div>
                       <p class="text-sm font-semibold">Change Cover Photo</p>
+                    </div>
+                  </div>
+
+                  <!-- Upload Progress Indicator -->
+                  <div v-if="uploadingBanner"
+                    class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div class="text-center text-white">
+                      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div>
+                      <p class="text-sm font-semibold">Uploading banner...</p>
                     </div>
                   </div>
                 </div>
@@ -105,8 +134,8 @@
                     <!-- Profile Picture Container -->
                     <div
                       class="relative w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white/95 backdrop-blur-sm flex items-center justify-center m-0.5">
-                      <template v-if="profileImage">
-                        <img :src="profileImage" class="w-full h-full object-cover" alt="Profile" />
+                      <template v-if="user.profilePicture">
+                        <img :src="user.profilePicture" class="w-full h-full object-cover" alt="Profile" />
                         <div
                           class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,6 +156,12 @@
                           class="absolute inset-0 border-3 border-dashed border-gray-300 group-hover:border-green-400 rounded-full">
                         </div>
                       </template>
+
+                      <!-- Upload Progress Indicator -->
+                      <div v-if="uploadingProfile"
+                        class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
                     </div>
 
                     <!-- Online status -->
@@ -166,9 +201,9 @@
                       <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
                           <h1 class="text-4xl font-bold text-gray-900 tracking-tight">
-                            {{ user?.firstName }} {{ user?.lastName }}
+                            {{ user.firstName }} {{ user.lastName }}
                           </h1>
-                          <span v-if="verificationStatus === 'verified'"
+                          <span v-if="user.verificationStatus === 'verified'"
                             class="inline-flex items-center text-blue-600 text-sm border border-blue-200 px-3 py-1 rounded-full bg-blue-50 font-medium">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -180,7 +215,7 @@
 
                         <!-- Role and Status -->
                         <div class="flex items-center gap-4 mb-4">
-                          <p class="text-xl text-gray-700 font-medium">{{ user?.role }}</p>
+                          <p class="text-xl text-gray-700 font-medium">{{ user.role }}</p>
                           <div class="flex items-center text-green-600 text-sm">
                             <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                             Active now
@@ -191,23 +226,9 @@
                         <div class="flex items-center gap-6 mb-4">
                           <div class="flex items-center gap-2">
                             <div class="flex">
-                              <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                                <path
-                                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                              <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                                <path
-                                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                              <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                                <path
-                                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                              <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                                <path
-                                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                              <svg class="w-5 h-5 text-gray-300 fill-current" viewBox="0 0 24 24">
+                              <svg v-for="n in 5" :key="n" 
+                                :class="['w-5 h-5 fill-current', n <= 4 ? 'text-yellow-400' : 'text-gray-300']" 
+                                viewBox="0 0 24 24">
                                 <path
                                   d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                               </svg>
@@ -232,13 +253,12 @@
                             </svg>
                             Cebu City, Central Visayas, Philippines
                           </div>
-                          <div
-                            class="flex items-center text-blue-600 hover:text-blue-700 cursor-pointer transition-colors">
+                          <div class="flex items-center text-blue-600">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            {{ user?.email }}
+                            {{ user.email }}
                           </div>
                         </div>
                       </div>
@@ -250,13 +270,13 @@
                     <!-- Primary Actions -->
                     <div class="space-y-3 mb-6">
                       <button @click="toggleEdit"
-                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl cursor-pointer">
                         {{ editing ? 'Cancel Edit' : 'Edit Profile' }}
                       </button>
 
                       <div class="grid grid-cols-2 gap-2">
                         <button
-                          class="bg-white border-2 border-gray-200 hover:border-green-400 text-gray-700 hover:text-green-600 px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center justify-center">
+                          class="bg-white border-2 border-gray-200 hover:border-green-400 text-gray-700 hover:text-green-600 px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center justify-center cursor-pointer">
                           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -264,7 +284,7 @@
                           Message
                         </button>
                         <button
-                          class="bg-white border-2 border-gray-200 hover:border-purple-400 text-gray-700 hover:text-purple-600 px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center justify-center">
+                          class="bg-white border-2 border-gray-200 hover:border-purple-400 text-gray-700 hover:text-purple-600 px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center justify-center cursor-pointer">
                           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -283,27 +303,27 @@
             </div>
 
             <!-- Profile Details Card -->
-            <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
+            <div ref="profileDetailsSection" class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
               <!-- Tabs -->
               <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
                 <nav class="flex space-x-4">
                   <button
-                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition', activeTab === 'profile' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
+                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition cursor-pointer', activeTab === 'profile' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
                     @click="activeTab = 'profile'">
                     Profile Information
                   </button>
                   <button
-                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition', activeTab === 'farmer' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
+                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition cursor-pointer', activeTab === 'farmer' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
                     @click="activeTab = 'farmer'">
                     Farm Information
                   </button>
                   <button v-if="user?.role === 'Farmer'"
-                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition', activeTab === 'livestock' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
+                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition cursor-pointer', activeTab === 'livestock' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
                     @click="activeTab = 'livestock'">
                     Livestock Posts
                   </button>
                   <button
-                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition', activeTab === 'reviews' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
+                    :class="['px-4 py-2 text-sm font-medium rounded-lg transition cursor-pointer', activeTab === 'reviews' ? 'bg-white/20 backdrop-blur-sm' : 'hover:bg-white/10']"
                     @click="activeTab = 'reviews'">
                     Reviews & Ratings
                   </button>
@@ -312,11 +332,13 @@
 
               <!-- Profile Info Tab -->
               <ProfileInfoTab v-if="activeTab === 'profile'" :user="user" v-model:editable-user="editableUser"
-                :editing="editing" :verificationStatus="verificationStatus" @save-profile="saveProfile" :upgradePending="upgradePending" />
+                :editing="editing" :verificationStatus="user.verificationStatus || 'unverified'" 
+                @save-profile="saveProfile" :upgradePending="upgradePending" />
 
               <!-- Farm Info Tab -->
               <FarmInfoTab v-if="activeTab === 'farmer'" :user="user" :editableUser="editableUser" :editing="editing"
-                :verificationStatus="verificationStatus" :upgradePending="upgradePending" @upgrade="goToUpgradeForm" />
+                :verificationStatus="user.verificationStatus || 'unverified'" 
+                :upgradePending="upgradePending" @upgrade="goToUpgradeForm" />
 
               <!-- Livestock Posts Tab (Farmer only) -->
               <LivestockPostsTab v-if="activeTab === 'livestock' && user?.role === 'Farmer'" :userId="user.userId" />
@@ -336,7 +358,7 @@
 
               <div class="p-6">
                 <!-- Verified Status -->
-                <div v-if="verificationStatus === 'verified'"
+                <div v-if="user.verificationStatus === 'verified'"
                   class="bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                   <div class="flex items-center">
                     <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -352,7 +374,7 @@
                 </div>
 
                 <!-- Pending Status -->
-                <div v-else-if="verificationStatus === 'pending'"
+                <div v-else-if="user.verificationStatus === 'pending'"
                   class="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                   <div class="flex items-center">
                     <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -365,13 +387,13 @@
                       <p class="text-xs text-blue-700">Your verification request is being reviewed</p>
                     </div>
                   </div>
-                  <div class="text-xs text-blue-600">
-                    <p>Submitted: {{ formatDate(verificationSubmittedAt) }}</p>
+                  <div class="text-xs text-blue-600 mt-2">
+                    <p>Submitted: {{ formatDate(user.verificationSubmittedAt) }}</p>
                   </div>
                 </div>
 
                 <!-- Rejected Status -->
-                <div v-else-if="verificationStatus === 'rejected'"
+                <div v-else-if="user.verificationStatus === 'rejected'"
                   class="bg-red-100 border-l-4 border-red-500 rounded-lg p-4 mb-4">
                   <div class="flex items-center">
                     <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -384,11 +406,11 @@
                       <p class="text-xs text-red-700">Your verification request was rejected</p>
                     </div>
                   </div>
-                  <div class="text-xs text-red-600">
-                    <p v-if="verificationRejectionReason">Reason: {{ verificationRejectionReason }}</p>
+                  <div v-if="user.verificationRejectionReason" class="text-xs text-red-600 mt-2">
+                    <p>Reason: {{ user.verificationRejectionReason }}</p>
                   </div>
                   <button @click="openVerificationModal"
-                    class="mt-3 w-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-red-700 hover:to-rose-700 transition">
+                    class="mt-3 w-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-red-700 hover:to-rose-700 transition cursor-pointer">
                     Resubmit Verification
                   </button>
                 </div>
@@ -407,7 +429,7 @@
                     </div>
                   </div>
                   <button @click="openVerificationModal"
-                    class="mt-3 w-full bg-gradient-to-r from-yellow-600 to-amber-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-yellow-700 hover:to-amber-700 transition">
+                    class="mt-3 w-full bg-gradient-to-r from-yellow-600 to-amber-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-yellow-700 hover:to-amber-700 transition cursor-pointer">
                     Verify Account
                   </button>
                 </div>
@@ -522,7 +544,7 @@
 
                     <!-- Edit button (only shows on hover) -->
                     <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button class="text-emerald-600 hover:text-emerald-800 p-1">
+                      <button class="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -549,7 +571,7 @@
 
                 <!-- Add new address button -->
                 <button @click="openAddressModal(null)"
-                  class="mt-6 w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md">
+                  class="mt-6 w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -560,11 +582,13 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- No User Message -->
-        <div v-if="!user" class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-6 text-center">
+      <!-- No User Message -->
+      <div v-else-if="!user && !loading && !error" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-6 text-center">
           <div class="text-yellow-800 mb-4">No user is logged in.</div>
-          <router-link to="/signin" class="text-blue-600 font-medium hover:underline">Sign in</router-link>
+          <router-link to="/signin" class="text-blue-600 font-medium hover:underline cursor-pointer">Sign in</router-link>
           <span class="text-gray-600"> to view your profile.</span>
         </div>
       </div>
@@ -580,9 +604,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { ProfileService } from '@/services/profileService'
 import NavBar from '../../components/NavBar.vue'
 import AddressModal from '../../components/Profile/AddressModal.vue'
 import VerificationModal from '../../components/Profile/VerificationModal.vue'
@@ -593,55 +618,32 @@ import ReviewsRatingsTab from '../../components/Profile/ReviewsRatings.vue'
 import type { 
   User, 
   Address, 
-  VerificationRequest, 
-  VerificationStatus,
   VerificationData 
 } from '../../services/user'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Use computed properties to get user data from authStore
-const user = computed(() => {
-  if (!authStore.user) return null
-
-  return {
-    userId: authStore.userId || '',
-    username: authStore.userName,
-    email: authStore.userEmail,
-    firstName: authStore.userMetadata?.firstname || '', 
-    lastName: authStore.userMetadata?.lastname || '',  
-    phoneNumber: authStore.userMetadata?.phone || '',
-    gender: authStore.userMetadata?.gender || '',
-    role: authStore.userRole,
-    isVerified: authStore.userMetadata?.isVerified || false,
-    createdAt: authStore.userMetadata?.created_at || new Date().toISOString(),
-    farmName: authStore.userMetadata?.farmName,
-    farmSize: authStore.userMetadata?.farmSize,
-    farmSizeUnit: authStore.userMetadata?.farmSizeUnit,
-    livestockTypes: authStore.userMetadata?.livestockTypes,
-    description: authStore.userMetadata?.description,
-    farmAddress: authStore.userMetadata?.farmAddress
-  } as User
-})
-
+// State
+const user = ref<User | null>(null)
 const editableUser = ref<Partial<User>>({})
 const editing = ref(false)
+const loading = ref(true)
+const error = ref<string | null>(null)
 const upgradePending = ref(false)
 const addresses = ref<Address[]>([])
 const activeTab = ref<'profile' | 'farmer' | 'livestock' | 'reviews'>('profile')
-const verificationStatus = ref<VerificationStatus>('unverified')
-const verificationSubmittedAt = ref<string | null>(null)
-const verificationRejectionReason = ref<string | null>(null)
-const profileImage = ref<string | null>(null)
-const bannerImage = ref<string | null>(null)
 const showAddressModal = ref(false)
 const selectedAddress = ref<Address | null>(null)
 const selectedIndex = ref<number | null>(null)
 const showVerificationModal = ref(false)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const profileInput = ref<HTMLInputElement | null>(null)
+const uploadingProfile = ref(false)
+const uploadingBanner = ref(false)
+const profileDetailsSection = ref<HTMLElement | null>(null)
 
+// Methods
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '—'
   const options: Intl.DateTimeFormatOptions = {
@@ -659,149 +661,172 @@ const formatAddress = (addr: Address): string => {
   return parts.length ? parts.join(', ') : 'No location specified'
 }
 
-const toggleEdit = (): void => {
-  if (editing.value) {
-    editableUser.value = { ...user.value } as Partial<User>
+const toggleEdit = async (): Promise<void> => {
+  if (editing.value && user.value) {
+    // Don't include addresses in editableUser as they're managed separately
+    const { addresses, ...userWithoutAddresses } = user.value
+    editableUser.value = { ...userWithoutAddresses }
   }
+  
   editing.value = !editing.value
+
+  // If entering edit mode, scroll to profile details section
+  if (editing.value) {
+    // Make sure profile tab is active
+    activeTab.value = 'profile'
+    
+    // Wait for next tick to ensure DOM is updated
+    await nextTick()
+    
+    // Scroll to the profile details section
+    if (profileDetailsSection.value) {
+      profileDetailsSection.value.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      })
+    }
+  }
 }
 
-const saveProfile = (): void => {
-  if (editableUser.value) {
-    handleProfileSave(editableUser.value)
+const saveProfile = async (): Promise<void> => {
+  if (!user.value || !editableUser.value) return
+
+  try {
+    // Don't send addresses or email with profile update
+    const { addresses: _, email, ...profileData } = editableUser.value
+    const result = await ProfileService.updateProfile(user.value.userId, profileData)
+    
+    if (result.success) {
+      // Reload profile data
+      await loadUserData()
+      editing.value = false
+      alert('Profile updated successfully!')
+    } else {
+      alert(`Error updating profile: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error saving profile:', error)
+    alert('Failed to save profile')
   }
-  editing.value = false
 }
 
 const goToUpgradeForm = (): void => {
-  if (verificationStatus.value !== 'verified' || upgradePending.value) return
   router.push('/upgradeForm')
 }
 
 const triggerBannerUpload = (): void => {
-  bannerInput.value?.click()
+  if (!uploadingBanner.value) {
+    bannerInput.value?.click()
+  }
 }
 
 const triggerProfileUpload = (): void => {
-  profileInput.value?.click()
+  if (!uploadingProfile.value) {
+    profileInput.value?.click()
+  }
 }
 
-const handleBannerUpload = (event: Event): void => {
+const handleBannerUpload = async (event: Event): Promise<void> => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
+  
   if (file && user.value) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const imageData = e.target?.result as string
-      bannerImage.value = imageData
-      // Store in localStorage for persistence (remove this if you want to store in backend)
-      localStorage.setItem(`bannerImage_${user.value?.userId}`, imageData)
+    uploadingBanner.value = true
+    try {
+      const result = await ProfileService.uploadBannerImage(user.value.userId, file)
+      
+      if (result.success && result.url) {
+        // Reload profile to get updated banner
+        await loadUserData()
+        alert('Banner image uploaded successfully!')
+      } else {
+        alert(`Error uploading banner: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading banner:', error)
+      alert('Failed to upload banner image')
+    } finally {
+      uploadingBanner.value = false
     }
-    reader.readAsDataURL(file)
   }
+  
   target.value = ''
 }
 
-const handleProfileUpload = (event: Event): void => {
+const handleProfileUpload = async (event: Event): Promise<void> => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
+  
   if (file && user.value) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const imageData = e.target?.result as string
-      profileImage.value = imageData
-      // Store in localStorage for persistence (remove this if you want to store in backend)
-      localStorage.setItem(`profileImage_${user.value?.userId}`, imageData)
+    uploadingProfile.value = true
+    try {
+      const result = await ProfileService.uploadProfilePicture(user.value.userId, file)
+      
+      if (result.success && result.url) {
+        // Reload profile to get updated picture
+        await loadUserData()
+        alert('Profile picture uploaded successfully!')
+      } else {
+        alert(`Error uploading profile picture: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error)
+      alert('Failed to upload profile picture')
+    } finally {
+      uploadingProfile.value = false
     }
-    reader.readAsDataURL(file)
   }
+  
   target.value = ''
 }
 
-const checkVerificationStatus = (userId: string): void => {
-  if (!authStore.userMetadata) {
-    verificationStatus.value = 'unverified'
-    return
-  }
-
-  if (authStore.userMetadata.isVerified) {
-    verificationStatus.value = 'verified'
-    return
-  }
-
-  // Check verification requests from localStorage (you might want to move this to a proper database)
-  const verificationRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-  const userVerification = verificationRequests.find(req => req.userId === userId)
-
-  if (!userVerification) {
-    verificationStatus.value = 'unverified'
-    return
-  }
-
-  verificationStatus.value = userVerification.status
-  verificationSubmittedAt.value = userVerification.submittedAt
-  verificationRejectionReason.value = userVerification.rejectionReason || null
-}
-
-const loadUserData = (): void => {
-  if (!authStore.user) return
-
-  const userId = authStore.userId
-  if (!userId) return
+const loadUserData = async (): Promise<void> => {
+  loading.value = true
+  error.value = null
 
   try {
-    // Set editable user from authStore data
-    editableUser.value = { ...user.value } as Partial<User>
-    delete editableUser.value.password
+    // Initialize auth if not already done
+    await authStore.initialize()
 
-    checkVerificationStatus(userId)
-
-    // Load images from localStorage (remove if using backend storage)
-    profileImage.value = localStorage.getItem(`profileImage_${userId}`)
-    bannerImage.value = localStorage.getItem(`bannerImage_${userId}`)
-
-    // Check upgrade status from localStorage (you might want to move this to a proper database)
-    const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-    upgradePending.value = upgradeRequests.some((req: any) =>
-      req.userId === userId && req.status === 'pending'
-    )
-
-    // Load addresses from localStorage (you might want to move this to a proper database)
-    const storedAddresses = localStorage.getItem(`addresses_${userId}`)
-    if (storedAddresses) {
-      addresses.value = JSON.parse(storedAddresses) as Address[]
-    }
-  } catch (error) {
-    console.error('Error loading user data:', error)
-  }
-}
-
-const handleProfileSave = async (updatedUser: Partial<User>): Promise<void> => {
-  if (!authStore.user) return
-
-  try {
-    // Update user metadata in authStore (this would typically call an API to update the user)
-    const updatedMetadata = {
-      ...authStore.userMetadata,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      phone: updatedUser.phoneNumber,
-      gender: updatedUser.gender,
-      isVerified: verificationStatus.value === 'verified'
+    // Check if user is authenticated
+    if (!authStore.user) {
+      console.log('No authenticated user found')
+      loading.value = false
+      return
     }
 
-    // Here you would typically call an API to update the user profile
-    // For now, we'll just update the local state
-    console.log('Profile update would be sent to API:', updatedMetadata)
+    const userId = authStore.userId
+    if (!userId) {
+      error.value = 'User ID not found'
+      loading.value = false
+      return
+    }
+
+    console.log('Loading profile for user:', userId)
+
+    // Load profile from Supabase (includes addresses from separate table)
+    const profile = await ProfileService.getProfile(userId)
     
-    // If you have an updateUser method in your authStore, you would call it here:
-    // await authStore.updateUser(updatedMetadata)
-
-    editing.value = false
-  } catch (error) {
-    console.error('Error updating profile:', error)
+    if (profile) {
+      console.log('Profile loaded successfully:', profile)
+      user.value = profile
+      
+      // Create editableUser without addresses and email
+      const { addresses: _, email, ...userWithoutAddresses } = profile
+      editableUser.value = { ...userWithoutAddresses }
+      delete editableUser.value.password
+      
+      // Set addresses from the loaded profile
+      addresses.value = profile.addresses || []
+    } else {
+      error.value = 'Failed to load profile'
+      console.error('Profile not found for user:', userId)
+    }
+  } catch (err) {
+    console.error('Error loading user data:', err)
+    error.value = 'An error occurred while loading your profile'
+  } finally {
+    loading.value = false
   }
 }
 
@@ -817,40 +842,89 @@ const closeAddressModal = (): void => {
   selectedIndex.value = null
 }
 
-const handleAddressSave = (addressData: Address): void => {
-  if (!authStore.userId) return
+const handleAddressSave = async (addressData: Address): Promise<void> => {
+  if (!user.value) return
 
-  let updatedAddresses = [...addresses.value]
+  try {
+    let result: { success: boolean; error?: string; data?: Address }
 
-  if (selectedIndex.value !== null) {
-    updatedAddresses[selectedIndex.value] = addressData
-  } else {
-    updatedAddresses.push(addressData)
+    // Check if we're updating an existing address or adding a new one
+    if (selectedIndex.value !== null && addresses.value[selectedIndex.value]?.id) {
+      // Update existing address
+      const addressId = addresses.value[selectedIndex.value].id!
+      
+      // Handle default address logic
+      if (addressData.isDefault) {
+        // First, unset all other defaults
+        const otherAddresses = addresses.value.filter((_, idx) => idx !== selectedIndex.value)
+        for (const addr of otherAddresses) {
+          if (addr.isDefault && addr.id) {
+            await ProfileService.updateAddress(addr.id, user.value.userId, { ...addr, isDefault: false })
+          }
+        }
+      }
+      
+      result = await ProfileService.updateAddress(addressId, user.value.userId, addressData)
+      
+      if (result.success) {
+        // Update local state
+        addresses.value[selectedIndex.value] = { ...addressData, id: addressId }
+      }
+    } else {
+      // Add new address
+      result = await ProfileService.addAddress(user.value.userId, addressData)
+      
+      if (result.success && result.data) {
+        // Add to local state
+        addresses.value.push(result.data)
+      }
+    }
+
+    if (result.success) {
+      // Update user object
+      if (user.value) {
+        user.value.addresses = [...addresses.value]
+      }
+      closeAddressModal()
+      alert('Address saved successfully!')
+    } else {
+      alert(`Error saving address: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error saving address:', error)
+    alert('Failed to save address')
   }
-
-  if (addressData.isDefault) {
-    updatedAddresses = updatedAddresses.map(addr => ({
-      ...addr,
-      isDefault: addr === addressData
-    }))
-  }
-
-  // Store in localStorage (remove this if you want to store in backend)
-  localStorage.setItem(`addresses_${authStore.userId}`, JSON.stringify(updatedAddresses))
-  addresses.value = updatedAddresses
-  closeAddressModal()
 }
 
-const handleAddressDelete = (): void => {
-  if (!authStore.userId || selectedIndex.value === null) return
+const handleAddressDelete = async (): Promise<void> => {
+  if (selectedIndex.value === null || !user.value) return
+  
+  const addressToDelete = addresses.value[selectedIndex.value]
+  if (!addressToDelete.id) {
+    alert('Cannot delete address without ID')
+    return
+  }
 
-  const updatedAddresses = [...addresses.value]
-  updatedAddresses.splice(selectedIndex.value, 1)
-
-  // Store in localStorage (remove this if you want to store in backend)
-  localStorage.setItem(`addresses_${authStore.userId}`, JSON.stringify(updatedAddresses))
-  addresses.value = updatedAddresses
-  closeAddressModal()
+  try {
+    const result = await ProfileService.deleteAddress(addressToDelete.id, user.value.userId)
+    
+    if (result.success) {
+      // Remove from local state
+      addresses.value.splice(selectedIndex.value, 1)
+      
+      // Update user object
+      if (user.value) {
+        user.value.addresses = [...addresses.value]
+      }
+      closeAddressModal()
+      alert('Address deleted successfully!')
+    } else {
+      alert(`Error deleting address: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error deleting address:', error)
+    alert('Failed to delete address')
+  }
 }
 
 const openVerificationModal = (): void => {
@@ -861,31 +935,41 @@ const closeVerificationModal = (): void => {
   showVerificationModal.value = false
 }
 
-const handleVerification = (verificationData: VerificationData): void => {
-  if (!authStore.userId) return
+const handleVerification = async (verificationData: VerificationData): Promise<void> => {
+  if (!user.value) return
 
-  const verificationRequest: VerificationRequest = {
-    userId: authStore.userId,
-    idType: verificationData.idType,
-    frontImage: verificationData.frontImage,
-    backImage: verificationData.backImage,
-    status: 'pending',
-    submittedAt: new Date().toISOString()
+  try {
+    const result = await ProfileService.submitVerification(user.value.userId, verificationData)
+    
+    if (result.success) {
+      // Reload profile to get updated verification status
+      await loadUserData()
+      closeVerificationModal()
+      alert('Verification submitted successfully! We will review your request.')
+    } else {
+      alert(`Error submitting verification: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error submitting verification:', error)
+    alert('Failed to submit verification')
   }
-
-  // Store in localStorage (remove this if you want to store in backend)
-  const existingRequests = JSON.parse(localStorage.getItem('verificationRequests') || '[]') as VerificationRequest[]
-  const filteredRequests = existingRequests.filter(req => req.userId !== authStore.userId)
-  filteredRequests.push(verificationRequest)
-
-  localStorage.setItem('verificationRequests', JSON.stringify(filteredRequests))
-  verificationStatus.value = 'pending'
-  verificationSubmittedAt.value = verificationRequest.submittedAt
-  verificationRejectionReason.value = null
-  closeVerificationModal()
 }
 
-onMounted(() => {
-  loadUserData()
+// Watch for auth state changes
+watch(() => authStore.user, (newUser) => {
+  if (newUser && !loading.value) {
+    console.log('Auth state changed, reloading profile')
+    loadUserData()
+  } else if (!newUser) {
+    console.log('User logged out')
+    user.value = null
+    loading.value = false
+  }
+}, { immediate: false })
+
+// Initial load
+onMounted(async () => {
+  console.log('Component mounted, loading user data')
+  await loadUserData()
 })
 </script>

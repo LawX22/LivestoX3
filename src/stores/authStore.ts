@@ -14,9 +14,27 @@ export const useAuthStore = defineStore('auth', () => {
   const user: Ref<SupabaseUser | null> = ref(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const initialized = ref(false)
 
 
   // AUTH ACTIONS
+
+  const initialize = async (): Promise<void> => {
+    if (initialized.value) return
+    
+    try {
+      loading.value = true
+      const { data } = await supabase.auth.getSession()
+      session.value = data.session
+      user.value = data.session?.user || null
+      initialized.value = true
+    } catch (err: any) {
+      error.value = err.message || 'Failed to initialize auth'
+      console.error('Auth initialization error:', err)
+    } finally {
+      loading.value = false
+    }
+  }
 
   const login = async (email: string, password: string) => {
     try {
@@ -73,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = null
       user.value = null
       error.value = null
+      initialized.value = false
     } catch (err: any) {
       error.value = err.message || 'Logout failed'
     } finally {
@@ -93,6 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Listen to auth state changes
   supabase.auth.onAuthStateChange(async (_event, _session) => {
     session.value = _session
     user.value = _session ? _session.user : null
@@ -148,8 +168,10 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     loading,
     error,
+    initialized,
 
     // Actions
+    initialize,
     login,
     register,
     logout,
