@@ -164,7 +164,7 @@ export interface AddressDB {
   updated_at: string
 }
 
-// Helper function to convert DB profile to User (addresses handled separately)
+// ✅ EXPORTED - Helper function to convert DB profile to User (addresses handled separately)
 export function dbProfileToUser(profile: ProfileDB, email: string): User {
   return {
     userId: profile.id,
@@ -199,7 +199,7 @@ export function dbProfileToUser(profile: ProfileDB, email: string): User {
   }
 }
 
-// Helper function to convert User to DB profile (excludes addresses)
+// ✅ EXPORTED - Helper function to convert User to DB profile (excludes addresses)
 export function userToDbProfile(user: Partial<User>): Partial<ProfileDB> {
   // Destructure to exclude addresses
   const { addresses, ...userWithoutAddresses } = user

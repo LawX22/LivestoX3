@@ -115,7 +115,7 @@
       <!-- Fixed Logout Button at Bottom -->
       <div class="p-4 border-t border-gray-200 flex-shrink-0 mt-auto">
         <button
-          @click="logout"
+          @click="showLogoutModal = true"
           :class="[
             'group flex items-center w-full rounded-xl border transition-all duration-200 relative overflow-hidden',
             isMinimized ? 'p-3 justify-center' : 'px-4 py-3',
@@ -144,14 +144,57 @@
       </div>
     </div>
   </aside>
+
+  <!-- Logout Confirmation Modal - Teleported to body -->
+  <Teleport to="body">
+    <div v-if="showLogoutModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <!-- Dimmer glass backdrop that blocks clicks -->
+      <div class="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300" @click="showLogoutModal = false"></div>
+      
+      <!-- Simple Modal -->
+      <div class="relative bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-sm" @click.stop>
+        <!-- Modal Content -->
+        <div class="p-6 text-center">
+          <div class="w-12 h-12 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </div>
+          
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            Sign out?
+          </h3>
+          <p class="text-sm text-gray-600 mb-6">
+            Are you sure you want to sign out?
+          </p>
+          
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button @click="showLogoutModal = false"
+              class="flex-1 cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+              Cancel
+            </button>
+            
+            <button @click="handleLogout"
+              class="flex-1 cursor-pointer px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const isMinimized = ref(false)
+const showLogoutModal = ref(false)
 
 const navItems = [
   {
@@ -203,8 +246,33 @@ const toggleMinimize = () => {
   isMinimized.value = !isMinimized.value
 }
 
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/')
+const handleLogout = async () => {
+  try {
+    // Use authStore logout
+    await authStore.logout()
+    
+    // Close modal
+    showLogoutModal.value = false
+    
+    // Redirect to home page
+    router.push('/')
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Close modal with Escape key
+  if (event.key === 'Escape') {
+    showLogoutModal.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+})
 </script>

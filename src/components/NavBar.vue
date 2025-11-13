@@ -42,7 +42,7 @@
 
     <ul class="hidden md:flex gap-6 text-sm font-medium items-center">
       <!-- Show Home and About Us only for guests -->
-      <template v-if="!authStore.isAuthenticated">
+      <template v-if="!isAuthenticated">
         <li>
           <router-link to="/"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -112,9 +112,9 @@
       </li>
 
       <!-- Additional links for logged-in users -->
-      <template v-if="authStore.isAuthenticated">
+      <template v-if="isAuthenticated">
         <!-- Show Transactions only for farmers in main navbar -->
-        <li v-if="authStore.userRole === 'farmer'">
+        <li v-if="userRole === 'farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -132,7 +132,7 @@
         </li>
 
         <!-- Show My Purchases only for buyers in main navbar -->
-        <li v-if="authStore.userRole === 'buyer'">
+        <li v-if="userRole === 'buyer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -170,7 +170,7 @@
     <!-- Right: Auth or User Info -->
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Notification and Message Icons (only shown when logged in) -->
-      <template v-if="authStore.isAuthenticated">
+      <template v-if="isAuthenticated">
         <!-- Cart Button -->
         <div class="relative">
           <router-link to="/carts"
@@ -361,7 +361,7 @@
       </template>
 
       <!-- Logged in -->
-      <template v-if="authStore.isAuthenticated">
+      <template v-if="isAuthenticated">
         <div>
           <div
             class="flex items-center cursor-pointer gap-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 px-4 py-2 rounded-xl transition-all duration-300 group border border-transparent hover:border-green-200"
@@ -369,11 +369,11 @@
             <!-- Profile Image with enhanced styling -->
             <div class="relative">
               <!-- Profile Picture or Initials -->
-              <div v-if="userProfile?.profilePicture"
+              <div v-if="profilePicture"
                 class="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <img 
-                  :src="userProfile.profilePicture" 
-                  :alt="authStore.userDisplayName"
+                  :src="profilePicture" 
+                  :alt="displayName"
                   class="w-full h-full object-cover"
                   @error="handleImageError"
                 />
@@ -381,7 +381,7 @@
               <div v-else
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <span class="text-sm font-bold text-white">
-                  {{ authStore.userInitials }}
+                  {{ userInitials }}
                 </span>
               </div>
               <div
@@ -392,11 +392,11 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ authStore.userDisplayName }}
+                {{ displayName }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
-                {{ authStore.userRole }}
+                {{ displayRole }}
               </p>
             </div>
 
@@ -421,11 +421,11 @@
                   @click="closeDropdown">
                   <div class="mr-4">
                     <!-- Profile Picture or Initials in Dropdown -->
-                    <div v-if="userProfile?.profilePicture"
+                    <div v-if="profilePicture"
                       class="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <img 
-                        :src="userProfile.profilePicture" 
-                        :alt="authStore.userDisplayName"
+                        :src="profilePicture" 
+                        :alt="displayName"
                         class="w-full h-full object-cover"
                         @error="handleImageError"
                       />
@@ -433,15 +433,15 @@
                     <div v-else
                       class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <span class="text-base font-bold text-white">
-                        {{ authStore.userInitials }}
+                        {{ userInitials }}
                       </span>
                     </div>
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ authStore.userDisplayName }}
+                      {{ displayName }}
                     </p>
-                    <p class="text-xs text-green-100 truncate mb-2">{{ authStore.userEmail }}</p>
+                    <p class="text-xs text-green-100 truncate mb-2">{{ userEmail }}</p>
                     <p
                       class="text-xs text-white font-medium flex items-center group-hover:translate-x-1 transition-transform duration-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
@@ -472,7 +472,7 @@
               </router-link>
 
               <!-- Show Transactions only for farmers in dropdown -->
-              <router-link v-if="authStore.userRole === 'farmer'" to="/transactions"
+              <router-link v-if="userRole === 'farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -487,7 +487,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="authStore.userRole === 'buyer'" to="/transactions"
+              <router-link v-if="userRole === 'buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -604,17 +604,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from '@/stores/authStore';
-import { ProfileService } from '@/services/profileService';
-import type { User } from '@/services/user';
+import { useAuthStore } from "@/stores/authStore";
+import { ProfileService } from "@/services/profileService";
 
 const router = useRouter();
 const authStore = useAuthStore();
-
-// User profile data
-const userProfile = ref<User | null>(null);
 
 // Notification, cart, and message state
 const cartCount = ref(3);
@@ -625,13 +621,13 @@ const recentNotifications = ref([
     id: 1,
     title: "Order Shipped",
     message: "Your order #12345 has been shipped",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
   },
   {
     id: 2,
     title: "New Message",
     message: "You have a new message from John Doe",
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() // 5 hours ago
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
   }
 ]);
 const recentMessages = ref([
@@ -639,7 +635,7 @@ const recentMessages = ref([
     id: 1,
     sender_name: "John Doe",
     content: "Hello, I'm interested in your product",
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() // 1 hour ago
+    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
   }
 ]);
 
@@ -652,40 +648,108 @@ const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
-// Load user profile
-const loadUserProfile = async () => {
-  if (authStore.isAuthenticated && authStore.userId) {
-    const profile = await ProfileService.getProfile(authStore.userId);
-    if (profile) {
-      userProfile.value = profile;
-    }
-  }
-};
+// Profile data from profiles table
+const profileData = ref<any>(null);
 
-// Handle image load error
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement;
-  target.style.display = 'none';
-  // This will cause the fallback initials to show
-};
+// Computed properties from auth store
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const userId = computed(() => authStore.userId);
+const userEmail = computed(() => authStore.userEmail);
 
-// Watch for auth changes to reload profile
-watch(() => authStore.isAuthenticated, async (isAuth) => {
-  if (isAuth) {
-    await loadUserProfile();
-  } else {
-    userProfile.value = null;
+// Computed properties that use profile data when available, otherwise fall back to auth store
+const displayName = computed(() => {
+  if (profileData.value) {
+    const fullName = `${profileData.value.firstName || ''} ${profileData.value.lastName || ''}`.trim();
+    if (fullName) return fullName;
+    if (profileData.value.username) return profileData.value.username;
   }
+  return authStore.userDisplayName;
 });
 
+const userInitials = computed(() => {
+  if (profileData.value) {
+    const firstName = profileData.value.firstName || '';
+    const lastName = profileData.value.lastName || '';
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    if (profileData.value.username) {
+      return profileData.value.username.substring(0, 2).toUpperCase();
+    }
+  }
+  return authStore.userInitials;
+});
+
+const userRole = computed(() => {
+  if (profileData.value?.role) {
+    return profileData.value.role.toLowerCase();
+  }
+  return authStore.userRole;
+});
+
+const displayRole = computed(() => {
+  if (profileData.value?.role) {
+    return profileData.value.role;
+  }
+  return authStore.userRole || 'user';
+});
+
+const profilePicture = computed(() => {
+  return profileData.value?.profilePicture || null;
+});
+
+// Load profile data from profiles table
+const loadProfileData = async () => {
+  if (!userId.value) {
+    console.log('❌ No user ID available');
+    return;
+  }
+
+  try {
+    console.log('🔄 Loading profile data for user:', userId.value);
+    const profile = await ProfileService.getProfile(userId.value);
+    
+    if (profile) {
+      console.log('✅ Profile data loaded:', profile);
+      profileData.value = profile;
+    } else {
+      console.log('⚠️  No profile found, using auth store data');
+      profileData.value = null;
+    }
+  } catch (error) {
+    console.error('❌ Error loading profile:', error);
+    profileData.value = null;
+  }
+};
+
+// Watch for authentication changes
+watch(isAuthenticated, async (newValue) => {
+  if (newValue) {
+    console.log('✅ User authenticated, loading profile...');
+    await loadProfileData();
+  } else {
+    console.log('❌ User logged out, clearing profile data');
+    profileData.value = null;
+    cartCount.value = 0;
+    unreadNotifications.value = 0;
+    unreadMessages.value = 0;
+    recentNotifications.value = [];
+    recentMessages.value = [];
+  }
+}, { immediate: true });
+
+// Initialize auth store and load profile on mount
 onMounted(async () => {
-  // Initialize auth store session
-  await authStore.getSession();
+  console.log('🚀 NavBar mounted, initializing...');
   
-  // Load user profile if authenticated
-  await loadUserProfile();
+  // Initialize auth store
+  await authStore.initialize();
   
-  // Add event listeners
+  // Load profile if authenticated
+  if (isAuthenticated.value) {
+    await loadProfileData();
+  }
+  
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("keydown", handleKeyDown);
 });
@@ -696,7 +760,6 @@ onBeforeUnmount(() => {
 });
 
 const handleKeyDown = (event: KeyboardEvent) => {
-  // Close modal with Escape key
   if (event.key === "Escape") {
     showLogoutModal.value = false;
     showDropdown.value = false;
@@ -707,7 +770,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
-  // Close other dropdowns when opening this one
   if (showDropdown.value) {
     showNotificationDropdown.value = false;
     showMessageDropdown.value = false;
@@ -716,7 +778,6 @@ const toggleDropdown = () => {
 
 const toggleNotificationDropdown = () => {
   showNotificationDropdown.value = !showNotificationDropdown.value;
-  // Close other dropdowns when opening this one
   if (showNotificationDropdown.value) {
     showDropdown.value = false;
     showMessageDropdown.value = false;
@@ -725,7 +786,6 @@ const toggleNotificationDropdown = () => {
 
 const toggleMessageDropdown = () => {
   showMessageDropdown.value = !showMessageDropdown.value;
-  // Close other dropdowns when opening this one
   if (showMessageDropdown.value) {
     showDropdown.value = false;
     showNotificationDropdown.value = false;
@@ -747,33 +807,27 @@ const closeMessageDropdown = () => {
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as Node;
 
-  // Close dropdown if clicked outside
   if (dropdownRef.value && !dropdownRef.value.contains(target)) {
     showDropdown.value = false;
   }
 
-  // Close notification dropdown if clicked outside
   if (notificationRef.value && !notificationRef.value.contains(target)) {
     showNotificationDropdown.value = false;
   }
 
-  // Close message dropdown if clicked outside
   if (messageRef.value && !messageRef.value.contains(target)) {
     showMessageDropdown.value = false;
   }
 };
 
 const markAsRead = async (type: "notification" | "message", id: string | number) => {
-  // Replace with your actual mark as read logic
   if (type === "notification") {
-    // Update local state
     const notification = recentNotifications.value.find(n => n.id === id);
     if (notification && unreadNotifications.value > 0) {
       unreadNotifications.value--;
     }
     closeNotificationDropdown();
   } else {
-    // Update local state
     const message = recentMessages.value.find(m => m.id === id);
     if (message && unreadMessages.value > 0) {
       unreadMessages.value--;
@@ -800,24 +854,37 @@ const getInitials = (name: string) => {
   return name.split(' ').map(part => part.charAt(0)).join('').toUpperCase().substring(0, 2);
 };
 
+// Handle image load error
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  target.style.display = 'none';
+};
+
 const handleLogout = async () => {
   try {
-    // Use authStore logout
+    console.log('🔒 Logging out...');
+    
+    // Logout using auth store
     await authStore.logout();
     
-    // Reset notification counts
+    // Clear profile data
+    profileData.value = null;
+    
+    // Clear UI state
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
     recentNotifications.value = [];
     recentMessages.value = [];
-    userProfile.value = null;
     
+    // Close modals and dropdowns
     showLogoutModal.value = false;
     showDropdown.value = false;
+    
+    console.log('✅ Logout successful, redirecting to home...');
     router.push("/");
   } catch (error) {
-    console.error("Logout failed:", error);
+    console.error("❌ Logout failed:", error);
   }
 };
 </script>

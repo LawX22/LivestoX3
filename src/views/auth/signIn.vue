@@ -508,22 +508,70 @@ onUnmounted(() => {
 const handleSignIn = async () => {
   isLoading.value = true
 
-  const { error } = await auth.signIn(email.value, password.value)
-  if (error) {
+  try {
+    // Sign in the user
+    const { data, error } = await auth.signIn(email.value, password.value)
+    
+    if (error) {
+      addToast({
+        type: 'error',
+        title: 'Sign In Failed',
+        content: 'Invalid email or password. Please check your credentials and try again.',
+        list: [
+          'Verify your email address is correct',
+          'Check if your password is correct',
+          'Make sure caps lock is off',
+          'Contact support if you continue having issues'
+        ]
+      })
+      isLoading.value = false
+      return
+    }
+
+    // Fetch user profile to get the role
+    if (data?.user) {
+      const { data: profileData, error: profileError } = await auth.getUserProfile(data.user.id)
+      
+      if (profileError || !profileData) {
+        addToast({
+          type: 'error',
+          title: 'Profile Error',
+          content: 'Could not load user profile. Please try again.',
+        })
+        isLoading.value = false
+        return
+      }
+
+      console.log('✅ User signed in with role:', profileData.role)
+      
+      // Show success message
+      addToast({
+        type: 'success',
+        title: 'Sign In Successful',
+        content: `Welcome back! You are logged in as ${profileData.role}.`
+      })
+
+      // Redirect based on role
+      if (profileData.role === 'Admin') {
+        console.log('🔐 Redirecting to Admin Dashboard')
+        router.push('/adminDashboard')
+      } else {
+        console.log('👤 Redirecting to User Dashboard')
+        router.push('/dashboard')
+      }
+      return
+    }
+
+    // Fallback to regular dashboard if no profile data
+    router.push('/dashboard')
+  } catch (err) {
+    console.error('❌ Unexpected error during sign in:', err)
     addToast({
       type: 'error',
-      title: 'Sign In Failed',
-      content: 'Invalid email or password. Please check your credentials and try again.',
-      list: [
-        'Verify your email address is correct',
-        'Check if your password is correct',
-        'Make sure caps lock is off',
-        'Contact support if you continue having issues'
-      ]
+      title: 'Unexpected Error',
+      content: 'An unexpected error occurred. Please try again.',
     })
     isLoading.value = false
-    return
   }
-  router.push('/dashboard')
 }
 </script>

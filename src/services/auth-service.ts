@@ -11,6 +11,16 @@ class AuthService {
     return { data, error }
   }
 
+  async getUserProfile(userId: string) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    return { data, error }
+  }
+
   async signUp(email: string, password: string, additionalInfo: any = {}) {
     try {
       console.log('📝 Signup data being sent:', additionalInfo)
