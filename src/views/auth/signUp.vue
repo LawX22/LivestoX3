@@ -679,7 +679,7 @@ const form = ref<SignUpForm>({
   verificationCode: ''
 })
 
-// Relaxed password validation - only require minimum length of 6 characters
+// Password validation
 const hasMinLength = computed(() => form.value.password.length >= 8)
 const hasNumber = computed(() => /\d/.test(form.value.password))
 const hasSpecialChar = computed(() => /[!@#$%^&*(),.?":{}|<>]/.test(form.value.password))
@@ -815,16 +815,24 @@ const sendVerificationCode = async () => {
   }
 
   try {
-
-    auth.signUp(form.value.email, form.value.password, {
-      firstname: form.value.firstName,
-      lastname: form.value.lastName,
+    // ✅ FIXED: Use consistent camelCase property names
+    console.log('📝 Sending signup data:', {
+      firstName: form.value.firstName,
+      lastName: form.value.lastName,
       username: form.value.username,
-      phone: form.value.phoneNumber,
+      phoneNumber: form.value.phoneNumber,
       gender: form.value.gender,
-      role: "Buyer"
-    });
+      role: 'Buyer'
+    })
 
+    await auth.signUp(form.value.email, form.value.password, {
+      firstName: form.value.firstName,      // ✅ camelCase
+      lastName: form.value.lastName,        // ✅ camelCase
+      username: form.value.username,
+      phoneNumber: form.value.phoneNumber,  // ✅ camelCase
+      gender: form.value.gender,
+      role: 'Buyer'
+    })
 
     // Show success toast
     addToast({
@@ -833,11 +841,11 @@ const sendVerificationCode = async () => {
       content: `A 6-digit verification code has been sent to ${form.value.email}. Please check your inbox and spam folder.`
     })
 
-    console.log('Verification code would be sent to:', form.value.email)
+    console.log('✅ Verification code sent to:', form.value.email)
     isCodeSent.value = true
     goToNextStep()
   } catch (error) {
-    console.error('Error sending verification code:', error)
+    console.error('❌ Error sending verification code:', error)
     addToast({
       type: 'error',
       title: 'Failed to Send Code',
@@ -847,7 +855,6 @@ const sendVerificationCode = async () => {
 }
 
 const handleSignUp = async () => {
-  // MODIFIED: Removed the verification code check
   if (isLoading.value) {
     return
   }
@@ -856,7 +863,7 @@ const handleSignUp = async () => {
   verificationError.value = ''
 
   try {
-    // Combine verification code (even if incomplete)
+    // Combine verification code
     form.value.verificationCode = verificationCode.value.join('')
 
     // Check if passwords match
@@ -871,15 +878,15 @@ const handleSignUp = async () => {
       return
     }
 
-    const { error } = await auth.verifyEmailOtp(form.value.email, form.value.verificationCode);
+    const { error } = await auth.verifyEmailOtp(form.value.email, form.value.verificationCode)
 
     if (error) {
       addToast({
         type: 'error',
         title: 'Verification Failed!',
         content: 'There was an issue with your verification. Please try again.'
-      });
-      return;
+      })
+      return
     }
 
     // Show success toast
@@ -889,10 +896,9 @@ const handleSignUp = async () => {
       content: 'Your account has been created and verified. You can now sign in with your credentials.'
     })
 
-    router.push('/signin');
-
+    router.push('/signin')
   } catch (error: any) {
-    console.error('Sign up error:', error)
+    console.error('❌ Sign up error:', error)
 
     // Handle specific error cases
     if (error.message?.includes('email already exists')) {

@@ -91,7 +91,7 @@
                   <p class="text-xs text-green-800">
                     Posting as 
                     <span class="font-semibold">{{ authStore.userDisplayName }}</span> 
-                    <span class="text-green-600">({{ authStore.userRole }})</span>
+                    <span class="text-green-600"> ({{ authStore.userRole }})</span>
                   </p>
                 </div>
               </div>

@@ -64,7 +64,7 @@ interface GuideItem {
 
 interface Props {
   visible: boolean;
-  type: 'guest' | 'buyer' | 'farmer';
+  type: 'guest' | 'user';
 }
 
 const props = defineProps<Props>();
@@ -104,32 +104,8 @@ const guideConfig = {
       }
     ]
   },
-  buyer: {
-    title: 'Buyer Guide',
-    headerClass: 'bg-gradient-to-r from-blue-600 to-cyan-600',
-    iconBgClass: 'bg-blue-100',
-    iconClass: 'text-blue-600',
-    buttonClass: 'bg-gradient-to-r from-blue-600 to-cyan-600',
-    items: [
-      {
-        title: 'Public Questions',
-        description: 'As a buyer, you can view and answer all public questions marked as visible to "All" users.',
-        icon: '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />'
-      },
-      {
-        title: 'Ask Questions',
-        description: 'Buyers can now ask questions to farmers and other community members.',
-        icon: '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
-      },
-      {
-        title: 'Building Relationships',
-        description: 'Use the forum to connect with farmers, understand their challenges, and build trust for future business.',
-        icon: '<path d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.559-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.559.5.948.737 1.182.233.230.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" />'
-      }
-    ]
-  },
-  farmer: {
-    title: 'Farmer Guide',
+  user: {
+    title: 'User Guide',
     headerClass: 'bg-gradient-to-r from-green-600 to-emerald-600',
     iconBgClass: 'bg-green-100',
     iconClass: 'text-green-600',
@@ -137,13 +113,18 @@ const guideConfig = {
     items: [
       {
         title: 'Ask Questions',
-        description: 'As a farmer, you can ask questions to the community and get answers from other farmers and buyers.',
+        description: 'Post your questions about livestock, farming techniques, or animal health. Get expert advice from the community.',
         icon: '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />'
       },
       {
-        title: 'Answer Questions',
+        title: 'Answer & Help',
         description: 'Share your knowledge and experience by answering questions from other community members.',
         icon: '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+      },
+      {
+        title: 'Filter & Search',
+        description: 'Use filters to find questions by category, urgency level, or search for specific topics.',
+        icon: '<path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />'
       },
       {
         title: 'Build Reputation',
@@ -151,9 +132,9 @@ const guideConfig = {
         icon: '<path d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.559-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.559.5.948.737 1.182.233.230.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" />'
       },
       {
-        title: 'Private Questions',
-        description: 'You can mark questions as "Farmers Only" to get advice specifically from other farmers.',
-        icon: '<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />'
+        title: 'Vote & Interact',
+        description: 'Upvote helpful answers, mark urgent questions, and engage with the community through comments.',
+        icon: '<path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />'
       }
     ]
   }
