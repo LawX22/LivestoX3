@@ -25,8 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       const { data } = await supabase.auth.getSession()
-      session.value = data.session
-      user.value = data.session?.user || null
+      session.value = data?.session ?? null
+      user.value = data?.session?.user || null
       initialized.value = true
     } catch (err: any) {
       error.value = err.message || 'Failed to initialize auth'
@@ -43,12 +43,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       const { data, error: authError } = await auth.signIn(email, password)
       if (authError) {
-        error.value = authError.message
+        const message = (authError as any)?.message ?? String(authError) ?? 'Authentication error'
+        error.value = message
         return { data: null, error: authError }
       }
 
-      session.value = data.session
-      user.value = data.user
+      session.value = data?.session ?? null
+      user.value = data?.user ?? null
       return { data, error: null }
     } catch (err: any) {
       error.value = err.message || 'Login failed'
@@ -66,15 +67,15 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       error.value = null
-
       const { data, error: authError } = await auth.signUp(email, password, additionalInfo)
       if (authError) {
-        error.value = authError.message
+        const message = (authError as any)?.message ?? String(authError) ?? 'Registration error'
+        error.value = message
         return { data: null, error: authError }
       }
 
-      session.value = data.session
-      user.value = data.user
+      session.value = data?.session ?? null
+      user.value = data?.user ?? null
       return { data, error: null }
     } catch (err: any) {
       error.value = err.message || 'Registration failed'
@@ -120,20 +121,23 @@ export const useAuthStore = defineStore('auth', () => {
 
 
   // COMPUTED PROPERTIES
+  // ✅ FIXED: Support both camelCase and lowercase property names for compatibility
 
   const userMetadata = computed(() => user.value?.user_metadata || {})
   const userId = computed(() => user.value?.id ?? null)
   const isAuthenticated = computed(() => !!user.value)
 
   const userFullName = computed(() => {
-    const firstname = userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastname || ''
+    // Support both camelCase (firstName) and lowercase (firstname)
+    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
+    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
     return `${firstname} ${lastname}`.trim() || userMetadata.value.username || 'User Name'
   })
 
   const userInitials = computed(() => {
-    const firstname = userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastname || ''
+    // Support both camelCase (firstName) and lowercase (firstname)
+    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
+    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
     const initials = `${firstname.charAt(0) || ''}${lastname.charAt(0) || ''}`.toUpperCase()
     return initials || (userMetadata.value.username?.substring(0, 2).toUpperCase() || 'UN')
   })
@@ -150,8 +154,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const userDisplayName = computed(() => {
     if (!userMetadata.value) return 'User'
-    const firstname = userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastname || ''
+    // Support both camelCase (firstName) and lowercase (firstname)
+    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
+    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
     const fullName = `${firstname} ${lastname}`.trim()
     if (fullName) return fullName
     if (userMetadata.value.username) return userMetadata.value.username
