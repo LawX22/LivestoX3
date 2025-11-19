@@ -129,32 +129,33 @@ export interface AddressDB {
 
 // ✅ EXPORTED - Helper function to convert DB profile to User (addresses handled separately)
 export function dbProfileToUser(profile: ProfileDB, email: string): User {
-  return {
-    userId: profile.id,
-    username: profile.username || '',
-    email: email,
-    firstName: profile.first_name || '',
-    lastName: profile.last_name || '',
-    phoneNumber: profile.phone_number || '',
-    gender: profile.gender || '',
-    role: profile.role || 'Buyer',
-    isVerified: profile.is_verified || false,
-    profilePicture: profile.profile_picture,
-    bannerImage: profile.banner_image,
-    
-    // Farm info
-    farmName: profile.farm_name,
-    farmSize: profile.farm_size,
-    farmSizeUnit: profile.farm_size_unit,
-    livestockTypes: profile.livestock_types,
-    description: profile.description,
-    farmAddress: profile.farm_address,
-    
-    // Note: addresses will be populated separately from addresses table
-    addresses: [],
-    
-    createdAt: profile.created_at || new Date().toISOString()
-  }
+return {
+  userId: profile.id,
+  username: profile.username || '',
+  email: email,
+  firstName: profile.first_name || '',
+  lastName: profile.last_name || '',
+  phoneNumber: profile.phone_number || '',
+  gender: profile.gender || '',
+  role: profile.role || 'Buyer',
+  isVerified: profile.is_verified || false,
+  profilePicture: profile.profile_picture,
+  bannerImage: profile.banner_image,
+
+  // Farm info
+  farmName: profile.farm_name,
+  farmSize: profile.farm_size,
+  farmSizeUnit: profile.farm_size_unit,
+  livestockTypes: profile.livestock_types,
+  description: profile.description,
+  farmAddress: profile.farm_address,
+
+  // Note: addresses will be populated separately from addresses table
+  addresses: [],
+
+  createdAt: profile.created_at || new Date().toISOString(),
+  upgradePending: false
+}
 }
 
 // ✅ EXPORTED - Helper function to convert User to DB profile (excludes addresses)
