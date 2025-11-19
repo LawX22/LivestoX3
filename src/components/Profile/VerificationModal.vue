@@ -145,7 +145,7 @@
                         ×
                       </button>
                     </div>
-                    <input ref="frontInputRef" type="file" accept="image/*" class="hidden">
+                    <input ref="frontInputRef" type="file" accept="image/*" @change="handleFrontImageChange" class="hidden">
                   </div>
                   <button @click="triggerFrontInput" class="mt-2 w-full text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg py-2 hover:from-blue-600 hover:to-indigo-600 transition-all duration-300">
                     {{ frontImagePreview ? 'Change Photo' : 'Upload Photo' }}
@@ -180,7 +180,7 @@
                         ×
                       </button>
                     </div>
-                    <input ref="backInputRef" type="file" accept="image/*" class="hidden">
+                    <input ref="backInputRef" type="file" accept="image/*" @change="handleBackImageChange" class="hidden">
                   </div>
                   <button @click="triggerBackInput" class="mt-2 w-full text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg py-2 hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
                     {{ backImagePreview ? 'Change Photo' : 'Upload Photo' }}
@@ -267,7 +267,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount, defineProps, defineEmits } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 
 type IDType = 
   | 'drivers_license'
@@ -282,76 +282,62 @@ type IDType =
   | 'company_id'
   | 'school_id'
   | 'tin_id'
-  | '';
+  | ''
 
 interface FormData {
-  idType: IDType;
-  frontImage: string;
-  backImage: string;
+  idType: IDType
+  frontImage: string
+  backImage: string
 }
 
-interface VerificationRecord {
-  idType: IDType;
-  frontImage: string;
-  backImage: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-}
-
-interface UserData {
-  verificationStatus?: 'pending' | 'verified' | 'unverified';
-  verification?: VerificationRecord;
-  [key: string]: unknown;
-}
-
-const props = defineProps<{ visible: boolean }>();
+const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'verify', data: FormData): void;
-}>();
+  (e: 'close'): void
+  (e: 'verify', data: FormData): void
+}>()
 
 const formData = ref<FormData>({
   idType: '',
   frontImage: '',
   backImage: ''
-});
+})
 
-const frontImagePreview = ref<string | null>(null);
-const backImagePreview = ref<string | null>(null);
-const isSubmitting = ref(false);
-const errorMessage = ref('');
-const successMessage = ref('');
-const originalOverflow = ref('');
+const frontImagePreview = ref<string | null>(null)
+const backImagePreview = ref<string | null>(null)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+const originalOverflow = ref('')
 
-const frontInputRef = ref<HTMLInputElement | null>(null);
-const backInputRef = ref<HTMLInputElement | null>(null);
+const frontInputRef = ref<HTMLInputElement | null>(null)
+const backInputRef = ref<HTMLInputElement | null>(null)
 
 const canSubmit = computed(() =>
   !!formData.value.idType &&
   !!formData.value.frontImage &&
   !!formData.value.backImage
-);
+)
 
 watch(() => props.visible, (visible) => {
   if (visible) {
-    lockBodyScroll();
-    resetForm();
+    lockBodyScroll()
+    resetForm()
   } else {
-    unlockBodyScroll();
+    unlockBodyScroll()
   }
-});
+})
 
 onBeforeUnmount(() => {
-  unlockBodyScroll();
-});
+  unlockBodyScroll()
+})
 
 const lockBodyScroll = () => {
-  originalOverflow.value = document.body.style.overflow;
-  document.body.style.overflow = 'hidden';
+  originalOverflow.value = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
 }
 
-const unlockBodyScroll= () => {
-  document.body.style.overflow = originalOverflow.value;
+const unlockBodyScroll = () => {
+  document.body.style.overflow = originalOverflow.value
 }
 
 const resetForm = () => {
@@ -359,116 +345,121 @@ const resetForm = () => {
     idType: '',
     frontImage: '',
     backImage: ''
-  };
-  frontImagePreview.value = null;
-  backImagePreview.value = null;
-  errorMessage.value = '';
-  successMessage.value = '';
-  isSubmitting.value = false;
+  }
+  frontImagePreview.value = null
+  backImagePreview.value = null
+  errorMessage.value = ''
+  successMessage.value = ''
+  isSubmitting.value = false
 }
 
 const closeModal = () => {
   if (!isSubmitting.value) {
-    unlockBodyScroll();
-    emit('close');
+    unlockBodyScroll()
+    emit('close')
   }
 }
 
 const triggerFrontInput = () => {
-  frontInputRef.value?.click();
+  frontInputRef.value?.click()
 }
 
 const triggerBackInput = () => {
-  backInputRef.value?.click();
+  backInputRef.value?.click()
 }
 
-// const handleImageChange = (
-//   event: Event,
-//   type: 'front' | 'back'
-// ) => {
-//   const input = event.target as HTMLInputElement;
-//   const file = input.files?.[0];
+const handleFrontImageChange = (event: Event) => {
+  handleImageChange(event, 'front')
+}
 
-//   if (!file) return;
+const handleBackImageChange = (event: Event) => {
+  handleImageChange(event, 'back')
+}
 
-//   if (file.size > 10 * 1024 * 1024 || !file.type.startsWith('image/')) {
-//     errorMessage.value = 'Please select a valid image file under 10MB';
-//     return;
-//   }
+const handleImageChange = (
+  event: Event,
+  type: 'front' | 'back'
+) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
 
-//   errorMessage.value = '';
-//   const reader = new FileReader();
-//   reader.onload = () => {
-//     if (type === 'front') {
-//       formData.value.frontImage = reader.result as string;
-//       frontImagePreview.value = reader.result as string;
-//     } else {
-//       formData.value.backImage = reader.result as string;
-//       backImagePreview.value = reader.result as string;
-//     }
-//   };
-//   reader.readAsDataURL(file);
-//   input.value = '';
-// }
+  if (!file) return
+
+  // Validate file size (10MB max)
+  if (file.size > 10 * 1024 * 1024) {
+    errorMessage.value = 'File size must be less than 10MB'
+    return
+  }
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    errorMessage.value = 'Please select a valid image file'
+    return
+  }
+
+  errorMessage.value = ''
+  
+  // Convert to base64
+  const reader = new FileReader()
+  reader.onload = () => {
+    const base64String = reader.result as string
+    
+    if (type === 'front') {
+      formData.value.frontImage = base64String
+      frontImagePreview.value = base64String
+    } else {
+      formData.value.backImage = base64String
+      backImagePreview.value = base64String
+    }
+  }
+  reader.onerror = () => {
+    errorMessage.value = 'Failed to read image file'
+  }
+  reader.readAsDataURL(file)
+  
+  // Clear input value so same file can be selected again
+  input.value = ''
+}
 
 const removeFrontImage = () => {
-  formData.value.frontImage = '';
-  frontImagePreview.value = null;
+  formData.value.frontImage = ''
+  frontImagePreview.value = null
+  if (frontInputRef.value) {
+    frontInputRef.value.value = ''
+  }
 }
 
 const removeBackImage = () => {
-  formData.value.backImage = '';
-  backImagePreview.value = null;
-}
-
-const getCurrentUserId = (): string => {
-  const userId = localStorage.getItem('authUserId');
-  if (!userId) throw new Error('No user is logged in.');
-  return userId;
+  formData.value.backImage = ''
+  backImagePreview.value = null
+  if (backInputRef.value) {
+    backInputRef.value.value = ''
+  }
 }
 
 const submitVerification = async () => {
-  if (!canSubmit.value) return;
+  if (!canSubmit.value) return
 
-  isSubmitting.value = true;
-  errorMessage.value = '';
-  successMessage.value = '';
+  isSubmitting.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
 
   try {
-    const userId = getCurrentUserId();
-    const userData: UserData = JSON.parse(localStorage.getItem(`user_${userId}`) || '{}');
+    // Emit verification data to parent
+    emit('verify', formData.value)
 
-    const verificationRecord: VerificationRecord = {
-      idType: formData.value.idType,
-      frontImage: formData.value.frontImage,
-      backImage: formData.value.backImage,
-      status: 'pending',
-      submittedAt: new Date().toISOString()
-    };
+    successMessage.value = 'Verification submitted successfully!'
 
-    userData.verificationStatus = 'pending';
-    userData.verification = verificationRecord;
-    localStorage.setItem(`user_${userId}`, JSON.stringify(userData));
-
-    const verificationQueue = JSON.parse(localStorage.getItem('verificationQueue') || '[]') as VerificationRecord[] & { userId: string }[];
-    verificationQueue.push({
-      userId,
-      ...verificationRecord
-    });
-    localStorage.setItem('verificationQueue', JSON.stringify(verificationQueue));
-
-    successMessage.value = 'Verification submitted successfully!';
-    emit('verify', formData.value);
-
+    // Close modal after 1.5 seconds
     setTimeout(() => {
-      if (props.visible) closeModal();
-    }, 2000);
+      if (props.visible) closeModal()
+    }, 1500)
 
   } catch (err) {
-    console.error('Verification error:', err);
-    errorMessage.value = err instanceof Error ? err.message : 'Failed to submit verification. Please try again.';
+    console.error('Verification error:', err)
+    errorMessage.value = err instanceof Error ? err.message : 'Failed to submit verification. Please try again.'
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
 }
 </script>

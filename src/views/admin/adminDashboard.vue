@@ -1,4 +1,4 @@
-<!-- adminDashboard.vue -->
+<!-- adminDashboard.vue - WITH SKELETON LOADING -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
     <!-- Floating Background Elements -->
@@ -34,7 +34,25 @@
       <main class="flex-1 p-8 overflow-auto">
         <!-- Enhanced Header Section -->
         <div class="mb-6">
-          <div
+          <div v-if="isLoading"
+            class="bg-white/95 backdrop-blur-xl rounded-xl p-6 animate-pulse">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-gray-300 rounded-xl"></div>
+                <div>
+                  <div class="h-6 bg-gray-300 rounded w-48 mb-2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-32"></div>
+                </div>
+              </div>
+              <div class="flex space-x-4">
+                <div class="h-10 bg-gray-300 rounded w-32"></div>
+                <div class="h-10 bg-gray-300 rounded w-24"></div>
+                <div class="h-10 bg-gray-300 rounded w-32"></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else
             class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-xl backdrop-blur-sm">
             <!-- Left side - Logo and Title -->
             <div class="flex items-center min-w-0">
@@ -62,12 +80,22 @@
               </div>
             </div>
 
-            <!-- Right side - Last updated and time range selector -->
+            <!-- Right side - Last updated and controls -->
             <div class="flex items-center space-x-4">
               <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
                 <span class="opacity-90">Last updated:</span>
-                <span class="font-medium ml-1">{{ new Date().toLocaleString() }}</span>
+                <span class="font-medium ml-1">{{ lastUpdated }}</span>
               </div>
+              <button 
+                @click="refreshData"
+                :disabled="isRefreshing"
+                class="px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg text-sm text-white hover:bg-white/30 transition-colors disabled:opacity-50 flex items-center gap-2">
+                <svg v-if="!isRefreshing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <div v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Refresh
+              </button>
               <select v-model="selectedTimeRange" @change="updateChartData" 
                 class="px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg text-sm text-white placeholder-white/70 focus:ring-2 focus:ring-white/50 focus:border-white/50">
                 <option value="7d" class="text-gray-800">Last 7 days</option>
@@ -79,436 +107,578 @@
           </div>
         </div>
 
-        <!-- Enhanced Stats Cards -->
+        <!-- Enhanced Stats Cards with Skeleton -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <router-link
-            to="/userManagement"
-            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-emerald-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
-            <div class="relative z-10 flex items-start justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Users</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-900">
-                  {{ formatNumber(stats.totalUsers) }}
-                </h3>
-                <div class="flex items-center mt-2">
-                  <span
-                    :class="[
-                      'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
-                      stats.userChange >= 0
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800',
-                    ]"
-                  >
-                    <svg v-if="stats.userChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-                    {{ stats.userChange >= 0 ? '+' : '' }}{{ stats.userChange }}%
-                  </span>
-                  <span class="text-xs text-gray-500 ml-2">vs last month</span>
+          <!-- Skeleton Loading for Stats Cards -->
+          <template v-if="isLoading">
+            <div v-for="n in 4" :key="n" 
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 animate-pulse">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="h-3 bg-gray-300 rounded w-24 mb-3"></div>
+                  <div class="h-8 bg-gray-300 rounded w-20 mb-3"></div>
+                  <div class="flex items-center space-x-2">
+                    <div class="h-5 bg-gray-200 rounded w-16"></div>
+                    <div class="h-3 bg-gray-200 rounded w-20"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
+                <div class="w-12 h-12 bg-gray-300 rounded-lg"></div>
               </div>
             </div>
-          </router-link>
+          </template>
 
-          <router-link
-            to="/upgradeRequests"
-            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-blue-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
-            <div class="relative z-10 flex items-start justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Upgrade Requests</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-900">
-                  {{ formatNumber(stats.requests) }}
-                </h3>
-                <div class="flex items-center mt-2">
-                  <span
-                    :class="[
-                      'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
-                      stats.requestChange >= 0
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800',
-                    ]"
-                  >
-                    <svg v-if="stats.requestChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-                    {{ stats.requestChange >= 0 ? '+' : '' }}{{ stats.requestChange }}%
-                  </span>
-                  <span class="text-xs text-gray-500 ml-2">vs last month</span>
+          <!-- Actual Stats Cards -->
+          <template v-else>
+            <router-link
+              to="/userManagement"
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-emerald-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              ></div>
+              <div class="relative z-10 flex items-start justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Users</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-900">
+                    {{ formatNumber(stats.totalUsers) }}
+                  </h3>
+                  <div class="flex items-center mt-2">
+                    <span
+                      :class="[
+                        'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
+                        stats.userChange >= 0
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800',
+                      ]"
+                    >
+                      <svg v-if="stats.userChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                      {{ stats.userChange >= 0 ? '+' : '' }}{{ stats.userChange }}%
+                    </span>
+                    <span class="text-xs text-gray-500 ml-2">vs last month</span>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-blue-100 text-blue-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-              </div>
-            </div>
-            <div v-if="stats.requests > 0" class="absolute top-4 right-4">
-              <span
-                class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200"
-              >
-                {{ stats.requests }} pending
-              </span>
-            </div>
-          </router-link>
+            </router-link>
 
-          <router-link
-            to="/admin/livestock"
-            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-amber-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
-            <div class="relative z-10 flex items-start justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock Listings</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-900">
-                  {{ formatNumber(stats.livestock) }}
-                </h3>
-                <div class="flex items-center mt-2">
-                  <span
-                    :class="[
-                      'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
-                      stats.livestockChange >= 0
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800',
-                    ]"
-                  >
-                    <svg v-if="stats.livestockChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-                    {{ stats.livestockChange >= 0 ? '+' : '' }}{{ stats.livestockChange }}%
-                  </span>
-                  <span class="text-xs text-gray-500 ml-2">vs last month</span>
+            <router-link
+              to="/upgradeRequests"
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-blue-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              ></div>
+              <div class="relative z-10 flex items-start justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Upgrade Requests</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-900">
+                    {{ formatNumber(stats.requests) }}
+                  </h3>
+                  <div class="flex items-center mt-2">
+                    <span
+                      :class="[
+                        'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
+                        stats.requestChange >= 0
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800',
+                      ]"
+                    >
+                      <svg v-if="stats.requestChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                      {{ stats.requestChange >= 0 ? '+' : '' }}{{ stats.requestChange }}%
+                    </span>
+                    <span class="text-xs text-gray-500 ml-2">vs last month</span>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-lg bg-blue-100 text-blue-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-amber-100 text-amber-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
+              <div v-if="stats.requests > 0" class="absolute top-4 right-4">
+                <span
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200"
+                >
+                  {{ stats.requests }} pending
+                </span>
               </div>
-            </div>
-          </router-link>
+            </router-link>
 
-          <router-link
-            to="/admin/reports"
-            class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-r from-purple-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
-            <div class="relative z-10 flex items-start justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reports Generated</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-900">
-                  {{ formatNumber(stats.reports) }}
-                </h3>
-                <div class="flex items-center mt-2">
-                  <span
-                    :class="[
-                      'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
-                      stats.reportChange >= 0
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800',
-                    ]"
-                  >
-                    <svg v-if="stats.reportChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                        clip-rule="evenodd" />
-                    </svg>
-                    {{ stats.reportChange >= 0 ? '+' : '' }}{{ stats.reportChange }}%
-                  </span>
-                  <span class="text-xs text-gray-500 ml-2">vs last month</span>
+            <router-link
+              to="/admin/livestock"
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-amber-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              ></div>
+              <div class="relative z-10 flex items-start justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Livestock Listings</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-900">
+                    {{ formatNumber(stats.livestock) }}
+                  </h3>
+                  <div class="flex items-center mt-2">
+                    <span
+                      :class="[
+                        'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
+                        stats.livestockChange >= 0
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800',
+                      ]"
+                    >
+                      <svg v-if="stats.livestockChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                      {{ stats.livestockChange >= 0 ? '+' : '' }}{{ stats.livestockChange }}%
+                    </span>
+                    <span class="text-xs text-gray-500 ml-2">vs last month</span>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-lg bg-amber-100 text-amber-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
                 </div>
               </div>
-              <div class="p-2.5 rounded-lg bg-purple-100 text-purple-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
+            </router-link>
+
+            <router-link
+              to="/admin/reports"
+              class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-purple-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              ></div>
+              <div class="relative z-10 flex items-start justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reports Generated</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-900">
+                    {{ formatNumber(stats.reports) }}
+                  </h3>
+                  <div class="flex items-center mt-2">
+                    <span
+                      :class="[
+                        'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
+                        stats.reportChange >= 0
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800',
+                      ]"
+                    >
+                      <svg v-if="stats.reportChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                      {{ stats.reportChange >= 0 ? '+' : '' }}{{ stats.reportChange }}%
+                    </span>
+                    <span class="text-xs text-gray-500 ml-2">vs last month</span>
+                  </div>
+                </div>
+                <div class="p-2.5 rounded-lg bg-purple-100 text-purple-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
               </div>
-            </div>
-          </router-link>
+            </router-link>
+          </template>
         </div>
 
-        <!-- Enhanced Charts Section - Random Layout -->
+        <!-- Enhanced Charts Section with Skeleton -->
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
-          <!-- User Growth Chart - Span 8 columns -->
-          <div class="xl:col-span-8">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">User Growth Analytics</h3>
-                    <p class="mt-1 text-xs text-emerald-100">Detailed user registration trends</p>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button 
-                      @click="setUserGrowthView('registrations')"
-                      :class="[
-                        'text-xs px-2 py-1 rounded transition-colors',
-                        userGrowthView === 'registrations' 
-                          ? 'bg-white/30 text-white' 
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                      ]">
-                      Registrations
-                    </button>
-                    <button 
-                      @click="setUserGrowthView('active')"
-                      :class="[
-                        'text-xs px-2 py-1 rounded transition-colors',
-                        userGrowthView === 'active' 
-                          ? 'bg-white/30 text-white' 
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                      ]">
-                      Active Users
-                    </button>
+          <!-- Skeleton Loading for Charts -->
+          <template v-if="isLoading">
+            <!-- User Growth Chart Skeleton - Span 8 columns -->
+            <div class="xl:col-span-8">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
+                  <div class="animate-pulse">
+                    <div class="h-5 bg-white/30 rounded w-48 mb-2"></div>
+                    <div class="h-3 bg-white/20 rounded w-32"></div>
                   </div>
                 </div>
-              </div>
-              
-              <div class="p-6">
-                <!-- Growth Metrics -->
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-2xl font-bold text-emerald-700">{{ userMetrics.newUsers }}</div>
-                    <div class="text-sm text-emerald-600">New Users</div>
-                    <div class="text-xs text-emerald-500 mt-1">+{{ userMetrics.newUsersChange }}% from last period</div>
+                <div class="p-6">
+                  <div class="grid grid-cols-2 gap-4 mb-6 animate-pulse">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="h-8 bg-gray-300 rounded w-16 mb-2"></div>
+                      <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
+                      <div class="h-3 bg-gray-200 rounded w-32"></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="h-8 bg-gray-300 rounded w-16 mb-2"></div>
+                      <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
+                      <div class="h-3 bg-gray-200 rounded w-32"></div>
+                    </div>
                   </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-2xl font-bold text-blue-700">{{ userMetrics.activeUsers }}</div>
-                    <div class="text-sm text-blue-600">Active Users</div>
-                    <div class="text-xs text-blue-500 mt-1">{{ userMetrics.activeUsersChange }}% activity rate</div>
+                  <div class="h-80 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 45%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 60%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 40%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 70%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 55%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 80%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 65%"></div>
+                    <div class="w-8 bg-gray-300 rounded-t" style="height: 50%"></div>
                   </div>
-                </div>
-
-                <div class="h-80">
-                  <Chart 
-                    type="line" 
-                    :data="userGrowthData" 
-                    :options="enhancedUserGrowthOptions" 
-                    class="w-full h-full"
-                  />
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- User Demographics Chart - Span 4 columns -->
-          <div class="xl:col-span-4">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-teal-600 to-cyan-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">User Demographics</h3>
-                    <p class="mt-1 text-xs text-cyan-100">New user profile distribution</p>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button 
-                      @click="setDemographicsView('types')"
-                      :class="[
-                        'text-xs px-2 py-1 rounded transition-colors',
-                        demographicsView === 'types' 
-                          ? 'bg-white/30 text-white' 
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                      ]">
-                      User Types
-                    </button>
-                    <button 
-                      @click="setDemographicsView('sources')"
-                      :class="[
-                        'text-xs px-2 py-1 rounded transition-colors',
-                        demographicsView === 'sources' 
-                          ? 'bg-white/30 text-white' 
-                          : 'bg-white/10 text-white hover:bg-white/20'
-                      ]">
-                      Sources
-                    </button>
+            <!-- Demographics Chart Skeleton - Span 4 columns -->
+            <div class="xl:col-span-4">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-teal-600 to-cyan-600">
+                  <div class="animate-pulse">
+                    <div class="h-5 bg-white/30 rounded w-40 mb-2"></div>
+                    <div class="h-3 bg-white/20 rounded w-24"></div>
                   </div>
                 </div>
-              </div>
-              
-              <div class="p-6">
-                <!-- Demographic Metrics -->
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-2xl font-bold text-teal-700">{{ demographics.farmers }}</div>
-                    <div class="text-sm text-teal-600">Farmers</div>
-                    <div class="text-xs text-teal-500 mt-1">{{ demographics.farmersChange }}% from last month</div>
+                <div class="p-6">
+                  <div class="grid grid-cols-3 gap-4 mb-6 animate-pulse">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
+                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                      <div class="h-3 bg-gray-200 rounded w-12"></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
+                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                      <div class="h-3 bg-gray-200 rounded w-12"></div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
+                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                      <div class="h-3 bg-gray-200 rounded w-12"></div>
+                    </div>
                   </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-2xl font-bold text-cyan-700">{{ demographics.buyers }}</div>
-                    <div class="text-sm text-cyan-600">Buyers</div>
-                    <div class="text-xs text-cyan-500 mt-1">{{ demographics.buyersChange }}% from last month</div>
+                  <div class="h-64 flex items-center justify-center animate-pulse">
+                    <div class="w-48 h-48 rounded-full bg-gray-300"></div>
                   </div>
-                  <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-2xl font-bold text-purple-700">{{ demographics.guests }}</div>
-                    <div class="text-sm text-purple-600">Guests</div>
-                    <div class="text-xs text-purple-500 mt-1">{{ demographics.guestsChange }}% from last month</div>
-                  </div>
-                </div>
-
-                <div class="h-64">
-                  <Chart 
-                    type="doughnut" 
-                    :data="demographicsData" 
-                    :options="demographicsOptions" 
-                    class="w-full h-full"
-                  />
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Requests Status Chart - Span 6 columns -->
-          <div class="xl:col-span-6">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Request Status</h3>
-                    <p class="mt-1 text-xs text-emerald-100">Upgrade request distribution</p>
-                  </div>
-                  <router-link
-                    to="/upgradeRequests"
-                    class="text-xs font-medium text-white hover:text-emerald-100 flex items-center"
-                  >
-                    View all
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </router-link>
+            <!-- Other Chart Skeletons -->
+            <div class="xl:col-span-6">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-32 mb-2"></div>
+                  <div class="h-3 bg-white/20 rounded w-40"></div>
                 </div>
-              </div>
-              <div class="p-6">
-                <div class="h-64">
-                  <Chart 
-                    type="doughnut" 
-                    :data="requestsStatusData" 
-                    :options="requestsStatusOptions" 
-                    class="w-full h-full"
-                  />
+                <div class="p-6">
+                  <div class="h-64 flex items-center justify-center animate-pulse">
+                    <div class="w-56 h-56 rounded-full bg-gray-300"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Livestock Categories Chart - Span 6 columns -->
-          <div class="xl:col-span-6">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Livestock Categories</h3>
-                    <p class="mt-1 text-xs text-emerald-100">Distribution by animal type</p>
-                  </div>
+            <div class="xl:col-span-6">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-40 mb-2"></div>
+                  <div class="h-3 bg-white/20 rounded w-36"></div>
                 </div>
-              </div>
-              <div class="p-6">
-                <div class="h-64">
-                  <Chart 
-                    type="polarArea" 
-                    :data="livestockCategoriesData" 
-                    :options="livestockCategoriesOptions" 
-                    class="w-full h-full"
-                  />
+                <div class="p-6">
+                  <div class="h-64 flex items-center justify-center animate-pulse">
+                    <div class="w-56 h-56 rounded-full bg-gray-300"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Geographic Distribution - Span 8 columns -->
-          <div class="xl:col-span-8">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Geographic Distribution</h3>
-                    <p class="mt-1 text-xs text-emerald-100">Users by location</p>
-                  </div>
+            <div class="xl:col-span-8">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-44 mb-2"></div>
+                  <div class="h-3 bg-white/20 rounded w-28"></div>
                 </div>
-              </div>
-              <div class="p-6">
-                <div class="h-80">
-                  <Chart 
-                    type="bar" 
-                    :data="geographicData" 
-                    :options="geographicOptions" 
-                    class="w-full h-full"
-                  />
+                <div class="p-6">
+                  <div class="h-80 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 70%"></div>
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 50%"></div>
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 35%"></div>
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 60%"></div>
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 45%"></div>
+                    <div class="w-12 bg-gray-300 rounded-t" style="height: 55%"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Activity Timeline - Span 4 columns -->
-          <div class="xl:col-span-4">
-            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-              <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-lg font-semibold text-white">Daily Activity</h3>
-                    <p class="mt-1 text-xs text-emerald-100">User engagement patterns</p>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold text-white">{{ activityMetrics.peakHour }}:00</div>
-                    <div class="text-xs text-emerald-100">Peak hour</div>
-                  </div>
+            <div class="xl:col-span-4">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-32 mb-2"></div>
+                  <div class="h-3 bg-white/20 rounded w-40"></div>
                 </div>
-              </div>
-              <div class="p-6">
-                <div class="h-64">
-                  <Chart 
-                    type="line" 
-                    :data="activityTimelineData" 
-                    :options="activityTimelineOptions" 
-                    class="w-full h-full"
-                  />
+                <div class="p-6">
+                  <div class="h-64 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 35%"></div>
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 25%"></div>
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 15%"></div>
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 40%"></div>
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 60%"></div>
+                    <div class="w-6 bg-gray-300 rounded-t" style="height: 85%"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </template>
+
+          <!-- Actual Charts (same as before) -->
+          <template v-else>
+            <!-- User Growth Chart - Span 8 columns -->
+            <div class="xl:col-span-8">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">User Growth Analytics</h3>
+                      <p class="mt-1 text-xs text-emerald-100">Detailed user registration trends</p>
+                    </div>
+                    <div class="flex space-x-2">
+                      <button 
+                        @click="setUserGrowthView('registrations')"
+                        :class="[
+                          'text-xs px-2 py-1 rounded transition-colors',
+                          userGrowthView === 'registrations' 
+                            ? 'bg-white/30 text-white' 
+                            : 'bg-white/10 text-white hover:bg-white/20'
+                        ]">
+                        Registrations
+                      </button>
+                      <button 
+                        @click="setUserGrowthView('active')"
+                        :class="[
+                          'text-xs px-2 py-1 rounded transition-colors',
+                          userGrowthView === 'active' 
+                            ? 'bg-white/30 text-white' 
+                            : 'bg-white/10 text-white hover:bg-white/20'
+                        ]">
+                        Active Users
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="p-6">
+                  <!-- Growth Metrics -->
+                  <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-emerald-700">{{ userMetrics.newUsers }}</div>
+                      <div class="text-sm text-emerald-600">New Users</div>
+                      <div class="text-xs text-emerald-500 mt-1">+{{ userMetrics.newUsersChange }}% from last period</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-blue-700">{{ userMetrics.activeUsers }}</div>
+                      <div class="text-sm text-blue-600">Active Users</div>
+                      <div class="text-xs text-blue-500 mt-1">{{ userMetrics.activeUsersChange }}% activity rate</div>
+                    </div>
+                  </div>
+
+                  <div class="h-80">
+                    <Chart 
+                      type="line" 
+                      :data="userGrowthData" 
+                      :options="enhancedUserGrowthOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- User Demographics Chart - Span 4 columns -->
+            <div class="xl:col-span-4">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-teal-600 to-cyan-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">User Demographics</h3>
+                      <p class="mt-1 text-xs text-cyan-100">User distribution</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="p-6">
+                  <!-- Demographic Metrics -->
+                  <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-teal-700">{{ demographics.farmers }}</div>
+                      <div class="text-sm text-teal-600">Farmers</div>
+                      <div class="text-xs text-teal-500 mt-1">{{ demographics.farmersChange }}%</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-cyan-700">{{ demographics.buyers }}</div>
+                      <div class="text-sm text-cyan-600">Buyers</div>
+                      <div class="text-xs text-cyan-500 mt-1">{{ demographics.buyersChange }}%</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-purple-700">{{ demographics.guests }}</div>
+                      <div class="text-sm text-purple-600">Guests</div>
+                      <div class="text-xs text-purple-500 mt-1">{{ demographics.guestsChange }}%</div>
+                    </div>
+                  </div>
+
+                  <div class="h-64">
+                    <Chart 
+                      type="doughnut" 
+                      :data="demographicsChartData" 
+                      :options="demographicsOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Requests Status Chart - Span 6 columns -->
+            <div class="xl:col-span-6">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Request Status</h3>
+                      <p class="mt-1 text-xs text-emerald-100">Upgrade request distribution</p>
+                    </div>
+                    <router-link
+                      to="/upgradeRequests"
+                      class="text-xs font-medium text-white hover:text-emerald-100 flex items-center"
+                    >
+                      View all
+                      <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </router-link>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="h-64">
+                    <Chart 
+                      type="doughnut" 
+                      :data="requestsStatusChartData" 
+                      :options="requestsStatusOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Livestock Categories Chart - Span 6 columns -->
+            <div class="xl:col-span-6">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Livestock Categories</h3>
+                      <p class="mt-1 text-xs text-emerald-100">Distribution by animal type</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="h-64">
+                    <Chart 
+                      type="polarArea" 
+                      :data="livestockCategoriesChartData" 
+                      :options="livestockCategoriesOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Geographic Distribution - Span 8 columns -->
+            <div class="xl:col-span-8">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Geographic Distribution</h3>
+                      <p class="mt-1 text-xs text-emerald-100">Users by location</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="h-80">
+                    <Chart 
+                      type="bar" 
+                      :data="geographicChartData" 
+                      :options="geographicOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Timeline - Span 4 columns -->
+            <div class="xl:col-span-4">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Daily Activity</h3>
+                      <p class="mt-1 text-xs text-emerald-100">User engagement patterns</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-lg font-bold text-white">{{ activityMetrics.peakHour }}:00</div>
+                      <div class="text-xs text-emerald-100">Peak hour</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <div class="h-64">
+                    <Chart 
+                      type="line" 
+                      :data="activityTimelineChartData" 
+                      :options="activityTimelineOptions" 
+                      class="w-full h-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Activity with Skeleton -->
         <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
           <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
             <div class="flex items-center justify-between">
@@ -539,43 +709,73 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200/50">
-                <tr v-for="(activity, index) in recentActivities" :key="index" class="hover:bg-gray-50/80 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-white font-medium">
-                          {{ getUserInitials(activity.user) }}
+                <!-- Skeleton Loading for Table -->
+                <template v-if="isLoading">
+                  <tr v-for="n in 5" :key="n" class="animate-pulse">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 bg-gray-300 rounded-full"></div>
+                        <div class="ml-4">
+                          <div class="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                          <div class="h-3 bg-gray-200 rounded w-40"></div>
                         </div>
                       </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ activity.user }}</div>
-                        <div class="text-sm text-gray-500">{{ activity.userEmail }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-4 bg-gray-300 rounded w-28"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-4 bg-gray-200 rounded w-36"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-4 bg-gray-200 rounded w-24"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-6 bg-gray-300 rounded-full w-20"></div>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Actual Data -->
+                <template v-else>
+                  <tr v-for="(activity, index) in recentActivities" :key="index" class="hover:bg-gray-50/80 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-white font-medium">
+                            {{ getUserInitials(activity.user) }}
+                          </div>
+                        </div>
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900">{{ activity.user }}</div>
+                          <div class="text-sm text-gray-500">{{ activity.userEmail }}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ activity.action }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-500">{{ activity.details }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-500">{{ formatTime(activity.time) }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="[
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      activity.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                      activity.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    ]">
-                      {{ activity.status }}
-                    </span>
-                  </td>
-                </tr>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ activity.action }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-500">{{ activity.details }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-500">{{ formatTime(activity.time) }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span :class="[
+                        'px-2 py-1 text-xs font-medium rounded-full',
+                        activity.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                        activity.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      ]">
+                        {{ activity.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
-            <div v-if="recentActivities.length === 0" class="text-center py-8">
+            <div v-if="!isLoading && recentActivities.length === 0" class="text-center py-8">
               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
@@ -592,118 +792,144 @@
 import { ref, onMounted, computed } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import Chart from 'primevue/chart'
+import { DashboardService } from '@/services/dashboardService'
+import type {
+  DashboardStats,
+  UserMetrics,
+  Demographics,
+  ActivityMetrics,
+  RecentActivity,
+} from '@/services/dashboardService'
 
+// Loading states
+const isLoading = ref(true)
+const isRefreshing = ref(false)
+const lastUpdated = ref('')
+
+// View controls
 const selectedTimeRange = ref('30d')
 const userGrowthView = ref('registrations')
-const demographicsView = ref('types')
 
-const stats = ref({
+// Data from backend
+const stats = ref<DashboardStats>({
   totalUsers: 0,
-  userChange: 12.5,
+  userChange: 0,
   requests: 0,
-  requestChange: -3.2,
+  requestChange: 0,
   livestock: 0,
-  livestockChange: 8.7,
+  livestockChange: 0,
   reports: 0,
-  reportChange: 24.1,
+  reportChange: 0,
 })
 
-// Enhanced user metrics
-const userMetrics = ref({
-  newUsers: 245,
-  newUsersChange: 18,
-  activeUsers: 1842,
-  activeUsersChange: 92,
-  retention: 78,
-  retentionTrend: 5,
-  avgSession: 24,
-  sessionTrend: 12
+const userMetrics = ref<UserMetrics>({
+  newUsers: 0,
+  newUsersChange: 0,
+  activeUsers: 0,
+  activeUsersChange: 0,
+  retention: 0,
+  retentionTrend: 0,
+  avgSession: 0,
+  sessionTrend: 0,
 })
 
-// User demographics - Updated to include guests
-const demographics = ref({
-  farmers: 1560,
-  farmersChange: 15,
-  buyers: 890,
-  buyersChange: 22,
-  guests: 1250,        // Added guest users
-  guestsChange: -5,    // Added guest change percentage
+const demographics = ref<Demographics>({
+  farmers: 0,
+  farmersChange: 0,
+  buyers: 0,
+  buyersChange: 0,
+  guests: 0,
+  guestsChange: 0,
   sources: {
-    organic: 45,
-    referral: 30,
-    social: 15,
-    direct: 10
-  }
+    organic: 0,
+    referral: 0,
+    social: 0,
+    direct: 0,
+  },
 })
 
-// Activity metrics
-const activityMetrics = ref({
-  peakHour: 14
+const activityMetrics = ref<ActivityMetrics>({
+  peakHour: 14,
 })
 
-const recentActivities = ref([
-  {
-    user: 'John Doe',
-    userEmail: 'john@example.com',
-    action: 'Account Upgrade',
-    details: 'Requested premium membership',
-    time: new Date(Date.now() - 3600000),
-    status: 'Pending',
-  },
-  {
-    user: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    action: 'Livestock Added',
-    details: 'Added 5 new cattle listings',
-    time: new Date(Date.now() - 7200000),
-    status: 'Completed',
-  },
-  {
-    user: 'Robert Johnson',
-    userEmail: 'robert@example.com',
-    action: 'Profile Update',
-    details: 'Changed contact information',
-    time: new Date(Date.now() - 10800000),
-    status: 'Completed',
-  },
-  {
-    user: 'Emily Davis',
-    userEmail: 'emily@example.com',
-    action: 'Report Generated',
-    details: 'Monthly sales report',
-    time: new Date(Date.now() - 14400000),
-    status: 'Completed',
-  },
-  {
-    user: 'Michael Wilson',
-    userEmail: 'michael@example.com',
-    action: 'Account Deletion',
-    details: 'Requested account removal',
-    time: new Date(Date.now() - 18000000),
-    status: 'Pending',
-  },
-])
+const recentActivities = ref<RecentActivity[]>([])
 
-// Enhanced User Growth Chart Data
+// Chart data
 const userGrowthData = ref({
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  labels: [] as string[],
+  datasets: [] as any[],
+})
+
+const demographicsChartData = computed(() => ({
+  labels: ['Farmers', 'Buyers', 'Guests'],
   datasets: [
     {
-      label: 'New Registrations',
-      data: [120, 190, 170, 220, 250, 280, 310, 290, 330, 380, 410, 450],
-      borderColor: '#10B981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#10B981',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 6,
+      data: [demographics.value.farmers, demographics.value.buyers, demographics.value.guests],
+      backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6'],
+      borderWidth: 0,
+      borderRadius: 4,
+      hoverBackgroundColor: ['#059669', '#2563EB', '#7C3AED'],
+      hoverBorderWidth: 2,
+      hoverBorderColor: '#ffffff',
     },
+  ],
+}))
+
+const requestsStatusChartData = ref({
+  labels: ['Approved', 'Pending', 'Rejected'],
+  datasets: [
+    {
+      data: [0, 0, 0],
+      backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+      borderWidth: 0,
+      borderRadius: 4,
+      hoverBackgroundColor: ['#059669', '#D97706', '#DC2626'],
+      hoverBorderWidth: 2,
+      hoverBorderColor: '#ffffff',
+    },
+  ],
+})
+
+const livestockCategoriesChartData = ref({
+  labels: [] as string[],
+  datasets: [
+    {
+      data: [] as number[],
+      backgroundColor: [
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(107, 114, 128, 0.8)',
+      ],
+      borderColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#6B7280'],
+      borderWidth: 2,
+    },
+  ],
+})
+
+const geographicChartData = ref({
+  labels: [] as string[],
+  datasets: [
+    {
+      label: 'Users',
+      data: [] as number[],
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      borderColor: '#10B981',
+      borderWidth: 2,
+      borderRadius: 6,
+      borderSkipped: false,
+    },
+  ],
+})
+
+const activityTimelineChartData = ref({
+  labels: [] as string[],
+  datasets: [
     {
       label: 'Active Users',
-      data: [800, 920, 850, 980, 1120, 1250, 1380, 1290, 1450, 1620, 1750, 1840],
+      data: [] as number[],
       borderColor: '#3B82F6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       borderWidth: 3,
@@ -712,27 +938,28 @@ const userGrowthData = ref({
       pointBackgroundColor: '#3B82F6',
       pointBorderColor: '#ffffff',
       pointBorderWidth: 2,
-      pointRadius: 6,
-    }
+      pointRadius: 5,
+    },
   ],
 })
 
+// Chart options
 const enhancedUserGrowthOptions = ref({
   responsive: true,
   maintainAspectRatio: false,
   interaction: {
-    mode: 'index',
+    mode: 'index' as const,
     intersect: false,
   },
   plugins: {
     legend: {
-      position: 'top',
+      position: 'top' as const,
       labels: {
         usePointStyle: true,
         padding: 20,
         font: {
-          size: 12
-        }
+          size: 12,
+        },
       },
     },
     tooltip: {
@@ -744,10 +971,10 @@ const enhancedUserGrowthOptions = ref({
       cornerRadius: 8,
       displayColors: true,
       callbacks: {
-        title: function(context) {
+        title: function (context: any) {
           return `${context[0].label} Analytics`
         },
-        label: function(context) {
+        label: function (context: any) {
           let label = context.dataset.label || ''
           if (label) {
             label += ': '
@@ -756,8 +983,8 @@ const enhancedUserGrowthOptions = ref({
             label += new Intl.NumberFormat().format(context.parsed.y)
           }
           return label
-        }
-      }
+        },
+      },
     },
   },
   scales: {
@@ -767,63 +994,28 @@ const enhancedUserGrowthOptions = ref({
       },
       ticks: {
         font: {
-          size: 11
-        }
-      }
+          size: 11,
+        },
+      },
     },
     y: {
-      type: 'linear',
+      type: 'linear' as const,
       display: true,
-      position: 'left',
+      position: 'left' as const,
       beginAtZero: true,
       grid: {
         color: 'rgba(0, 0, 0, 0.05)',
       },
       ticks: {
         font: {
-          size: 11
+          size: 11,
         },
-        callback: function(value) {
+        callback: function (value: any) {
           return new Intl.NumberFormat().format(value)
-        }
-      }
-    }
+        },
+      },
+    },
   },
-})
-
-// Demographics Chart Data - Updated to include guests
-const demographicsData = computed(() => {
-  if (demographicsView.value === 'types') {
-    return {
-      labels: ['Farmers', 'Buyers', 'Guests'],
-      datasets: [
-        {
-          data: [50, 30, 20], // Updated percentages for farmers, buyers, and guests
-          backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6'],
-          borderWidth: 0,
-          borderRadius: 4,
-          hoverBackgroundColor: ['#059669', '#2563EB', '#7C3AED'],
-          hoverBorderWidth: 2,
-          hoverBorderColor: '#ffffff',
-        },
-      ]
-    }
-  } else {
-    return {
-      labels: ['Organic', 'Referral', 'Social Media', 'Direct'],
-      datasets: [
-        {
-          data: [45, 30, 15, 10],
-          backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B'],
-          borderWidth: 0,
-          borderRadius: 4,
-          hoverBackgroundColor: ['#059669', '#2563EB', '#7C3AED', '#D97706'],
-          hoverBorderWidth: 2,
-          hoverBorderColor: '#ffffff',
-        },
-      ]
-    }
-  }
 })
 
 const demographicsOptions = ref({
@@ -832,13 +1024,13 @@ const demographicsOptions = ref({
   cutout: '60%',
   plugins: {
     legend: {
-      position: 'bottom',
+      position: 'bottom' as const,
       labels: {
         usePointStyle: true,
         padding: 20,
         font: {
-          size: 12
-        }
+          size: 12,
+        },
       },
     },
     tooltip: {
@@ -849,30 +1041,14 @@ const demographicsOptions = ref({
       borderWidth: 1,
       cornerRadius: 8,
       callbacks: {
-        label: function(context) {
-          const total = context.dataset.data.reduce((a, b) => a + b, 0)
+        label: function (context: any) {
+          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = Math.round((context.parsed * 100) / total)
           return `${context.label}: ${percentage}% (${context.parsed} users)`
-        }
-      }
-    }
-  },
-})
-
-// Requests Status Chart Data
-const requestsStatusData = ref({
-  labels: ['Approved', 'Pending', 'Rejected'],
-  datasets: [
-    {
-      data: [45, 15, 5],
-      backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-      borderWidth: 0,
-      borderRadius: 4,
-      hoverBackgroundColor: ['#059669', '#D97706', '#DC2626'],
-      hoverBorderWidth: 2,
-      hoverBorderColor: '#ffffff',
+        },
+      },
     },
-  ],
+  },
 })
 
 const requestsStatusOptions = ref({
@@ -881,13 +1057,13 @@ const requestsStatusOptions = ref({
   cutout: '60%',
   plugins: {
     legend: {
-      position: 'bottom',
+      position: 'bottom' as const,
       labels: {
         usePointStyle: true,
         padding: 20,
         font: {
-          size: 12
-        }
+          size: 12,
+        },
       },
     },
     tooltip: {
@@ -898,41 +1074,14 @@ const requestsStatusOptions = ref({
       borderWidth: 1,
       cornerRadius: 8,
       callbacks: {
-        label: function(context) {
-          const total = context.dataset.data.reduce((a, b) => a + b, 0)
+        label: function (context: any) {
+          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = Math.round((context.parsed * 100) / total)
           return `${context.label}: ${context.parsed} (${percentage}%)`
-        }
-      }
-    }
-  },
-})
-
-// Livestock Categories Data
-const livestockCategoriesData = ref({
-  labels: ['Cattle', 'Goats', 'Sheep', 'Pigs', 'Poultry', 'Others'],
-  datasets: [
-    {
-      data: [35, 25, 15, 12, 8, 5],
-      backgroundColor: [
-        'rgba(16, 185, 129, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(139, 92, 246, 0.8)',
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(107, 114, 128, 0.8)'
-      ],
-      borderColor: [
-        '#10B981',
-        '#3B82F6',
-        '#8B5CF6',
-        '#F59E0B',
-        '#EF4444',
-        '#6B7280'
-      ],
-      borderWidth: 2,
+        },
+      },
     },
-  ],
+  },
 })
 
 const livestockCategoriesOptions = ref({
@@ -940,13 +1089,13 @@ const livestockCategoriesOptions = ref({
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'bottom',
+      position: 'bottom' as const,
       labels: {
         usePointStyle: true,
         padding: 15,
         font: {
-          size: 11
-        }
+          size: 11,
+        },
       },
     },
     tooltip: {
@@ -956,14 +1105,7 @@ const livestockCategoriesOptions = ref({
       borderColor: 'rgba(255, 255, 255, 0.2)',
       borderWidth: 1,
       cornerRadius: 8,
-      callbacks: {
-        label: function(context) {
-          const total = context.dataset.data.reduce((a, b) => a + b, 0)
-          const percentage = Math.round((context.parsed * 100) / total)
-          return `${context.label}: ${context.parsed}% (${percentage}% of total)`
-        }
-      }
-    }
+    },
   },
   scales: {
     r: {
@@ -975,32 +1117,16 @@ const livestockCategoriesOptions = ref({
         color: 'rgba(0, 0, 0, 0.1)',
       },
       ticks: {
-        display: false
-      }
-    }
-  }
-})
-
-// Geographic Distribution Data
-const geographicData = ref({
-  labels: ['Metro Manila', 'Cebu', 'Davao', 'Baguio', 'Iloilo', 'Cagayan de Oro', 'Bacolod', 'Others'],
-  datasets: [
-    {
-      label: 'Users',
-      data: [450, 280, 180, 120, 95, 85, 70, 150],
-      backgroundColor: 'rgma(16, 185, 129, 0.8)',
-      borderColor: '#10B981',
-      borderWidth: 2,
-      borderRadius: 6,
-      borderSkipped: false,
-    }
-  ],
+        display: false,
+      },
+    },
+  },
 })
 
 const geographicOptions = ref({
   responsive: true,
   maintainAspectRatio: false,
-  indexAxis: 'y',
+  indexAxis: 'y' as const,
   plugins: {
     legend: {
       display: false,
@@ -1013,13 +1139,13 @@ const geographicOptions = ref({
       borderWidth: 1,
       cornerRadius: 8,
       callbacks: {
-        label: function(context) {
-          const total = context.dataset.data.reduce((a, b) => a + b, 0)
+        label: function (context: any) {
+          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = Math.round((context.parsed.x * 100) / total)
           return `${context.parsed.x} users (${percentage}%)`
-        }
-      }
-    }
+        },
+      },
+    },
   },
   scales: {
     x: {
@@ -1029,9 +1155,9 @@ const geographicOptions = ref({
       },
       ticks: {
         font: {
-          size: 11
-        }
-      }
+          size: 11,
+        },
+      },
     },
     y: {
       grid: {
@@ -1039,31 +1165,11 @@ const geographicOptions = ref({
       },
       ticks: {
         font: {
-          size: 11
-        }
-      }
+          size: 11,
+        },
+      },
     },
   },
-})
-
-// Activity Timeline Data
-const activityTimelineData = ref({
-  labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
-  datasets: [
-    {
-      label: 'Active Users',
-      data: [45, 23, 12, 35, 78, 125, 165, 195, 175, 142, 98, 67],
-      borderColor: '#3B82F6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#3B82F6',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 5,
-    },
-  ],
 })
 
 const activityTimelineOptions = ref({
@@ -1081,14 +1187,14 @@ const activityTimelineOptions = ref({
       borderWidth: 1,
       cornerRadius: 8,
       callbacks: {
-        title: function(context) {
+        title: function (context: any) {
           return `${context[0].label}`
         },
-        label: function(context) {
+        label: function (context: any) {
           return `Active Users: ${context.parsed.y}`
-        }
-      }
-    }
+        },
+      },
+    },
   },
   scales: {
     x: {
@@ -1097,9 +1203,9 @@ const activityTimelineOptions = ref({
       },
       ticks: {
         font: {
-          size: 11
-        }
-      }
+          size: 11,
+        },
+      },
     },
     y: {
       beginAtZero: true,
@@ -1108,30 +1214,109 @@ const activityTimelineOptions = ref({
       },
       ticks: {
         font: {
-          size: 11
-        }
-      }
+          size: 11,
+        },
+      },
     },
   },
 })
 
 // Methods
+const loadDashboardData = async () => {
+  try {
+    isLoading.value = true
+    console.log('🚀 Loading dashboard data...')
+
+    const data = await DashboardService.getAllDashboardData()
+
+    // Update all data
+    stats.value = data.stats
+    userMetrics.value = data.userMetrics
+    demographics.value = data.demographics
+    activityMetrics.value = data.activityMetrics
+    recentActivities.value = data.recentActivities
+
+    // Update chart data
+    updateUserGrowthChart(data.charts.userGrowth)
+    
+    requestsStatusChartData.value.datasets[0].data = [
+      data.charts.requestsStatus.approved,
+      data.charts.requestsStatus.pending,
+      data.charts.requestsStatus.rejected,
+    ]
+
+    livestockCategoriesChartData.value.labels = data.charts.livestockCategories.labels
+    livestockCategoriesChartData.value.datasets[0].data = data.charts.livestockCategories.data
+
+    geographicChartData.value.labels = data.charts.geographic.labels
+    geographicChartData.value.datasets[0].data = data.charts.geographic.data
+
+    activityTimelineChartData.value.labels = data.charts.activityTimeline.labels
+    activityTimelineChartData.value.datasets[0].data = data.charts.activityTimeline.data
+
+    lastUpdated.value = new Date().toLocaleString()
+
+    console.log('✅ Dashboard data loaded successfully')
+  } catch (error) {
+    console.error('❌ Error loading dashboard data:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const refreshData = async () => {
+  try {
+    isRefreshing.value = true
+    await loadDashboardData()
+  } finally {
+    isRefreshing.value = false
+  }
+}
+
 const setUserGrowthView = (view: string) => {
   userGrowthView.value = view
-  updateUserGrowthChart()
+  updateUserGrowthChartView()
 }
 
-const setDemographicsView = (view: string) => {
-  demographicsView.value = view
+const updateUserGrowthChart = (data: any) => {
+  userGrowthData.value.labels = data.labels
+  userGrowthData.value.datasets = [
+    {
+      label: 'New Registrations',
+      data: data.newRegistrations,
+      borderColor: '#10B981',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#10B981',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      pointRadius: 6,
+    },
+    {
+      label: 'Active Users',
+      data: data.activeUsers,
+      borderColor: '#3B82F6',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#3B82F6',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      pointRadius: 6,
+    }
+  ]
+  updateUserGrowthChartView()
 }
 
-const updateUserGrowthChart = () => {
-  // Update chart data based on selected view
+const updateUserGrowthChartView = () => {
   if (userGrowthView.value === 'registrations') {
     userGrowthData.value.datasets = [
       {
         label: 'New Registrations',
-        data: [120, 190, 170, 220, 250, 280, 310, 290, 330, 380, 410, 450],
+        data: userGrowthData.value.datasets[0]?.data || [],
         borderColor: '#10B981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         borderWidth: 3,
@@ -1141,13 +1326,13 @@ const updateUserGrowthChart = () => {
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
         pointRadius: 6,
-      }
+      },
     ]
-  } else if (userGrowthView.value === 'active') {
+  } else {
     userGrowthData.value.datasets = [
       {
         label: 'Active Users',
-        data: [800, 920, 850, 980, 1120, 1250, 1380, 1290, 1450, 1620, 1750, 1840],
+        data: userGrowthData.value.datasets[1]?.data || [],
         borderColor: '#3B82F6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         borderWidth: 3,
@@ -1157,39 +1342,21 @@ const updateUserGrowthChart = () => {
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
         pointRadius: 6,
-      }
+      },
     ]
   }
 }
 
 const updateChartData = () => {
-  // Update all charts based on selected time range
-  // This would typically involve API calls to fetch new data
   console.log('Updating charts for time range:', selectedTimeRange.value)
+  loadDashboardData()
 }
 
-onMounted(() => {
-  // Get stats from localStorage or API
-  const userKeys = Object.keys(localStorage).filter((key) => key.startsWith('user_'))
-  stats.value.totalUsers = userKeys.length
-
-  const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-  const livestock = JSON.parse(localStorage.getItem('livestock') || '[]')
-  const reports = JSON.parse(localStorage.getItem('reports') || '[]')
-
-  stats.value.requests = requests.length
-  stats.value.livestock = livestock.length
-  stats.value.reports = reports.length
-
-  // Initialize chart with default view
-  updateUserGrowthChart()
-})
-
-const formatNumber = (num: number | bigint) => {
+const formatNumber = (num: number) => {
   return new Intl.NumberFormat().format(num)
 }
 
-const formatTime = (date: number | Date | undefined) => {
+const formatTime = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: 'numeric',
@@ -1205,4 +1372,34 @@ const getUserInitials = (name: string) => {
     .join('')
     .toUpperCase()
 }
+
+// Lifecycle
+onMounted(() => {
+  loadDashboardData()
+})
 </script>
+
+<style scoped>
+/* Additional shimmer animation for skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+</style>

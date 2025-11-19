@@ -227,9 +227,53 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { FarmerTransaction, BuyerTransaction, Transaction } from '../../services/transactions'
 
-// Props
+// Type Definitions
+interface Livestock {
+  id: number
+  type: string
+  breed: string
+  description: string
+  image: string
+}
+
+interface Person {
+  id: number
+  name: string
+  contact: string
+  address: string
+  avatar?: string
+  farm?: string
+}
+
+interface FarmerTransaction {
+  id: string
+  livestock: Livestock
+  buyer: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  message?: string
+}
+
+interface BuyerTransaction {
+  id: string
+  livestock: Livestock
+  seller: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Shipped' | 'Completed' | 'Cancelled'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  estimatedDelivery?: string
+  trackingNumber?: string
+  message?: string
+}
+
+type Transaction = FarmerTransaction | BuyerTransaction
+
 interface Props {
   transactions: Transaction[]
   isFarmerView: boolean
@@ -237,7 +281,6 @@ interface Props {
 
 defineProps<Props>()
 
-// Emits
 const emit = defineEmits<{
   'view-details': [transaction: Transaction]
   'update-status': [id: string, status: 'Accepted' | 'Rejected']
@@ -251,7 +294,6 @@ const showWarningModal = ref(false)
 const pendingCancelId = ref<string | null>(null)
 const pendingCancelStatus = ref<'Rejected' | 'Cancelled' | null>(null)
 const pendingCancelType = ref<'farmer' | 'buyer' | null>(null)
-
 const warningMessage = ref('')
 
 // Cancel confirmation methods
@@ -293,17 +335,18 @@ const resetCancelState = () => {
   warningMessage.value = ''
 }
 
-// Utility methods for table display
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
     day: 'numeric'
   })
 }
 
 const formatTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleTimeString('en-US', {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('en-US', { 
     hour: '2-digit',
     minute: '2-digit'
   })

@@ -136,7 +136,7 @@
 
           <!-- Sidebar Skeleton -->
           <div class="space-y-6">
-            <!-- Verification Card Skeleton -->
+            <!-- Account Type Card Skeleton -->
             <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
               <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
                 <div class="h-6 w-48 bg-white/30 rounded"></div>
@@ -330,21 +330,13 @@
 
                   <!-- Left Column - Primary Info -->
                   <div class="lg:col-span-2">
-                    <!-- Name and Verification -->
+                    <!-- Name and Status -->
                     <div class="flex items-start justify-between mb-6">
                       <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
                           <h1 class="text-4xl font-bold text-gray-900 tracking-tight">
                             {{ user.firstName }} {{ user.lastName }}
                           </h1>
-                          <span v-if="user.verificationStatus === 'verified'"
-                            class="inline-flex items-center text-blue-600 text-sm border border-blue-200 px-3 py-1 rounded-full bg-blue-50 font-medium">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Verified
-                          </span>
                         </div>
 
                         <!-- Role and Status -->
@@ -464,20 +456,22 @@
                 </nav>
               </div>
 
-              <!-- Profile Info Tab - Pass userEmail separately to make it read-only -->
+              <!-- Profile Info Tab -->
               <ProfileInfoTab v-if="activeTab === 'profile'" 
                 :user="user" 
                 v-model:editable-user="editableUser"
                 :editing="editing" 
-                :verificationStatus="user.verificationStatus || 'unverified'"
                 :userEmail="user.email"
                 @save-profile="saveProfile" 
                 :upgradePending="upgradePending" />
 
               <!-- Farm Info Tab -->
-              <FarmInfoTab v-if="activeTab === 'farmer'" :user="user" :editableUser="editableUser" :editing="editing"
-                :verificationStatus="user.verificationStatus || 'unverified'" 
-                :upgradePending="upgradePending" @upgrade="goToUpgradeForm" />
+              <FarmInfoTab v-if="activeTab === 'farmer'" 
+                :user="user" 
+                :editableUser="editableUser" 
+                :editing="editing"
+                :upgradePending="upgradePending" 
+                @upgrade="goToUpgradeForm" />
 
               <!-- Livestock Posts Tab (Farmer only) -->
               <LivestockPostsTab v-if="activeTab === 'livestock' && user?.role === 'Farmer'" :userId="user.userId" />
@@ -489,93 +483,70 @@
 
           <!-- Sidebar -->
           <div class="space-y-6">
-            <!-- Verification Status Card -->
+            <!-- Account Type Card -->
             <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/30">
               <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
-                <h3 class="text-lg font-semibold">Account Verification</h3>
+                <h3 class="text-lg font-semibold">Account Type</h3>
               </div>
 
               <div class="p-6">
-                <!-- Verified Status -->
-                <div v-if="user.verificationStatus === 'verified'"
-                  class="bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
+                <!-- Current Account Type -->
+                <div class="bg-gradient-to-br from-emerald-50 to-green-50 border-l-4 border-emerald-500 rounded-lg p-4 mb-4">
                   <div class="flex items-center">
-                    <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-emerald-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
                         clip-rule="evenodd" />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-green-800">Account Verified</p>
-                      <p class="text-xs text-green-700">Your account has been successfully verified</p>
+                      <p class="text-sm font-medium text-emerald-800">Current Account</p>
+                      <p class="text-lg font-bold text-emerald-900">{{ user.role }}</p>
                     </div>
                   </div>
                 </div>
 
-                <!-- Pending Status -->
-                <div v-else-if="user.verificationStatus === 'pending'"
-                  class="bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
+                <!-- Upgrade Status - Show if Pending -->
+                <div v-if="upgradePending" class="bg-gradient-to-br from-yellow-50 to-amber-50 border-l-4 border-yellow-500 rounded-lg p-4 mb-4">
                   <div class="flex items-center">
-                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                        clip-rule="evenodd" />
+                    <svg class="w-5 h-5 text-yellow-600 mr-2 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                     </svg>
-                    <div>
-                      <p class="text-sm font-medium text-blue-800">Verification Pending</p>
-                      <p class="text-xs text-blue-700">Your verification request is being reviewed</p>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-yellow-800">Upgrade Request Pending</p>
+                      <p class="text-xs text-yellow-700 mt-1">Awaiting admin approval</p>
                     </div>
-                  </div>
-                  <div class="text-xs text-blue-600 mt-2">
-                    <p>Submitted: {{ formatDate(user.verificationSubmittedAt) }}</p>
                   </div>
                 </div>
 
-                <!-- Rejected Status -->
-                <div v-else-if="user.verificationStatus === 'rejected'"
-                  class="bg-red-100 border-l-4 border-red-500 rounded-lg p-4 mb-4">
-                  <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd" />
+                <!-- Upgrade to Farmer Button (only for Buyers and not pending) -->
+                <div v-if="user.role === 'Buyer'" class="mt-4">
+                  <button 
+                    @click.prevent="handleUpgradeClick"
+                    :disabled="upgradePending"
+                    :class="[
+                      'w-full text-sm font-medium px-4 py-3 rounded-lg transition-all duration-300 shadow-md flex items-center justify-center',
+                      upgradePending 
+                        ? 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-60' 
+                        : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 hover:shadow-lg cursor-pointer'
+                    ]"
+                  >
+                    <svg v-if="!upgradePending" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <div>
-                      <p class="text-sm font-medium text-red-800">Verification Rejected</p>
-                      <p class="text-xs text-red-700">Your verification request was rejected</p>
-                    </div>
-                  </div>
-                  <div v-if="user.verificationRejectionReason" class="text-xs text-red-600 mt-2">
-                    <p>Reason: {{ user.verificationRejectionReason }}</p>
-                  </div>
-                  <button @click="openVerificationModal"
-                    class="mt-3 w-full bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-red-700 hover:to-rose-700 transition cursor-pointer">
-                    Resubmit Verification
+                    <svg v-else class="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    {{ upgradePending ? 'Request Pending' : 'Upgrade to Farmer Account' }}
                   </button>
-                </div>
-
-                <!-- Unverified Status -->
-                <div v-else class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 mb-4">
-                  <div class="flex items-center">
-                    <svg class="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clip-rule="evenodd" />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium text-yellow-800">Account Not Verified</p>
-                      <p class="text-xs text-yellow-700">Please verify your account to access all features</p>
-                    </div>
-                  </div>
-                  <button @click="openVerificationModal"
-                    class="mt-3 w-full bg-gradient-to-r from-yellow-600 to-amber-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:from-yellow-700 hover:to-amber-700 transition cursor-pointer">
-                    Verify Account
-                  </button>
+                  <p class="text-xs text-gray-500 mt-2 text-center">
+                    {{ upgradePending ? 'Your upgrade request is being reviewed' : 'Start selling your livestock products' }}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <!-- Enhanced Addresses Card with Improved Default/Home Display -->
+            <!-- Enhanced Addresses Card -->
             <div
               class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/50 transition-all duration-300 hover:shadow-lg">
               <!-- Header with gradient background -->
@@ -608,9 +579,9 @@
                 <div v-if="addresses.length > 0" class="space-y-4">
                   <div v-for="(addr, index) in addresses" :key="index" @click="openAddressModal(addr, index)"
                     class="group relative border border-gray-200 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-sm">
-                    <!-- Address type indicator - moved to top left -->
+                    <!-- Address type indicator -->
                     <div class="flex items-center gap-2 mb-2">
-                      <!-- Home indicator (if labeled as home) -->
+                      <!-- Home indicator -->
                       <div v-if="addr.label === 'Home'" class="flex items-center text-emerald-600">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -619,7 +590,7 @@
                         <span class="text-xs font-medium">Home</span>
                       </div>
 
-                      <!-- Default badge - now more prominent -->
+                      <!-- Default badge -->
                       <div v-if="addr.isDefault"
                         class="flex items-center bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,7 +652,7 @@
                       </div>
                     </div>
 
-                    <!-- Edit button (only shows on hover) -->
+                    <!-- Edit button -->
                     <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button class="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,9 +706,6 @@
       <!-- Modals -->
       <AddressModal :visible="showAddressModal" :address="selectedAddress" @close="closeAddressModal"
         @save="handleAddressSave" @delete="handleAddressDelete" />
-
-      <VerificationModal :visible="showVerificationModal" @close="closeVerificationModal"
-        @verify="handleVerification" />
     </div>
   </div>
 </template>
@@ -747,9 +715,9 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { ProfileService } from '@/services/profileService'
+import { UpgradeService } from '@/services/upgradeService'
 import NavBar from '../../components/NavBar.vue'
 import AddressModal from '../../components/Profile/AddressModal.vue'
-import VerificationModal from '../../components/Profile/VerificationModal.vue'
 import ProfileInfoTab from '../../components/Profile/ProfileInfo.vue'
 import FarmInfoTab from '../../components/Profile/FarmInfo.vue'
 import LivestockPostsTab from '../../components/Profile/LivestockPosts.vue'
@@ -757,8 +725,7 @@ import ReviewsRatingsTab from '../../components/Profile/ReviewsRatings.vue'
 import Toast from '../../components/Profile/Toast.vue'
 import type { 
   User, 
-  Address, 
-  VerificationData 
+  Address 
 } from '../../services/user'
 
 const router = useRouter()
@@ -776,7 +743,6 @@ const activeTab = ref<'profile' | 'farmer' | 'livestock' | 'reviews'>('profile')
 const showAddressModal = ref(false)
 const selectedAddress = ref<Address | null>(null)
 const selectedIndex = ref<number | null>(null)
-const showVerificationModal = ref(false)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const profileInput = ref<HTMLInputElement | null>(null)
 const uploadingProfile = ref(false)
@@ -795,18 +761,6 @@ const displayToast = (type: 'success' | 'error', title: string, message: string)
   toastTitle.value = title
   toastMessage.value = message
   showToast.value = true
-}
-
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return '—'
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }
-  return new Date(dateString).toLocaleDateString(undefined, options)
 }
 
 const formatAddress = (addr: Address): string => {
@@ -854,7 +808,23 @@ const saveProfile = async (): Promise<void> => {
   }
 }
 
+const handleUpgradeClick = (event: Event): void => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  if (upgradePending.value) {
+    displayToast('error', 'Request Pending', 'You already have a pending upgrade request. Please wait for admin approval.')
+    return
+  }
+  
+  goToUpgradeForm()
+}
+
 const goToUpgradeForm = (): void => {
+  if (upgradePending.value) {
+    displayToast('error', 'Request Pending', 'You already have a pending upgrade request. Please wait for admin approval.')
+    return
+  }
   router.push('/upgradeForm')
 }
 
@@ -922,6 +892,24 @@ const handleProfileUpload = async (event: Event): Promise<void> => {
   target.value = ''
 }
 
+const checkUpgradeStatus = async (userId: string): Promise<void> => {
+  try {
+    console.log('🔍 Checking upgrade status for user:', userId)
+    const pendingRequest = await UpgradeService.getUserPendingRequest(userId)
+    
+    if (pendingRequest) {
+      console.log('⏳ Found pending upgrade request:', pendingRequest.id)
+      upgradePending.value = true
+    } else {
+      console.log('✅ No pending upgrade request found')
+      upgradePending.value = false
+    }
+  } catch (error) {
+    console.error('❌ Error checking upgrade status:', error)
+    upgradePending.value = false
+  }
+}
+
 const loadUserData = async (): Promise<void> => {
   loading.value = true
   error.value = null
@@ -955,6 +943,9 @@ const loadUserData = async (): Promise<void> => {
       delete editableUser.value.password
       
       addresses.value = profile.addresses || []
+      
+      // Check for pending upgrade requests
+      await checkUpgradeStatus(userId)
     } else {
       error.value = 'Failed to load profile'
       console.error('Profile not found for user:', userId)
@@ -1054,33 +1045,6 @@ const handleAddressDelete = async (): Promise<void> => {
   }
 }
 
-const openVerificationModal = (): void => {
-  showVerificationModal.value = true
-}
-
-const closeVerificationModal = (): void => {
-  showVerificationModal.value = false
-}
-
-const handleVerification = async (verificationData: VerificationData): Promise<void> => {
-  if (!user.value) return
-
-  try {
-    const result = await ProfileService.submitVerification(user.value.userId, verificationData)
-    
-    if (result.success) {
-      await loadUserData()
-      closeVerificationModal()
-      displayToast('success', 'Verification Submitted!', 'Your verification request has been submitted and is under review.')
-    } else {
-      displayToast('error', 'Submission Failed', result.error || 'Failed to submit verification. Please try again.')
-    }
-  } catch (error) {
-    console.error('Error submitting verification:', error)
-    displayToast('error', 'Submission Error', 'An unexpected error occurred while submitting your verification.')
-  }
-}
-
 watch(() => authStore.user, (newUser) => {
   if (newUser && !loading.value) {
     console.log('Auth state changed, reloading profile')
@@ -1097,4 +1061,3 @@ onMounted(async () => {
   await loadUserData()
 })
 </script>
-

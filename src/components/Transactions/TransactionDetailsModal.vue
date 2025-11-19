@@ -18,7 +18,7 @@
                 </h2>
                 <div class="ml-3 h-7 flex items-center">
                   <button 
-                    @click="$emit('close')"
+                    @click="emit('close')"
                     class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <span class="sr-only">Close panel</span>
@@ -147,21 +147,21 @@
                 <template v-if="isFarmerView">
                   <button 
                     v-if="transaction.status === 'Pending'"
-                    @click="$emit('updateStatus', transaction.id, 'Accepted')"
+                    @click="emit('update-status', transaction.id, 'Accepted')"
                     class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
                   >
                     Accept Offer
                   </button>
                   <button 
                     v-if="transaction.status === 'Pending'"
-                    @click="$emit('updateStatus', transaction.id, 'Rejected')"
+                    @click="emit('update-status', transaction.id, 'Rejected')"
                     class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
                   >
                     Reject Offer
                   </button>
                   <button 
                     v-if="transaction.status !== 'Pending'"
-                    @click="$emit('close')"
+                    @click="emit('close')"
                     class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
                   >
                     Close
@@ -172,20 +172,20 @@
                 <template v-else>
                   <button 
                     v-if="transaction.status === 'Pending'"
-                    @click="$emit('cancelOrder', transaction.id)"
+                    @click="emit('cancel-order', transaction.id)"
                     class="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
                   >
                     Cancel Order
                   </button>
                   <button 
                     v-if="transaction.status === 'Shipped'"
-                    @click="$emit('confirmDelivery', transaction.id)"
+                    @click="emit('confirm-delivery', transaction.id)"
                     class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md"
                   >
                     Confirm Delivery
                   </button>
                   <button 
-                    @click="$emit('close')"
+                    @click="emit('close')"
                     class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium transition-all shadow hover:shadow-md border border-gray-300"
                   >
                     Close
@@ -201,22 +201,65 @@
 </template>
 
 <script setup lang="ts">
-import type { FarmerTransaction, BuyerTransaction, Transaction } from '../../services/transactions'
+// Type Definitions
+interface Livestock {
+  id: number
+  type: string
+  breed: string
+  description: string
+  image: string
+}
+
+interface Person {
+  id: number
+  name: string
+  contact: string
+  address: string
+  avatar?: string
+  farm?: string
+}
+
+interface FarmerTransaction {
+  id: string
+  livestock: Livestock
+  buyer: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  message?: string
+}
+
+interface BuyerTransaction {
+  id: string
+  livestock: Livestock
+  seller: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Shipped' | 'Completed' | 'Cancelled'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  estimatedDelivery?: string
+  trackingNumber?: string
+  message?: string
+}
+
+type Transaction = FarmerTransaction | BuyerTransaction
 
 interface Props {
   transaction: Transaction | null
   isFarmerView: boolean
 }
 
-interface Emits {
-  (e: 'close'): void
-  (e: 'updateStatus', id: string, status: 'Accepted' | 'Rejected'): void
-  (e: 'cancelOrder', id: string): void
-  (e: 'confirmDelivery', id: string): void
-}
-
 defineProps<Props>()
-const emit = defineEmits<Emits>()
+
+const emit = defineEmits<{
+  close: []
+  'update-status': [id: string, status: 'Accepted' | 'Rejected']
+  'cancel-order': [id: string]
+  'confirm-delivery': [id: string]
+}>()
 
 const closeModalIfClickedOutside = (event: Event) => {
   if (event.target === event.currentTarget) {

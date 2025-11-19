@@ -18,7 +18,7 @@
         <button
           v-if="editing"
           @click="saveProfile"
-          class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl cursor-pointer"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -193,35 +193,62 @@
         </div>
       </div>
       
-      <!-- Upgrade Prompt -->
-      <div v-else class="bg-gradient-to-br from-white via-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 text-center">
-        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      <!-- Upgrade Prompt (for Buyers) -->
+      <div v-else class="bg-gradient-to-br from-white via-emerald-50 to-green-100 border-2 border-emerald-200 rounded-2xl p-8 text-center">
+        <!-- Pending Status Badge -->
+        <div v-if="upgradePending" class="mb-6">
+          <div class="inline-flex items-center bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-full">
+            <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="font-semibold">Upgrade Request Pending</span>
+          </div>
+        </div>
+
+        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <h4 class="text-xl font-bold text-gray-900 mb-2">Upgrade to Farmer Account</h4>
+        <h4 class="text-xl font-bold text-gray-900 mb-2">
+          {{ upgradePending ? 'Upgrade Request Submitted' : 'Upgrade to Farmer Account' }}
+        </h4>
         <p class="text-gray-700 mb-6 max-w-md mx-auto">
-          You need to be verified first in order to upgrade your account and access farmer features.
+          {{ upgradePending 
+            ? 'Your upgrade request is being reviewed by our admin team. You will be notified once approved.' 
+            : 'Start selling your livestock products and manage your farm inventory. Upgrade your account now to access farmer features!' 
+          }}
         </p>
+        
+        <!-- Upgrade Button with proper disabled handling -->
         <button 
-          @click="goToUpgradeForm" 
-          :disabled="verificationStatus !== 'verified' || upgradePending" 
+          @click="handleUpgradeClick" 
+          :disabled="upgradePending" 
           :class="[
-            'px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl',
-            verificationStatus === 'verified' && !upgradePending
-              ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer'
-              : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+            'inline-flex items-center justify-center px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg',
+            upgradePending
+              ? 'bg-gray-400 text-gray-100 cursor-not-allowed opacity-60'
+              : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white transform hover:scale-105 hover:shadow-xl cursor-pointer'
           ]" 
-          :title="verificationStatus !== 'verified'
-            ? 'You must verify your account first'
-            : upgradePending
-              ? 'Upgrade request pending'
-              : 'Upgrade to Farmer'"
+          :title="upgradePending ? 'Upgrade request already pending' : 'Click to upgrade to Farmer account'"
         >
-          <span v-if="upgradePending">Upgrade Pending</span>
-          <span v-else>Upgrade to Farmer</span>
+          <svg v-if="upgradePending" class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>{{ upgradePending ? 'Request Pending - Awaiting Approval' : 'Upgrade to Farmer' }}</span>
         </button>
+        
+        <p class="text-xs text-gray-500 mt-4">
+          {{ upgradePending 
+            ? 'Please check back later or contact support if you have questions.' 
+            : 'Once upgraded, you\'ll be able to list products, manage inventory, and connect with buyers.' 
+          }}
+        </p>
       </div>
     </section>
 
@@ -241,6 +268,26 @@
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
           </svg>
           <span class="text-green-800 font-medium">Farm information updated successfully!</span>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Warning Toast for Pending Request -->
+    <transition
+      enter-active-class="transition ease-out duration-300"
+      enter-from-class="opacity-0 transform translate-y-2"
+      enter-to-class="opacity-100 transform translate-y-0"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100 transform translate-y-0"
+      leave-to-class="opacity-0 transform translate-y-2"
+    >
+      <div v-if="showPendingWarning" 
+          class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-4 shadow-lg z-50">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-yellow-800 font-medium">Your upgrade request is already pending approval!</span>
         </div>
       </div>
     </transition>
@@ -267,12 +314,9 @@ type User = {
   }
 }
 
-type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified'
-
 const props = defineProps<{
   user: User | null
   editing: boolean
-  verificationStatus: VerificationStatus
   upgradePending: boolean
 }>()
 
@@ -284,6 +328,7 @@ const emit = defineEmits<{
 const editableUser = defineModel<User>('editableUser', { required: true })
 
 const showSuccessMessage = ref(false)
+const showPendingWarning = ref(false)
 
 const formatLivestockTypes = (types: string | string[] | undefined): string => {
   if (!types) return 'Not specified'
@@ -299,8 +344,17 @@ const saveProfile = () => {
   }, 3000)
 }
 
-const goToUpgradeForm = () => {
-  if (props.verificationStatus !== 'verified' || props.upgradePending) return
+const handleUpgradeClick = () => {
+  // If upgrade is already pending, show warning and do nothing
+  if (props.upgradePending) {
+    showPendingWarning.value = true
+    setTimeout(() => {
+      showPendingWarning.value = false
+    }, 3000)
+    return
+  }
+  
+  // Otherwise, proceed with upgrade
   emit('upgrade')
 }
 </script>

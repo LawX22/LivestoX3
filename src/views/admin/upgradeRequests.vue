@@ -1,4 +1,4 @@
-<!-- upgradeRequests.vue -->
+<!-- upgradeRequests.vue - ADMIN PAGE -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
     <!-- Floating Background Elements -->
@@ -34,7 +34,24 @@
       <main class="flex-1 p-8 overflow-auto">
         <!-- Enhanced Header Section -->
         <div class="mb-6">
-          <div
+          <div v-if="isLoading"
+            class="bg-white/95 backdrop-blur-xl rounded-xl p-6 animate-pulse">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-gray-300 rounded-xl"></div>
+                <div>
+                  <div class="h-6 bg-gray-300 rounded w-48 mb-2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-64"></div>
+                </div>
+              </div>
+              <div class="flex space-x-4">
+                <div class="h-10 bg-gray-300 rounded w-24"></div>
+                <div class="h-10 bg-gray-300 rounded w-28"></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else
             class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-xl backdrop-blur-sm">
             <!-- Left side - Logo and Title -->
             <div class="flex items-center min-w-0">
@@ -58,10 +75,10 @@
             <!-- Right side - Stats -->
             <div class="flex items-center space-x-4">
               <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
-                <span class="opacity-90">Total: {{ filteredRequests.length }}</span>
+                <span class="opacity-90">Total: {{ stats.total }}</span>
               </div>
               <div class="text-sm bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/30">
-                <span class="opacity-90">Pending: {{ pendingCount }}</span>
+                <span class="opacity-90">Pending: {{ stats.pending }}</span>
               </div>
             </div>
           </div>
@@ -122,221 +139,230 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards with Skeleton -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Total Requests</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ filteredRequests.length }}</h3>
-              </div>
-              <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
+          <template v-if="isLoading">
+            <div v-for="n in 3" :key="n" class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 animate-pulse">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="h-4 bg-gray-300 rounded w-24 mb-3"></div>
+                  <div class="h-8 bg-gray-300 rounded w-16"></div>
+                </div>
+                <div class="w-12 h-12 bg-gray-300 rounded-lg"></div>
               </div>
             </div>
-          </div>
+          </template>
 
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Pending Review</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ pendingCount }}</h3>
-              </div>
-              <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+          <template v-else>
+            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Total Requests</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ stats.total }}</h3>
+                </div>
+                <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-500">Approved Today</p>
-                <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ approvedTodayCount }}</h3>
-              </div>
-              <div class="p-2 bg-green-100 rounded-lg text-green-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Pending Review</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ stats.pending }}</h3>
+                </div>
+                <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
+
+            <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">Approved Today</p>
+                  <h3 class="text-2xl font-bold mt-1 text-gray-800">{{ stats.approvedToday }}</h3>
+                </div>
+                <div class="p-2 bg-green-100 rounded-lg text-green-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
 
-        <!-- Requests Table -->
+        <!-- Requests Table with Skeleton -->
         <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 overflow-hidden transition-all hover:shadow-2xl">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200/50">
               <thead class="bg-white/80 sticky top-0 z-10">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    User
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Farm Details
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Requested
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farm Details</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested</th>
+                  <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody class="bg-white/80 divide-y divide-gray-200/50">
-                <tr
-                  v-for="request in paginatedRequests"
-                  :key="request.userId"
-                  class="hover:bg-gray-50/80 transition-colors duration-150"
-                >
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10 relative">
-                        <img
-                          :src="getUserProfileImage(request.userId)"
-                          class="h-10 w-10 rounded-full object-cover"
-                          :alt="getUserFullName(request)"
-                          @error="handleImageError"
-                        />
-                        <span
-                          v-if="isNewRequest(request)"
-                          class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-red-500"
-                        ></span>
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900 flex items-center">
-                          {{ getUserFullName(request) }}
-                          <span v-if="isVerifiedUser(request.userId)" class="ml-1.5">
-                            <svg
-                              class="w-4 h-4 text-emerald-500"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                              />
-                            </svg>
-                          </span>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                          {{ getUserEmail(request.userId) || request.email }}
+                <!-- Skeleton Loading -->
+                <template v-if="isLoading">
+                  <tr v-for="n in 5" :key="n" class="animate-pulse">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 bg-gray-300 rounded-full"></div>
+                        <div class="ml-4">
+                          <div class="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                          <div class="h-3 bg-gray-200 rounded w-40"></div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm font-medium text-gray-900">
-                      {{ request.farmDetails?.farmName || 'N/A' }}
-                    </div>
-                    <div class="text-sm text-gray-500 flex items-center mt-1">
-                      <svg
-                        class="w-4 h-4 mr-1 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      {{ request.farmAddress?.province }}, {{ request.farmAddress?.city }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <span :class="statusBadgeClass(request)">{{
-                        request.status || 'pending'
-                      }}</span>
-                      <span v-if="request.status === 'pending'" class="ml-2 text-xs text-gray-500">
-                        {{ formatRelativeTime(request.date) }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatDate(request.date) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex justify-end space-x-2">
-                      <button
-                        @click="viewRequestDetails(request)"
-                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all"
-                      >
-                        Review
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="paginatedRequests.length === 0">
-                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                    <div class="flex flex-col items-center justify-center py-8">
-                      <svg
-                        class="w-16 h-16 text-gray-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="1"
-                          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <h3 class="mt-2 text-sm font-medium text-gray-700">
-                        No upgrade requests found
-                      </h3>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Try adjusting your search or filter criteria
-                      </p>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="h-4 bg-gray-300 rounded w-36 mb-2"></div>
+                      <div class="h-3 bg-gray-200 rounded w-32"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-6 bg-gray-300 rounded-full w-20"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="h-4 bg-gray-200 rounded w-24"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                      <div class="h-8 bg-gray-300 rounded w-20 ml-auto"></div>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Actual Data -->
+                <template v-else>
+                  <tr
+                    v-for="request in paginatedRequests"
+                    :key="request.id"
+                    class="hover:bg-gray-50/80 transition-colors duration-150"
+                  >
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 relative">
+                          <img
+                            :src="getUserProfileImage(request)"
+                            class="h-10 w-10 rounded-full object-cover"
+                            :alt="getUserFullName(request)"
+                            @error="handleImageError"
+                          />
+                          <span
+                            v-if="isNewRequest(request)"
+                            class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-red-500"
+                          ></span>
+                        </div>
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900 flex items-center">
+                            {{ getUserFullName(request) }}
+                          </div>
+                          <div class="text-sm text-gray-500">
+                            {{ request.email }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ request.farmDetails?.farmName || 'N/A' }}
+                      </div>
+                      <div class="text-sm text-gray-500 flex items-center mt-1">
+                        <svg
+                          class="w-4 h-4 mr-1 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        {{ request.farmAddress?.province }}, {{ request.farmAddress?.city }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <span :class="statusBadgeClass(request)">{{
+                          request.status || 'pending'
+                        }}</span>
+                        <span v-if="request.status === 'pending'" class="ml-2 text-xs text-gray-500">
+                          {{ formatRelativeTime(request.createdAt) }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(request.createdAt) }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div class="flex justify-end space-x-2">
+                        <button
+                          @click="viewRequestDetails(request)"
+                          class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all"
+                        >
+                          Review
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="!isLoading && paginatedRequests.length === 0">
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                      <div class="flex flex-col items-center justify-center py-8">
+                        <svg
+                          class="w-16 h-16 text-gray-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1"
+                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-700">
+                          No upgrade requests found
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                          Try adjusting your search or filter criteria
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -475,49 +501,139 @@ import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import UpgradeRequestModal from '../../components/Admin/UpgradeRequestModal.vue'
 
+// Types
+interface FarmAddress {
+  street?: string
+  barangay?: string
+  city?: string
+  province?: string
+  region?: string
+}
+
 interface FarmDetails {
   farmName?: string
-  farmSize?: string
+  farmSize?: number
+  farmSizeUnit?: string
   livestockTypes?: string[]
   description?: string
 }
 
-interface FarmAddress {
-  region?: string
-  province?: string
-  city?: string
-  barangay?: string
-  street?: string
-}
-
 interface Documents {
-  businessPermit?: string
-  farmPhotos?: string[]
+  businessPermitUrl?: string
+  farmPhotoUrls?: string[]
 }
 
 interface UpgradeRequest {
+  id: string
   userId: string
   email: string
   firstName?: string
   lastName?: string
   fullName?: string
+  phoneNumber?: string
+  profilePicture?: string
   farmDetails?: FarmDetails
   farmAddress?: FarmAddress
   documents?: Documents
-  date?: string
-  status?: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt?: string
 }
 
-interface UserData {
-  userId: string
-  email: string
-  firstName?: string
-  lastName?: string
-  fullName?: string
-  profilePicture?: string
-  role?: string
-  isVerified?: boolean
+interface RequestsStats {
+  total: number
+  pending: number
+  approved: number
+  rejected: number
+  approvedToday: number
 }
+
+// Mock Data
+const mockRequests: UpgradeRequest[] = [
+  {
+    id: '1',
+    userId: 'user-001',
+    email: 'juan.delaCruz@email.com',
+    firstName: 'Juan',
+    lastName: 'Dela Cruz',
+    phoneNumber: '+63 912 345 6789',
+    farmDetails: {
+      farmName: 'Green Valley Farm',
+      farmSize: 5,
+      farmSizeUnit: 'hectares',
+      livestockTypes: ['cattle', 'goat'],
+      description: 'A sustainable farm focusing on organic cattle and goat farming'
+    },
+    farmAddress: {
+      street: '123 Farm Road',
+      barangay: 'Barangay Poblacion',
+      city: 'Cebu City',
+      province: 'Cebu',
+      region: 'Region VII - Central Visayas'
+    },
+    documents: {
+      businessPermitUrl: '/default-avatar.png',
+      farmPhotoUrls: ['/default-avatar.png', '/default-avatar.png']
+    },
+    status: 'pending',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2',
+    userId: 'user-002',
+    email: 'maria.santos@email.com',
+    firstName: 'Maria',
+    lastName: 'Santos',
+    phoneNumber: '+63 923 456 7890',
+    farmDetails: {
+      farmName: 'Santos Livestock Farm',
+      farmSize: 3,
+      farmSizeUnit: 'hectares',
+      livestockTypes: ['pig', 'chicken'],
+      description: 'Family-owned farm specializing in pig and chicken production'
+    },
+    farmAddress: {
+      street: '456 Rural Street',
+      barangay: 'Barangay San Isidro',
+      city: 'Mandaue City',
+      province: 'Cebu',
+      region: 'Region VII - Central Visayas'
+    },
+    documents: {
+      businessPermitUrl: '/default-avatar.png',
+      farmPhotoUrls: ['/default-avatar.png']
+    },
+    status: 'approved',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '3',
+    userId: 'user-003',
+    email: 'pedro.reyes@email.com',
+    firstName: 'Pedro',
+    lastName: 'Reyes',
+    phoneNumber: '+63 934 567 8901',
+    farmDetails: {
+      farmName: 'Reyes Poultry Farm',
+      farmSize: 2,
+      farmSizeUnit: 'hectares',
+      livestockTypes: ['chicken', 'duck'],
+      description: 'Modern poultry farm with advanced facilities'
+    },
+    farmAddress: {
+      street: '789 Country Road',
+      barangay: 'Barangay Talamban',
+      city: 'Cebu City',
+      province: 'Cebu',
+      region: 'Region VII - Central Visayas'
+    },
+    documents: {
+      businessPermitUrl: '/default-avatar.png',
+      farmPhotoUrls: ['/default-avatar.png', '/default-avatar.png', '/default-avatar.png']
+    },
+    status: 'pending',
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+  }
+]
 
 const upgradeRequests = ref<UpgradeRequest[]>([])
 const selectedRequest = ref<UpgradeRequest | null>(null)
@@ -528,66 +644,49 @@ const sortBy = ref('newest')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const defaultAvatar = '/default-avatar.png'
+const isLoading = ref(true)
+
+const stats = ref<RequestsStats>({
+  total: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  approvedToday: 0,
+})
 
 const loadRequests = () => {
-  try {
-    const requests = localStorage.getItem('upgradeRequests')
-    if (requests) {
-      upgradeRequests.value = JSON.parse(requests).map((req: any) => ({
-        ...req,
-        userId: req.userId || getUserIdFromEmail(req.email),
-        status: req.status || 'pending',
-      }))
+  isLoading.value = true
+  
+  // Simulate API call delay
+  setTimeout(() => {
+    if (statusFilter.value === 'all') {
+      upgradeRequests.value = [...mockRequests]
     } else {
-      upgradeRequests.value = []
+      upgradeRequests.value = mockRequests.filter(r => r.status === statusFilter.value)
     }
-  } catch (error) {
-    console.error('Error loading upgrade requests:', error)
-    upgradeRequests.value = []
+    isLoading.value = false
+  }, 500)
+}
+
+const loadStats = () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  stats.value = {
+    total: mockRequests.length,
+    pending: mockRequests.filter(r => r.status === 'pending').length,
+    approved: mockRequests.filter(r => r.status === 'approved').length,
+    rejected: mockRequests.filter(r => r.status === 'rejected').length,
+    approvedToday: mockRequests.filter(r => {
+      if (r.status !== 'approved' || !r.createdAt) return false
+      const reqDate = new Date(r.createdAt)
+      return reqDate >= today
+    }).length,
   }
 }
 
-const getUserIdFromEmail = (email: string): string => {
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (key && key.startsWith('user_')) {
-      const userData = localStorage.getItem(key)
-      if (userData) {
-        try {
-          const user = JSON.parse(userData)
-          if (user.email === email) {
-            return key.replace('user_', '')
-          }
-        } catch (e) {
-          console.error(`Error parsing user data for key ${key}:`, e)
-        }
-      }
-    }
-  }
-  return 'unknown'
-}
-
-const getUserData = (userId: string): UserData | null => {
-  const userKey = `user_${userId}`
-  const userData = localStorage.getItem(userKey)
-  if (userData) {
-    try {
-      return JSON.parse(userData)
-    } catch (e) {
-      console.error('Error parsing user data:', e)
-    }
-  }
-  return null
-}
-
-const getUserProfileImage = (userId: string): string => {
-  const profileImage = localStorage.getItem(`profileImage_${userId}`)
-  if (profileImage) return profileImage
-
-  const user = getUserData(userId)
-  if (user?.profilePicture) return user.profilePicture
-
-  return defaultAvatar
+const getUserProfileImage = (request: UpgradeRequest): string => {
+  return request.profilePicture || defaultAvatar
 }
 
 const handleImageError = (event: Event) => {
@@ -596,30 +695,16 @@ const handleImageError = (event: Event) => {
 }
 
 const getUserFullName = (request: UpgradeRequest): string => {
-  const user = getUserData(request.userId)
-  if (user) {
-    if (user.fullName) return user.fullName
-    if (user.firstName || user.lastName)
-      return `${user.firstName || ''} ${user.lastName || ''}`.trim()
-  }
-
   if (request.fullName) return request.fullName
-  return `${request.firstName || ''} ${request.lastName || ''}`.trim() || 'N/A'
-}
-
-const getUserEmail = (userId: string): string => {
-  const user = getUserData(userId)
-  return user?.email || ''
-}
-
-const isVerifiedUser = (userId: string): boolean => {
-  const user = getUserData(userId)
-  return user?.isVerified || false
+  if (request.firstName || request.lastName) {
+    return `${request.firstName || ''} ${request.lastName || ''}`.trim()
+  }
+  return 'N/A'
 }
 
 const isNewRequest = (request: UpgradeRequest): boolean => {
-  if (!request.date) return false
-  const requestDate = new Date(request.date)
+  if (!request.createdAt) return false
+  const requestDate = new Date(request.createdAt)
   const now = new Date()
   const diffInHours = (now.getTime() - requestDate.getTime()) / (1000 * 60 * 60)
   return diffInHours < 24 && request.status === 'pending'
@@ -636,33 +721,18 @@ const filteredRequests = computed(() => {
         (request.farmDetails?.farmName &&
           request.farmDetails.farmName.toLowerCase().includes(query))
 
-      const matchesStatus =
-        statusFilter.value === 'all' || request.status === statusFilter.value
-
-      return matchesSearch && matchesStatus
+      return matchesSearch
     })
     .sort((a, b) => {
-      // Sort based on selected option
       switch (sortBy.value) {
         case 'oldest':
-          return (a.date || '').localeCompare(b.date || '')
+          return (a.createdAt || '').localeCompare(b.createdAt || '')
         case 'name':
           return getUserFullName(a).localeCompare(getUserFullName(b))
         default: // newest first
-          return (b.date || '').localeCompare(a.date || '')
+          return (b.createdAt || '').localeCompare(a.createdAt || '')
       }
     })
-})
-
-const pendingCount = computed(
-  () => filteredRequests.value.filter((r) => r.status === 'pending').length,
-)
-
-const approvedTodayCount = computed(() => {
-  const today = new Date().toISOString().split('T')[0]
-  return filteredRequests.value.filter(
-    (r) => r.status === 'approved' && r.date && r.date.startsWith(today),
-  ).length
 })
 
 const paginatedRequests = computed(() => {
@@ -737,51 +807,39 @@ const closeModal = () => {
 }
 
 const handleApproval = (approvedRequest: UpgradeRequest) => {
-  try {
-    // Update user role in localStorage
-    const userKey = `user_${approvedRequest.userId}`
-    const userData = localStorage.getItem(userKey)
-    if (userData) {
-      const user = JSON.parse(userData)
-      user.role = 'Farmer'
-      localStorage.setItem(userKey, JSON.stringify(user))
-    }
-
-    // Update request status
-    approvedRequest.status = 'approved'
-    updateRequestInStorage(approvedRequest)
-
-    // Reload requests
-    loadRequests()
-    closeModal()
-  } catch (e) {
-    console.error('Error approving request:', e)
+  console.log('✅ Request approved:', approvedRequest.id)
+  
+  // Update the request status in the local array
+  const index = upgradeRequests.value.findIndex(r => r.id === approvedRequest.id)
+  if (index !== -1) {
+    upgradeRequests.value[index].status = 'approved'
   }
+  
+  loadStats()
+  closeModal()
+  
+  // Show success message (you can replace with a toast notification)
+  alert('Request approved successfully!')
 }
 
 const handleRejection = (rejectedRequest: UpgradeRequest) => {
-  try {
-    // Update request status
-    rejectedRequest.status = 'rejected'
-    updateRequestInStorage(rejectedRequest)
-
-    // Reload requests
-    loadRequests()
-    closeModal()
-  } catch (e) {
-    console.error('Error rejecting request:', e)
+  console.log('❌ Request rejected:', rejectedRequest.id)
+  
+  // Update the request status in the local array
+  const index = upgradeRequests.value.findIndex(r => r.id === rejectedRequest.id)
+  if (index !== -1) {
+    upgradeRequests.value[index].status = 'rejected'
   }
-}
-
-const updateRequestInStorage = (updatedRequest: UpgradeRequest) => {
-  const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-  const updatedRequests = requests.map((req: UpgradeRequest) =>
-    req.userId === updatedRequest.userId ? updatedRequest : req,
-  )
-  localStorage.setItem('upgradeRequests', JSON.stringify(updatedRequests))
+  
+  loadStats()
+  closeModal()
+  
+  // Show success message (you can replace with a toast notification)
+  alert('Request rejected successfully!')
 }
 
 onMounted(() => {
   loadRequests()
+  loadStats()
 })
 </script>

@@ -605,11 +605,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
-import { ProfileService } from "@/services/profileService";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 // Notification, cart, and message state
@@ -648,108 +648,31 @@ const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
-// Profile data from profiles table
-const profileData = ref<any>(null);
-
-// Computed properties from auth store
+// Computed properties from authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated);
-const userId = computed(() => authStore.userId);
+const userRole = computed(() => authStore.userRole);
 const userEmail = computed(() => authStore.userEmail);
-
-// Computed properties that use profile data when available, otherwise fall back to auth store
-const displayName = computed(() => {
-  if (profileData.value) {
-    const fullName = `${profileData.value.firstName || ''} ${profileData.value.lastName || ''}`.trim();
-    if (fullName) return fullName;
-    if (profileData.value.username) return profileData.value.username;
-  }
-  return authStore.userDisplayName;
-});
-
-const userInitials = computed(() => {
-  if (profileData.value) {
-    const firstName = profileData.value.firstName || '';
-    const lastName = profileData.value.lastName || '';
-    if (firstName && lastName) {
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    }
-    if (profileData.value.username) {
-      return profileData.value.username.substring(0, 2).toUpperCase();
-    }
-  }
-  return authStore.userInitials;
-});
-
-const userRole = computed(() => {
-  if (profileData.value?.role) {
-    return profileData.value.role.toLowerCase();
-  }
-  return authStore.userRole;
-});
-
+const displayName = computed(() => authStore.userDisplayName);
+const userInitials = computed(() => authStore.userInitials);
 const displayRole = computed(() => {
-  if (profileData.value?.role) {
-    return profileData.value.role;
-  }
-  return authStore.userRole || 'user';
+  const role = authStore.userRole;
+  if (!role) return 'User';
+  return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
+// Computed property for profile picture
 const profilePicture = computed(() => {
-  return profileData.value?.profilePicture || null;
+  if (!authStore.isAuthenticated) return null;
+  // Check if user metadata has a profile picture URL
+  return authStore.userMetadata?.profilePicture || 
+         authStore.userMetadata?.profile_picture || 
+         authStore.userMetadata?.avatar || 
+         null;
 });
 
-// Load profile data from profiles table
-const loadProfileData = async () => {
-  if (!userId.value) {
-    console.log('❌ No user ID available');
-    return;
-  }
-
-  try {
-    console.log('🔄 Loading profile data for user:', userId.value);
-    const profile = await ProfileService.getProfile(userId.value);
-    
-    if (profile) {
-      console.log('✅ Profile data loaded:', profile);
-      profileData.value = profile;
-    } else {
-      console.log('⚠️  No profile found, using auth store data');
-      profileData.value = null;
-    }
-  } catch (error) {
-    console.error('❌ Error loading profile:', error);
-    profileData.value = null;
-  }
-};
-
-// Watch for authentication changes
-watch(isAuthenticated, async (newValue) => {
-  if (newValue) {
-    console.log('✅ User authenticated, loading profile...');
-    await loadProfileData();
-  } else {
-    console.log('❌ User logged out, clearing profile data');
-    profileData.value = null;
-    cartCount.value = 0;
-    unreadNotifications.value = 0;
-    unreadMessages.value = 0;
-    recentNotifications.value = [];
-    recentMessages.value = [];
-  }
-}, { immediate: true });
-
-// Initialize auth store and load profile on mount
+// Initialize auth store
 onMounted(async () => {
-  console.log('🚀 NavBar mounted, initializing...');
-  
-  // Initialize auth store
   await authStore.initialize();
-  
-  // Load profile if authenticated
-  if (isAuthenticated.value) {
-    await loadProfileData();
-  }
-  
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("keydown", handleKeyDown);
 });
@@ -757,6 +680,14 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
   document.removeEventListener("keydown", handleKeyDown);
+});
+
+// Watch for route changes to close dropdowns
+watch(() => route.path, () => {
+  showDropdown.value = false;
+  showNotificationDropdown.value = false;
+  showMessageDropdown.value = false;
+  showLogoutModal.value = false;
 });
 
 const handleKeyDown = (event: KeyboardEvent) => {
@@ -864,11 +795,8 @@ const handleLogout = async () => {
   try {
     console.log('🔒 Logging out...');
     
-    // Logout using auth store
+    // Use authStore logout
     await authStore.logout();
-    
-    // Clear profile data
-    profileData.value = null;
     
     // Clear UI state
     cartCount.value = 0;

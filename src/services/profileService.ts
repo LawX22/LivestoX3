@@ -1,7 +1,7 @@
 // services/profileService.ts
 import { supabase } from '@/supabase'
-import type { User, ProfileDB, Address, VerificationStatus, VerificationData } from './user'
-import { dbProfileToUser, userToDbProfile } from './user'
+import type { User, ProfileDB, Address } from './user'
+import { dbProfileToUser } from './user'
 
 // Configuration
 const STORAGE_BUCKET = 'avatars'
@@ -12,10 +12,10 @@ export class ProfileService {
   /**
    * Validate image file
    */
-  private static validateImageFile(file: File): { valid: boolean; error?: string } {
+  private static validateImageFile(file: File, maxSize: number = MAX_FILE_SIZE): { valid: boolean; error?: string } {
     // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      return { valid: false, error: 'File size must be less than 5MB' }
+    if (file.size > maxSize) {
+      return { valid: false, error: `File size must be less than ${maxSize / (1024 * 1024)}MB` }
     }
 
     // Check file type
@@ -139,19 +139,19 @@ export class ProfileService {
   /**
    * Delete old image from storage
    */
-  private static async deleteOldImage(imageUrl: string | null | undefined): Promise<void> {
+  private static async deleteOldImage(imageUrl: string | null | undefined, bucket: string = STORAGE_BUCKET): Promise<void> {
     if (!imageUrl) return
 
     try {
       // Extract file path from URL
-      const urlParts = imageUrl.split(`/${STORAGE_BUCKET}/`)
+      const urlParts = imageUrl.split(`/${bucket}/`)
       if (urlParts.length < 2) return
 
       const filePath = urlParts[1]
       
       // Delete the old file
       await supabase.storage
-        .from(STORAGE_BUCKET)
+        .from(bucket)
         .remove([filePath])
     } catch (error) {
       console.error('Error deleting old image:', error)
@@ -185,7 +185,7 @@ export class ProfileService {
       
       console.log('📤 Uploading to bucket:', STORAGE_BUCKET, 'path:', filePath)
 
-      // Upload new file - TRY DIRECTLY WITHOUT CHECKING IF BUCKET EXISTS
+      // Upload new file
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filePath, file, { 
@@ -279,7 +279,7 @@ export class ProfileService {
       
       console.log('📤 Uploading to bucket:', STORAGE_BUCKET, 'path:', filePath)
 
-      // Upload new file - TRY DIRECTLY WITHOUT CHECKING IF BUCKET EXISTS
+      // Upload new file
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filePath, file, { 
@@ -595,17 +595,6 @@ export class ProfileService {
   }
 
   /**
-   * Submit verification request (DISABLED - schema not ready)
-   */
-  static async submitVerification(
-    userId: string, 
-    verificationData: VerificationData
-  ): Promise<{ success: boolean; error?: string }> {
-    console.warn('Verification feature is disabled - schema columns not available')
-    return { success: false, error: 'Verification feature is currently unavailable. Please contact support.' }
-  }
-
-  /**
    * Update farm information (DISABLED - schema not ready)
    */
   static async updateFarmInfo(userId: string, farmData: {
@@ -614,7 +603,7 @@ export class ProfileService {
     farmSizeUnit?: string
     livestockTypes?: string[]
     description?: string
-    farmAddress?: Address
+    farmAddress?: any
   }): Promise<{ success: boolean; error?: string }> {
     console.warn('Farm info update is disabled - schema columns not available')
     return { success: false, error: 'Farm info update is currently unavailable. Please contact support.' }

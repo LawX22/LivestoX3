@@ -1,11 +1,8 @@
 // user.ts
 
-// Verification Status
-export type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified'
-
 // ADDRESS TYPES
 export interface Address {
-  id?: string  // Added ID field for database reference
+  id?: string
   fullName?: string
   label?: string
   phoneNumber?: string
@@ -38,30 +35,6 @@ export interface FarmInfo {
   farmAddress?: FarmAddress
 }
 
-// VERIFICATION TYPES
-export interface VerificationInfo {
-  status?: VerificationStatus
-  approvedAt?: string
-  rejectedAt?: string
-  reason?: string
-}
-
-export interface VerificationRequest {
-  userId: string
-  idType: string
-  frontImage: string
-  backImage: string
-  status: VerificationStatus
-  submittedAt: string
-  rejectionReason?: string
-}
-
-export interface VerificationData {
-  idType: string
-  frontImage: string
-  backImage: string
-}
-
 // USER DATA TYPES
 export interface UserData {
   role?: string
@@ -70,6 +43,7 @@ export interface UserData {
 
 // USER TYPES
 export interface User {
+  upgradePending: boolean
   userId: string
   publicId?: string
   username: string
@@ -96,12 +70,6 @@ export interface User {
   experience?: string
   description?: string
   farmAddress?: FarmAddress
-
-  // Verification info
-  verificationStatus?: VerificationStatus
-  verificationSubmittedAt?: string
-  verificationRejectionReason?: string
-  verification?: VerificationInfo
 
   // Admin
   bannedUntil?: string
@@ -132,11 +100,6 @@ export interface ProfileDB {
   livestock_types?: string[]
   description?: string
   farm_address?: FarmAddress
-  
-  // Verification
-  verification_status?: VerificationStatus
-  verification_submitted_at?: string
-  verification_rejection_reason?: string
   
   // Timestamps
   created_at?: string
@@ -187,11 +150,6 @@ export function dbProfileToUser(profile: ProfileDB, email: string): User {
     description: profile.description,
     farmAddress: profile.farm_address,
     
-    // Verification
-    verificationStatus: profile.verification_status || 'unverified',
-    verificationSubmittedAt: profile.verification_submitted_at,
-    verificationRejectionReason: profile.verification_rejection_reason,
-    
     // Note: addresses will be populated separately from addresses table
     addresses: [],
     
@@ -222,11 +180,6 @@ export function userToDbProfile(user: Partial<User>): Partial<ProfileDB> {
     livestock_types: userWithoutAddresses.livestockTypes,
     description: userWithoutAddresses.description,
     farm_address: userWithoutAddresses.farmAddress,
-    
-    // Verification
-    verification_status: userWithoutAddresses.verificationStatus,
-    verification_submitted_at: userWithoutAddresses.verificationSubmittedAt,
-    verification_rejection_reason: userWithoutAddresses.verificationRejectionReason,
     
     // Note: addresses not included as they're managed separately
   }

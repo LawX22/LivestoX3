@@ -20,7 +20,51 @@
           <p class="text-gray-600 text-sm">Provide your farming details to request an upgrade to a Farmer account</p>
         </div>
 
-        <form @submit.prevent="handleUpgradeRequest" class="flex flex-col">
+        <!-- Loading State -->
+        <div v-if="loadingData" class="flex items-center justify-center py-20">
+          <div class="text-center">
+            <svg class="animate-spin w-10 h-10 text-green-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <p class="text-gray-600 text-sm">Loading your information...</p>
+          </div>
+        </div>
+
+        <!-- Already Has Pending Request Message -->
+        <div v-else-if="hasPendingRequest" class="p-12">
+          <div class="max-w-md mx-auto text-center">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Request Already Pending</h2>
+            <p class="text-gray-600 mb-6">
+              You already have a pending upgrade request. Please wait for our admin team to review and approve your application.
+            </p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p class="text-sm text-yellow-800">
+                <strong>What happens next?</strong><br>
+                Our team typically reviews upgrade requests within 1-3 business days. You'll receive a notification once your request is reviewed.
+              </p>
+            </div>
+            <button 
+              @click="router.back()" 
+              class="inline-flex items-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Return to Profile
+            </button>
+          </div>
+        </div>
+
+        <form v-else @submit.prevent="handleUpgradeRequest" class="flex flex-col">
           <!-- Main Content Area -->
           <div class="flex h-[calc(100vh-280px)]">
             <!-- Left Side - Personal Info, Farm Details, Address (Scrollable) -->
@@ -141,7 +185,7 @@
                     <select v-model="selectedAddressIndex" @change="applySelectedAddress"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-colors text-sm mb-2">
                       <option value="-1">— Select Saved Address —</option>
-                      <option v-for="(addr, idx) in userAddresses" :key="idx" :value="idx">
+                      <option v-for="(addr, idx) in userAddresses" :key="addr.id || idx" :value="idx">
                         {{ addr.label || 'Address' }} - {{ addr.street }}, {{ addr.barangay }}, {{ addr.city }}
                       </option>
                     </select>
@@ -341,9 +385,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { livestockTypes, farmSizeUnits } from '../../services/UpgradeFormDetails'
+import { useAuthStore } from '@/stores/authStore'
+import { ProfileService } from '@/services/profileService'
+import { UpgradeService } from '@/services/upgradeService'
+import type { Address } from '@/services/user'
+import { livestockTypes, farmSizeUnits } from '@/services/UpgradeFormDetails'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+const loadingData = ref(true)
+const hasPendingRequest = ref(false)
 const submitted = ref(false)
 const error = ref('')
 const isSubmitting = ref(false)
@@ -368,34 +420,63 @@ const fileData = ref({
   farmPhotos: [] as string[]
 })
 
-const userAddresses = ref<Record<string, any>[]>([])
+const userAddresses = ref<Address[]>([])
 const selectedAddressIndex = ref(-1)
 const selectedLivestock = ref('')
 
-onMounted(() => {
-  loadUserData()
-  loadUserAddresses()
+onMounted(async () => {
+  await loadUserData()
 })
 
-const loadUserData = () => {
-  const authUserId = localStorage.getItem('authUserId')
-  if (!authUserId) return
+const loadUserData = async () => {
+  try {
+    loadingData.value = true
+    error.value = ''
 
-  const userData = localStorage.getItem(`user_${authUserId}`)
-  if (userData) {
-    const user = JSON.parse(userData)
-    form.value.fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
-    form.value.phone = user.phoneNumber || ''
-  }
-}
+    if (!authStore.initialized) {
+      await authStore.initialize()
+    }
 
-const loadUserAddresses = () => {
-  const authUserId = localStorage.getItem('authUserId')
-  if (!authUserId) return
+    const userId = authStore.userId
 
-  const storedAddresses = localStorage.getItem(`addresses_${authUserId}`)
-  if (storedAddresses) {
-    userAddresses.value = JSON.parse(storedAddresses)
+    if (!userId) {
+      error.value = 'You must be logged in to submit an upgrade request'
+      setTimeout(() => router.push('/login'), 2000)
+      return
+    }
+
+    console.log('📋 Loading user data for:', userId)
+
+    // Check for existing pending request FIRST
+    const pendingRequest = await UpgradeService.getUserPendingRequest(userId)
+    if (pendingRequest) {
+      console.log('⚠️  Found existing pending request:', pendingRequest.id)
+      hasPendingRequest.value = true
+      loadingData.value = false
+      return
+    }
+
+    const userProfile = await ProfileService.getProfile(userId)
+
+    if (userProfile) {
+      form.value.fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || authStore.userFullName
+      form.value.phone = userProfile.phoneNumber || ''
+
+      if (userProfile.addresses && userProfile.addresses.length > 0) {
+        userAddresses.value = userProfile.addresses
+        console.log('✅ Loaded', userAddresses.value.length, 'addresses')
+      }
+    } else {
+      form.value.fullName = authStore.userFullName
+      console.warn('⚠️  Profile not found, using auth store data')
+    }
+
+    console.log('✅ User data loaded successfully')
+  } catch (err) {
+    console.error('❌ Error loading user data:', err)
+    error.value = 'Failed to load user data. Please try again.'
+  } finally {
+    loadingData.value = false
   }
 }
 
@@ -420,7 +501,6 @@ const applySelectedAddress = () => {
     form.value.barangay = selected.barangay || ''
     form.value.street = selected.street || ''
   } else {
-    // Reset address fields if no selection or invalid selection
     form.value.region = ''
     form.value.province = ''
     form.value.city = ''
@@ -441,12 +521,7 @@ const handleFileUpload = (event: Event, field: 'businessPermit') => {
       }
     }
 
-    if (file.type.startsWith('image/')) {
-      reader.readAsDataURL(file)
-    } else {
-      // For PDFs, we'll just store the file name
-      fileData.value[field] = file.name
-    }
+    reader.readAsDataURL(file)
   }
 }
 
@@ -477,8 +552,19 @@ const handleUpgradeRequest = async () => {
   error.value = ''
 
   try {
-    const authUserId = localStorage.getItem('authUserId')
-    if (!authUserId) throw new Error('User ID not found. Please log in again.')
+    const userId = authStore.userId
+
+    if (!userId) {
+      throw new Error('User ID not found. Please log in again.')
+    }
+
+    // Double-check for pending request before submitting
+    const existingRequest = await UpgradeService.getUserPendingRequest(userId)
+    if (existingRequest) {
+      hasPendingRequest.value = true
+      error.value = 'You already have a pending upgrade request.'
+      return
+    }
 
     // Validate required fields
     if (
@@ -489,62 +575,47 @@ const handleUpgradeRequest = async () => {
       throw new Error('Please fill in all required fields.')
     }
 
-    // Validate documents
     if (!fileData.value.businessPermit) throw new Error('Business permit document is required.')
     if (fileData.value.farmPhotos.length === 0) throw new Error('At least one farm photo is required.')
 
-    // Check for existing pending requests
-    const upgradeRequests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]')
-    const hasPendingRequest = upgradeRequests.some((req: any) => 
-      req.userId === authUserId && req.status === 'pending'
-    )
+    console.log('📤 Submitting upgrade request to Supabase...')
 
-    if (hasPendingRequest) {
-      throw new Error('You already have a pending upgrade request.')
-    }
-
-    const newRequest = {
-      userId: authUserId,
-      farmDetails: {
+    // Create upgrade request using UpgradeService
+    const result = await UpgradeService.createUpgradeRequest(
+      userId,
+      {
         farmName: form.value.farmName,
-        farmSize: form.value.farmSize,
+        farmSize: parseFloat(form.value.farmSize),
         farmSizeUnit: form.value.farmSizeUnit,
         livestockTypes: form.value.livestockTypes,
-        description: form.value.description
-      },
-      farmAddress: {
+        description: form.value.description,
         region: form.value.region,
         province: form.value.province,
         city: form.value.city,
         barangay: form.value.barangay,
         street: form.value.street
       },
-      documents: {
-        businessPermit: fileData.value.businessPermit,
-        farmPhotos: fileData.value.farmPhotos
-      },
-      date: new Date().toISOString(),
-      status: 'pending'
-    }
+      fileData.value.businessPermit,
+      fileData.value.farmPhotos
+    )
 
-    // Save to upgrade requests
-    localStorage.setItem('upgradeRequests', JSON.stringify([...upgradeRequests, newRequest]))
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to submit upgrade request')
+    }
 
     // Save new address if not selected from existing ones
     if (selectedAddressIndex.value === -1) {
-      const newAddress = {
+      const newAddress: Partial<Address> = {
         label: `${form.value.farmName} Farm`,
         region: form.value.region,
         province: form.value.province,
         city: form.value.city,
         barangay: form.value.barangay,
         street: form.value.street,
-        isDefault: false,
-        createdAt: new Date().toISOString()
+        isDefault: false
       }
 
-      const existingAddresses = JSON.parse(localStorage.getItem(`addresses_${authUserId}`) || '[]')
-      const addressExists = existingAddresses.some((addr: any) =>
+      const addressExists = userAddresses.value.some((addr: Address) =>
         addr.region === newAddress.region &&
         addr.province === newAddress.province &&
         addr.city === newAddress.city &&
@@ -553,17 +624,22 @@ const handleUpgradeRequest = async () => {
       )
 
       if (!addressExists) {
-        localStorage.setItem(`addresses_${authUserId}`, JSON.stringify([...existingAddresses, newAddress]))
+        const addressResult = await ProfileService.addAddress(userId, newAddress as Address)
+        if (addressResult.success) {
+          console.log('✅ New address saved')
+        }
       }
     }
 
+    console.log('✅ Upgrade request submitted successfully!')
     submitted.value = true
+    
     setTimeout(() => {
       router.back()
     }, 2000)
 
   } catch (err) {
-    console.error('Error submitting upgrade request:', err)
+    console.error('❌ Error submitting upgrade request:', err)
     error.value = err instanceof Error ? err.message : 'An error occurred. Please try again.'
   } finally {
     isSubmitting.value = false

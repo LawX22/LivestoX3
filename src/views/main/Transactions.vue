@@ -234,7 +234,7 @@
     <!-- Info Modal Component -->
     <InfoModal
       :show="showInfoModal"
-      :current-user-role="authStore.userRole"
+      :current-user-role="currentUser.role"
       @close="showInfoModal = false"
     />
 
@@ -267,21 +267,82 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import NavBar from '@/components/NavBar.vue'
 import FiltersSidebar from '@/components/Transactions/FilterSidebar.vue'
 import TransactionDetailsModal from '@/components/Transactions/TransactionDetailsModal.vue'
 import TransactionsTable from '@/components/Transactions/TransactionsTable.vue'
 import InfoModal from '@/components/Transactions/InfoModal.vue'
-import type { FarmerTransaction, BuyerTransaction, Transaction, Filters } from '@/services/transactions'
+
+// Types
+interface Livestock {
+  id: number
+  type: string
+  breed: string
+  description: string
+  image: string
+}
+
+interface Person {
+  id: number
+  name: string
+  contact: string
+  address: string
+  avatar?: string
+  farm?: string
+}
+
+interface FarmerTransaction {
+  id: string
+  livestock: Livestock
+  buyer: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Completed'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  message?: string
+}
+
+interface BuyerTransaction {
+  id: string
+  livestock: Livestock
+  seller: Person
+  date: string
+  status: 'Pending' | 'Accepted' | 'Shipped' | 'Completed' | 'Cancelled'
+  amount: number
+  paymentMethod: string
+  deliveryMethod: string
+  estimatedDelivery?: string
+  trackingNumber?: string
+  message?: string
+}
+
+type Transaction = FarmerTransaction | BuyerTransaction
+
+interface Filters {
+  search: string
+  statuses: string[]
+  types: string[]
+  sellers: string[]
+  dateFrom: string
+  dateTo: string
+}
 
 const router = useRouter()
-const authStore = useAuthStore()
 
-// User state computed from authStore
-const userIsFarmer = computed(() => authStore.userRole === 'farmer')
-const userIsBuyer = computed(() => authStore.userRole === 'buyer' || authStore.userRole === 'user')
-const userIsAdmin = computed(() => authStore.userRole === 'admin')
+// Local auth state (replace with your auth system)
+const currentUser = ref({
+  isAuthenticated: true,
+  role: 'farmer', // Can be 'farmer', 'buyer', or 'admin'
+  id: '1',
+  email: 'user@example.com',
+  name: 'John Doe'
+})
+
+// User state computed
+const userIsFarmer = computed(() => currentUser.value.role === 'farmer')
+const userIsBuyer = computed(() => currentUser.value.role === 'buyer' || currentUser.value.role === 'user')
+const userIsAdmin = computed(() => currentUser.value.role === 'admin')
 
 // Reactive state
 const currentView = ref<'farmer' | 'buyer'>('buyer')
@@ -356,7 +417,7 @@ const filteredTransactions = computed(() => {
   return currentTransactions.value.filter(transaction => {
     const f = filters.value;
     let matchesSearch = !f.search;
-    
+      
     if (f.search) {
       const searchTerm = f.search.toLowerCase();
       matchesSearch = 
@@ -371,10 +432,10 @@ const filteredTransactions = computed(() => {
         const buyerTx = transaction as BuyerTransaction;
         matchesSearch = matchesSearch || 
           buyerTx.seller.name.toLowerCase().includes(searchTerm) ||
-          buyerTx.seller.farm.toLowerCase().includes(searchTerm);
+          (buyerTx.seller.farm ? buyerTx.seller.farm.toLowerCase().includes(searchTerm) : false);
       }
     }
-    
+      
     const matchesStatus = f.statuses.length === 0 || f.statuses.includes(transaction.status);
     const matchesType = f.types.length === 0 || f.types.includes(transaction.livestock.type);
     
@@ -555,15 +616,9 @@ const setInitialView = () => {
   }
 }
 
-// Watch for auth changes and reload data
-watch(() => authStore.user, () => {
-  setInitialView()
-  loadTransactionData()
-}, { immediate: false })
-
 // Lifecycle
 onMounted(() => {
-  if (!authStore.isAuthenticated) {
+  if (!currentUser.value.isAuthenticated) {
     router.push('/login')
     return
   }

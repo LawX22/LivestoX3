@@ -1,4 +1,4 @@
-<!-- UpgradeRequestModal.vue -->
+<!-- UpgradeRequestModal.vue ADMIN -->
 <template>
   <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-full max-h-[95vh] p-6 relative flex flex-col">
@@ -23,7 +23,7 @@
             </div>
             <div class="min-w-0 flex-1 space-y-1">
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-lg text-gray-800 truncate">{{ fullName || 'No name provided' }}</h3>
+                <h3 class="font-bold text-lg text-gray-800 truncate">{{ fullName }}</h3>
                 <span v-if="request.status" :class="{
                   'bg-green-500 text-white': request.status === 'approved',
                   'bg-yellow-400 text-white': request.status === 'pending',
@@ -88,7 +88,7 @@
                       <span class="font-medium text-gray-700 text-sm">Livestock Type</span>
                     </div>
                     <span class="text-sm text-gray-600 capitalize">
-                      {{ request.farmDetails?.livestockTypes?.join(', ') || 'Not specified' }}
+                      {{ formatLivestockTypes(request.farmDetails?.livestockTypes) }}
                     </span>
                   </div>
 
@@ -99,7 +99,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Email</span>
                     </div>
-                    <span class="text-sm text-gray-600">{{ userEmail || 'Not provided' }}</span>
+                    <span class="text-sm text-gray-600">{{ request.email || 'Not provided' }}</span>
                   </div>
 
                   <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
@@ -109,7 +109,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Phone</span>
                     </div>
-                    <span class="text-sm text-gray-600">{{ userPhone || 'Not provided' }}</span>
+                    <span class="text-sm text-gray-600">{{ request.phoneNumber || 'Not provided' }}</span>
                   </div>
                 </div>
               </div>
@@ -227,14 +227,14 @@
                   Business Permit
                 </h3>
                 
-                <div v-if="request.documents?.businessPermit" class="relative group">
-                  <img :src="request.documents.businessPermit" @click="openDocument(request.documents.businessPermit)"
+                <div v-if="request.documents?.businessPermitUrl" class="relative group">
+                  <img :src="request.documents.businessPermitUrl" @click="openDocument(request.documents.businessPermitUrl)"
                     class="w-full max-h-80 object-contain rounded-lg border border-gray-300 cursor-pointer hover:shadow-md transition-all"
                     alt="Business Permit"
                     @error="handleImageError" />
                   <div
                     class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <button @click="openDocument(request.documents.businessPermit)"
+                    <button @click="openDocument(request.documents.businessPermitUrl)"
                       class="bg-white bg-opacity-90 text-blue-600 px-2 py-0.5 rounded-full text-xs font-medium shadow-md flex items-center gap-0.5">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -259,8 +259,8 @@
                   Farm Photos
                 </h3>
                 
-                <div v-if="request.documents?.farmPhotos?.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div v-for="(photo, index) in request.documents.farmPhotos" :key="index" class="relative group">
+                <div v-if="request.documents?.farmPhotoUrls?.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div v-for="(photo, index) in request.documents.farmPhotoUrls" :key="index" class="relative group">
                     <img :src="photo" @click="openDocument(photo)"
                       class="w-full h-40 object-cover rounded-lg border border-gray-300 cursor-pointer hover:shadow-md transition-all"
                       :alt="`Farm photo ${index + 1}`"
@@ -293,7 +293,7 @@
         <button @click="close" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           Cancel
         </button>
-        <button v-if="request.status === 'pending'" @click="handleReject" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1">
+        <button v-if="request.status === 'pending'" @click="handleRejection" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
@@ -317,132 +317,73 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue'
 
-interface FarmDetails {
-  farmName?: string;
-  farmSize?: string;
-  farmSizeUnit?: string;
-  livestockTypes?: string[];
-  experience?: string;
-  description?: string;
+// Types
+interface FarmAddress {
+  street?: string
+  barangay?: string
+  city?: string
+  province?: string
+  region?: string
 }
 
-interface FarmAddress {
-  region?: string;
-  province?: string;
-  city?: string;
-  barangay?: string;
-  street?: string;
+interface FarmDetails {
+  farmName?: string
+  farmSize?: number
+  farmSizeUnit?: string
+  livestockTypes?: string[]
+  description?: string
 }
 
 interface Documents {
-  businessPermit?: string;
-  farmPhotos?: string[];
+  businessPermitUrl?: string
+  farmPhotoUrls?: string[]
 }
 
 interface UpgradeRequest {
-  userId: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  fullName?: string;
-  farmDetails?: FarmDetails;
-  farmAddress?: FarmAddress;
-  documents?: Documents;
-  date?: string;
-  status?: 'pending' | 'approved' | 'rejected';
-}
-
-interface UserData {
-  userId: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  fullName?: string;
-  phone?: string;
-  profilePicture?: string;
-  role?: string;
+  id: string
+  userId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  phoneNumber?: string
+  profilePicture?: string
+  farmDetails?: FarmDetails
+  farmAddress?: FarmAddress
+  documents?: Documents
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt?: string
 }
 
 const props = defineProps<{
-  visible: boolean;
-  request: UpgradeRequest;
-}>();
+  visible: boolean
+  request: UpgradeRequest
+}>()
 
 const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'approved', updatedRequest: UpgradeRequest): void;
-  (e: 'rejected', updatedRequest: UpgradeRequest): void;
-}>();
+  (e: 'close'): void
+  (e: 'approved', updatedRequest: UpgradeRequest): void
+  (e: 'rejected', updatedRequest: UpgradeRequest): void
+}>()
 
-const userData = ref<UserData | null>(null);
-const defaultAvatar = '/src/assets/default.png';
-
-// Load user data from localStorage
-const loadUserData = () => {
-  try {
-    const userKey = `user_${props.request.userId}`;
-    const storedUser = localStorage.getItem(userKey);
-    if (storedUser) {
-      userData.value = JSON.parse(storedUser);
-    }
-
-    // Also check for profile image separately
-    const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
-    if (profileImage) {
-      if (!userData.value) {
-        userData.value = { userId: props.request.userId } as UserData;
-      }
-      userData.value.profilePicture = profileImage;
-    }
-  } catch (error) {
-    console.error('Error loading user data:', error);
-  }
-};
-
-onMounted(() => {
-  loadUserData();
-});
+const defaultAvatar = '/default-avatar.png'
 
 const fullName = computed(() => {
-  if (props.request.fullName) return props.request.fullName;
-  if (userData.value?.fullName) return userData.value.fullName;
-  const first = props.request.firstName || userData.value?.firstName || '';
-  const last = props.request.lastName || userData.value?.lastName || '';
-  return `${first} ${last}`.trim() || 'No name provided';
-});
-
-const userEmail = computed(() => {
-  return props.request.email || userData.value?.email || 'No email provided';
-});
-
-const userPhone = computed(() => {
-  // First try to get from userData
-  if (userData.value?.phone) return userData.value.phone;
-
-  // Then try to get from localStorage directly
-  const phone = localStorage.getItem(`phone_${props.request.userId}`);
-  if (phone) return phone;
-
-  return 'No phone provided';
-});
+  if (props.request.fullName) return props.request.fullName
+  const first = props.request.firstName || ''
+  const last = props.request.lastName || ''
+  return `${first} ${last}`.trim() || 'No name provided'
+})
 
 const userProfileImage = computed(() => {
-  // First try to get from userData
-  if (userData.value?.profilePicture) return userData.value.profilePicture;
-
-  // Then try to get from localStorage directly
-  const profileImage = localStorage.getItem(`profileImage_${props.request.userId}`);
-  if (profileImage) return profileImage;
-
-  // Fallback to default avatar
-  return defaultAvatar;
-});
+  return props.request.profilePicture || defaultAvatar
+})
 
 const formattedAddress = computed(() => {
-  const addr = props.request.farmAddress;
-  if (!addr) return 'No address provided';
+  const addr = props.request.farmAddress
+  if (!addr) return 'No address provided'
 
   const parts = [
     addr.street,
@@ -450,91 +391,48 @@ const formattedAddress = computed(() => {
     addr.city,
     addr.province,
     addr.region
-  ].filter(Boolean);
+  ].filter(Boolean)
 
-  return parts.join(', ') || 'No address provided';
-});
+  return parts.join(', ') || 'No address provided'
+})
 
 const formattedDate = computed(() => {
-  if (!props.request.date) return '';
-  const date = new Date(props.request.date);
+  if (!props.request.createdAt) return ''
+  const date = new Date(props.request.createdAt)
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  });
-});
+  })
+})
+
+const formatLivestockTypes = (types?: string[]): string => {
+  if (!types || types.length === 0) return 'Not specified'
+  return types.join(', ')
+}
 
 const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  img.src = defaultAvatar;
-};
+  const img = event.target as HTMLImageElement
+  img.src = defaultAvatar
+}
 
 const openDocument = (url: string) => {
   if (url) {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
-};
+}
 
 const close = () => {
-  emit('close');
-};
+  emit('close')
+}
 
 const handleApprove = () => {
-  try {
-    const userKey = `user_${props.request.userId}`;
-    const storedUser = localStorage.getItem(userKey);
+  emit('approved', props.request)
+}
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      user.role = 'Farmer';
-      localStorage.setItem(userKey, JSON.stringify(user));
-    }
-
-    const updatedRequest: UpgradeRequest = {
-      ...props.request,
-      status: 'approved'
-    };
-
-    updateRequestInStorage(updatedRequest);
-
-    emit('approved', updatedRequest);
-    close();
-  } catch (error) {
-    console.error('Error approving upgrade request:', error);
-  }
-};
-
-const handleReject = () => {
-  try {
-    const updatedRequest: UpgradeRequest = {
-      ...props.request,
-      status: 'rejected'
-    };
-
-    updateRequestInStorage(updatedRequest);
-
-    emit('rejected', updatedRequest);
-    close();
-  } catch (error) {
-    console.error('Error rejecting upgrade request:', error);
-  }
-};
-
-const updateRequestInStorage = (updatedRequest: UpgradeRequest) => {
-  try {
-    const existingRequestsRaw = localStorage.getItem('upgradeRequests');
-    const requests: UpgradeRequest[] = existingRequestsRaw ? JSON.parse(existingRequestsRaw) : [];
-
-    const updatedRequests = requests.map((req: UpgradeRequest) =>
-      req.userId === updatedRequest.userId ? updatedRequest : req
-    );
-
-    localStorage.setItem('upgradeRequests', JSON.stringify(updatedRequests));
-  } catch (error) {
-    console.error('Error updating request in storage:', error);
-  }
-};
+const handleRejection = () => {
+  emit('rejected', props.request)
+}
 </script>
