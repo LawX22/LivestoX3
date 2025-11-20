@@ -119,10 +119,40 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = _session ? _session.user : null
   })
 
-  // COMPUTED PROPERTIES (Core Auth Only)
+  // COMPUTED PROPERTIES (Core Auth)
   const userId = computed(() => user.value?.id ?? null)
   const isAuthenticated = computed(() => !!user.value)
   const userEmail = computed(() => user.value?.email || '')
+
+  // COMPUTED PROPERTIES (User Metadata)
+  const userMetadata = computed(() => user.value?.user_metadata || {})
+  
+  const userRole = computed(() => {
+    return userMetadata.value?.role || 'buyer'
+  })
+
+  const userName = computed(() => {
+    return userMetadata.value?.full_name || 
+           userMetadata.value?.name || 
+           userMetadata.value?.username || 
+           ''
+  })
+
+  const userFullName = computed(() => {
+    return userMetadata.value?.full_name || 
+           userMetadata.value?.name || 
+           `${userMetadata.value?.first_name || ''} ${userMetadata.value?.last_name || ''}`.trim() ||
+           ''
+  })
+
+  const userDisplayName = computed(() => {
+    return userMetadata.value?.display_name || 
+           userMetadata.value?.full_name || 
+           userMetadata.value?.name ||
+           userMetadata.value?.username ||
+           userEmail.value.split('@')[0] || 
+           'User'
+  })
 
   // RETURN STORE
   return {
@@ -140,9 +170,16 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     getSession,
 
-    // Computed (Auth only)
+    // Computed (Auth)
     userId,
     isAuthenticated,
     userEmail,
+
+    // Computed (User Metadata)
+    userMetadata,
+    userRole,
+    userName,
+    userFullName,
+    userDisplayName,
   }
 })
