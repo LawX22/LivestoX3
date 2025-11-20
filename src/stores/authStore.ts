@@ -9,16 +9,13 @@ import { auth } from '../services/auth-service'
 export const useAuthStore = defineStore('auth', () => {
 
   // STATE
-
   const session: Ref<Session | null> = ref(null)
   const user: Ref<SupabaseUser | null> = ref(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
   const initialized = ref(false)
 
-
   // AUTH ACTIONS
-
   const initialize = async (): Promise<void> => {
     if (initialized.value) return
     
@@ -115,58 +112,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Listen to auth state changes
   supabase.auth.onAuthStateChange(async (_event, _session) => {
+    // Prevent unnecessary updates
+    if (_session?.user?.id === user.value?.id) return
+    
     session.value = _session
     user.value = _session ? _session.user : null
   })
 
-
-  // COMPUTED PROPERTIES
-  // ✅ FIXED: Support both camelCase and lowercase property names for compatibility
-
-  const userMetadata = computed(() => user.value?.user_metadata || {})
+  // COMPUTED PROPERTIES (Core Auth Only)
   const userId = computed(() => user.value?.id ?? null)
   const isAuthenticated = computed(() => !!user.value)
-
-  const userFullName = computed(() => {
-    // Support both camelCase (firstName) and lowercase (firstname)
-    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
-    return `${firstname} ${lastname}`.trim() || userMetadata.value.username || 'User Name'
-  })
-
-  const userInitials = computed(() => {
-    // Support both camelCase (firstName) and lowercase (firstname)
-    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
-    const initials = `${firstname.charAt(0) || ''}${lastname.charAt(0) || ''}`.toUpperCase()
-    return initials || (userMetadata.value.username?.substring(0, 2).toUpperCase() || 'UN')
-  })
-
   const userEmail = computed(() => user.value?.email || '')
-  const userName = computed(() => userMetadata.value?.username || '')
-  const userRole = computed(() => userMetadata.value?.role?.toLowerCase() || 'user')
-  const userGender = computed(() => userMetadata.value?.gender || '')
-  const isVerified = computed(() =>
-    userMetadata.value.isVerified ||
-    userMetadata.value.verificationStatus === 'verified' ||
-    false
-  )
-
-  const userDisplayName = computed(() => {
-    if (!userMetadata.value) return 'User'
-    // Support both camelCase (firstName) and lowercase (firstname)
-    const firstname = userMetadata.value.firstName || userMetadata.value.firstname || ''
-    const lastname = userMetadata.value.lastName || userMetadata.value.lastname || ''
-    const fullName = `${firstname} ${lastname}`.trim()
-    if (fullName) return fullName
-    if (userMetadata.value.username) return userMetadata.value.username
-    if (user.value?.email) return user.value.email.split('@')[0]
-    return 'User'
-  })
-
 
   // RETURN STORE
-
   return {
     // State
     session,
@@ -182,17 +140,9 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     getSession,
 
-    // Computed
-    userMetadata,
+    // Computed (Auth only)
     userId,
     isAuthenticated,
-    userFullName,
-    userInitials,
     userEmail,
-    userName,
-    userRole,
-    userGender,
-    isVerified,
-    userDisplayName,
   }
 })

@@ -114,7 +114,7 @@
       <!-- Additional links for logged-in users -->
       <template v-if="isAuthenticated">
         <!-- Show Transactions only for farmers in main navbar -->
-        <li v-if="userRole === 'farmer'">
+        <li v-if="navbarUser?.role === 'Farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -132,14 +132,15 @@
         </li>
 
         <!-- Show My Purchases only for buyers in main navbar -->
-        <li v-if="userRole === 'buyer'">
+        <li v-if="navbarUser?.role === 'Buyer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
             <div class="flex items-center gap-1.5 px-1 py-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="2.3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               <span>My Purchases</span>
             </div>
@@ -169,7 +170,7 @@
 
     <!-- Right: Auth or User Info -->
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
-      <!-- Notification and Message Icons (only shown when logged in) -->
+      <!-- Cart, Notification and Message Icons (only shown when logged in) -->
       <template v-if="isAuthenticated">
         <!-- Cart Button -->
         <div class="relative">
@@ -182,7 +183,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l-2.5-5m0 0l-.5-3H2m8 14a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z" />
               </svg>
-              <span
+              <span v-if="cartCount > 0"
                 class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
                 {{ cartCount }}
               </span>
@@ -222,39 +223,8 @@
             </div>
 
             <div class="max-h-80 overflow-y-auto">
-              <!-- Notification Items -->
-              <a v-for="notification in recentNotifications" :key="notification.id" href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('notification', notification.id)">
-                <div class="flex-shrink-0">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="ml-4 flex-1">
-                  <p class="text-sm font-semibold text-gray-900 mb-1">
-                    {{ notification.title }}
-                  </p>
-                  <p class="text-xs text-gray-600 mb-2">
-                    {{ notification.message }}
-                  </p>
-                  <p class="text-xs text-green-600 font-medium flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {{ formatTime(notification.timestamp) }}
-                  </p>
-                </div>
-              </a>
-
               <!-- Empty State -->
-              <div v-if="recentNotifications.length === 0" class="px-6 py-8 text-center">
+              <div class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -308,36 +278,8 @@
             </div>
 
             <div class="max-h-80 overflow-y-auto">
-              <!-- Message Items -->
-              <a v-for="message in recentMessages" :key="message.id" href="#"
-                class="flex px-6 py-4 text-sm hover:bg-gray-50 transition-all duration-300 border-b border-gray-100 group"
-                @click.prevent="markAsRead('message', message.id)">
-                <div class="flex-shrink-0 mr-4">
-                  <div
-                    class="w-12 h-12 rounded-xl bg-gradient-to-r from-gray-400 to-gray-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <span class="text-sm font-bold text-white">{{ getInitials(message.sender_name) }}</span>
-                  </div>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex justify-between items-start mb-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">{{ message.sender_name }}</p>
-                    <span class="text-xs text-green-600 font-medium whitespace-nowrap ml-2 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {{ formatTime(message.timestamp) }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-gray-600 truncate">
-                    {{ message.content }}
-                  </p>
-                </div>
-              </a>
-
               <!-- Empty State -->
-              <div v-if="recentMessages.length === 0" class="px-6 py-8 text-center">
+              <div class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -362,26 +304,48 @@
 
       <!-- Logged in -->
       <template v-if="isAuthenticated">
-        <div>
+        <!-- Profile Skeleton Loader -->
+        <div v-if="isLoadingNavbarData || !navbarUser">
+          <div class="flex items-center gap-3 px-4 py-2 rounded-xl">
+            <!-- Profile Image Skeleton -->
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-gray-200 animate-pulse ring-2 ring-gray-100"></div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 rounded-full ring-2 ring-white animate-pulse"></div>
+            </div>
+
+            <!-- User Info Skeleton (hidden on mobile) -->
+            <div class="hidden md:block space-y-2">
+              <div class="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+              <div class="h-2 w-16 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+
+            <!-- Dropdown Arrow Skeleton -->
+            <div class="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Actual Profile Content -->
+        <div v-else>
           <div
             class="flex items-center cursor-pointer gap-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 px-4 py-2 rounded-xl transition-all duration-300 group border border-transparent hover:border-green-200"
             @click="toggleDropdown">
             <!-- Profile Image with enhanced styling -->
             <div class="relative">
               <!-- Profile Picture or Initials -->
-              <div v-if="profilePicture"
+              <div v-if="navbarUser?.profilePicture"
                 class="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <img 
-                  :src="profilePicture" 
-                  :alt="displayName"
+                  :src="navbarUser.profilePicture" 
+                  :alt="navbarUser.displayName"
                   class="w-full h-full object-cover"
-                  @error="handleImageError"
+                  loading="eager"
+                  @error="navbarUser.profilePicture = null"
                 />
               </div>
               <div v-else
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <span class="text-sm font-bold text-white">
-                  {{ userInitials }}
+                  {{ navbarUser?.initials || 'U' }}
                 </span>
               </div>
               <div
@@ -392,11 +356,11 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ displayName }}
+                {{ navbarUser?.displayName || 'User' }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
-                {{ displayRole }}
+                {{ navbarUser?.role || 'user' }}
               </p>
             </div>
 
@@ -421,27 +385,28 @@
                   @click="closeDropdown">
                   <div class="mr-4">
                     <!-- Profile Picture or Initials in Dropdown -->
-                    <div v-if="profilePicture"
+                    <div v-if="navbarUser?.profilePicture"
                       class="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <img 
-                        :src="profilePicture" 
-                        :alt="displayName"
+                        :src="navbarUser.profilePicture" 
+                        :alt="navbarUser.displayName"
                         class="w-full h-full object-cover"
-                        @error="handleImageError"
+                        loading="eager"
+                        @error="navbarUser.profilePicture = null"
                       />
                     </div>
                     <div v-else
                       class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <span class="text-base font-bold text-white">
-                        {{ userInitials }}
+                        {{ navbarUser?.initials || 'U' }}
                       </span>
                     </div>
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ displayName }}
+                      {{ navbarUser?.displayName || 'User' }}
                     </p>
-                    <p class="text-xs text-green-100 truncate mb-2">{{ userEmail }}</p>
+                    <p class="text-xs text-green-100 truncate mb-2">{{ navbarUser?.email || '' }}</p>
                     <p
                       class="text-xs text-white font-medium flex items-center group-hover:translate-x-1 transition-transform duration-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
@@ -472,7 +437,7 @@
               </router-link>
 
               <!-- Show Transactions only for farmers in dropdown -->
-              <router-link v-if="userRole === 'farmer'" to="/transactions"
+              <router-link v-if="navbarUser?.role === 'Farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -487,7 +452,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="userRole === 'buyer'" to="/transactions"
+              <router-link v-if="navbarUser?.role === 'Buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -607,37 +572,19 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
+import { NavBarService, NavBarServiceError } from '@/services/navbarService';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Notification, cart, and message state
-const cartCount = ref(3);
-const unreadNotifications = ref(2);
-const unreadMessages = ref(1);
-const recentNotifications = ref([
-  {
-    id: 1,
-    title: "Order Shipped",
-    message: "Your order #12345 has been shipped",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 2,
-    title: "New Message",
-    message: "You have a new message from John Doe",
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
-  }
-]);
-const recentMessages = ref([
-  {
-    id: 1,
-    sender_name: "John Doe",
-    content: "Hello, I'm interested in your product",
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-  }
-]);
+// Navbar data state
+const navbarUser = ref<any>(null);
+
+// UI counters (static for now, no backend integration)
+const cartCount = ref(0);
+const unreadNotifications = ref(0);
+const unreadMessages = ref(0);
 
 // UI state
 const showDropdown = ref(false);
@@ -648,31 +595,23 @@ const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
+// Loading state
+const isLoadingNavbarData = ref(false);
+const isInitializing = ref(false);
+
 // Computed properties from authStore
 const isAuthenticated = computed(() => authStore.isAuthenticated);
-const userRole = computed(() => authStore.userRole);
-const userEmail = computed(() => authStore.userEmail);
-const displayName = computed(() => authStore.userDisplayName);
-const userInitials = computed(() => authStore.userInitials);
-const displayRole = computed(() => {
-  const role = authStore.userRole;
-  if (!role) return 'User';
-  return role.charAt(0).toUpperCase() + role.slice(1);
-});
 
-// Computed property for profile picture
-const profilePicture = computed(() => {
-  if (!authStore.isAuthenticated) return null;
-  // Check if user metadata has a profile picture URL
-  return authStore.userMetadata?.profilePicture || 
-         authStore.userMetadata?.profile_picture || 
-         authStore.userMetadata?.avatar || 
-         null;
-});
-
-// Initialize auth store
+// Initialize and load navbar data
 onMounted(async () => {
   await authStore.initialize();
+  
+  if (authStore.isAuthenticated && authStore.userId && !isInitializing.value) {
+    isInitializing.value = true;
+    await loadNavbarData();
+    isInitializing.value = false;
+  }
+  
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("keydown", handleKeyDown);
 });
@@ -682,6 +621,24 @@ onBeforeUnmount(() => {
   document.removeEventListener("keydown", handleKeyDown);
 });
 
+// Watch for authentication changes
+watch(() => authStore.isAuthenticated, async (newValue, oldValue) => {
+  // Only react if authentication status actually changed
+  if (newValue === oldValue || isInitializing.value) return;
+  
+  if (newValue && authStore.userId) {
+    isInitializing.value = true;
+    await loadNavbarData();
+    isInitializing.value = false;
+  } else {
+    // Clear data on logout
+    navbarUser.value = null;
+    cartCount.value = 0;
+    unreadNotifications.value = 0;
+    unreadMessages.value = 0;
+  }
+}, { immediate: false });
+
 // Watch for route changes to close dropdowns
 watch(() => route.path, () => {
   showDropdown.value = false;
@@ -689,6 +646,78 @@ watch(() => route.path, () => {
   showMessageDropdown.value = false;
   showLogoutModal.value = false;
 });
+
+/**
+ * Load all navbar data
+ * Automatically logs out if user is deleted or cannot be fetched
+ */
+const loadNavbarData = async () => {
+  if (!authStore.userId) return;
+  
+  isLoadingNavbarData.value = true;
+  
+  try {
+    console.log('📊 Loading navbar data...');
+    const data = await NavBarService.getAllNavBarData(authStore.userId);
+    
+    navbarUser.value = data.user;
+    
+    console.log('✅ Navbar data loaded:', data);
+  } catch (error) {
+    console.error('❌ Error loading navbar data:', error);
+    
+    // Check if it's a NavBarServiceError
+    if (error instanceof NavBarServiceError) {
+      // If user not found or auth error, automatically logout
+      if (error.code === 'USER_NOT_FOUND' || error.code === 'AUTH_ERROR') {
+        console.warn('⚠️ User account not found or auth invalid - logging out automatically');
+        await handleAutoLogout(error.message);
+        return;
+      }
+    }
+    
+    // For network errors, keep the user logged in but show they're offline
+    console.warn('⚠️ Network error loading navbar data, user remains logged in');
+  } finally {
+    isLoadingNavbarData.value = false;
+  }
+};
+
+/**
+ * Handle automatic logout when user is deleted or can't be fetched
+ */
+const handleAutoLogout = async (reason: string) => {
+  try {
+    console.log('🔒 Auto-logging out:', reason);
+    
+    // Use authStore logout
+    await authStore.logout();
+    
+    // Clear UI state
+    navbarUser.value = null;
+    cartCount.value = 0;
+    unreadNotifications.value = 0;
+    unreadMessages.value = 0;
+    
+    // Close modals and dropdowns
+    showLogoutModal.value = false;
+    showDropdown.value = false;
+    showNotificationDropdown.value = false;
+    showMessageDropdown.value = false;
+    
+    console.log('✅ Auto-logout successful, redirecting to home...');
+    
+    // Redirect to home with a message (optional - you can show a toast notification instead)
+    router.push({
+      path: "/",
+      query: { message: "Your session has expired or your account was not found" }
+    });
+  } catch (error) {
+    console.error("❌ Auto-logout failed:", error);
+    // Force redirect anyway
+    router.push("/");
+  }
+};
 
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
@@ -751,46 +780,6 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
-const markAsRead = async (type: "notification" | "message", id: string | number) => {
-  if (type === "notification") {
-    const notification = recentNotifications.value.find(n => n.id === id);
-    if (notification && unreadNotifications.value > 0) {
-      unreadNotifications.value--;
-    }
-    closeNotificationDropdown();
-  } else {
-    const message = recentMessages.value.find(m => m.id === id);
-    if (message && unreadMessages.value > 0) {
-      unreadMessages.value--;
-    }
-    closeMessageDropdown();
-  }
-};
-
-const formatTime = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-  
-  if (diffInHours < 1) {
-    return 'Just now';
-  } else if (diffInHours < 24) {
-    return `${diffInHours} hours ago`;
-  } else {
-    return `${Math.floor(diffInHours / 24)} days ago`;
-  }
-};
-
-const getInitials = (name: string) => {
-  return name.split(' ').map(part => part.charAt(0)).join('').toUpperCase().substring(0, 2);
-};
-
-// Handle image load error
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement;
-  target.style.display = 'none';
-};
-
 const handleLogout = async () => {
   try {
     console.log('🔒 Logging out...');
@@ -799,11 +788,10 @@ const handleLogout = async () => {
     await authStore.logout();
     
     // Clear UI state
+    navbarUser.value = null;
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
-    recentNotifications.value = [];
-    recentMessages.value = [];
     
     // Close modals and dropdowns
     showLogoutModal.value = false;

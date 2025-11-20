@@ -116,6 +116,7 @@
             <div>
               <select
                 v-model="statusFilter"
+                @change="loadRequests"
                 class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg bg-white/80"
               >
                 <option value="all">All Statuses</option>
@@ -213,7 +214,7 @@
           </template>
         </div>
 
-        <!-- Requests Table with Skeleton -->
+        <!-- Requests Table -->
         <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 overflow-hidden transition-all hover:shadow-2xl">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200/50">
@@ -310,7 +311,7 @@
                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                           />
                         </svg>
-                        {{ request.farmAddress?.province }}, {{ request.farmAddress?.city }}
+                        {{ formatLocation(request) }}
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -500,140 +501,8 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import UpgradeRequestModal from '../../components/Admin/UpgradeRequestModal.vue'
-
-// Types
-interface FarmAddress {
-  street?: string
-  barangay?: string
-  city?: string
-  province?: string
-  region?: string
-}
-
-interface FarmDetails {
-  farmName?: string
-  farmSize?: number
-  farmSizeUnit?: string
-  livestockTypes?: string[]
-  description?: string
-}
-
-interface Documents {
-  businessPermitUrl?: string
-  farmPhotoUrls?: string[]
-}
-
-interface UpgradeRequest {
-  id: string
-  userId: string
-  email: string
-  firstName?: string
-  lastName?: string
-  fullName?: string
-  phoneNumber?: string
-  profilePicture?: string
-  farmDetails?: FarmDetails
-  farmAddress?: FarmAddress
-  documents?: Documents
-  status: 'pending' | 'approved' | 'rejected'
-  createdAt?: string
-}
-
-interface RequestsStats {
-  total: number
-  pending: number
-  approved: number
-  rejected: number
-  approvedToday: number
-}
-
-// Mock Data
-const mockRequests: UpgradeRequest[] = [
-  {
-    id: '1',
-    userId: 'user-001',
-    email: 'juan.delaCruz@email.com',
-    firstName: 'Juan',
-    lastName: 'Dela Cruz',
-    phoneNumber: '+63 912 345 6789',
-    farmDetails: {
-      farmName: 'Green Valley Farm',
-      farmSize: 5,
-      farmSizeUnit: 'hectares',
-      livestockTypes: ['cattle', 'goat'],
-      description: 'A sustainable farm focusing on organic cattle and goat farming'
-    },
-    farmAddress: {
-      street: '123 Farm Road',
-      barangay: 'Barangay Poblacion',
-      city: 'Cebu City',
-      province: 'Cebu',
-      region: 'Region VII - Central Visayas'
-    },
-    documents: {
-      businessPermitUrl: '/default-avatar.png',
-      farmPhotoUrls: ['/default-avatar.png', '/default-avatar.png']
-    },
-    status: 'pending',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '2',
-    userId: 'user-002',
-    email: 'maria.santos@email.com',
-    firstName: 'Maria',
-    lastName: 'Santos',
-    phoneNumber: '+63 923 456 7890',
-    farmDetails: {
-      farmName: 'Santos Livestock Farm',
-      farmSize: 3,
-      farmSizeUnit: 'hectares',
-      livestockTypes: ['pig', 'chicken'],
-      description: 'Family-owned farm specializing in pig and chicken production'
-    },
-    farmAddress: {
-      street: '456 Rural Street',
-      barangay: 'Barangay San Isidro',
-      city: 'Mandaue City',
-      province: 'Cebu',
-      region: 'Region VII - Central Visayas'
-    },
-    documents: {
-      businessPermitUrl: '/default-avatar.png',
-      farmPhotoUrls: ['/default-avatar.png']
-    },
-    status: 'approved',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '3',
-    userId: 'user-003',
-    email: 'pedro.reyes@email.com',
-    firstName: 'Pedro',
-    lastName: 'Reyes',
-    phoneNumber: '+63 934 567 8901',
-    farmDetails: {
-      farmName: 'Reyes Poultry Farm',
-      farmSize: 2,
-      farmSizeUnit: 'hectares',
-      livestockTypes: ['chicken', 'duck'],
-      description: 'Modern poultry farm with advanced facilities'
-    },
-    farmAddress: {
-      street: '789 Country Road',
-      barangay: 'Barangay Talamban',
-      city: 'Cebu City',
-      province: 'Cebu',
-      region: 'Region VII - Central Visayas'
-    },
-    documents: {
-      businessPermitUrl: '/default-avatar.png',
-      farmPhotoUrls: ['/default-avatar.png', '/default-avatar.png', '/default-avatar.png']
-    },
-    status: 'pending',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
-  }
-]
+import { UpgradeRequestService, type UpgradeRequest, type UpgradeRequestStats } from '@/services/upgradeRequestService'
+import { supabase } from '@/supabase'
 
 const upgradeRequests = ref<UpgradeRequest[]>([])
 const selectedRequest = ref<UpgradeRequest | null>(null)
@@ -645,8 +514,9 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const defaultAvatar = '/default-avatar.png'
 const isLoading = ref(true)
+const currentAdminId = ref<string>('')
 
-const stats = ref<RequestsStats>({
+const stats = ref<UpgradeRequestStats>({
   total: 0,
   pending: 0,
   approved: 0,
@@ -654,34 +524,45 @@ const stats = ref<RequestsStats>({
   approvedToday: 0,
 })
 
-const loadRequests = () => {
+const loadRequests = async () => {
   isLoading.value = true
   
-  // Simulate API call delay
-  setTimeout(() => {
+  try {
+    console.log('🔄 Loading requests with filter:', statusFilter.value)
+    
     if (statusFilter.value === 'all') {
-      upgradeRequests.value = [...mockRequests]
+      upgradeRequests.value = await UpgradeRequestService.getAllRequests()
     } else {
-      upgradeRequests.value = mockRequests.filter(r => r.status === statusFilter.value)
+      const allRequests = await UpgradeRequestService.getAllRequests()
+      upgradeRequests.value = allRequests.filter(r => r.status === statusFilter.value)
     }
+    
+    console.log('✅ Loaded', upgradeRequests.value.length, 'requests')
+  } catch (error) {
+    console.error('Error loading requests:', error)
+    alert('Failed to load upgrade requests. Please try again.')
+  } finally {
     isLoading.value = false
-  }, 500)
+  }
 }
 
-const loadStats = () => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+const loadStats = async () => {
+  try {
+    stats.value = await UpgradeRequestService.getRequestStats()
+  } catch (error) {
+    console.error('Error loading stats:', error)
+  }
+}
 
-  stats.value = {
-    total: mockRequests.length,
-    pending: mockRequests.filter(r => r.status === 'pending').length,
-    approved: mockRequests.filter(r => r.status === 'approved').length,
-    rejected: mockRequests.filter(r => r.status === 'rejected').length,
-    approvedToday: mockRequests.filter(r => {
-      if (r.status !== 'approved' || !r.createdAt) return false
-      const reqDate = new Date(r.createdAt)
-      return reqDate >= today
-    }).length,
+const getCurrentAdminId = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      currentAdminId.value = user.id
+      console.log('Current admin ID:', currentAdminId.value)
+    }
+  } catch (error) {
+    console.error('Error getting current admin:', error)
   }
 }
 
@@ -695,11 +576,28 @@ const handleImageError = (event: Event) => {
 }
 
 const getUserFullName = (request: UpgradeRequest): string => {
-  if (request.fullName) return request.fullName
+  if (request.fullName && request.fullName !== 'No name provided') {
+    return request.fullName
+  }
   if (request.firstName || request.lastName) {
     return `${request.firstName || ''} ${request.lastName || ''}`.trim()
   }
   return 'N/A'
+}
+
+const formatLocation = (request: UpgradeRequest): string => {
+  const province = request.farmAddress?.province
+  const city = request.farmAddress?.city
+  
+  if (province && city) {
+    return `${province}, ${city}`
+  } else if (province) {
+    return province
+  } else if (city) {
+    return city
+  }
+  
+  return 'Location not provided'
 }
 
 const isNewRequest = (request: UpgradeRequest): boolean => {
@@ -716,7 +614,7 @@ const filteredRequests = computed(() => {
     .filter((request) => {
       const matchesSearch =
         !query ||
-        request.email.toLowerCase().includes(query) ||
+        (request.email && request.email.toLowerCase().includes(query)) ||
         getUserFullName(request).toLowerCase().includes(query) ||
         (request.farmDetails?.farmName &&
           request.farmDetails.farmName.toLowerCase().includes(query))
@@ -797,6 +695,7 @@ const statusBadgeClass = (request: UpgradeRequest): string => {
 }
 
 const viewRequestDetails = (request: UpgradeRequest) => {
+  console.log('👁️ Viewing request details:', request)
   selectedRequest.value = request
   showModal.value = true
 }
@@ -806,40 +705,61 @@ const closeModal = () => {
   selectedRequest.value = null
 }
 
-const handleApproval = (approvedRequest: UpgradeRequest) => {
+const handleApproval = async (approvedRequest: UpgradeRequest) => {
   console.log('✅ Request approved:', approvedRequest.id)
   
-  // Update the request status in the local array
-  const index = upgradeRequests.value.findIndex(r => r.id === approvedRequest.id)
-  if (index !== -1) {
-    upgradeRequests.value[index].status = 'approved'
+  try {
+    const result = await UpgradeRequestService.approveRequest({
+      requestId: approvedRequest.id,
+      adminId: currentAdminId.value,
+    })
+
+    if (result.success) {
+      // Reload data
+      await loadRequests()
+      await loadStats()
+      closeModal()
+      alert('✅ Request approved successfully! User role has been updated to Farmer.')
+    } else {
+      alert(`❌ Failed to approve request: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error approving request:', error)
+    alert('An error occurred while approving the request.')
   }
-  
-  loadStats()
-  closeModal()
-  
-  // Show success message (you can replace with a toast notification)
-  alert('Request approved successfully!')
 }
 
-const handleRejection = (rejectedRequest: UpgradeRequest) => {
+const handleRejection = async (rejectedRequest: UpgradeRequest) => {
   console.log('❌ Request rejected:', rejectedRequest.id)
   
-  // Update the request status in the local array
-  const index = upgradeRequests.value.findIndex(r => r.id === rejectedRequest.id)
-  if (index !== -1) {
-    upgradeRequests.value[index].status = 'rejected'
+  const reason = prompt('Please provide a reason for rejection (optional):')
+  
+  try {
+    const result = await UpgradeRequestService.rejectRequest({
+      requestId: rejectedRequest.id,
+      adminId: currentAdminId.value,
+      rejectionReason: reason || undefined,
+    })
+
+    if (result.success) {
+      // Reload data
+      await loadRequests()
+      await loadStats()
+      closeModal()
+      alert('❌ Request rejected successfully!')
+    } else {
+      alert(`Failed to reject request: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Error rejecting request:', error)
+    alert('An error occurred while rejecting the request.')
   }
-  
-  loadStats()
-  closeModal()
-  
-  // Show success message (you can replace with a toast notification)
-  alert('Request rejected successfully!')
 }
 
-onMounted(() => {
-  loadRequests()
-  loadStats()
+onMounted(async () => {
+  console.log('🚀 Component mounted, initializing...')
+  await getCurrentAdminId()
+  await loadRequests()
+  await loadStats()
 })
 </script>

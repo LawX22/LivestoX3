@@ -54,7 +54,6 @@ export interface User {
   phoneNumber: string
   gender: 'Male' | 'Female' | 'Other' | string
   role: 'Buyer' | 'Farmer' | 'Admin' | 'Banned' | string
-  isVerified: boolean
   createdAt: string | Date
   lastActive?: string | Date
   profilePicture?: string
@@ -89,7 +88,6 @@ export interface ProfileDB {
   phone_number?: string
   gender?: string
   role?: string
-  is_verified?: boolean
   profile_picture?: string
   banner_image?: string
   
@@ -129,33 +127,32 @@ export interface AddressDB {
 
 // ✅ EXPORTED - Helper function to convert DB profile to User (addresses handled separately)
 export function dbProfileToUser(profile: ProfileDB, email: string): User {
-return {
-  userId: profile.id,
-  username: profile.username || '',
-  email: email,
-  firstName: profile.first_name || '',
-  lastName: profile.last_name || '',
-  phoneNumber: profile.phone_number || '',
-  gender: profile.gender || '',
-  role: profile.role || 'Buyer',
-  isVerified: profile.is_verified || false,
-  profilePicture: profile.profile_picture,
-  bannerImage: profile.banner_image,
+  return {
+    userId: profile.id,
+    username: profile.username || '',
+    email: email,
+    firstName: profile.first_name || '',
+    lastName: profile.last_name || '',
+    phoneNumber: profile.phone_number || '',
+    gender: profile.gender || '',
+    role: profile.role || 'Buyer',
+    profilePicture: profile.profile_picture,
+    bannerImage: profile.banner_image,
 
-  // Farm info
-  farmName: profile.farm_name,
-  farmSize: profile.farm_size,
-  farmSizeUnit: profile.farm_size_unit,
-  livestockTypes: profile.livestock_types,
-  description: profile.description,
-  farmAddress: profile.farm_address,
+    // Farm info
+    farmName: profile.farm_name,
+    farmSize: profile.farm_size,
+    farmSizeUnit: profile.farm_size_unit,
+    livestockTypes: profile.livestock_types,
+    description: profile.description,
+    farmAddress: profile.farm_address,
 
-  // Note: addresses will be populated separately from addresses table
-  addresses: [],
+    // Note: addresses will be populated separately from addresses table
+    addresses: [],
 
-  createdAt: profile.created_at || new Date().toISOString(),
-  upgradePending: false
-}
+    createdAt: profile.created_at || new Date().toISOString(),
+    upgradePending: false
+  }
 }
 
 // ✅ EXPORTED - Helper function to convert User to DB profile (excludes addresses)
@@ -170,7 +167,6 @@ export function userToDbProfile(user: Partial<User>): Partial<ProfileDB> {
     phone_number: userWithoutAddresses.phoneNumber,
     gender: userWithoutAddresses.gender,
     role: userWithoutAddresses.role,
-    is_verified: userWithoutAddresses.isVerified,
     profile_picture: userWithoutAddresses.profilePicture,
     banner_image: userWithoutAddresses.bannerImage,
     

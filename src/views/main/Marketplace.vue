@@ -120,7 +120,7 @@
 
           <!-- Buyer View -->
           <div
-            v-else-if="authStore.userRole !== 'farmer'"
+            v-else-if="(userRole || '').toLowerCase() !== 'farmer'"
             class="flex items-center gap-3 max-w-full"
           >
             <!-- Account Not Verified -->
@@ -491,16 +491,40 @@ const authStore = useAuthStore();
 const isLoadingData = ref(true);
 
 // Computed properties for user data from authStore
-const currentUserMetadata = computed(() => authStore.userMetadata);
+const currentUserMetadata = computed(() => {
+  const anyStore = authStore as any;
+  if (anyStore.user && anyStore.user.user_metadata) return anyStore.user.user_metadata;
+  if (anyStore.userMetadata) return anyStore.userMetadata;
+  return null;
+});
 
-// Create a compatible user object for the modals that expect the old interface
+// Create a compatible user object for the modals
 const currentUserForModal = computed(() => {
   if (!authStore.isAuthenticated) return null;
-  
+
+  const meta: any = currentUserMetadata.value || {};
+  const anyAuth: any = authStore as any;
+
+  const name =
+    meta?.full_name ||
+    meta?.name ||
+    meta?.displayName ||
+    anyAuth.user?.user_metadata?.full_name ||
+    anyAuth.user?.user_metadata?.name ||
+    null;
+
+  const email =
+    anyAuth.userEmail ||
+    meta?.email ||
+    anyAuth.user?.email ||
+    null;
+
+  const role = anyAuth.userRole || meta?.role || null;
+
   return {
-    name: authStore.userDisplayName,
-    email: authStore.userEmail,
-    role: authStore.userRole
+    name,
+    email,
+    role
   };
 });
 
@@ -518,10 +542,16 @@ const selectedAnimalForContact = ref<Animal | null>(null);
 // Tab state
 const activeTab = ref<'normal' | 'auction'>('normal');
 
-// View mode - defaults to buyer if user is not a farmer
+// View mode
+const userRole = computed(() => {
+  const anyAuth: any = authStore as any;
+  return anyAuth.userRole || currentUserForModal.value?.role || currentUserMetadata.value?.role || null;
+});
+
 const isFarmerView = computed(() => {
   if (props.viewMode) return props.viewMode === 'farmer';
-  return authStore.userRole === 'farmer';
+  const role = (userRole.value || '').toString().toLowerCase();
+  return role === 'farmer';
 });
 
 // Sidebar state
@@ -551,9 +581,35 @@ const filters = ref<Filters>({
   bidActivities: []
 });
 
-// Sample animal data with proper interface compliance
+// Animal data
 const animals = ref<Animal[]>([]);
 
+/**
+ * Helper function to create display name from profile
+ */
+const getDisplayName = (profile: any, farm: any): string => {
+  if (!profile) return farm?.owner_name || 'Unknown Farmer';
+  
+  const firstName = profile.first_name || '';
+  const lastName = profile.last_name || '';
+  const username = profile.username || '';
+  
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  } else if (firstName) {
+    return firstName;
+  } else if (username) {
+    return username;
+  } else if (profile.email) {
+    return profile.email.split('@')[0];
+  }
+  
+  return farm?.owner_name || 'Unknown Farmer';
+};
+
+/**
+ * Fetch and format livestock listings for marketplace
+ */
 const getPublicListing = async () => {
   try {
     isLoadingData.value = true;
@@ -561,53 +617,91 @@ const getPublicListing = async () => {
     // Add a minimum loading time for better UX
     const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
     
-    const { data } = await livestock.getForMarket();
+    console.log('🔍 Fetching marketplace listings...');
+    const { data, error } = await livestock.getForMarket();
 
-    if (!data) {
-      console.error("No data found");
+    if (error) {
+      console.error("❌ Error fetching livestock:", error);
       animals.value = [];
       return;
     }
 
-    const format = data.map((item) => {
+    if (!data || data.length === 0) {
+      console.log("ℹ️ No listings found");
+      animals.value = [];
+      return;
+    }
+
+    console.log('✅ Raw data received:', data.length, 'listings');
+    console.log('📊 Sample listing:', data[0]);
+
+    // Map the data with proper structure including profile information
+    const format = data.map((item: any) => {
+      // Extract profile and farm data
+      const profile = item.profiles || null;
+      const farm = item.farms || null;
+      
+      console.log('👤 Processing listing:', {
+        id: item.id,
+        title: item.title,
+        hasProfile: !!profile,
+        hasFarm: !!farm,
+        profile: profile,
+        farm: farm
+      });
+      
+      // Create display name
+      const displayName = getDisplayName(profile, farm);
+      
+      // Get email
+      const email = profile?.email || farm?.email || '';
+      
       return {
-        ...item,
         id: item.id,
         title: item.title,
         type: item.category,
         breed: item.breed,
-        weight: 450,
-        quantity: 5,
-        originalQuantity: 5,
+        weight: item.weight || 450,
+        quantity: item.quantity || 5,
+        originalQuantity: item.original_quantity || item.quantity || 5,
         age: item.age,
         gender: item.gender,
         status: item.status,
-        healthStatus: item.health_status,
-        price: 45000,
-        deliveryOptions: item.delivery_options,
-        images: item.image_url,
+        healthStatus: item.health_status || [],
+        price: item.price || 45000,
+        deliveryOptions: item.delivery_options || [],
+        images: item.image_url || [],
         description: item.description,
         datePosted: item.listed_date,
         farmer: {
-          id: item.farms.user_id,
-          name: item.farms.farm_name,
-          farmName: item.farms.owner_name,
-          contact: item.farms.phone_number,
-          email: item.farms.email,
-          address: item.farms.location,
-          avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
+          id: item.seller_id || farm?.user_id || '',
+          name: displayName,
+          farmName: farm?.farm_name || 'Farm',
+          contact: profile?.username || farm?.phone_number || '',
+          email: email,
+          address: farm?.location || '',
+          avatar: profile?.profile_picture || 'https://randomuser.me/api/portraits/women/68.jpg'
         },
-        location: item.location,
-        isAuction: item.auction
+        location: item.location || farm?.location || '',
+        isAuction: item.auction || false,
+        // Auction-specific fields
+        startingBid: item.starting_bid || null,
+        currentBid: item.current_bid || null,
+        bidCount: item.bid_count || 0,
+        endTime: item.end_time || null,
+        auctionStartTime: item.auction_start_time || null
       }
     });
 
     // Wait for minimum loading time to complete
     await minLoadingTime;
     
+    console.log('✅ Formatted listings:', format.length);
+    console.log('👥 Farmer names:', format.map((a: any) => a.farmer.name));
+    
     animals.value = format;
   } catch (error) {
-    console.error('Error fetching livestock data:', error);
+    console.error('❌ Error fetching livestock data:', error);
     animals.value = [];
   } finally {
     isLoadingData.value = false;
@@ -648,9 +742,9 @@ const getAuctionStatus = (animal: Animal): string => {
   const timeLeft = endTime - now;
   
   if (timeLeft <= 0) return 'Ended';
-  if (timeLeft <= 3600000) return 'Ending Soon'; // 1 hour
+  if (timeLeft <= 3600000) return 'Ending Soon';
   if (animal.bidCount && animal.bidCount >= 10) return 'Hot Auction';
-  if (animal.datePosted && new Date(animal.datePosted).getTime() > now - 86400000) return 'New Listing'; // 24 hours
+  if (animal.datePosted && new Date(animal.datePosted).getTime() > now - 86400000) return 'New Listing';
   return 'Live';
 };
 
@@ -696,28 +790,28 @@ const currentFilteredAnimals = computed(() => {
       (animal.farmer.farmName && animal.farmer.farmName.toLowerCase().includes(searchLower)) ||
       animal.farmer.name.toLowerCase().includes(searchLower);
 
-    // Type filter (multi-select)
+    // Type filter
     const matchesType = filters.value.types.length === 0 || 
       filters.value.types.includes(animal.type);
 
-    // Breed filter (multi-select)
+    // Breed filter
     const matchesBreed = filters.value.breeds.length === 0 || 
       filters.value.breeds.includes(animal.breed);
 
-    // Location filter (multi-select)
+    // Location filter
     const matchesLocation = filters.value.locations.length === 0 || 
       filters.value.locations.includes(animal.location);
 
-    // Gender filter (multi-select)
+    // Gender filter
     const matchesGender = filters.value.genders.length === 0 || 
       filters.value.genders.includes(animal.gender);
 
-    // Health status filter (multi-select)
+    // Health status filter
     const healthStatuses = Array.isArray(filters.value.healthStatuses) ? filters.value.healthStatuses : [];
     const matchesHealthStatus = healthStatuses.length === 0 || 
       healthStatuses.some(status => (Array.isArray(animal.healthStatus) ? animal.healthStatus : []).includes(status));
 
-    // Price range filter (multi-select) - adjusted for auctions
+    // Price range filter
     let matchesPrice = true;
     if (filters.value.priceRanges.length > 0) {
       matchesPrice = filters.value.priceRanges.some(range => {
@@ -731,7 +825,7 @@ const currentFilteredAnimals = computed(() => {
       });
     }
 
-    // Auction-specific filters (only apply when viewing auctions)
+    // Auction-specific filters
     if (activeTab.value === 'auction' && animal.isAuction) {
       // Auction Status filter
       if (filters.value.auctionStatuses.length > 0) {
@@ -808,7 +902,7 @@ const currentFilteredAnimals = computed(() => {
            matchesPrice && matchesGender && matchesHealthStatus;
   });
 
-  // Sorting - enhanced for auctions
+  // Sorting
   return filtered.sort((a, b) => {
     switch (sortBy.value) {
       case 'datePosted':
@@ -949,11 +1043,11 @@ const handlePlaceBid = (bidData: BidData) => {
 // Lifecycle hooks
 onMounted(async () => {
   // Initialize auth store session if not already done
-  if (!authStore.isAuthenticated) {
-    await authStore.getSession();
+  if (!authStore.initialized) {
+    await authStore.initialize();
   }
   
-  // Check for pending upgrade requests using the authStore user email
+  // Check for pending upgrade requests
   const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]');
   hasPendingUpgrade.value = authStore.userEmail
     ? requests.some((r: any) => r.email === authStore.userEmail)

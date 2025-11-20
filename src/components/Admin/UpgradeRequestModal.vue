@@ -65,7 +65,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Farm Name</span>
                     </div>
-                    <span class="text-sm text-gray-600">{{ request.farmDetails?.farmName || 'Not provided' }}</span>
+                    <span class="text-sm text-gray-600">{{ farmName }}</span>
                   </div>
 
                   <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
@@ -75,9 +75,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Farm Size</span>
                     </div>
-                    <span class="text-sm text-gray-600">
-                      {{ request.farmDetails?.farmSize ? `${request.farmDetails.farmSize} ${request.farmDetails.farmSizeUnit || 'hectares'}` : 'Not provided' }}
-                    </span>
+                    <span class="text-sm text-gray-600">{{ farmSize }}</span>
                   </div>
 
                   <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
@@ -87,9 +85,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Livestock Type</span>
                     </div>
-                    <span class="text-sm text-gray-600 capitalize">
-                      {{ formatLivestockTypes(request.farmDetails?.livestockTypes) }}
-                    </span>
+                    <span class="text-sm text-gray-600 capitalize">{{ livestockTypes }}</span>
                   </div>
 
                   <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
@@ -109,7 +105,7 @@
                       </svg>
                       <span class="font-medium text-gray-700 text-sm">Phone</span>
                     </div>
-                    <span class="text-sm text-gray-600">{{ request.phoneNumber || 'Not provided' }}</span>
+                    <span class="text-sm text-gray-600">{{ phoneNumber }}</span>
                   </div>
                 </div>
               </div>
@@ -136,9 +132,7 @@
                     </div>
                     <div>
                       <h4 class="font-medium text-gray-700 text-sm">Full Address</h4>
-                      <p class="text-sm text-gray-600">
-                        {{ formattedAddress }}
-                      </p>
+                      <p class="text-sm text-gray-600">{{ formattedAddress }}</p>
                     </div>
                   </div>
 
@@ -151,7 +145,7 @@
                       </div>
                       <div>
                         <h4 class="font-medium text-gray-700 text-sm">Barangay</h4>
-                        <p class="text-sm text-gray-600">{{ request.farmAddress?.barangay || 'Not provided' }}</p>
+                        <p class="text-sm text-gray-600">{{ barangay }}</p>
                       </div>
                     </div>
 
@@ -163,7 +157,7 @@
                       </div>
                       <div>
                         <h4 class="font-medium text-gray-700 text-sm">City</h4>
-                        <p class="text-sm text-gray-600">{{ request.farmAddress?.city || 'Not provided' }}</p>
+                        <p class="text-sm text-gray-600">{{ city }}</p>
                       </div>
                     </div>
 
@@ -175,7 +169,7 @@
                       </div>
                       <div>
                         <h4 class="font-medium text-gray-700 text-sm">Province</h4>
-                        <p class="text-sm text-gray-600">{{ request.farmAddress?.province || 'Not provided' }}</p>
+                        <p class="text-sm text-gray-600">{{ province }}</p>
                       </div>
                     </div>
 
@@ -187,7 +181,7 @@
                       </div>
                       <div>
                         <h4 class="font-medium text-gray-700 text-sm">Region</h4>
-                        <p class="text-sm text-gray-600">{{ request.farmAddress?.region || 'Not provided' }}</p>
+                        <p class="text-sm text-gray-600">{{ region }}</p>
                       </div>
                     </div>
                   </div>
@@ -206,7 +200,7 @@
 
               <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <h4 class="font-medium text-gray-700 mb-2">Farm Description</h4>
-                <p class="text-gray-600 text-sm whitespace-pre-line">{{ request.farmDetails?.description || 'No description provided' }}</p>
+                <p class="text-gray-600 text-sm whitespace-pre-line">{{ farmDescription }}</p>
               </div>
             </div>
           </div>
@@ -227,14 +221,14 @@
                   Business Permit
                 </h3>
                 
-                <div v-if="request.documents?.businessPermitUrl" class="relative group">
-                  <img :src="request.documents.businessPermitUrl" @click="openDocument(request.documents.businessPermitUrl)"
+                <div v-if="businessPermitUrl" class="relative group">
+                  <img :src="businessPermitUrl" @click="openDocument(businessPermitUrl)"
                     class="w-full max-h-80 object-contain rounded-lg border border-gray-300 cursor-pointer hover:shadow-md transition-all"
                     alt="Business Permit"
                     @error="handleImageError" />
                   <div
                     class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <button @click="openDocument(request.documents.businessPermitUrl)"
+                    <button @click="openDocument(businessPermitUrl)"
                       class="bg-white bg-opacity-90 text-blue-600 px-2 py-0.5 rounded-full text-xs font-medium shadow-md flex items-center gap-0.5">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -259,8 +253,8 @@
                   Farm Photos
                 </h3>
                 
-                <div v-if="request.documents?.farmPhotoUrls?.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div v-for="(photo, index) in request.documents.farmPhotoUrls" :key="index" class="relative group">
+                <div v-if="farmPhotoUrls && farmPhotoUrls.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div v-for="(photo, index) in farmPhotoUrls" :key="index" class="relative group">
                     <img :src="photo" @click="openDocument(photo)"
                       class="w-full h-40 object-cover rounded-lg border border-gray-300 cursor-pointer hover:shadow-md transition-all"
                       :alt="`Farm photo ${index + 1}`"
@@ -371,14 +365,59 @@ const emit = defineEmits<{
 const defaultAvatar = '/default-avatar.png'
 
 const fullName = computed(() => {
-  if (props.request.fullName) return props.request.fullName
+  if (props.request.fullName && props.request.fullName !== 'No name provided') {
+    return props.request.fullName
+  }
   const first = props.request.firstName || ''
   const last = props.request.lastName || ''
-  return `${first} ${last}`.trim() || 'No name provided'
+  const combined = `${first} ${last}`.trim()
+  return combined || 'No name provided'
 })
 
 const userProfileImage = computed(() => {
   return props.request.profilePicture || defaultAvatar
+})
+
+const phoneNumber = computed(() => {
+  return props.request.phoneNumber || 'Not provided'
+})
+
+const farmName = computed(() => {
+  return props.request.farmDetails?.farmName || 'Not provided'
+})
+
+const farmSize = computed(() => {
+  if (!props.request.farmDetails?.farmSize) return 'Not provided'
+  const size = props.request.farmDetails.farmSize
+  const unit = props.request.farmDetails.farmSizeUnit || 'hectares'
+  return `${size} ${unit}`
+})
+
+const livestockTypes = computed(() => {
+  if (!props.request.farmDetails?.livestockTypes || props.request.farmDetails.livestockTypes.length === 0) {
+    return 'Not specified'
+  }
+  return props.request.farmDetails.livestockTypes.join(', ')
+})
+
+const farmDescription = computed(() => {
+  return props.request.farmDetails?.description || 'No description provided'
+})
+
+const barangay = computed(() => {
+  return props.request.farmAddress?.barangay || 'Not provided'
+})
+
+const city = computed(() => {
+  return props.request.farmAddress?.city || 'Not provided'
+})
+
+const province = computed(() => {
+  return props.request.farmAddress?.province || 'Not provided'
+})
+
+const region = computed(() => {
+  return props.request.farmAddress?.region || 'Not provided'
 })
 
 const formattedAddress = computed(() => {
@@ -393,7 +432,15 @@ const formattedAddress = computed(() => {
     addr.region
   ].filter(Boolean)
 
-  return parts.join(', ') || 'No address provided'
+  return parts.length > 0 ? parts.join(', ') : 'No address provided'
+})
+
+const businessPermitUrl = computed(() => {
+  return props.request.documents?.businessPermitUrl || ''
+})
+
+const farmPhotoUrls = computed(() => {
+  return props.request.documents?.farmPhotoUrls || []
 })
 
 const formattedDate = computed(() => {
@@ -407,11 +454,6 @@ const formattedDate = computed(() => {
     minute: '2-digit'
   })
 })
-
-const formatLivestockTypes = (types?: string[]): string => {
-  if (!types || types.length === 0) return 'Not specified'
-  return types.join(', ')
-}
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
