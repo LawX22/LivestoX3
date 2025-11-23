@@ -1,3 +1,4 @@
+<!-- FilterSidebar.vue -->
 <template>
   <div :class="`${isExpanded ? 'w-full md:w-52 lg:w-56' : 'w-14'} bg-white/95 backdrop-blur-xl border-r border-white/40 shadow-lg relative transition-all duration-300 ease-in-out`">
     <div class="absolute inset-0 bg-gradient-to-b from-green-50/20 via-transparent to-emerald-50/20"></div>
@@ -341,7 +342,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { Filters, PriceRange, TimeRange, AuctionDuration } from '../../services/animal';
+import type { Filters, PriceRange, TimeRange, AuctionDuration } from '@/services/marketplace';
 
 const props = defineProps<{
   isExpanded: boolean;
@@ -442,6 +443,7 @@ const resetFilters = () => {
     locations: [],
     priceRanges: [],
     genders: [],
+    healthStatuses: [],
     auctionStatuses: [],
     endTimeRanges: [],
     bidCountMin: null,

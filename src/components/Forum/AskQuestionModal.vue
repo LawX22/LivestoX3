@@ -90,7 +90,7 @@
                 <div>
                   <p class="text-xs text-green-800">
                     Posting as 
-                    <span class="font-semibold">{{ authStore.userDisplayName }}</span> 
+                    <span class="font-semibold">{{ userDisplayName }}</span> 
                     <span class="text-green-600"> ({{ authStore.userRole }})</span>
                   </p>
                 </div>
@@ -339,6 +339,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { forumService } from '../../services/forumService'
 import type { NewQuestion } from '../../services/forumService'
+import type { User } from '@/services/user'
 
 // Type definitions
 interface QuestionForm {
@@ -352,6 +353,7 @@ interface QuestionForm {
 // Props and emits
 const props = defineProps<{
   visible: boolean;
+  currentUserProfile: User | null;
 }>();
 
 const emits = defineEmits<{
@@ -374,6 +376,26 @@ const question = ref<QuestionForm>({
   category: '',
   urgency: '',
   visibility: 'all'
+});
+
+// Computed property for user display name
+const userDisplayName = computed(() => {
+  if (!props.currentUserProfile) {
+    return authStore.userDisplayName || 'User';
+  }
+
+  const firstName = props.currentUserProfile.firstName?.trim() || '';
+  const lastName = props.currentUserProfile.lastName?.trim() || '';
+
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  } else if (firstName) {
+    return firstName;
+  } else if (lastName) {
+    return lastName;
+  } else {
+    return authStore.userDisplayName || 'User';
+  }
 });
 
 // Watch for visibility changes to reset form
@@ -466,10 +488,10 @@ const handleSubmit = async (): Promise<void> => {
       visibility: question.value.visibility
     };
 
-    // Submit to Supabase via forumService - FIXED: Use userId instead of userEmail
+    // Submit to Supabase via forumService
     const createdQuestion = await forumService.createQuestion(
       newQuestionData,
-      authStore.userId,  // Changed from authStore.userEmail
+      authStore.userId,
       authStore.userRole
     );
 

@@ -38,7 +38,6 @@ const routes = [
   { path: '/signUp', component: signUp, name: 'SignUp' },
   { path: '/forgotPassword', component: ForgotPassword, name: 'ForgotPassword.vue' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
-  { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
 
   // Admin Routes
   { path: '/adminDashboard', component: adminDashboard, name: 'adminDashboard' },

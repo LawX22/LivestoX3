@@ -161,7 +161,7 @@ export class UpgradeRequestService {
   }
 
   /**
-   * Approve upgrade request and update user role to Farmer
+   * 🔥 APPROVE UPGRADE REQUEST - Updates role in profiles table
    */
   static async approveRequest(params: {
     requestId: string
@@ -202,7 +202,7 @@ export class UpgradeRequestService {
         return { success: false, error: updateRequestError.message }
       }
 
-      // 3. Update user role in profiles table
+      // 3. 🎯 UPDATE USER ROLE IN PROFILES TABLE
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -280,13 +280,10 @@ export class UpgradeRequestService {
   private static mapRequestData(item: any): UpgradeRequest {
     const profile = item.profiles
 
-    // Get user's email from auth
-    const email = item.user_id ? '' : '' // We'll need to fetch this separately if needed
-
     return {
       id: item.id,
       userId: item.user_id,
-      email: email,
+      email: item.email || '',
       firstName: profile?.first_name || '',
       lastName: profile?.last_name || '',
       fullName: profile?.first_name && profile?.last_name

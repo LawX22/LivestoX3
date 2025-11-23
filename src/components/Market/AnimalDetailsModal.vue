@@ -1,4 +1,3 @@
-<!-- AnimalDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -586,10 +585,48 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore';
 import ContactFarmerModal from './ContactFarmerModal.vue';
-import type { Animal, CartItem, MessageData } from '../../services/animal';
+
+// Types
+interface Animal {
+  id: string;
+  title: string;
+  type: string;
+  breed: string;
+  weight: number;
+  quantity: number;
+  age: string;
+  gender: string;
+  status: string;
+  healthStatus: string[];
+  price: number;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+  datePosted: string;
+  farmer: {
+    id: string;
+    name: string;
+    farmName: string;
+    contact: string;
+    email: string;
+    address: string;
+    avatar: string;
+  };
+  location: string;
+  isAuction: boolean;
+}
+
+interface ServiceUser {
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface MessageData {
+  message: string;
+  contactMethod: string;
+}
 
 // Props
 const props = defineProps<{
@@ -599,27 +636,16 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   close: [];
-  addToCart: [item: CartItem];
+  contact: [contactInfo: string];
 }>();
 
-// Router
-const router = useRouter();
-
-// Auth Store
-const authStore = useAuthStore();
-
-// Current User - Get from authStore instead of user.ts
-const currentUser = computed(() => {
-  if (!authStore.isAuthenticated || !authStore.user) {
-    return null;
-  }
-
+// Current User - Mock data
+const currentUser = computed<ServiceUser | null>(() => {
+  // Simulate authenticated user
   return {
-    id: authStore.userId,
-    name: authStore.userFullName,
-    email: authStore.userEmail,
-    displayName: authStore.userDisplayName,
-    role: authStore.userRole
+    name: 'John Doe',
+    email: 'john@example.com',
+    role: 'buyer'
   };
 });
 
@@ -688,8 +714,9 @@ const showToastNotification = (message: string, type: 'success' | 'cart' = 'succ
   setTimeout(() => (showToast.value = false), 4000);
 };
 
-const goToUserProfile = (farmerId: number) => {
-  router.push({ name: 'UserProfile', params: { id: farmerId } });
+const goToUserProfile = (farmerId: string) => {
+  console.log('Navigate to farmer profile:', farmerId);
+  showToastNotification('Profile view would open here', 'success');
 };
 
 // Quantity management
@@ -722,15 +749,8 @@ const addToCart = async () => {
   isAddingToCart.value = true;
 
   try {
-    const cartItem: CartItem = {
-      id: Date.now(),
-      animal: props.animal,
-      quantity: selectedQuantity.value,
-      totalPrice: props.animal.price * selectedQuantity.value,
-      dateAdded: new Date().toISOString()
-    };
-
-    emit('addToCart', cartItem);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     showToastNotification(
       `${selectedQuantity.value} ${props.animal.type}(s) added to cart!`,
@@ -768,14 +788,12 @@ const emailFarmer = () => {
   }
 };
 
-// Generate modal title - prioritizing animal.title, fallback to generated title
+// Generate modal title
 const getModalTitle = (animal: Animal): string => {
-  // If animal already has a title, use it
   if (animal.title) {
     return animal.title;
   }
   
-  // Otherwise generate a descriptive title for the modal
   const { type, breed, gender, age } = animal;
   return `${breed} ${type} - ${gender} ${age}`;
 };
@@ -785,18 +803,12 @@ const getTypeBadgeClassForImage = (type: string) => {
   switch (type) {
     case 'Cattle':
       return 'bg-green-500/90 text-white border-green-400/50';
-    case 'Pig':
+    case 'Swine':
       return 'bg-pink-500/90 text-white border-pink-400/50';
     case 'Goat':
       return 'bg-amber-500/90 text-white border-amber-400/50';
-    case 'Chicken':
+    case 'Poultry':
       return 'bg-red-500/90 text-white border-red-400/50';
-    case 'Buffalo':
-      return 'bg-blue-500/90 text-white border-blue-400/50';
-    case 'Duck':
-      return 'bg-indigo-500/90 text-white border-indigo-400/50';
-    case 'Sheep':
-      return 'bg-gray-500/90 text-white border-gray-400/50';
     default:
       return 'bg-gray-500/90 text-white border-gray-400/50';
   }

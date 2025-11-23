@@ -169,7 +169,49 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Animal, ServiceUser, MessageTemplate } from '../../services/animal';
+
+// Types
+interface Animal {
+  id: string;
+  title: string;
+  type: string;
+  breed: string;
+  weight: number;
+  quantity: number;
+  age: string;
+  gender: string;
+  status: string;
+  healthStatus: string[];
+  price: number;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+  datePosted: string;
+  farmer: {
+    id: string;
+    name: string;
+    farmName: string;
+    contact: string;
+    email: string;
+    address: string;
+    avatar: string;
+  };
+  location: string;
+  isAuction: boolean;
+}
+
+interface ServiceUser {
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface MessageTemplate {
+  id: string;
+  title: string;
+  preview: string;
+  template: string;
+}
 
 const props = defineProps<{
   animal: Animal;

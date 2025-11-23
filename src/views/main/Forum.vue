@@ -76,9 +76,9 @@
                 <svg class="w-4 h-4 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
-               <span class="text-sm font-semibold truncate ml-2">
-                Welcome, {{ currentUserProfile?.firstName }} {{ currentUserProfile?.lastName || authStore.userDisplayName }}!
-              </span>
+                <span class="text-sm font-semibold truncate ml-2">
+                  Welcome, {{ userFullName }}!
+                </span>
               </div>
               <button @click="showModal = true"
                 class="whitespace-nowrap bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
@@ -292,7 +292,8 @@
     <!-- Ask Question Modal -->
     <AskQuestionModal 
       v-if="showModal" 
-      :visible="showModal" 
+      :visible="showModal"
+      :current-user-profile="currentUserProfile"
       @submit="handlePostQuestion" 
       @close="showModal = false"
       @showToast="showToastNotification"
@@ -303,7 +304,7 @@
       v-if="showCommentsModal" 
       :visible="showCommentsModal" 
       :question="selectedQuestion!"
-      @close="showCommentsModal = false" 
+      @close="handleCloseCommentsModal" 
       @showToast="showToastNotification"
       @answerSubmitted="handleAnswerSubmitted"
     />
@@ -391,6 +392,40 @@ const forumQuestions = ref<ForumQuestion[]>([]);
 // Computed properties
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
+// FIXED: Computed property for user full name display
+const userFullName = computed(() => {
+  console.log('Computing userFullName...');
+  console.log('Current user profile:', currentUserProfile.value);
+  console.log('Auth store user:', authStore.userId);
+  
+  if (!currentUserProfile.value) {
+    console.log('No profile, using authStore display name:', authStore.userDisplayName);
+    return authStore.userDisplayName || 'User';
+  }
+
+  // Access firstName and lastName from the User object
+  const firstName = (currentUserProfile.value.firstName || '').trim();
+  const lastName = (currentUserProfile.value.lastName || '').trim();
+  
+  console.log('Profile firstName:', firstName);
+  console.log('Profile lastName:', lastName);
+
+  if (firstName && lastName) {
+    const fullName = `${firstName} ${lastName}`;
+    console.log('Returning full name:', fullName);
+    return fullName;
+  } else if (firstName) {
+    console.log('Returning first name only:', firstName);
+    return firstName;
+  } else if (lastName) {
+    console.log('Returning last name only:', lastName);
+    return lastName;
+  } else {
+    console.log('No name fields, using fallback');
+    return authStore.userDisplayName || 'User';
+  }
+});
+
 const forumStats = computed(() => ({
   totalQuestions: forumQuestions.value.length,
   totalAnswers: forumQuestions.value.reduce((sum, q) => sum + q.answers.length, 0),
@@ -456,6 +491,8 @@ const loadUserProfile = async () => {
     if (profile) {
       currentUserProfile.value = profile;
       console.log('Profile loaded successfully:', profile);
+      console.log('Profile firstName:', profile.firstName);
+      console.log('Profile lastName:', profile.lastName);
     } else {
       console.warn('No profile found for user');
     }
@@ -519,28 +556,46 @@ const showToastNotification = (message: string, type: 'success' | 'error' = 'suc
   toast.visible = true;
 };
 
-const openCommentsModal = async (question: ForumQuestion) => {
+// FIXED: Open modal immediately, load data in background
+const openCommentsModal = (question: ForumQuestion) => {
+  console.log('Opening comments modal for question:', question.id);
+  
+  // Open modal immediately with current question data
+  selectedQuestion.value = question;
+  showCommentsModal.value = true;
+  
+  // Load fresh data in the background (async, non-blocking)
+  loadQuestionData(question.id);
+};
+
+// Separate function to load question data in background
+const loadQuestionData = async (questionId: number) => {
   try {
-    // Increment view count when opening question
-    await forumService.incrementViews(question.id);
+    // Increment view count
+    await forumService.incrementViews(questionId);
     
     // Reload the specific question to get updated data
-    const updatedQuestion = await forumService.getQuestionById(question.id, authStore.userId || undefined);
+    const updatedQuestion = await forumService.getQuestionById(questionId, authStore.userId || undefined);
     
     if (updatedQuestion) {
+      // Update selected question with fresh data
       selectedQuestion.value = updatedQuestion;
-      showCommentsModal.value = true;
       
       // Update the question in the list
-      const index = forumQuestions.value.findIndex(q => q.id === question.id);
+      const index = forumQuestions.value.findIndex(q => q.id === questionId);
       if (index !== -1) {
         forumQuestions.value[index] = updatedQuestion;
       }
     }
   } catch (error) {
-    console.error('Error opening question:', error);
-    showToastNotification('Failed to load question details', 'error');
+    console.error('Error loading question data:', error);
+    // Don't show error toast since modal is already open with cached data
   }
+};
+
+const handleCloseCommentsModal = () => {
+  showCommentsModal.value = false;
+  selectedQuestion.value = null;
 };
 
 const handlePostQuestion = async (questionData: ForumQuestion) => {

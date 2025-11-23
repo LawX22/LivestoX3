@@ -1,17 +1,25 @@
 // services/navbarService.ts
 import { supabase } from '@/supabase'
 
+// 🔥 Storage key for caching navbar user data
+const NAVBAR_CACHE_KEY = 'livestox_navbar_cache'
+
 // Types
 export interface NavBarUser {
   id: string
   email: string
   displayName: string
   initials: string
-  role: string
+  role: 'buyer' | 'farmer'
   profilePicture: string | null
   firstName: string
   lastName: string
   username: string
+}
+
+interface NavBarCache {
+  user: NavBarUser
+  timestamp: number
 }
 
 export class NavBarServiceError extends Error {
@@ -26,11 +34,81 @@ export class NavBarServiceError extends Error {
 
 export class NavBarService {
   /**
+   * 🔥 CRITICAL: Normalize role to lowercase
+   */
+  private static normalizeRole(role: string | null | undefined): 'buyer' | 'farmer' {
+    if (!role) {
+      return 'buyer'
+    }
+
+    const trimmed = role.trim()
+    const lower = trimmed.toLowerCase()
+
+    if (lower === 'farmer') {
+      return 'farmer'
+    } else {
+      return 'buyer'
+    }
+  }
+
+  /**
+   * 🔥 NEW: Get cached navbar data (synchronous)
+   */
+  static getCachedNavBarData(): NavBarUser | null {
+    try {
+      const cached = localStorage.getItem(NAVBAR_CACHE_KEY)
+      if (cached) {
+        const parsed = JSON.parse(cached) as NavBarCache
+        // Cache valid for 1 hour
+        const isValid = Date.now() - parsed.timestamp < 60 * 60 * 1000
+        if (isValid && parsed.user) {
+          console.log('🔄 Loaded cached navbar data:', parsed.user.displayName)
+          return parsed.user
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load cached navbar data:', e)
+    }
+    return null
+  }
+
+  /**
+   * 🔥 NEW: Save navbar data to cache
+   */
+  static saveNavBarCache(user: NavBarUser): void {
+    try {
+      const cache: NavBarCache = {
+        user,
+        timestamp: Date.now()
+      }
+      localStorage.setItem(NAVBAR_CACHE_KEY, JSON.stringify(cache))
+      console.log('💾 Saved navbar cache:', user.displayName)
+    } catch (e) {
+      console.warn('Failed to save navbar cache:', e)
+    }
+  }
+
+  /**
+   * 🔥 NEW: Clear navbar cache
+   */
+  static clearNavBarCache(): void {
+    try {
+      localStorage.removeItem(NAVBAR_CACHE_KEY)
+      console.log('🗑️ Cleared navbar cache')
+    } catch (e) {
+      console.warn('Failed to clear navbar cache:', e)
+    }
+  }
+
+  /**
    * Get user data for navbar display
    * @throws {NavBarServiceError} When user is not found or auth fails
    */
   static async getNavBarUserData(userId: string): Promise<NavBarUser | null> {
     try {
+      console.log('🔍 ===== FETCHING NAVBAR USER DATA =====')
+      console.log('   User ID:', userId)
+
       // First, verify auth session is still valid
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       
@@ -44,12 +122,11 @@ export class NavBarService {
       // Get profile from profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, first_name, last_name, profile_picture, role')
+        .select('id, username, first_name, last_name, profile_picture, role, email')
         .eq('id', userId)
         .single()
 
       if (profileError) {
-        // Check if user was not found (deleted or never existed)
         if (profileError.code === 'PGRST116') {
           throw new NavBarServiceError(
             'User profile not found - account may have been deleted',
@@ -57,7 +134,7 @@ export class NavBarService {
           )
         }
         
-        console.error('Error fetching profile for navbar:', profileError)
+        console.error('❌ Error fetching profile for navbar:', profileError)
         throw new NavBarServiceError(
           'Failed to fetch user profile',
           'NETWORK_ERROR'
@@ -71,42 +148,52 @@ export class NavBarService {
         )
       }
 
-      const email = authUser.email || ''
+      const email = profile.email || authUser.email || ''
+      const firstName = (profile.first_name || '').trim()
+      const lastName = (profile.last_name || '').trim()
+      const username = (profile.username || '').trim()
 
-      // Extract names
-      const firstName = profile.first_name || ''
-      const lastName = profile.last_name || ''
-      const username = profile.username || ''
+      const rawRole = profile.role
+      const normalizedRole = this.normalizeRole(rawRole)
 
-      // Create display name
+      console.log('   🎭 Role from database:', `"${rawRole}"`)
+      console.log('   🎯 Normalized role:', `"${normalizedRole}"`)
+
       const displayName = firstName && lastName 
         ? `${firstName} ${lastName}` 
         : username || email.split('@')[0] || 'User'
 
-      // Create initials
       const initials = firstName && lastName
         ? `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
         : displayName.substring(0, 2).toUpperCase()
 
-      return {
+      console.log('   👤 Display name:', displayName)
+      console.log('   📧 Email:', email)
+      console.log('   🎯 Final role:', normalizedRole)
+      console.log('===================================\n')
+
+      const navBarUser: NavBarUser = {
         id: profile.id,
         email,
         displayName,
         initials,
-        role: profile.role || 'buyer',
+        role: normalizedRole,
         profilePicture: profile.profile_picture || null,
         firstName,
         lastName,
         username
       }
+
+      // 🔥 Save to cache after successful fetch
+      this.saveNavBarCache(navBarUser)
+
+      return navBarUser
     } catch (error) {
-      // Re-throw NavBarServiceError
       if (error instanceof NavBarServiceError) {
         throw error
       }
       
-      // Wrap other errors
-      console.error('Unexpected error in getNavBarUserData:', error)
+      console.error('💥 Unexpected error in getNavBarUserData:', error)
       throw new NavBarServiceError(
         'Unexpected error loading user data',
         'NETWORK_ERROR'
@@ -128,7 +215,6 @@ export class NavBarService {
         user
       }
     } catch (error) {
-      // Re-throw to let caller handle it
       throw error
     }
   }
@@ -139,5 +225,85 @@ export class NavBarService {
    */
   static async refreshNavBarData(userId: string): Promise<NavBarUser | null> {
     return await this.getNavBarUserData(userId)
+  }
+
+  /**
+   * Check role consistency between auth metadata and profiles table
+   */
+  static async checkRoleSync(userId: string): Promise<{ 
+    inSync: boolean
+    profileRole: 'buyer' | 'farmer'
+    authRole: 'buyer' | 'farmer' 
+  }> {
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const profileRole = this.normalizeRole(profileData?.role)
+      const authRole = this.normalizeRole(user?.user_metadata?.role)
+
+      const inSync = profileRole === authRole
+
+      console.log('🔍 Role sync check:', {
+        inSync,
+        profileRole,
+        authRole
+      })
+
+      return {
+        inSync,
+        profileRole,
+        authRole
+      }
+    } catch (error) {
+      console.error('❌ Error checking role sync:', error)
+      return {
+        inSync: false,
+        profileRole: 'buyer',
+        authRole: 'buyer'
+      }
+    }
+  }
+
+  /**
+   * Force sync auth metadata with profiles
+   */
+  static async syncAuthWithProfiles(userId: string): Promise<boolean> {
+    try {
+      console.log('🔄 Syncing auth with profiles...')
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+
+      if (!profileData) {
+        console.error('❌ No profile found')
+        return false
+      }
+
+      const correctRole = this.normalizeRole(profileData.role)
+
+      const { error } = await supabase.auth.updateUser({
+        data: { role: correctRole }
+      })
+
+      if (error) {
+        console.error('❌ Error syncing:', error)
+        return false
+      }
+
+      console.log('✅ Auth synced with profiles:', correctRole)
+      return true
+    } catch (error) {
+      console.error('💥 Exception syncing:', error)
+      return false
+    }
   }
 }

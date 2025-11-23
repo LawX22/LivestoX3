@@ -40,9 +40,10 @@
       </div>
     </div>
 
+    <!-- CENTER NAVIGATION -->
     <ul class="hidden md:flex gap-6 text-sm font-medium items-center">
       <!-- Show Home and About Us only for guests -->
-      <template v-if="!isAuthenticated">
+      <template v-if="!isLoggedIn">
         <li>
           <router-link to="/"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -111,10 +112,10 @@
         </router-link>
       </li>
 
-      <!-- Additional links for logged-in users -->
-      <template v-if="isAuthenticated">
-        <!-- Show Transactions only for farmers in main navbar -->
-        <li v-if="navbarUser?.role === 'Farmer'">
+      <!-- Role-based links - Show when logged in (uses cached or live data) -->
+      <template v-if="isLoggedIn && currentUser">
+        <!-- Show Transactions only for farmers -->
+        <li v-if="currentUser.role === 'farmer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -131,8 +132,8 @@
           </router-link>
         </li>
 
-        <!-- Show My Purchases only for buyers in main navbar -->
-        <li v-if="navbarUser?.role === 'Buyer'">
+        <!-- Show My Purchases only for buyers -->
+        <li v-if="currentUser.role === 'buyer'">
           <router-link to="/transactions"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
             active-class="text-green-600 [&_.underline]:scale-x-100">
@@ -149,6 +150,7 @@
           </router-link>
         </li>
 
+        <!-- Dashboard - always shown for authenticated users -->
         <li>
           <router-link to="/dashboard"
             class="relative text-gray-600 hover:text-green-600 transition-colors duration-200 flex flex-col items-center group"
@@ -171,7 +173,7 @@
     <!-- Right: Auth or User Info -->
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Cart, Notification and Message Icons (only shown when logged in) -->
-      <template v-if="isAuthenticated">
+      <template v-if="isLoggedIn && currentUser">
         <!-- Cart Button -->
         <div class="relative">
           <router-link to="/carts"
@@ -300,52 +302,29 @@
             </div>
           </div>
         </div>
-      </template>
 
-      <!-- Logged in -->
-      <template v-if="isAuthenticated">
-        <!-- Profile Skeleton Loader -->
-        <div v-if="isLoadingNavbarData || !navbarUser">
-          <div class="flex items-center gap-3 px-4 py-2 rounded-xl">
-            <!-- Profile Image Skeleton -->
-            <div class="relative">
-              <div class="w-10 h-10 rounded-xl bg-gray-200 animate-pulse ring-2 ring-gray-100"></div>
-              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 rounded-full ring-2 ring-white animate-pulse"></div>
-            </div>
-
-            <!-- User Info Skeleton (hidden on mobile) -->
-            <div class="hidden md:block space-y-2">
-              <div class="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
-              <div class="h-2 w-16 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-
-            <!-- Dropdown Arrow Skeleton -->
-            <div class="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-        </div>
-
-        <!-- Actual Profile Content -->
-        <div v-else>
+        <!-- Profile Dropdown -->
+        <div>
           <div
             class="flex items-center cursor-pointer gap-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 px-4 py-2 rounded-xl transition-all duration-300 group border border-transparent hover:border-green-200"
             @click="toggleDropdown">
             <!-- Profile Image with enhanced styling -->
             <div class="relative">
               <!-- Profile Picture or Initials -->
-              <div v-if="navbarUser?.profilePicture"
+              <div v-if="currentUser.profilePicture"
                 class="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <img 
-                  :src="navbarUser.profilePicture" 
-                  :alt="navbarUser.displayName"
+                  :src="currentUser.profilePicture" 
+                  :alt="currentUser.displayName"
                   class="w-full h-full object-cover"
                   loading="eager"
-                  @error="navbarUser.profilePicture = null"
+                  @error="handleImageError"
                 />
               </div>
               <div v-else
                 class="w-10 h-10 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center ring-2 ring-green-200 shadow-lg group-hover:scale-110 transition-all duration-300">
                 <span class="text-sm font-bold text-white">
-                  {{ navbarUser?.initials || 'U' }}
+                  {{ currentUser.initials || 'U' }}
                 </span>
               </div>
               <div
@@ -356,11 +335,11 @@
             <!-- User Info (hidden on mobile) -->
             <div class="hidden md:block">
               <p class="text-sm font-semibold text-gray-800 group-hover:text-green-700 transition-colors duration-200">
-                {{ navbarUser?.displayName || 'User' }}
+                {{ currentUser.displayName || 'User' }}
               </p>
               <p
                 class="text-xs font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent capitalize">
-                {{ navbarUser?.role || 'user' }}
+                {{ currentUser.role || 'user' }}
               </p>
             </div>
 
@@ -385,28 +364,28 @@
                   @click="closeDropdown">
                   <div class="mr-4">
                     <!-- Profile Picture or Initials in Dropdown -->
-                    <div v-if="navbarUser?.profilePicture"
+                    <div v-if="currentUser.profilePicture"
                       class="w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <img 
-                        :src="navbarUser.profilePicture" 
-                        :alt="navbarUser.displayName"
+                        :src="currentUser.profilePicture" 
+                        :alt="currentUser.displayName"
                         class="w-full h-full object-cover"
                         loading="eager"
-                        @error="navbarUser.profilePicture = null"
+                        @error="handleImageError"
                       />
                     </div>
                     <div v-else
                       class="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center ring-2 ring-white ring-opacity-30 group-hover:scale-110 transition-transform duration-200">
                       <span class="text-base font-bold text-white">
-                        {{ navbarUser?.initials || 'U' }}
+                        {{ currentUser.initials || 'U' }}
                       </span>
                     </div>
                   </div>
                   <div class="flex-1">
                     <p class="font-bold text-white text-base mb-1">
-                      {{ navbarUser?.displayName || 'User' }}
+                      {{ currentUser.displayName || 'User' }}
                     </p>
-                    <p class="text-xs text-green-100 truncate mb-2">{{ navbarUser?.email || '' }}</p>
+                    <p class="text-xs text-green-100 truncate mb-2">{{ currentUser.email || '' }}</p>
                     <p
                       class="text-xs text-white font-medium flex items-center group-hover:translate-x-1 transition-transform duration-200">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
@@ -437,7 +416,7 @@
               </router-link>
 
               <!-- Show Transactions only for farmers in dropdown -->
-              <router-link v-if="navbarUser?.role === 'Farmer'" to="/transactions"
+              <router-link v-if="currentUser.role === 'farmer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -452,7 +431,7 @@
               </router-link>
 
               <!-- Show My Purchases only for buyers in dropdown -->
-              <router-link v-if="navbarUser?.role === 'Buyer'" to="/transactions"
+              <router-link v-if="currentUser.role === 'buyer'" to="/transactions"
                 class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-700 transition-all duration-300 rounded-xl group"
                 @click="closeDropdown">
                 <div
@@ -502,7 +481,7 @@
       </template>
 
       <!-- Not logged in -->
-      <template v-else>
+      <template v-else-if="!isLoggedIn">
         <div class="flex items-center gap-3">
           <router-link to="/signIn"
             class="border-2 border-green-500 px-5 py-2 rounded-xl text-sm font-medium hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 transition-all duration-300 flex items-center gap-2 group hover:border-green-600 hover:shadow-md">
@@ -573,15 +552,19 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
 import { NavBarService, NavBarServiceError } from '@/services/navbarService';
+import type { NavBarUser } from '@/services/navbarService';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Navbar data state
-const navbarUser = ref<any>(null);
+// 🔥 CRITICAL: Load cached data IMMEDIATELY (synchronous, before any async calls)
+const cachedNavbarUser = NavBarService.getCachedNavBarData();
 
-// UI counters (static for now, no backend integration)
+// Navbar data state - initialized with cached data if available
+const navbarUser = ref<NavBarUser | null>(cachedNavbarUser);
+
+// UI counters
 const cartCount = ref(0);
 const unreadNotifications = ref(0);
 const unreadMessages = ref(0);
@@ -595,21 +578,51 @@ const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
-// Loading state
-const isLoadingNavbarData = ref(false);
-const isInitializing = ref(false);
+// 🔥 KEY FIX: Use cached auth state OR live auth state
+// This computed property returns true IMMEDIATELY if cache says user was logged in
+const isLoggedIn = computed(() => {
+  // Check live auth state first
+  if (authStore.isAuthenticated) return true;
+  // Fall back to checking if we have cached user data
+  if (cachedNavbarUser) return true;
+  return false;
+});
 
-// Computed properties from authStore
-const isAuthenticated = computed(() => authStore.isAuthenticated);
+// 🔥 KEY FIX: Use cached user OR live user data
+// This ensures user data is available immediately on page load
+const currentUser = computed(() => {
+  // Prefer live data if available
+  if (navbarUser.value) return navbarUser.value;
+  // Fall back to cached data
+  return cachedNavbarUser;
+});
 
-// Initialize and load navbar data
+// Handle image load errors
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  target.style.display = 'none';
+  if (navbarUser.value) {
+    navbarUser.value.profilePicture = null;
+  }
+};
+
+// Initialize
 onMounted(async () => {
+  console.log('🚀 NavBar mounting...');
+  console.log('📦 Cached navbar user:', cachedNavbarUser?.displayName || 'none');
+  
+  // Initialize auth store (this updates isAuthenticated)
   await authStore.initialize();
   
-  if (authStore.isAuthenticated && authStore.userId && !isInitializing.value) {
-    isInitializing.value = true;
-    await loadNavbarData();
-    isInitializing.value = false;
+  // If authenticated, refresh navbar data in background (don't wait)
+  if (authStore.isAuthenticated && authStore.userId) {
+    // Don't await - let it update in background
+    loadNavbarData();
+  } else if (!authStore.isAuthenticated && cachedNavbarUser) {
+    // Session expired but cache exists - clear cache and reset
+    console.log('⚠️ Session expired, clearing cache');
+    NavBarService.clearNavBarCache();
+    navbarUser.value = null;
   }
   
   document.addEventListener("click", handleClickOutside);
@@ -621,25 +634,26 @@ onBeforeUnmount(() => {
   document.removeEventListener("keydown", handleKeyDown);
 });
 
-// Watch for authentication changes
+// Watch for auth changes
 watch(() => authStore.isAuthenticated, async (newValue, oldValue) => {
-  // Only react if authentication status actually changed
-  if (newValue === oldValue || isInitializing.value) return;
+  console.log('🔄 Auth state changed:', { newValue, oldValue });
+  
+  if (oldValue === undefined || newValue === oldValue) return;
   
   if (newValue && authStore.userId) {
-    isInitializing.value = true;
+    // User just logged in - load navbar data
     await loadNavbarData();
-    isInitializing.value = false;
   } else {
-    // Clear data on logout
+    // User logged out - clear everything
     navbarUser.value = null;
+    NavBarService.clearNavBarCache();
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
   }
 }, { immediate: false });
 
-// Watch for route changes to close dropdowns
+// Watch for route changes
 watch(() => route.path, () => {
   showDropdown.value = false;
   showNotificationDropdown.value = false;
@@ -647,74 +661,56 @@ watch(() => route.path, () => {
   showLogoutModal.value = false;
 });
 
-/**
- * Load all navbar data
- * Automatically logs out if user is deleted or cannot be fetched
- */
 const loadNavbarData = async () => {
   if (!authStore.userId) return;
   
-  isLoadingNavbarData.value = true;
-  
   try {
-    console.log('📊 Loading navbar data...');
+    console.log('📊 Loading fresh navbar data...');
     const data = await NavBarService.getAllNavBarData(authStore.userId);
     
+    // Update with fresh data
     navbarUser.value = data.user;
     
-    console.log('✅ Navbar data loaded:', data);
+    console.log('✅ Navbar data refreshed:', data.user?.displayName);
   } catch (error) {
     console.error('❌ Error loading navbar data:', error);
     
-    // Check if it's a NavBarServiceError
     if (error instanceof NavBarServiceError) {
-      // If user not found or auth error, automatically logout
       if (error.code === 'USER_NOT_FOUND' || error.code === 'AUTH_ERROR') {
-        console.warn('⚠️ User account not found or auth invalid - logging out automatically');
+        console.warn('⚠️ User account not found - logging out');
         await handleAutoLogout(error.message);
         return;
       }
     }
     
-    // For network errors, keep the user logged in but show they're offline
-    console.warn('⚠️ Network error loading navbar data, user remains logged in');
-  } finally {
-    isLoadingNavbarData.value = false;
+    // Network error - keep using cached data
+    console.warn('⚠️ Network error, using cached data');
   }
 };
 
-/**
- * Handle automatic logout when user is deleted or can't be fetched
- */
 const handleAutoLogout = async (reason: string) => {
   try {
     console.log('🔒 Auto-logging out:', reason);
     
-    // Use authStore logout
     await authStore.logout();
     
-    // Clear UI state
     navbarUser.value = null;
+    NavBarService.clearNavBarCache();
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
     
-    // Close modals and dropdowns
     showLogoutModal.value = false;
     showDropdown.value = false;
     showNotificationDropdown.value = false;
     showMessageDropdown.value = false;
     
-    console.log('✅ Auto-logout successful, redirecting to home...');
-    
-    // Redirect to home with a message (optional - you can show a toast notification instead)
     router.push({
       path: "/",
-      query: { message: "Your session has expired or your account was not found" }
+      query: { message: "Your session has expired" }
     });
   } catch (error) {
     console.error("❌ Auto-logout failed:", error);
-    // Force redirect anyway
     router.push("/");
   }
 };
@@ -784,20 +780,18 @@ const handleLogout = async () => {
   try {
     console.log('🔒 Logging out...');
     
-    // Use authStore logout
     await authStore.logout();
     
-    // Clear UI state
     navbarUser.value = null;
+    NavBarService.clearNavBarCache();
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
     
-    // Close modals and dropdowns
     showLogoutModal.value = false;
     showDropdown.value = false;
     
-    console.log('✅ Logout successful, redirecting to home...');
+    console.log('✅ Logout successful');
     router.push("/");
   } catch (error) {
     console.error("❌ Logout failed:", error);

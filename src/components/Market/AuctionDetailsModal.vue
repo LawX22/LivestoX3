@@ -1,3 +1,4 @@
+<!-- AuctionDetailsModal.vue -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div v-if="isOpen" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -317,7 +318,7 @@
                   <div class="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200/60">
                     <div class="flex items-center gap-2 mb-2">
                       <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2 2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Description:</span>
                     </div>
@@ -854,8 +855,62 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import type { Animal, ServiceUser, Bid, User } from '../../services/animal'; 
+
+// Types
+interface Animal {
+  id: string;
+  title: string;
+  type: string;
+  breed: string;
+  weight: number;
+  quantity: number;
+  age: string;
+  gender: string;
+  status: string;
+  healthStatus: string[];
+  price: number;
+  deliveryOptions: string[];
+  images: string[];
+  description: string;
+  datePosted: string;
+  farmer: {
+    id: string;
+    name: string;
+    farmName: string;
+    contact: string;
+    email: string;
+    address: string;
+    avatar: string;
+  };
+  location: string;
+  isAuction: boolean;
+  startingBid?: number;
+  currentBid?: number;
+  bidCount?: number;
+  endTime?: string;
+  auctionStartTime?: string;
+}
+
+interface ServiceUser {
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  avatar: string;
+}
+
+interface Bid {
+  id: number;
+  amount: number;
+  timestamp: string;
+  user: User;
+  previousBid?: number;
+}
 
 const props = defineProps<{
   animal: Animal;
@@ -865,13 +920,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'placeBid', bidData: { animalId: number; amount: number }): void;
+  (e: 'placeBid', bidData: { animalId: string; amount: number }): void;
   (e: 'redirectToLogin'): void;
 }>();
 
-const router = useRouter();
-
-// Reactive state from both components
+// Reactive state
 const currentImageIndex = ref(0);
 const bidAmount = ref<number | null>(null);
 const showToast = ref(false);
@@ -880,7 +933,7 @@ const searchQuery = ref('');
 const sortBy = ref('amount-desc');
 const amountFilter = ref('all');
 
-// Mock bids (replace with API data later)
+// Mock bids
 const bids = ref<Bid[]>([
   {
     id: 1,
@@ -944,7 +997,7 @@ const bids = ref<Bid[]>([
   }
 ]);
 
-// Computed properties from new component
+// Computed properties
 const minimumIncrement = computed(() => {
   const currentBid = props.animal.currentBid || props.animal.startingBid || 0;
   if (currentBid < 10000) return 500;
@@ -981,7 +1034,6 @@ const bidError = computed(() => {
   return null;
 });
 
-// Mock recent bids data from new component
 const recentBids = computed(() => [
   { bidder: 'Juan D.', amount: props.animal.currentBid || props.animal.startingBid || 0, timeAgo: '2 min ago' },
   { bidder: 'Maria S.', amount: (props.animal.currentBid || props.animal.startingBid || 0) - minimumIncrement.value, timeAgo: '5 min ago' },
@@ -989,7 +1041,6 @@ const recentBids = computed(() => [
   { bidder: 'Ana C.', amount: (props.animal.currentBid || props.animal.startingBid || 0) - (minimumIncrement.value * 3), timeAgo: '12 min ago' }
 ].filter(bid => bid.amount >= (props.animal.startingBid || 0)));
 
-// Computed properties from old component
 const highestBid = computed(() =>
   bids.value.length > 0 ? Math.max(...bids.value.map(bid => bid.amount)) : props.animal.startingBid || 0
 );
@@ -1008,7 +1059,6 @@ const averageBid = computed(() => {
 const filteredBids = computed(() => {
   let filtered = [...bids.value];
 
-  // Search
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(bid =>
@@ -1017,7 +1067,6 @@ const filteredBids = computed(() => {
     );
   }
 
-  // Amount filter
   if (amountFilter.value !== 'all') {
     filtered = filtered.filter(bid => {
       switch (amountFilter.value) {
@@ -1033,7 +1082,6 @@ const filteredBids = computed(() => {
     });
   }
 
-  // Sort
   filtered.sort((a, b) => {
     switch (sortBy.value) {
       case 'amount-desc': return b.amount - a.amount;
@@ -1048,7 +1096,7 @@ const filteredBids = computed(() => {
   return filtered;
 });
 
-// Methods from both components
+// Methods
 const nextImage = () => {
   currentImageIndex.value = (currentImageIndex.value + 1) % props.animal.images.length;
 };
@@ -1100,7 +1148,6 @@ const placeBid = () => {
   showToast.value = true;
   setTimeout(() => (showToast.value = false), 4000);
   
-  // Reset bid amount after placing bid
   bidAmount.value = null;
 };
 
@@ -1129,7 +1176,7 @@ const isRecentBid = (timestamp: string): boolean => {
 };
 
 const viewBidderProfile = (userId: number) => {
-  router.push({ name: 'UserProfile', params: { id: userId } });
+  console.log('View bidder profile:', userId);
 };
 
 const contactBidder = (user: User) => {
@@ -1143,7 +1190,7 @@ const contactBidder = (user: User) => {
 };
 
 const loadMoreBids = () => {
-  console.log("Load more bids"); // Hook for API pagination
+  console.log("Load more bids");
 };
 
 // Watchers

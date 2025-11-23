@@ -243,7 +243,7 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import type { Animal } from '../../services/animal';
+import type { Animal } from '@/services/marketplace';
 
 // Props
 const props = defineProps<{
@@ -313,41 +313,5 @@ const getTimeRemaining = (endTime?: string): string => {
   } else {
     return `${minutes}m left`;
   }
-};
-
-const generateEngagingTitle = (animal: Animal): string => {
-  const { type, breed, status, gender, age, isAuction } = animal;
-
-  if (isAuction) {
-    const auctionTitles = [
-      `AUCTION: Premium ${breed} ${type} - Live Bidding!`,
-      `LIVE AUCTION: Quality ${breed} ${type} - Bid Now!`,
-      `${breed} ${type} Auction - ${gender} ${age}`,
-      `AUCTION ALERT: Exceptional ${breed} ${type}`,
-      `BIDDING NOW: Farm-Fresh ${breed} ${type}`,
-      `LIVE: Premium ${type} Stock - ${breed} Excellence`,
-      `AUCTION: ${breed} ${type} - Raised with Care`,
-      `BIDDING: Quality ${gender} ${breed} ${type}`,
-      `LIVE AUCTION: Top-Grade ${breed} ${type}`,
-      `AUCTION NOW: Healthy ${breed} ${type} Stock`
-    ];
-    return auctionTitles[animal.id % auctionTitles.length];
-  }
-
-  const titles = [
-    `Premium ${breed} ${type} Ready for New Home!`,
-    `Healthy ${breed} ${type} - ${status} Now!`,
-    `Quality ${breed} ${type} - ${gender} ${age}`,
-    `Farm-Fresh ${breed} ${type} - Direct from Farmer`,
-    `Exceptional ${breed} ${type} - Limited Availability`,
-    `Premium ${type} Stock - ${breed} Breed Excellence`,
-    `${breed} ${type} - Raised with Care & Expertise`,
-    `Healthy ${gender} ${breed} ${type} - Ready Now!`,
-    `Top-Quality ${breed} ${type} - ${status}`,
-    `Farm-Raised ${breed} ${type} - Healthy & Strong`
-  ];
-
-  // Use animal ID to get a consistent title for each animal
-  return titles[animal.id % titles.length];
 };
 </script>
