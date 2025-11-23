@@ -1,8 +1,125 @@
 <!-- livestockManagement.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
-    <!-- Farmer Role Check - Show access denied for non-farmers -->
-    <div v-if="!isFarmerUser" class="flex-1 flex items-center justify-center p-6">
+    <!-- Skeleton Loading State - Show while checking authentication -->
+    <div v-if="isLoading" class="flex-1 flex flex-col overflow-hidden">
+      <!-- Background Elements -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-10 w-12 h-12 bg-green-300/30 rounded-full blur-sm animate-pulse"></div>
+        <div class="absolute bottom-24 right-24 w-16 h-16 bg-teal-300/20 rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
+        <div class="absolute top-1/2 right-8 w-6 h-6 bg-green-400/25 rounded-full blur-sm animate-pulse" style="animation-delay: 0.5s"></div>
+      </div>
+
+      <!-- Skeleton Header -->
+      <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
+        <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
+          <!-- Left side skeleton -->
+          <div class="flex items-center min-w-0">
+            <div class="w-10 h-10 bg-white/20 rounded-xl mr-3 animate-pulse"></div>
+            <div class="w-12 h-12 bg-white/20 rounded-xl mr-3 animate-pulse"></div>
+            <div class="min-w-0 space-y-2">
+              <div class="h-5 bg-white/20 rounded w-48 animate-pulse"></div>
+              <div class="h-3 bg-white/20 rounded w-64 animate-pulse"></div>
+            </div>
+          </div>
+          <!-- Right side skeleton -->
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-32 bg-white/20 rounded-lg animate-pulse"></div>
+            <div class="h-9 w-32 bg-white/20 rounded-lg animate-pulse"></div>
+            <div class="flex gap-1 bg-white/10 rounded-lg p-1">
+              <div class="h-9 w-20 bg-white/20 rounded-md animate-pulse"></div>
+              <div class="h-9 w-20 bg-white/20 rounded-md animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Skeleton Sidebar -->
+        <div class="w-64 bg-white/95 backdrop-blur-sm border-r border-white/60 p-4 space-y-4">
+          <div class="h-6 bg-gray-200 rounded animate-pulse w-3/4"></div>
+          <div class="space-y-3">
+            <div class="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-10 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Skeleton Status Cards -->
+          <div class="sticky top-0 z-30 px-4 md:px-6 py-4 bg-gradient-to-b from-white/80 to-transparent backdrop-blur-sm">
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div v-for="i in 6" :key="i" class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60">
+                <div class="flex items-center justify-between">
+                  <div class="space-y-2 flex-1">
+                    <div class="h-3 bg-gray-200 rounded animate-pulse w-20"></div>
+                    <div class="h-6 bg-gray-300 rounded animate-pulse w-12"></div>
+                  </div>
+                  <div class="w-10 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skeleton Tabs and Sort -->
+          <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-white/40 px-4 py-3">
+            <div class="grid grid-cols-1 lg:grid-cols-3 items-center gap-3">
+              <div class="h-7 bg-gray-200 rounded animate-pulse w-40"></div>
+              <div class="flex justify-center gap-2">
+                <div class="h-10 w-32 bg-gray-200 rounded-md animate-pulse"></div>
+                <div class="h-10 w-32 bg-gray-200 rounded-md animate-pulse"></div>
+              </div>
+              <div class="flex justify-end">
+                <div class="h-8 w-32 bg-gray-200 rounded-md animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skeleton Cards Grid -->
+          <div class="flex-1 overflow-y-auto">
+            <div class="p-4">
+              <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                <div v-for="i in 8" :key="i" class="bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden border border-white/60 shadow-sm">
+                  <!-- Image skeleton -->
+                  <div class="h-48 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"></div>
+                  
+                  <!-- Content skeleton -->
+                  <div class="p-4 space-y-3">
+                    <!-- Title -->
+                    <div class="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                    
+                    <!-- Type badge -->
+                    <div class="h-6 bg-gray-200 rounded-full animate-pulse w-20"></div>
+                    
+                    <!-- Details -->
+                    <div class="space-y-2">
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="h-6 bg-gray-300 rounded animate-pulse w-32"></div>
+                    
+                    <!-- Buttons -->
+                    <div class="flex gap-2 pt-2">
+                      <div class="h-9 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+                      <div class="h-9 w-9 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Farmer Role Check - Show access denied for non-farmers (only after loading) -->
+    <div v-else-if="!isFarmerUser" class="flex-1 flex items-center justify-center p-6">
       <div class="bg-white/95 backdrop-blur-sm p-8 rounded-2xl border border-red-200/60 max-w-md text-center shadow-xl">
         <div class="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center mx-auto mb-4">
           <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +147,7 @@
       </div>
     </div>
 
-    <!-- Main Content - Only show for farmers -->
+    <!-- Main Content - Only show for farmers after loading -->
     <template v-else>
       <!-- Background Elements -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -186,7 +303,7 @@
         <div class="flex-1 flex flex-col overflow-hidden">
           <!-- Status Overview Cards -->
           <div class="sticky top-0 z-30 px-4 md:px-6 py-4 bg-gradient-to-b from-white/80 to-transparent backdrop-blur-sm">
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
               <!-- Total Listings -->
               <div
                 class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
@@ -261,24 +378,6 @@
                 </div>
               </div>
 
-              <!-- Healthy Animals -->
-              <div
-                class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-xs md:text-sm font-medium text-gray-600">Healthy</p>
-                    <p class="text-xl md:text-2xl font-bold text-emerald-600">
-                      {{ animals.filter(a => a.healthStatus?.includes('Healthy')).length }}
-                    </p>
-                  </div>
-                  <div class="p-2 bg-emerald-100/80 rounded-lg">
-                    <svg class="w-5 h-5 md:w-6 md:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
               <!-- Total Value -->
               <div
                 class="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all">
@@ -299,7 +398,6 @@
               </div>
             </div>
           </div>
-
           <!-- STICKY Results Summary with Tabs and Sort -->
           <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-white/40 px-4 py-3">
             <!-- Use grid to keep layout stable -->
@@ -389,9 +487,33 @@
           <!-- SCROLLABLE Content Area -->
           <div class="flex-1 overflow-y-auto">
             <div class="p-4">
+              <!-- Loading State for Listings -->
+              <div v-if="isLoadingListings" class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                <div v-for="i in 6" :key="i" class="bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden border border-white/60 shadow-sm">
+                  <!-- Image skeleton -->
+                  <div class="h-48 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"></div>
+                  
+                  <!-- Content skeleton -->
+                  <div class="p-4 space-y-3">
+                    <div class="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                    <div class="h-6 bg-gray-200 rounded-full animate-pulse w-20"></div>
+                    <div class="space-y-2">
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                      <div class="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+                    </div>
+                    <div class="h-6 bg-gray-300 rounded animate-pulse w-32"></div>
+                    <div class="flex gap-2 pt-2">
+                      <div class="h-9 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+                      <div class="h-9 w-9 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Card View -->
               <div 
-                v-if="displayMode === 'card' && currentFilteredAnimals.length > 0" 
+                v-else-if="displayMode === 'card' && currentFilteredAnimals.length > 0" 
                 class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
               >
                 <LivestockCard
@@ -407,7 +529,7 @@
               </div>
 
               <!-- Table View - Updated implementation -->
-              <div v-if="displayMode === 'table' && currentFilteredAnimals.length > 0" class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 overflow-hidden shadow-lg">
+              <div v-else-if="displayMode === 'table' && currentFilteredAnimals.length > 0" class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 overflow-hidden shadow-lg">
                 <div class="overflow-x-auto">
                   <table class="min-w-full divide-y divide-gray-200">
                     <LivestockCard
@@ -425,12 +547,12 @@
                 </div>
               </div>
 
-              <!-- Enhanced Empty State -->
-              <div v-if="currentFilteredAnimals.length === 0" class="flex flex-col items-center justify-center py-12">
+              <!-- Enhanced Empty State - Only show when NOT loading and no results -->
+              <div v-else-if="!isLoadingListings && currentFilteredAnimals.length === 0" class="flex flex-col items-center justify-center py-12">
                 <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md text-center shadow-xl">
                   <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-inner">
                     <svg v-if="activeTab === 'auction'" class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 01118 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -441,12 +563,18 @@
                   </h3>
                   <p class="text-xs text-gray-500 mb-4 leading-relaxed">
                     {{ activeTab === 'auction' 
-                      ? 'We couldn\'t find any live auctions matching your current search criteria. Try adjusting your filters or check back later for new auctions.'
-                      : 'We couldn\'t find any livestock matching your current search criteria. Try adjusting your filters or browse all available listings.'
+                      ? 'You don\'t have any live auctions yet. Create your first auction to start selling your livestock through bidding!'
+                      : animals.length === 0 
+                        ? 'You haven\'t created any livestock listings yet. Click the "Create Listing" button above to get started!'
+                        : 'No livestock match your current filters. Try adjusting your search criteria or reset filters to see all listings.'
                     }}
                   </p>
                   <div class="flex flex-col sm:flex-row gap-2 justify-center">
-                    <button @click="resetFilters" class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 justify-center transform hover:scale-105">
+                    <button 
+                      v-if="animals.length > 0"
+                      @click="resetFilters" 
+                      class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 justify-center transform hover:scale-105"
+                    >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
@@ -472,11 +600,13 @@
       </div>
     </template>
 
-    <!-- Animal Details Modal -->
+    <!-- Animal Details Modal - FIXED: Added @updated and @deleted handlers -->
     <AnimalDetailsModal 
       v-if="isModalOpen && selectedAnimal && !selectedAnimal.isAuction" 
       :animal="selectedAnimal"
       @close="closeModal"
+      @updated="handleListingUpdated"
+      @deleted="handleListingDeleted"
     />
 
     <!-- Auction Details Modal -->
@@ -564,39 +694,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import FilterSidebar from '../../components/LivestockManagement/FilterSidebar.vue';
-import AnimalDetailsModal from '../../components/LivestockManagement/AnimalDetailsModal.vue';
-import AuctionDetailsModal from '../../components/LivestockManagement/AuctionDetailsModal.vue';
+import AnimalDetailsModal from '../../components/LivestockManagement/AnimalModal.vue';
+import AuctionDetailsModal from '../../components/LivestockManagement/AuctionModal.vue';
 import LivestockCard from '../../components/LivestockManagement/LivestockCard.vue';
 import CreateListingModal from '../../components/LivestockManagement/CreateListingModal.vue';
 import CreateAuctionModal from '../../components/LivestockManagement/CreateAuctionModal.vue';
-import type { Animal, Farmer, Filters, ServiceUser, CreateListingForm, CreateAuctionForm, QuantityUpdateData, AuctionBidData } from '../../services/animal';
-
-// Mock user service for demonstration
-const getCurrentUser = (): ServiceUser | null => ({
-  role: 'Farmer',
-  name: 'John Doe',
-  email: 'john@example.com'
-});
+import type { Animal, Filters, CreateListingForm, CreateAuctionForm, QuantityUpdateData, AuctionBidData } from '../../services/managementTypes';
+import { LivestockService } from '../../services/livestockService';
+import { supabase } from '@/supabase';
 
 const router = useRouter();
-const rawUser = getCurrentUser();
-const currentUser = rawUser
-  ? {
-      ...rawUser,
-      name: rawUser.name || rawUser.displayName || rawUser.email || 'User',
-      email: rawUser.email || ''
-    }
-  : null;
+
+// Auth state
+const currentUser = ref<any>(null);
+const isLoading = ref(true);
+const isLoadingListings = ref(false);
 
 // Check if user is a farmer
 const isFarmerUser = computed(() => {
-  return currentUser?.role === 'Farmer';
+  return currentUser.value?.role === 'Farmer';
 });
 
-const hasPendingUpgrade = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
 
@@ -638,141 +759,96 @@ const filters = ref<Filters>({
   bidActivities: []
 });
 
-// Unified farmer (same person for all animals)
-const farmerMaria: Farmer = {
-  id: 2,
-  name: 'Maria Santos',
-  farmName: 'Santos Ranch',
-  contact: '+63 921 777 8888',
-  address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-  avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
-};
+// Data from backend
+const animals = ref<Animal[]>([]);
 
-// Function to automatically update status based on quantity
-const updateAnimalStatus = (animal: Animal): string => {
-  if (animal.quantity === 0) {
-    return 'Out of Stock';
-  } else if (animal.originalQuantity && animal.quantity <= animal.originalQuantity * 0.3) {
-    return 'Low Stock';
-  } else {
-    return 'Available';
-  }
-};
-
-// Function to check for status changes and show alerts
-const checkForStatusChange = (animal: Animal, oldQuantity: number, newQuantity: number) => {
-  const originalQty = animal.originalQuantity || animal.quantity;
-  const oldStatus = oldQuantity === 0 ? 'Out of Stock' : 
-                  oldQuantity <= originalQty * 0.3 ? 'Low Stock' : 'Available';
-  const newStatus = newQuantity === 0 ? 'Out of Stock' : 
-                  newQuantity <= originalQty * 0.3 ? 'Low Stock' : 'Available';
-  
-  if (oldStatus !== newStatus) {
-    let message = '';
-    if (newStatus === 'Out of Stock') {
-      message = `"${animal.title}" is now out of stock! Consider restocking or removing the listing.`;
-    } else if (newStatus === 'Low Stock' && oldStatus === 'Available') {
-      message = `"${animal.title}" is running low! Only ${newQuantity} items remaining (below 30% of original stock).`;
-    } else if (newStatus === 'Available' && oldStatus === 'Low Stock') {
-      message = `"${animal.title}" stock has been replenished! Status changed back to Available.`;
-    }
+// Load current user
+const loadUser = async () => {
+  try {
+    isLoading.value = true;
+    console.log('🔐 Loading user authentication...');
     
-    if (message) {
-      lowStockMessage.value = message;
-      alertAnimalId.value = animal.id.toString();
-      showLowStockAlert.value = true;
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log('❌ No authenticated user found');
+      currentUser.value = null;
+      isLoading.value = false;
+      return;
     }
+
+    console.log('✅ User authenticated:', user.id);
+
+    // Get user profile with role
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('❌ Error loading profile:', profileError);
+      currentUser.value = null;
+      isLoading.value = false;
+      return;
+    }
+
+    if (profile) {
+      // Normalize role to handle case inconsistencies
+      const normalizedRole = profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1).toLowerCase() : null;
+      
+      currentUser.value = {
+        id: user.id,
+        email: user.email,
+        role: normalizedRole,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        name: profile.first_name && profile.last_name 
+          ? `${profile.first_name} ${profile.last_name}`.trim()
+          : profile.username || user.email,
+      };
+      
+      console.log('✅ User profile loaded. Role:', normalizedRole);
+    } else {
+      console.log('❌ No profile found for user');
+      currentUser.value = null;
+    }
+  } catch (error) {
+    console.error('❌ Error in loadUser:', error);
+    currentUser.value = null;
+  } finally {
+    isLoading.value = false;
+    console.log('🔓 Authentication check complete. Loading:', isLoading.value, 'Is Farmer:', isFarmerUser.value);
   }
 };
 
-// Updated animal data with originalQuantity tracking
-const animals = ref<Animal[]>([
-  {
-    id: 1,
-    title: 'Premium Angus Cattle - Young Bulls',
-    type: 'Cattle',
-    breed: 'Angus',
-    weight: 450,
-    quantity: 5,
-    originalQuantity: 5,
-    age: '18-24 months',
-    gender: 'Male',
-    status: 'Available',
-    healthStatus: ['Healthy & Vaccinated', 'Vet Certified', 'Dewormed'],
-    price: 45000,
-    deliveryOptions: ['pickup', 'delivery'],
-    images: [
-      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed.',
-    datePosted: new Date().toISOString(),
-    farmer: farmerMaria,
-    location: 'Pampanga',
-    isAuction: false
-  },
-  {
-    id: 6,
-    title: 'Landrace Pigs',
-    type: 'Pig',
-    breed: 'Landrace',
-    weight: 95,
-    quantity: 3,
-    originalQuantity: 3,
-    age: '5-7 months',
-    gender: 'Mixed',
-    status: 'Available',
-    healthStatus: ['Vaccinated', 'Healthy'],
-    price: 0,
-    deliveryOptions: ['pickup'],
-    images: [
-      'https://media.istockphoto.com/id/140462837/photo/cute-pig-leaning-on-railing-of-his-cot.jpg?s=612x612&w=0&k=20&c=wX4-WVElHzIvfJoppwRZOgHKu3geSc3zReM_17lcwVc='
-    ],
-    description: 'High-quality Landrace pigs, excellent for commercial production. Well-fed and healthy.',
-    datePosted: new Date(Date.now() - 43200000).toISOString(),
-    farmer: {
-      id: 7,
-      name: 'Elena Morales',
-      farmName: 'Morales Hog Farm',
-      contact: '+63 926 333 4444',
-      email: 'elena@moraleshogfarm.com',
-      address: '777 Swine Valley, Barangay Pork, Tarlac',
-      avatar: 'https://randomuser.me/api/portraits/women/23.jpg'
-    },
-    location: 'Tarlac',
-    isAuction: true,
-    startingBid: 24000,
-    currentBid: 28500,
-    bidCount: 5,
-    endTime: new Date(Date.now() + 10800000).toISOString(), // 3 hours from now
-    duration: '3-7d',
-    auctionStartTime: new Date(Date.now() - 345600000).toISOString(), // Started 4 days ago
-    reservePrice: 22000,
-    bidIncrement: 500,
-    paymentTerms: '50% deposit, 50% upon delivery',
-    additionalTerms: 'Must be picked up within 3 days after auction ends'
+// Load livestock listings
+const loadListings = async () => {
+  if (!isFarmerUser.value) {
+    console.log('⏭️ Skipping listings load - user is not a farmer');
+    return;
   }
-]);
 
-// Watch for animal changes and update status automatically
-watch(animals, (newAnimals, oldAnimals) => {
-  if (oldAnimals) {
-    newAnimals.forEach((animal, index) => {
-      if (oldAnimals[index] && !animal.isAuction) {
-        const oldQuantity = oldAnimals[index].quantity;
-        const newQuantity = animal.quantity;
-        
-        // Update status based on current quantity
-        animal.status = updateAnimalStatus(animal);
-        
-        // Check for status changes and show alerts if quantity changed
-        if (oldQuantity !== newQuantity) {
-          checkForStatusChange(animal, oldQuantity, newQuantity);
-        }
-      }
-    });
+  isLoadingListings.value = true;
+  try {
+    console.log('📋 Loading livestock listings...');
+    
+    const result = await LivestockService.getMyListings();
+
+    if (result.success && result.data) {
+      animals.value = result.data;
+      console.log(`✅ Loaded ${result.data.length} listings`);
+    } else {
+      console.error('❌ Error loading listings:', result.error);
+      showToastNotification('Failed to load listings: ' + (result.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('❌ Error in loadListings:', error);
+    showToastNotification('Failed to load listings');
+  } finally {
+    isLoadingListings.value = false;
   }
-}, { deep: true });
+};
 
 // Computed properties
 const normalListings = computed(() => animals.value.filter(animal => !animal.isAuction));
@@ -809,6 +885,7 @@ const uniqueHealthStatuses = computed(() => {
   return Array.from(new Set(allHealthStatuses)).sort();
 });
 
+// Helper functions
 const getAuctionStatus = (animal: Animal): string => {
   if (!animal.isAuction || !animal.endTime) return 'Unknown';
   const now = new Date().getTime();
@@ -955,10 +1032,6 @@ const currentFilteredAnimals = computed(() => {
       case 'bidActivity': return (b.bidCount || 0) - (a.bidCount || 0);
       case 'type': return a.type.localeCompare(b.type);
       case 'type-desc': return b.type.localeCompare(a.type);
-      case 'breed': return a.breed.localeCompare(b.breed);
-      case 'breed-desc': return b.breed.localeCompare(a.breed);
-      case 'quantity': return a.quantity - b.quantity;
-      case 'quantity-desc': return b.quantity - a.quantity;
       default: return 0;
     }
   });
@@ -1032,7 +1105,7 @@ const createListing = () => {
 };
 
 const createAuction = () => {
-  showCreateAuctionModal.value = true;
+  showToastNotification(LivestockService.getAuctionUnavailableMessage());
 };
 
 const closeCreateListingModal = () => {
@@ -1043,25 +1116,13 @@ const closeCreateAuctionModal = () => {
   showCreateAuctionModal.value = false;
 };
 
-// Quantity update handler - This is the main function that handles stock changes
-const handleQuantityUpdate = (data: QuantityUpdateData) => {
-  const animalIndex = animals.value.findIndex(a => String(a.id) === data.animalId);
-  if (animalIndex !== -1) {
-    const animal = animals.value[animalIndex];
-    const oldQuantity = animal.quantity;
+// Quantity update handler
+const handleQuantityUpdate = async (data: QuantityUpdateData) => {
+  const result = await LivestockService.updateQuantity(data);
+  
+  if (result.success) {
+    await loadListings();
     
-    // Update the quantity
-    animals.value[animalIndex].quantity = Math.max(0, data.newQuantity);
-    
-    // The status will be automatically updated by the watcher
-    // But we can also do it manually here for immediate feedback
-    const newStatus = updateAnimalStatus(animals.value[animalIndex]);
-    animals.value[animalIndex].status = newStatus;
-    
-    // Check for status changes and show alerts
-    checkForStatusChange(animal, oldQuantity, data.newQuantity);
-    
-    // Show operation feedback
     let operationMessage = '';
     switch (data.operation) {
       case 'sold':
@@ -1073,11 +1134,11 @@ const handleQuantityUpdate = (data: QuantityUpdateData) => {
       case 'updated':
         operationMessage = `Quantity updated to ${data.newQuantity} items.`;
         break;
-      default:
-        operationMessage = `Quantity updated to ${data.newQuantity} items.`;
     }
     
     showToastNotification(operationMessage);
+  } else {
+    showToastNotification('Failed to update quantity: ' + (result.error || 'Unknown error'));
   }
 };
 
@@ -1096,43 +1157,11 @@ const goToListing = () => {
   closeLowStockAlert();
 };
 
-const handleListingCreated = (listingData: CreateListingForm) => {
-  // Generate new animal from form data with user-provided title and unique ID
-  const newAnimal: Animal = {
-    id: Math.max(...animals.value.map(a => a.id)) + 1, // Generate unique ID
-    title: listingData.title,
-    type: listingData.type,
-    breed: listingData.breed,
-    weight: listingData.weight || 0,
-    quantity: listingData.quantity || 0,
-    originalQuantity: listingData.quantity || 0,
-    age: listingData.age,
-    gender: listingData.gender,
-    status: listingData.status,
-    healthStatus: listingData.healthStatus,
-    price: listingData.price || 0,
-    deliveryOptions: listingData.deliveryOptions,
-    images: listingData.images.length > 0 ? listingData.images : [
-      'https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: listingData.description,
-    datePosted: new Date().toISOString(),
-    farmer: farmerMaria,
-    location: listingData.location,
-    isAuction: false
-  };
-
-  // Auto-set the correct status based on quantity
-  newAnimal.status = updateAnimalStatus(newAnimal);
-
-  // Add to animals list
-  animals.value.unshift(newAnimal);
-  
-  // Show success message
-  showToastNotification(`Listing "${listingData.title}" has been created successfully!`);
-  
-  // Close modal
+// CRUD Handlers
+const handleListingCreated = async () => {
+  showToastNotification('Listing created successfully!');
   closeCreateListingModal();
+  await loadListings();
 };
 
 const handleListingDraft = (listingData: CreateListingForm) => {
@@ -1140,83 +1169,43 @@ const handleListingDraft = (listingData: CreateListingForm) => {
   closeCreateListingModal();
 };
 
+// NEW: Handler for when a listing is updated
+const handleListingUpdated = async () => {
+  console.log('📝 Listing updated, reloading listings...');
+  showToastNotification('Listing updated successfully!');
+  closeModal();
+  await loadListings();
+};
+
+// NEW: Handler for when a listing is deleted
+const handleListingDeleted = async () => {
+  console.log('🗑️ Listing deleted, reloading listings...');
+  showToastNotification('Listing deleted successfully!');
+  closeModal();
+  await loadListings();
+};
+
 const handleAuctionCreated = (auctionData: CreateAuctionForm) => {
-  // Calculate auction end time
-  const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + (parseInt(auctionData.duration) * 24 * 60 * 60 * 1000));
-
-  // Generate new auction from form data
-  const newAuction: Animal = {
-    id: Math.max(...animals.value.map(a => a.id)) + 1, // Generate unique ID
-    title: auctionData.title,
-    type: auctionData.type,
-    breed: auctionData.breed,
-    weight: auctionData.weight || 0,
-    quantity: auctionData.quantity || 0,
-    originalQuantity: auctionData.quantity || 0,
-    age: auctionData.age,
-    gender: auctionData.gender,
-    status: 'Available',
-    healthStatus: auctionData.healthStatus,
-    price: 0, // Auctions start at 0 for price field
-    deliveryOptions: auctionData.deliveryOptions,
-    images: auctionData.images.length > 0 ? auctionData.images : [
-      'https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: auctionData.description,
-    datePosted: new Date().toISOString(),
-    farmer: farmerMaria,
-    location: auctionData.location,
-    isAuction: true,
-    startingBid: auctionData.startingBid || 0,
-    currentBid: auctionData.startingBid || 0, // Start with starting bid as current bid
-    bidCount: 0,
-    auctionStartTime: startTime.toISOString(),
-    endTime: endTime.toISOString(),
-    duration: `${auctionData.duration} ${parseInt(auctionData.duration) === 1 ? 'day' : 'days'}`,
-    reservePrice: auctionData.reservePrice || undefined,
-    bidIncrement: auctionData.bidIncrement || 100,
-    paymentTerms: auctionData.paymentTerms,
-    additionalTerms: auctionData.additionalTerms || undefined
-  };
-
-  // Add to animals list
-  animals.value.unshift(newAuction);
-  
-  // Show success message
-  showToastNotification(`Auction "${auctionData.title}" has been created successfully! Auction ends ${endTime.toLocaleDateString()}`);
-  
-  // Close modal and switch to auction tab
+  showToastNotification(LivestockService.getAuctionUnavailableMessage());
   closeCreateAuctionModal();
-  activeTab.value = 'auction';
 };
 
 const handleAuctionDraft = (auctionData: CreateAuctionForm) => {
-  showToastNotification(`Draft saved for auction "${auctionData.title}"`);
+  showToastNotification(LivestockService.getAuctionUnavailableMessage());
   closeCreateAuctionModal();
 };
 
 const handlePlaceBid = (bidData: AuctionBidData) => {
-  const animalIndex = animals.value.findIndex(a => String(a.id) === bidData.animalId);
-  if (animalIndex !== -1) {
-    animals.value[animalIndex].currentBid = bidData.amount;
-    animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
-    showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
-  }
+  showToastNotification(LivestockService.getAuctionUnavailableMessage());
 };
 
 // Lifecycle
-onMounted(() => {
-  const requests = JSON.parse(localStorage.getItem('upgradeRequests') || '[]');
-  hasPendingUpgrade.value = currentUser?.email
-    ? requests.some((r: any) => r.email === currentUser.email)
-    : false;
-    
-  // Initialize all animal statuses on mount
-  animals.value.forEach(animal => {
-    if (!animal.isAuction) {
-      animal.status = updateAnimalStatus(animal);
-    }
-  });
+onMounted(async () => {
+  console.log('🚀 Component mounted, starting authentication check...');
+  await loadUser();
+  
+  if (isFarmerUser.value) {
+    await loadListings();
+  }
 });
 </script>

@@ -1,4 +1,5 @@
-// animal.ts
+// managementTypes.ts - Complete type definitions for livestock management
+
 export interface Farmer {
   id: number;
   name: string;
@@ -11,18 +12,22 @@ export interface Farmer {
 
 export interface Animal {
   id: number;
+  uuid: string;
   title: string; 
   type: string;
   breed: string;
   weight: number;
-  quantity: number;
+  weightUnit?: string; // ✅ NEW: Weight unit (kg, lbs, g)
+  quantity: number; 
   originalQuantity?: number; 
   age: string;
   gender: string;
   status: string;
   healthStatus?: string[];
   price: number;
+  priceUnit?: string; // ✅ NEW: Price unit (per head, per kg, per lbs, total)
   deliveryOptions: string[];
+  paymentMethods?: string[];
   images: string[];
   description: string;
   datePosted: string;
@@ -122,19 +127,22 @@ export interface MessageTemplate {
   template: string;
 }
 
-// New interfaces for livestock management forms
+// Livestock management forms
 export interface CreateListingForm {
   title: string;
   type: string;
   breed: string;
   weight: number;
+  weightUnit?: string; // ✅ NEW: Weight unit
   quantity: number;
   age: string;
   gender: string;
   status: string;
   healthStatus: string[];
   price: number;
+  priceUnit?: string; // ✅ NEW: Price unit
   deliveryOptions: string[];
+  paymentMethods: string[];
   images: string[];
   description: string;
   location: string;
@@ -145,6 +153,7 @@ export interface CreateAuctionForm {
   type: string;
   breed: string;
   weight: number;
+  weightUnit?: string; // ✅ NEW: Weight unit
   quantity: number;
   age: string;
   gender: string;
@@ -170,4 +179,37 @@ export interface QuantityUpdateData {
 export interface AuctionBidData {
   animalId: string;
   amount: number;
+}
+
+// Additional types for filters and sorting
+export interface FilterOptions {
+  type: string;
+  status: string;
+  minPrice: number | null;
+  maxPrice: number | null;
+  searchQuery: string;
+}
+
+export interface SortOptions {
+  field: 'datePosted' | 'price' | 'title';
+  order: 'asc' | 'desc';
+}
+
+// Analytics types
+export interface AnalyticsData {
+  totalListings: number;
+  activeListings: number;
+  totalValue: number;
+  avgPrice: number;
+  byType: Record<string, number>;
+  byStatus: Record<string, number>;
+  recentActivity: ActivityLog[];
+}
+
+export interface ActivityLog {
+  id: number;
+  type: 'created' | 'updated' | 'sold' | 'deleted';
+  animalTitle: string;
+  timestamp: string;
+  details: string;
 }

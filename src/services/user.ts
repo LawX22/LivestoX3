@@ -1,4 +1,4 @@
-// user.ts
+// services/user.ts
 
 // ADDRESS TYPES
 export interface Address {
@@ -28,7 +28,7 @@ export interface FarmAddress {
 
 export interface FarmInfo {
   farmName?: string
-  farmSize?: string
+  farmSize?: string | number
   farmSizeUnit?: string
   livestockTypes?: string[]
   description?: string
@@ -62,9 +62,9 @@ export interface User {
   // Farm info
   farmName?: string
   farmLocation?: string
-  farmSize?: string
+  farmSize?: string | number
   farmSizeUnit?: string
-  livestockTypes?: string[]
+  livestockTypes?: string[] | string
   livestockType?: string
   experience?: string
   description?: string
@@ -91,19 +91,12 @@ export interface ProfileDB {
   profile_picture?: string
   banner_image?: string
   
-  // Farm info
-  farm_name?: string
-  farm_size?: string
-  farm_size_unit?: string
-  livestock_types?: string[]
-  description?: string
-  farm_address?: FarmAddress
-  
   // Timestamps
   created_at?: string
   updated_at?: string
   
-  // Note: addresses removed as they're now in separate table
+  // Note: farm info now stored in separate farm_info table
+  // Note: addresses stored in separate addresses table
 }
 
 // Database Address Type (matches Supabase addresses table)
@@ -125,7 +118,25 @@ export interface AddressDB {
   updated_at: string
 }
 
-// ✅ EXPORTED - Helper function to convert DB profile to User (addresses handled separately)
+// Database Farm Info Type (matches Supabase farm_info table)
+export interface FarmInfoDB {
+  id: string
+  user_id: string
+  farm_name?: string
+  farm_size?: number
+  farm_size_unit?: string
+  livestock_types?: string[]
+  description?: string
+  street?: string
+  barangay?: string
+  city?: string
+  province?: string
+  region?: string
+  created_at: string
+  updated_at: string
+}
+
+// ✅ EXPORTED - Helper function to convert DB profile to User (addresses and farm info handled separately)
 export function dbProfileToUser(profile: ProfileDB, email: string): User {
   return {
     userId: profile.id,
@@ -139,14 +150,7 @@ export function dbProfileToUser(profile: ProfileDB, email: string): User {
     profilePicture: profile.profile_picture,
     bannerImage: profile.banner_image,
 
-    // Farm info
-    farmName: profile.farm_name,
-    farmSize: profile.farm_size,
-    farmSizeUnit: profile.farm_size_unit,
-    livestockTypes: profile.livestock_types,
-    description: profile.description,
-    farmAddress: profile.farm_address,
-
+    // Note: farm info will be populated separately from farm_info table
     // Note: addresses will be populated separately from addresses table
     addresses: [],
 
@@ -155,29 +159,31 @@ export function dbProfileToUser(profile: ProfileDB, email: string): User {
   }
 }
 
-// ✅ EXPORTED - Helper function to convert User to DB profile (excludes addresses)
+// ✅ EXPORTED - Helper function to convert User to DB profile (excludes addresses and farm info)
 export function userToDbProfile(user: Partial<User>): Partial<ProfileDB> {
-  // Destructure to exclude addresses
-  const { addresses, ...userWithoutAddresses } = user
+  // Destructure to exclude addresses and farm info
+  const { 
+    addresses, 
+    farmName, 
+    farmSize, 
+    farmSizeUnit, 
+    livestockTypes, 
+    description, 
+    farmAddress,
+    ...userWithoutAddressesAndFarm 
+  } = user
   
   return {
-    username: userWithoutAddresses.username,
-    first_name: userWithoutAddresses.firstName,
-    last_name: userWithoutAddresses.lastName,
-    phone_number: userWithoutAddresses.phoneNumber,
-    gender: userWithoutAddresses.gender,
-    role: userWithoutAddresses.role,
-    profile_picture: userWithoutAddresses.profilePicture,
-    banner_image: userWithoutAddresses.bannerImage,
+    username: userWithoutAddressesAndFarm.username,
+    first_name: userWithoutAddressesAndFarm.firstName,
+    last_name: userWithoutAddressesAndFarm.lastName,
+    phone_number: userWithoutAddressesAndFarm.phoneNumber,
+    gender: userWithoutAddressesAndFarm.gender,
+    role: userWithoutAddressesAndFarm.role,
+    profile_picture: userWithoutAddressesAndFarm.profilePicture,
+    banner_image: userWithoutAddressesAndFarm.bannerImage,
     
-    // Farm info
-    farm_name: userWithoutAddresses.farmName,
-    farm_size: userWithoutAddresses.farmSize,
-    farm_size_unit: userWithoutAddresses.farmSizeUnit,
-    livestock_types: userWithoutAddresses.livestockTypes,
-    description: userWithoutAddresses.description,
-    farm_address: userWithoutAddresses.farmAddress,
-    
-    // Note: addresses not included as they're managed separately
+    // Note: farm info not included as it's managed separately in farm_info table
+    // Note: addresses not included as they're managed separately in addresses table
   }
 }

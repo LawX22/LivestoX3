@@ -13,10 +13,12 @@
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h3 class="text-2xl font-bold text-gray-900 mb-2">Farm Information</h3>
-          <p class="text-gray-600">Manage your farm details and agricultural operations</p>
+          <p class="text-gray-600">
+            {{ canEdit ? 'Manage your farm details and agricultural operations' : 'View farm details and agricultural operations' }}
+          </p>
         </div>
         <button
-          v-if="editing"
+          v-if="editing && canEdit"
           @click="saveProfile"
           class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl cursor-pointer"
         >
@@ -49,7 +51,7 @@
               </label>
               <div class="relative">
                 <input
-                  v-if="editing"
+                  v-if="editing && canEdit"
                   v-model="editableUser.farmName"
                   class="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-300 shadow-sm hover:shadow-md hover:border-green-300"
                   placeholder="Enter your farm name"
@@ -69,7 +71,7 @@
                 Farm Size
               </label>
               <div class="relative">
-                <div v-if="editing" class="flex gap-2">
+                <div v-if="editing && canEdit" class="flex gap-2">
                   <input
                     v-model="editableUser.farmSize"
                     type="number"
@@ -101,7 +103,7 @@
               </label>
               <div class="relative">
                 <input
-                  v-if="editing"
+                  v-if="editing && canEdit"
                   v-model="editableUser.livestockTypes"
                   class="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-300 shadow-sm hover:shadow-md hover:border-green-300"
                   placeholder="Enter livestock types (comma separated)"
@@ -122,7 +124,7 @@
               </label>
               <div class="relative">
                 <textarea
-                  v-if="editing"
+                  v-if="editing && canEdit"
                   v-model="editableUser.description"
                   class="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all duration-300 shadow-sm hover:shadow-md hover:border-green-300"
                   rows="4"
@@ -136,7 +138,7 @@
           </div>
         </div>
 
-        <!-- Farm Address Card -->
+        <!-- Farm Address Card (Always Read-Only) -->
         <div class="bg-gradient-to-br from-white via-gray-50 to-green-50 border-2 border-gray-200 rounded-2xl p-6 shadow-lg">
           <h4 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
             <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,13 +297,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 
 type User = {
   userId?: string
   role?: string
   farmName?: string
-  farmSize?: string
+  farmSize?: string | number
   farmSizeUnit?: string
   livestockTypes?: string | string[]
   description?: string
@@ -325,10 +328,22 @@ const emit = defineEmits<{
   (e: 'upgrade'): void
 }>()
 
+const authStore = useAuthStore()
 const editableUser = defineModel<User>('editableUser', { required: true })
 
 const showSuccessMessage = ref(false)
 const showPendingWarning = ref(false)
+
+// 🔒 Check if current user can edit (must be the farm owner AND be a Farmer in their profile)
+const canEdit = computed(() => {
+  // Must be viewing their own profile
+  const isOwnProfile = authStore.userId === props.user?.userId
+  
+  // Must be a Farmer according to their profile data
+  const isFarmer = props.user?.role === 'Farmer'
+  
+  return isOwnProfile && isFarmer
+})
 
 const formatLivestockTypes = (types: string | string[] | undefined): string => {
   if (!types) return 'Not specified'
@@ -337,6 +352,11 @@ const formatLivestockTypes = (types: string | string[] | undefined): string => {
 }
 
 const saveProfile = () => {
+  if (!canEdit.value) {
+    alert('You do not have permission to edit this farm information.')
+    return
+  }
+  
   emit('save-profile')
   showSuccessMessage.value = true
   setTimeout(() => {
@@ -345,7 +365,6 @@ const saveProfile = () => {
 }
 
 const handleUpgradeClick = () => {
-  // If upgrade is already pending, show warning and do nothing
   if (props.upgradePending) {
     showPendingWarning.value = true
     setTimeout(() => {
@@ -354,7 +373,6 @@ const handleUpgradeClick = () => {
     return
   }
   
-  // Otherwise, proceed with upgrade
   emit('upgrade')
 }
 </script>

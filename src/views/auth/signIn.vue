@@ -107,7 +107,10 @@
               <div class="flex items-center mb-3">
                 <div
                   class="w-10 h-10 bg-white bg-opacity-80 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm">
-                  <img src="/src/assets/vue.svg" alt="Logo" class="w-5 h-5 object-contain" />
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
                 </div>
                 <div>
                   <h1 class="text-xl font-bold bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent">
@@ -509,10 +512,13 @@ const handleSignIn = async () => {
   isLoading.value = true
 
   try {
+    console.log('🔐 Starting sign in process...')
+    
     // Sign in the user
     const { data, error } = await auth.signIn(email.value, password.value)
     
     if (error) {
+      console.error('❌ Sign in error:', error)
       addToast({
         type: 'error',
         title: 'Sign In Failed',
@@ -528,42 +534,66 @@ const handleSignIn = async () => {
       return
     }
 
-    // Fetch user profile to get the role
-    if (data?.user) {
-      const { data: profileData, error: profileError } = await auth.getUserProfile(data.user.id)
-      
-      if (profileError || !profileData) {
-        addToast({
-          type: 'error',
-          title: 'Profile Error',
-          content: 'Could not load user profile. Please try again.',
-        })
-        isLoading.value = false
-        return
-      }
-
-      console.log('✅ User signed in with role:', profileData.role)
-      
-      // Show success message
+    if (!data?.user) {
+      console.error('❌ No user data returned')
       addToast({
-        type: 'success',
-        title: 'Sign In Successful',
-        content: `Welcome back! You are logged in as ${profileData.role}.`
+        type: 'error',
+        title: 'Sign In Failed',
+        content: 'Unable to authenticate. Please try again.',
       })
-
-      // Redirect based on role
-      if (profileData.role === 'Admin') {
-        console.log('🔐 Redirecting to Admin Dashboard')
-        router.push('/adminDashboard')
-      } else {
-        console.log('👤 Redirecting to User Dashboard')
-        router.push('/dashboard')
-      }
+      isLoading.value = false
       return
     }
 
-    // Fallback to regular dashboard if no profile data
-    router.push('/dashboard')
+    console.log('✅ User authenticated:', data.user.email)
+
+    // Fetch user profile to get the role
+    const { data: profileData, error: profileError } = await auth.getUserProfile(data.user.id)
+    
+    if (profileError) {
+      console.error('❌ Profile error:', profileError)
+      addToast({
+        type: 'error',
+        title: 'Profile Error',
+        content: 'Could not load user profile. Please try again.',
+      })
+      isLoading.value = false
+      return
+    }
+
+    if (!profileData) {
+      console.error('❌ No profile data found')
+      addToast({
+        type: 'error',
+        title: 'Profile Not Found',
+        content: 'Your profile could not be loaded. Please contact support.',
+      })
+      isLoading.value = false
+      return
+    }
+
+    console.log('✅ User profile loaded:', { role: profileData.role, email: profileData.email })
+    
+    // Show success message
+    addToast({
+      type: 'success',
+      title: 'Sign In Successful',
+      content: `Welcome back! You are logged in as ${profileData.role}.`
+    })
+
+    // Small delay to show success toast
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Redirect based on role
+    if (profileData.role === 'Admin') {
+      console.log('🔐 Redirecting to Admin Dashboard...')
+      await router.push('/adminDashboard')
+    } else {
+      console.log('👤 Redirecting to User Dashboard...')
+      await router.push('/dashboard')
+    }
+    
+    console.log('✅ Navigation completed')
   } catch (err) {
     console.error('❌ Unexpected error during sign in:', err)
     addToast({
@@ -571,6 +601,7 @@ const handleSignIn = async () => {
       title: 'Unexpected Error',
       content: 'An unexpected error occurred. Please try again.',
     })
+  } finally {
     isLoading.value = false
   }
 }

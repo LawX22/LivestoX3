@@ -52,6 +52,14 @@ export interface UpgradeRequestStats {
 
 export class UpgradeRequestService {
   /**
+   * Validate UUID format
+   */
+  private static isValidUUID(uuid: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    return uuidRegex.test(uuid)
+  }
+
+  /**
    * Get all upgrade requests with user profile data
    */
   static async getAllRequests(): Promise<UpgradeRequest[]> {
@@ -161,7 +169,7 @@ export class UpgradeRequestService {
   }
 
   /**
-   * 🔥 APPROVE UPGRADE REQUEST - Updates role in profiles table
+   * 🔥 APPROVE UPGRADE REQUEST - Updates role and stores farm info
    */
   static async approveRequest(params: {
     requestId: string
@@ -169,15 +177,31 @@ export class UpgradeRequestService {
   }): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('✅ Approving upgrade request:', params.requestId)
+      console.log('👤 Admin ID:', params.adminId)
 
-      // 1. Get the upgrade request to find user_id
+      // 🔒 VALIDATE INPUT PARAMETERS
+      if (!params.requestId || !this.isValidUUID(params.requestId)) {
+        return { success: false, error: 'Invalid request ID format' }
+      }
+
+      if (!params.adminId || !this.isValidUUID(params.adminId)) {
+        console.error('❌ Invalid admin ID:', params.adminId)
+        return { success: false, error: 'Invalid admin ID. Please log in again.' }
+      }
+
+      // 1. Get the upgrade request with all farm details
       const { data: request, error: fetchError } = await supabase
         .from('upgrade_requests')
-        .select('user_id, status')
+        .select('*')
         .eq('id', params.requestId)
         .single()
 
-      if (fetchError || !request) {
+      if (fetchError) {
+        console.error('❌ Error fetching request:', fetchError)
+        return { success: false, error: 'Upgrade request not found' }
+      }
+
+      if (!request) {
         return { success: false, error: 'Upgrade request not found' }
       }
 
@@ -186,6 +210,11 @@ export class UpgradeRequestService {
       }
 
       const userId = request.user_id
+
+      // Validate user ID
+      if (!userId || !this.isValidUUID(userId)) {
+        return { success: false, error: 'Invalid user ID in request' }
+      }
 
       // 2. Update upgrade request status
       const { error: updateRequestError } = await supabase
@@ -203,6 +232,7 @@ export class UpgradeRequestService {
       }
 
       // 3. 🎯 UPDATE USER ROLE IN PROFILES TABLE
+      console.log('🎯 Updating user role to Farmer...')
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -216,7 +246,59 @@ export class UpgradeRequestService {
         return { success: false, error: profileError.message }
       }
 
-      console.log('✅ Request approved and role updated to Farmer!')
+      console.log('✅ User role updated successfully!')
+
+      // 4. 🚜 INSERT/UPDATE FARM INFO TO farm_info TABLE
+      console.log('🚜 Storing farm information...')
+      
+      const farmInfoData = {
+        user_id: userId,
+        farm_name: request.farm_name,
+        farm_size: request.farm_size,
+        farm_size_unit: request.farm_size_unit || 'hectares',
+        livestock_types: request.livestock_types || [],
+        description: request.description,
+        street: request.street,
+        barangay: request.barangay,
+        city: request.city,
+        province: request.province,
+        region: request.region,
+        updated_at: new Date().toISOString()
+      }
+
+      // Check if farm info already exists
+      const { data: existingFarmInfo } = await supabase
+        .from('farm_info')
+        .select('id')
+        .eq('user_id', userId)
+        .single()
+
+      if (existingFarmInfo) {
+        // Update existing farm info
+        const { error: updateFarmError } = await supabase
+          .from('farm_info')
+          .update(farmInfoData)
+          .eq('user_id', userId)
+
+        if (updateFarmError) {
+          console.error('❌ Error updating farm info:', updateFarmError)
+          return { success: false, error: updateFarmError.message }
+        }
+        console.log('✅ Farm info updated successfully!')
+      } else {
+        // Insert new farm info
+        const { error: insertFarmError } = await supabase
+          .from('farm_info')
+          .insert(farmInfoData)
+
+        if (insertFarmError) {
+          console.error('❌ Error inserting farm info:', insertFarmError)
+          return { success: false, error: insertFarmError.message }
+        }
+        console.log('✅ Farm info created successfully!')
+      }
+
+      console.log('🎉 Request approved, role updated, and farm info stored!')
       return { success: true }
     } catch (error: any) {
       console.error('💥 Error in approveRequest:', error)
@@ -234,6 +316,16 @@ export class UpgradeRequestService {
   }): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('❌ Rejecting upgrade request:', params.requestId)
+
+      // 🔒 VALIDATE INPUT PARAMETERS
+      if (!params.requestId || !this.isValidUUID(params.requestId)) {
+        return { success: false, error: 'Invalid request ID format' }
+      }
+
+      if (!params.adminId || !this.isValidUUID(params.adminId)) {
+        console.error('❌ Invalid admin ID:', params.adminId)
+        return { success: false, error: 'Invalid admin ID. Please log in again.' }
+      }
 
       // Get the upgrade request to check status
       const { data: request, error: fetchError } = await supabase

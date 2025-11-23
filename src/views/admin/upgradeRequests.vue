@@ -514,7 +514,7 @@ const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const defaultAvatar = '/default-avatar.png'
 const isLoading = ref(true)
-const currentAdminId = ref<string>('')
+const currentAdminId = ref<string | null>(null)
 
 const stats = ref<UpgradeRequestStats>({
   total: 0,
@@ -554,15 +554,39 @@ const loadStats = async () => {
   }
 }
 
-const getCurrentAdminId = async () => {
+const getCurrentAdminId = async (): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      currentAdminId.value = user.id
-      console.log('Current admin ID:', currentAdminId.value)
+    console.log('🔐 Getting current admin session...')
+    
+    // Get the current session
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('❌ Authentication error:', error.message)
+      alert('Authentication failed. Please log in again.')
+      // Redirect to login
+      window.location.href = '/login'
+      return false
     }
+    
+    if (!session || !session.user) {
+      console.error('❌ No active session found')
+      alert('You are not logged in. Please log in to continue.')
+      // Redirect to login
+      window.location.href = '/login'
+      return false
+    }
+    
+    // Successfully got admin ID
+    currentAdminId.value = session.user.id
+    console.log('✅ Current admin ID:', currentAdminId.value)
+    console.log('✅ Admin email:', session.user.email)
+    
+    return true
   } catch (error) {
-    console.error('Error getting current admin:', error)
+    console.error('💥 Unexpected error getting admin ID:', error)
+    alert('An unexpected error occurred. Please refresh the page and try again.')
+    return false
   }
 }
 
@@ -706,7 +730,14 @@ const closeModal = () => {
 }
 
 const handleApproval = async (approvedRequest: UpgradeRequest) => {
-  console.log('✅ Request approved:', approvedRequest.id)
+  console.log('✅ Attempting to approve request:', approvedRequest.id)
+  
+  // Validate admin ID
+  if (!currentAdminId.value) {
+    console.error('❌ No admin ID available')
+    alert('Authentication error. Please refresh the page and try again.')
+    return
+  }
   
   try {
     const result = await UpgradeRequestService.approveRequest({
@@ -721,16 +752,24 @@ const handleApproval = async (approvedRequest: UpgradeRequest) => {
       closeModal()
       alert('✅ Request approved successfully! User role has been updated to Farmer.')
     } else {
+      console.error('❌ Approval failed:', result.error)
       alert(`❌ Failed to approve request: ${result.error}`)
     }
   } catch (error) {
-    console.error('Error approving request:', error)
-    alert('An error occurred while approving the request.')
+    console.error('💥 Error approving request:', error)
+    alert('An error occurred while approving the request. Please try again.')
   }
 }
 
 const handleRejection = async (rejectedRequest: UpgradeRequest) => {
-  console.log('❌ Request rejected:', rejectedRequest.id)
+  console.log('❌ Attempting to reject request:', rejectedRequest.id)
+  
+  // Validate admin ID
+  if (!currentAdminId.value) {
+    console.error('❌ No admin ID available')
+    alert('Authentication error. Please refresh the page and try again.')
+    return
+  }
   
   const reason = prompt('Please provide a reason for rejection (optional):')
   
@@ -748,18 +787,32 @@ const handleRejection = async (rejectedRequest: UpgradeRequest) => {
       closeModal()
       alert('❌ Request rejected successfully!')
     } else {
+      console.error('❌ Rejection failed:', result.error)
       alert(`Failed to reject request: ${result.error}`)
     }
   } catch (error) {
-    console.error('Error rejecting request:', error)
-    alert('An error occurred while rejecting the request.')
+    console.error('💥 Error rejecting request:', error)
+    alert('An error occurred while rejecting the request. Please try again.')
   }
 }
 
 onMounted(async () => {
   console.log('🚀 Component mounted, initializing...')
-  await getCurrentAdminId()
-  await loadRequests()
-  await loadStats()
+  
+  // Get admin ID first - this will redirect to login if not authenticated
+  const authSuccess = await getCurrentAdminId()
+  
+  if (!authSuccess) {
+    console.error('❌ Failed to authenticate admin')
+    return
+  }
+  
+  // Then load requests and stats
+  await Promise.all([
+    loadRequests(),
+    loadStats()
+  ])
+  
+  console.log('✅ Initialization complete')
 })
 </script>

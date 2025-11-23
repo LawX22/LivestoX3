@@ -468,9 +468,10 @@
               <!-- Farm Info Tab -->
               <FarmInfoTab v-if="activeTab === 'farmer'" 
                 :user="user" 
-                :editableUser="editableUser" 
+                v-model:editable-user="editableUser"
                 :editing="editing"
                 :upgradePending="upgradePending" 
+                @save-profile="saveProfile"
                 @upgrade="goToUpgradeForm" />
 
               <!-- Livestock Posts Tab (Farmer only) -->

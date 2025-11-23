@@ -1,7 +1,7 @@
 <!-- LivestockCard.vue -->
 <template>
   <div
-    class="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg border border-white/60 hover:border-green-300/60 transition-all duration-300 bg-white/95 backdrop-blur-sm flex flex-col h-full group">
+    class="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg border border-white/60 hover:border-green-300/60 transition-all duration-300 bg-white/95 backdrop-blur-sm flex flex-col h-full group cursor-pointer">
 
     <!-- Premium Image Section -->
     <div class="relative h-48 overflow-hidden">
@@ -13,7 +13,7 @@
       <!-- Status Badge -->
       <div class="absolute top-3 right-3 z-20">
         <span
-          :class="`px-2 py-1 text-xs font-bold rounded-full shadow backdrop-blur-md border ${getStatusClass(animal.status)}`">
+          :class="`px-2 py-1 text-xs font-bold rounded-full shadow backdrop-blur-md border cursor-pointer ${getStatusClass(animal.status)}`">
           {{ animal.status }}
         </span>
       </div>
@@ -21,7 +21,7 @@
       <!-- Auction-specific Badge -->
       <div v-if="animal.isAuction" class="absolute top-3 left-3 z-20">
         <div
-          class="px-3 py-1 rounded-full shadow-lg backdrop-blur-md border border-amber-300/40 bg-amber-500/90 text-white flex items-center gap-1.5">
+          class="px-3 py-1 rounded-full shadow-lg backdrop-blur-md border border-amber-300/40 bg-amber-500/90 text-white flex items-center gap-1.5 cursor-pointer">
           <svg class="w-3 h-3 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
@@ -34,7 +34,7 @@
       <!-- Animal Type Badge (for non-auction items) -->
       <div v-else class="absolute top-3 left-3 z-20">
         <div
-          :class="`px-3 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/40 flex items-center gap-1.5 ${getTypeBadgeClassForImage(animal.type)}`">
+          :class="`px-3 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/40 flex items-center gap-1.5 cursor-pointer ${getTypeBadgeClassForImage(animal.type)}`">
           <span class="w-3 h-3 flex items-center justify-center">
             <svg v-if="animal.type === 'Cattle'" class="w-3 h-3 text-current" fill="currentColor" viewBox="0 0 24 24">
               <path
@@ -51,7 +51,7 @@
       </div>
 
       <!-- Price/Bid Badge on Image - Bottom Right -->
-      <div class="absolute bottom-3 right-3 z-20">
+      <div class="absolute bottom-3 right-3 z-20 cursor-pointer">
         <div v-if="animal.isAuction"
           class="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-md border border-white/20 flex flex-col items-center">
           <span class="text-xs font-medium">Current Bid</span>
@@ -65,7 +65,7 @@
       </div>
 
       <!-- Auction Timer - Bottom Left -->
-      <div v-if="animal.isAuction" class="absolute bottom-3 left-3 z-20">
+      <div v-if="animal.isAuction" class="absolute bottom-3 left-3 z-20 cursor-pointer">
         <div class="bg-black/70 backdrop-blur-md rounded-lg p-2 border border-white/20 flex items-center gap-2">
           <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
@@ -81,7 +81,7 @@
 
       <!-- Farmer Info Overlay (for non-auction items) -->
       <div v-if="!animal.isAuction"
-        class="absolute bottom-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+        class="absolute bottom-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 cursor-pointer">
         <div class="bg-black/70 backdrop-blur-md rounded-lg p-2 border border-white/20 flex items-center">
           <div class="w-6 h-6 rounded-full border border-white/60 shadow-sm overflow-hidden mr-2">
             <img :src="animal.farmer.avatar" :alt="animal.farmer.name" class="w-full h-full object-cover" />
@@ -95,9 +95,9 @@
 
       <!-- Quick View Overlay -->
       <div
-        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 backdrop-blur-sm z-15">
+        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 backdrop-blur-sm z-15 cursor-pointer">
         <button @click="$emit('openModal', animal)"
-          class="bg-white/95 backdrop-blur-md text-gray-800 px-3 py-2 rounded font-semibold shadow hover:shadow-md transition-all duration-200 flex items-center gap-2 text-sm border border-white/40 hover:bg-white">
+          class="bg-white/95 backdrop-blur-md text-gray-800 px-3 py-2 rounded font-semibold shadow hover:shadow-md transition-all duration-200 flex items-center gap-2 text-sm border border-white/40 hover:bg-white cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -111,11 +111,11 @@
 
     <!-- Redesigned Card Content -->
     <div class="p-4 flex-1 flex flex-col">
-      <!-- Header with Title and Date/Location -->
-      <div class="flex justify-between items-start mb-3">
+      <!-- Header with Title and Date/Location - FIXED HEIGHT -->
+      <div class="flex justify-between items-start mb-3 h-[52px]">
         <!-- Left Side - Title -->
         <div class="flex-1 pr-3">
-          <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2">
+          <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2 cursor-pointer hover:text-emerald-900 transition-colors duration-200">
             {{ animal.title }}
           </h3>
         </div>
@@ -123,7 +123,7 @@
         <!-- Right Side - Date and Location -->
         <div class="flex flex-col items-end text-right min-w-0">
           <!-- Date -->
-          <div class="text-xs text-gray-500 flex items-center gap-1 mb-1">
+          <div class="text-xs text-gray-500 flex items-center gap-1 mb-1 cursor-text">
             <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -132,7 +132,7 @@
           </div>
 
           <!-- Location -->
-          <div class="text-xs text-gray-500 flex items-center gap-1">
+          <div class="text-xs text-gray-500 flex items-center gap-1 cursor-text">
             <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -144,19 +144,19 @@
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="mb-3">
-        <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed">
-          {{ animal.description }}
+      <!-- Description - FIXED HEIGHT -->
+      <div class="mb-3 h-[32px]">
+        <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed cursor-text">
+          {{ animal.description || 'No description available' }}
         </p>
       </div>
 
-      <!-- Compact Stats Section -->
+      <!-- Compact Stats Section - CONSISTENT POSITION -->
       <div class="mb-4">
         <div :class="`grid gap-1.5 ${isSidebarExpanded ? 'grid-cols-2' : 'grid-cols-2'}`">
           <!-- Quantity -->
           <div
-            :class="`bg-blue-50 rounded-md border border-blue-200/60 flex items-center justify-center gap-1 relative group/quantity ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-blue-50 rounded-md border border-blue-200/60 flex items-center justify-center gap-1 relative group/quantity cursor-pointer hover:bg-blue-100 transition-colors duration-200 ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-blue-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -172,7 +172,7 @@
 
           <!-- Weight -->
           <div
-            :class="`bg-purple-50 rounded-md border border-purple-200/60 flex items-center justify-center gap-1 relative group/weight ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-purple-50 rounded-md border border-purple-200/60 flex items-center justify-center gap-1 relative group/weight cursor-pointer hover:bg-purple-100 transition-colors duration-200 ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-purple-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none"
               stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -188,7 +188,7 @@
 
           <!-- Gender -->
           <div
-            :class="`bg-pink-50 rounded-md border border-pink-200/60 flex items-center justify-center gap-1 relative group/gender ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-pink-50 rounded-md border border-pink-200/60 flex items-center justify-center gap-1 relative group/gender cursor-pointer hover:bg-pink-100 transition-colors duration-200 ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-pink-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -204,7 +204,7 @@
 
           <!-- Age -->
           <div
-            :class="`bg-teal-50 rounded-md border border-teal-200/60 flex items-center justify-center gap-1 relative group/age ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-teal-50 rounded-md border border-teal-200/60 flex items-center justify-center gap-1 relative group/age cursor-pointer hover:bg-teal-100 transition-colors duration-200 ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-teal-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -220,9 +220,9 @@
         </div>
       </div>
 
-      <!-- Action Button - Different for auction vs normal -->
+      <!-- Action Button - Different for auction vs normal - STAYS AT BOTTOM -->
       <button v-if="animal.isAuction" @click.stop="$emit('openModal', animal)"
-        class="w-full px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800 text-white text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 shadow hover:shadow-md border border-amber-500/20">
+        class="w-full px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800 text-white text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 shadow hover:shadow-md border border-amber-500/20 cursor-pointer mt-auto">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -230,7 +230,7 @@
         Place Bid
       </button>
       <button v-else @click.stop="$emit('openContactModal', animal)"
-        class="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 shadow hover:shadow-md border border-blue-500/20">
+        class="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 shadow hover:shadow-md border border-blue-500/20 cursor-pointer mt-auto">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -243,7 +243,7 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import type { Animal } from '@/services/marketplace';
+import type { Animal } from '@/services/animalTypes';
 
 // Props
 const props = defineProps<{

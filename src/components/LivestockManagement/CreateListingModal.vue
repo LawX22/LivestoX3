@@ -17,9 +17,27 @@
               <p class="text-green-100 text-xs">Add your livestock to the marketplace</p>
             </div>
           </div>
-          <button @click="closeModal"
-            class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-200">
+          <button @click="closeModal" :disabled="isSubmitting"
+            class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      <div v-if="submitError" class="bg-red-50 border-l-4 border-red-500 p-4 m-4">
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="text-sm font-semibold text-red-800">Error Creating Listing</h3>
+            <p class="text-sm text-red-700 mt-1">{{ submitError }}</p>
+          </div>
+          <button @click="submitError = ''" class="ml-auto text-red-500 hover:text-red-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -174,13 +192,21 @@
                 </h3>
 
                 <div class="grid grid-cols-2 gap-3">
-                  <!-- Animal Type -->
+                  <!-- Animal Type with Datalist -->
                   <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Animal Type *</label>
-                    <select v-model="form.type" @change="updateAvailableBreeds"
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      Animal Type * 
+                      <span class="text-gray-500 font-normal">(Type or select)</span>
+                    </label>
+                    <input 
+                      v-model="form.type" 
+                      list="animal-types" 
+                      type="text"
+                      @input="updateAvailableBreeds"
                       :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.type ? 'border-red-300' : 'border-gray-300'}`"
-                      required>
-                      <option value="">Select type</option>
+                      placeholder="Type or select animal type" 
+                      required />
+                    <datalist id="animal-types">
                       <option value="Cattle">Cattle</option>
                       <option value="Goat">Goat</option>
                       <option value="Pig">Pig</option>
@@ -189,20 +215,26 @@
                       <option value="Carabao">Carabao</option>
                       <option value="Sheep">Sheep</option>
                       <option value="Horse">Horse</option>
-                      <option value="Other">Other</option>
-                    </select>
+                    </datalist>
                     <p v-if="errors.type" class="text-red-500 text-xs mt-1">{{ errors.type }}</p>
                   </div>
 
-                  <!-- Breed -->
+                  <!-- Breed with Datalist -->
                   <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Breed *</label>
-                    <select v-model="form.breed" :disabled="!form.type"
-                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.breed ? 'border-red-300' : 'border-gray-300'} ${!form.type ? 'bg-gray-100 cursor-not-allowed' : ''}`"
-                      required>
-                      <option value="">{{ form.type ? 'Select breed' : 'Select type first' }}</option>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      Breed * 
+                      <span class="text-gray-500 font-normal">(Type or select)</span>
+                    </label>
+                    <input 
+                      v-model="form.breed" 
+                      :list="form.type ? 'breed-options' : ''"
+                      type="text"
+                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.breed ? 'border-red-300' : 'border-gray-300'}`"
+                      :placeholder="form.type ? 'Type or select breed' : 'Select animal type first'" 
+                      required />
+                    <datalist v-if="availableBreeds.length > 0" id="breed-options">
                       <option v-for="breed in availableBreeds" :key="breed" :value="breed">{{ breed }}</option>
-                    </select>
+                    </datalist>
                     <p v-if="errors.breed" class="text-red-500 text-xs mt-1">{{ errors.breed }}</p>
                   </div>
 
@@ -220,13 +252,20 @@
                     <p v-if="errors.gender" class="text-red-500 text-xs mt-1">{{ errors.gender }}</p>
                   </div>
 
-                  <!-- Age -->
+                  <!-- Age with Datalist -->
                   <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Age *</label>
-                    <select v-model="form.age"
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      Age * 
+                      <span class="text-gray-500 font-normal">(Type or select)</span>
+                    </label>
+                    <input 
+                      v-model="form.age" 
+                      list="age-options" 
+                      type="text"
                       :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.age ? 'border-red-300' : 'border-gray-300'}`"
-                      required>
-                      <option value="">Select age</option>
+                      placeholder="Type or select age" 
+                      required />
+                    <datalist id="age-options">
                       <option value="0-3 months">0-3 months</option>
                       <option value="3-6 months">3-6 months</option>
                       <option value="6-12 months">6-12 months</option>
@@ -235,7 +274,7 @@
                       <option value="4-6 years">4-6 years</option>
                       <option value="6+ years">6+ years</option>
                       <option value="Mixed ages">Mixed ages</option>
-                    </select>
+                    </datalist>
                     <p v-if="errors.age" class="text-red-500 text-xs mt-1">{{ errors.age }}</p>
                   </div>
                 </div>
@@ -253,18 +292,18 @@
 
                 <!-- Grid Layout -->
                 <div class="grid grid-cols-2 gap-3">
-                  <!-- Weight -->
+                  <!-- Weight with Unit -->
                   <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Weight *</label>
                     <div class="flex gap-2">
                       <input v-model.number="form.weight" type="number" min="0" step="0.1"
                         :class="`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.weight ? 'border-red-300' : 'border-gray-300'}`"
                         placeholder="Weight" required />
-                      <select v-model="weightUnit"
-                        class="w-16 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white">
+                      <select v-model="form.weightUnit"
+                        class="w-20 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="kg">kg</option>
                         <option value="lbs">lbs</option>
-                        <option value="tons">tons</option>
+                        <option value="g">g</option>
                       </select>
                     </div>
                     <p v-if="errors.weight" class="text-red-500 text-xs mt-1">{{ errors.weight }}</p>
@@ -279,28 +318,30 @@
                     <p v-if="errors.quantity" class="text-red-500 text-xs mt-1">{{ errors.quantity }}</p>
                   </div>
 
-                  <!-- Price -->
+                  <!-- Price with Unit -->
                   <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Price (₱) *</label>
-                    <input v-model.number="form.price" type="number" min="0" step="0.01"
-                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.price ? 'border-red-300' : 'border-gray-300'}`"
-                      placeholder="Price" required />
+                    <div class="flex gap-2">
+                      <input v-model.number="form.price" type="number" min="0" step="0.01"
+                        :class="`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.price ? 'border-red-300' : 'border-gray-300'}`"
+                        placeholder="Price" required />
+                      <select v-model="form.priceUnit"
+                        class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="per head">per head</option>
+                        <option value="per kg">per kg</option>
+                        <option value="per lbs">per lbs</option>
+                        <option value="total">total</option>
+                      </select>
+                    </div>
                     <p v-if="errors.price" class="text-red-500 text-xs mt-1">{{ errors.price }}</p>
                   </div>
 
                   <!-- Location -->
                   <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Location *</label>
-                    <select v-model="form.location"
+                    <input v-model="form.location" type="text"
                       :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.location ? 'border-red-300' : 'border-gray-300'}`"
-                      required>
-                      <option value="">Select location</option>
-                      <optgroup v-if="userAddresses.length > 0" label="Your Addresses">
-                        <option v-for="address in userAddresses" :key="address.id" :value="address.location">
-                          {{ address.label }} - {{ address.location }}
-                        </option>
-                      </optgroup>
-                    </select>
+                      placeholder="e.g., Pampanga, Bulacan" required />
                     <p v-if="errors.location" class="text-red-500 text-xs mt-1">{{ errors.location }}</p>
                   </div>
                 </div>
@@ -308,10 +349,15 @@
                 <!-- Total Value -->
                 <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p class="text-xs font-medium text-green-800">
-                    Total Value: <span class="text-sm font-bold">₱{{ ((form.price || 0) * (form.quantity || 0)).toLocaleString() }}</span>
-                  </p>
-                  <p class="text-xs text-green-600 mt-0.5">
-                    Weight per unit: {{ form.weight || 0 }} {{ weightUnit }}
+                    <span v-if="form.priceUnit === 'per head'">
+                      Total Value: <span class="text-sm font-bold">₱{{ ((form.price || 0) * (form.quantity || 0)).toLocaleString() }}</span>
+                    </span>
+                    <span v-else-if="form.priceUnit === 'total'">
+                      Total: <span class="text-sm font-bold">₱{{ (form.price || 0).toLocaleString() }}</span>
+                    </span>
+                    <span v-else>
+                      Price: <span class="text-sm font-bold">₱{{ (form.price || 0).toLocaleString() }} {{ form.priceUnit }}</span>
+                    </span>
                   </p>
                 </div>
               </div>
@@ -358,13 +404,74 @@
                   </label>
                 </div>
               </div>
+
+              <!-- Payment Methods -->
+              <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Payment Methods
+                </h3>
+
+                <div class="space-y-2">
+                  <label v-for="option in paymentMethodOptions" :key="option.value"
+                    :class="`flex items-start gap-2 p-3 rounded-lg transition-all border-2 ${
+                      option.available 
+                        ? 'cursor-pointer hover:bg-purple-50 border-gray-200 hover:border-purple-300' 
+                        : 'cursor-not-allowed bg-gray-50 border-gray-200 opacity-60'
+                    }`">
+                    <input 
+                      type="checkbox" 
+                      :value="option.value" 
+                      v-model="form.paymentMethods"
+                      :disabled="!option.available"
+                      class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-0.5 disabled:cursor-not-allowed disabled:opacity-50" />
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <span :class="`text-sm font-semibold ${option.available ? 'text-gray-900' : 'text-gray-500'}`">
+                          {{ option.label }}
+                        </span>
+                        <span v-if="!option.available" 
+                          class="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full font-medium">
+                          Coming Soon
+                        </span>
+                        <span v-else 
+                          class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                          Available
+                        </span>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-1">{{ option.description }}</p>
+                    </div>
+                  </label>
+                </div>
+
+                <!-- Payment Methods Info -->
+                <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div class="flex items-start gap-2">
+                    <svg class="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p class="text-xs font-semibold text-purple-900">Payment Method Note:</p>
+                      <p class="text-xs text-purple-700 mt-1">
+                        Additional payment methods (Bank Transfer, GCash, PayMaya) will be available soon. For now, only Cash on Hand transactions are supported.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Validation Error -->
+                <p v-if="errors.paymentMethods" class="text-red-500 text-xs mt-2">{{ errors.paymentMethods }}</p>
+              </div>
             </div>
 
             <!-- Action Buttons - Sticky at the bottom -->
             <div class="sticky bottom-0 pt-4 bg-gray-50 mt-auto">
               <div class="flex gap-3 justify-center">
                 <button type="submit" :disabled="isSubmitting"
-                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2">
+                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed">
                   <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l-3-2.647z"></path>
@@ -384,19 +491,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
+import { LivestockService } from '@/services/livestockService'
+import { supabase } from '@/supabase'  
+import type { CreateListingForm } from '@/services/managementTypes'
 
 // Interfaces
 interface FormErrors {
   [key: string]: string
-}
-
-interface UserAddress {
-  id: number
-  label: string
-  location: string
-  address: string
-  isDefault: boolean
 }
 
 interface DeliveryOption {
@@ -405,21 +507,11 @@ interface DeliveryOption {
   description: string
 }
 
-interface CreateListingForm {
-  title: string
-  type: string
-  breed: string
-  weight: number
-  quantity: number
-  age: string
-  gender: string
-  status: string
-  healthStatus: string[]
-  price: number
-  deliveryOptions: string[]
-  images: string[]
+interface PaymentMethodOption {
+  value: string
+  label: string
   description: string
-  location: string
+  available: boolean
 }
 
 defineProps<{
@@ -428,15 +520,16 @@ defineProps<{
 
 const emit = defineEmits<{
   close: []
-  created: [listing: CreateListingForm]
-  draft: [listing: CreateListingForm]
+  created: []
 }>()
 
 // Reactive data
 const isSubmitting = ref(false)
+const submitError = ref('')
 const selectedImageIndex = ref(0)
 const availableBreeds = ref<string[]>([])
-const weightUnit = ref('kg')
+const uploadingImages = ref(false)
+const imageFiles = ref<File[]>([])
 
 const form = reactive<CreateListingForm>({
   title: '',
@@ -445,47 +538,30 @@ const form = reactive<CreateListingForm>({
   gender: '',
   age: '',
   weight: 0,
+  weightUnit: 'kg',
   quantity: 1,
   status: 'Available',
   healthStatus: [],
   price: 0,
+  priceUnit: 'per head',
   location: '',
   deliveryOptions: [],
+  paymentMethods: [],
   images: [],
   description: ''
 })
 
 const errors = ref<FormErrors>({})
 
-// User addresses based on unified farmer data
-const userAddresses = ref<UserAddress[]>([
-  {
-    id: 1,
-    label: 'Santos Ranch - Main Farm',
-    location: 'Pampanga',
-    address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-    isDefault: true
-  },
-  {
-    id: 2,
-    label: 'Santos Ranch - Secondary Location',
-    location: 'Bulacan',
-    address: '456 Santos Extension, Barangay Ranch, Bulacan',
-    isDefault: false
-  }
-])
-
 // Options
 const healthOptions: readonly string[] = [
-  'Healthy & Vaccinated',
-  'Vet Certified',
+  'Vaccinated',
   'Dewormed',
-  'Disease Free',
-  'Quarantined',
-  'Breeding Ready',
+  'Health Certificate',
   'Pregnant',
-  'Recently Treated',
-  'Special Care Needed'
+  'Lactating',
+  'Disease Free',
+  'Quarantined'
 ] as const
 
 const deliveryOptions: readonly DeliveryOption[] = [
@@ -506,51 +582,67 @@ const deliveryOptions: readonly DeliveryOption[] = [
   }
 ] as const
 
-// Breed mapping based on animal type
+const paymentMethodOptions: readonly PaymentMethodOption[] = [
+  {
+    value: 'cash',
+    label: 'Cash on Hand',
+    description: 'Accept cash payment upon delivery or pickup',
+    available: true
+  },
+  {
+    value: 'bank_transfer',
+    label: 'Bank Transfer',
+    description: 'Accept payments via bank transfer',
+    available: false
+  },
+  {
+    value: 'gcash',
+    label: 'GCash',
+    description: 'Accept payments through GCash mobile wallet',
+    available: false
+  },
+  {
+    value: 'paymaya',
+    label: 'PayMaya',
+    description: 'Accept payments through PayMaya digital wallet',
+    available: false
+  }
+] as const
+
+// Breed mapping
 const breedsByAnimalType: Record<string, readonly string[]> = {
   'Cattle': [
     'Angus', 'Holstein', 'Brahman', 'Charolais', 'Simmental', 'Hereford',
     'Limousin', 'Wagyu', 'Native/Local Breed', 'Crossbred', 'Other'
   ] as const,
-
   'Goat': [
     'Boer', 'Nubian', 'Saanen', 'Alpine', 'LaMancha', 'Toggenburg',
     'Nigerian Dwarf', 'Kiko', 'Spanish', 'Native/Local Breed', 'Crossbred', 'Other'
   ] as const,
-
   'Pig': [
     'Yorkshire', 'Landrace', 'Duroc', 'Hampshire', 'Berkshire', 'Chester White',
     'Poland China', 'Pietrain', 'Large White', 'Native/Local Breed', 'Crossbred', 'Other'
   ] as const,
-
   'Chicken': [
     'Rhode Island Red', 'Leghorn', 'Plymouth Rock', 'Brahma', 'Orpington', 'Wyandotte',
     'Sussex', 'Marans', 'Australorp', 'Native/Local Breed', 'Broiler', 'Layer',
     'Dual Purpose', 'Other'
   ] as const,
-
   'Duck': [
     'Pekin', 'Mallard', 'Rouen', 'Khaki Campbell', 'Runner', 'Muscovy',
     'Call Duck', 'Cayuga', 'Swedish Blue', 'Native/Local Breed', 'Other'
   ] as const,
-
   'Carabao': [
     'Murrah', 'Nili-Ravi', 'Surti', 'Jaffarabadi',
     'Native Carabao', 'Crossbred', 'Other'
   ] as const,
-
   'Sheep': [
     'Dorper', 'Merino', 'Suffolk', 'Hampshire', 'Romney', 'Border Leicester',
     'Corriedale', 'Rambouillet', 'Katahdin', 'Native/Local Breed', 'Crossbred', 'Other'
   ] as const,
-
   'Horse': [
     'Arabian', 'Thoroughbred', 'Quarter Horse', 'Paint', 'Appaloosa', 'Mustang',
     'Clydesdale', 'Percheron', 'Friesian', 'Native/Local Breed', 'Other'
-  ] as const,
-
-  'Other': [
-    'Mixed Breed', 'Crossbred', 'Unspecified', 'Other'
   ] as const
 }
 
@@ -561,8 +653,6 @@ const updateAvailableBreeds = (): void => {
   } else {
     availableBreeds.value = []
   }
-  // Reset breed selection when animal type changes
-  form.breed = ''
 }
 
 const validateForm = (): boolean => {
@@ -629,10 +719,17 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
+  if (form.paymentMethods.length === 0) {
+    errors.value.paymentMethods = 'Please select at least one payment method'
+    isValid = false
+  }
+
   return isValid
 }
 
 const handleSubmit = async (): Promise<void> => {
+  submitError.value = ''
+  
   if (!validateForm()) {
     return
   }
@@ -640,27 +737,70 @@ const handleSubmit = async (): Promise<void> => {
   isSubmitting.value = true
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    console.log('🚀 Submitting new listing...')
 
-    // Emit the created event with form data
-    emit('created', { ...form })
+    // Upload images to Supabase Storage first
+    if (imageFiles.value.length > 0) {
+      uploadingImages.value = true
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
 
-    // Reset form
-    resetForm()
+      console.log('📤 Uploading images to storage...')
+      const uploadResult = await LivestockService.uploadImages(imageFiles.value, user.id)
+      
+      if (!uploadResult.success || !uploadResult.urls) {
+        throw new Error(uploadResult.error || 'Failed to upload images')
+      }
 
-    // Close modal
-    closeModal()
-  } catch (error) {
-    console.error('Error creating listing:', error)
+      // Update form with uploaded image URLs
+      form.images = uploadResult.urls
+      uploadingImages.value = false
+      
+      console.log('✅ Images uploaded successfully:', uploadResult.urls)
+    }
+
+    // Create the listing with image URLs
+    const result = await LivestockService.createListing(form)
+
+    if (result.success) {
+      console.log('✅ Listing created successfully:', result.data)
+      resetForm()
+      emit('created')
+      emit('close')
+    } else {
+      console.error('❌ Failed to create listing:', result.error)
+      submitError.value = result.error || 'Failed to create listing. Please try again.'
+      
+      // CLEANUP: If listing creation failed but images were uploaded, delete them
+      if (form.images.length > 0) {
+        console.log('🧹 Cleaning up uploaded images due to listing creation failure...')
+        await LivestockService.deleteImages(form.images)
+      }
+    }
+  } catch (error: any) {
+    console.error('❌ Error creating listing:', error)
+    submitError.value = error.message || 'An unexpected error occurred. Please try again.'
+    
+    // CLEANUP: If error occurred but images were uploaded, delete them
+    if (form.images.length > 0) {
+      console.log('🧹 Cleaning up uploaded images due to error...')
+      await LivestockService.deleteImages(form.images)
+    }
   } finally {
     isSubmitting.value = false
+    uploadingImages.value = false
   }
 }
 
 const closeModal = (): void => {
-  resetForm()
-  emit('close')
+  if (!isSubmitting.value) {
+    resetForm()
+    submitError.value = ''
+    emit('close')
+  }
 }
 
 const resetForm = (): void => {
@@ -671,17 +811,20 @@ const resetForm = (): void => {
     gender: '',
     age: '',
     weight: 0,
+    weightUnit: 'kg',
     quantity: 1,
     status: 'Available',
     healthStatus: [],
     price: 0,
+    priceUnit: 'per head',
     location: '',
     deliveryOptions: [],
+    paymentMethods: [],
     images: [],
     description: ''
   })
   
-  weightUnit.value = 'kg'
+  imageFiles.value = []
   errors.value = {}
   selectedImageIndex.value = 0
   availableBreeds.value = []
@@ -693,7 +836,7 @@ const handleImageUpload = (event: Event): void => {
   if (!files) return
 
   Array.from(files).forEach(file => {
-    if (form.images.length >= 5) {
+    if (imageFiles.value.length >= 5) {
       alert('Maximum 5 images allowed')
       return
     }
@@ -703,6 +846,15 @@ const handleImageUpload = (event: Event): void => {
       return
     }
 
+    if (!file.type.startsWith('image/')) {
+      alert('Please select only image files')
+      return
+    }
+
+    // Store the actual File object
+    imageFiles.value.push(file)
+
+    // Create preview URL for display
     const reader = new FileReader()
     reader.onload = (e) => {
       if (e.target?.result) {
@@ -712,12 +864,13 @@ const handleImageUpload = (event: Event): void => {
     reader.readAsDataURL(file)
   })
 
-  // Clear the input value to allow re-uploading the same file
   target.value = ''
 }
 
 const removeImage = (index: number): void => {
   form.images.splice(index, 1)
+  imageFiles.value.splice(index, 1)
+  
   if (selectedImageIndex.value >= form.images.length) {
     selectedImageIndex.value = Math.max(0, form.images.length - 1)
   }
@@ -734,12 +887,4 @@ const nextImage = (): void => {
     ? selectedImageIndex.value + 1
     : 0
 }
-
-// Initialize user's default location when component mounts
-onMounted(() => {
-  const defaultAddress = userAddresses.value.find(addr => addr.isDefault)
-  if (defaultAddress) {
-    form.location = defaultAddress.location
-  }
-})
 </script>

@@ -235,6 +235,14 @@
             ></div>
           </div>
 
+          <!-- Low Stock Warning Badge (if applicable) -->
+          <div v-if="showLowStockWarning(animal.quantity, animal.originalQuantity)" class="mb-2 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
+            <svg class="w-3 h-3 text-yellow-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-xs text-yellow-800 font-medium">Low stock! {{ getLowStockMessage(animal.quantity, animal.originalQuantity) }}</span>
+          </div>
+
           <!-- Quick Actions -->
           <div class="flex gap-1">
             <button 
@@ -262,12 +270,12 @@
     <thead v-if="showTableHeader" class="bg-gradient-to-r from-green-50 to-emerald-50">
       <tr>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Image</th>
-        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Title & Info</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Specifications</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Price/Bid</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Posted</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Stock</th>
         <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
       </tr>
     </thead>
@@ -294,12 +302,6 @@
             </span>
           </div>
         </div>
-      </td>
-
-      
-      <!-- ID -->
-      <td class="px-4 py-3">
-        <div class="text-sm text-gray-600 font-mono">{{ animal.id }}...</div>
       </td>
       
       <!-- Title & Basic Info -->
@@ -362,6 +364,49 @@
         </span>
       </td>
 
+      <!-- Stock Management -->
+      <td class="px-4 py-3">
+        <div v-if="animal.originalQuantity !== undefined && !animal.isAuction" class="flex flex-col gap-1">
+          <!-- Stock Indicator -->
+          <div class="text-xs text-gray-600 mb-1">
+            {{ animal.quantity }}/{{ animal.originalQuantity }}
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-gray-200 rounded-full h-1 mb-1">
+            <div 
+              :class="`h-1 rounded-full transition-all duration-300 ${getStockProgressColor(animal.quantity, animal.originalQuantity)}`"
+              :style="`width: ${Math.max((animal.quantity / animal.originalQuantity) * 100, 3)}%`"
+            ></div>
+          </div>
+          <!-- Low Stock Warning (if applicable) -->
+          <div v-if="showLowStockWarning(animal.quantity, animal.originalQuantity)" class="text-xs text-yellow-700 font-medium mb-1 flex items-center gap-1">
+            <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>Low!</span>
+          </div>
+          <!-- Action Buttons -->
+          <div class="flex gap-1">
+            <button 
+              @click="handleQuickSale"
+              :disabled="animal.quantity === 0"
+              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Sold
+            </button>
+            <button 
+              @click="handleRestock"
+              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors"
+            >
+              +Stock
+            </button>
+          </div>
+        </div>
+        <div v-else class="text-xs text-gray-400">
+          N/A
+        </div>
+      </td>
+
       <!-- Actions -->
       <td class="px-4 py-3 whitespace-nowrap text-right">
         <button @click="$emit('openModal', animal)"
@@ -379,7 +424,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Animal, QuantityUpdateData } from '../../services/animal';
+import type { Animal, QuantityUpdateData } from '../../services/managementTypes';
 
 // Props interface
 interface Props {
@@ -405,6 +450,36 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
+// ✅ SMART THRESHOLD FUNCTION - Dynamic based on original quantity
+const getLowStockThreshold = (originalQuantity: number): number => {
+  if (originalQuantity <= 5) {
+    return 2;
+  } else if (originalQuantity <= 10) {
+    return 3;
+  } else if (originalQuantity <= 20) {
+    return 5;
+  } else if (originalQuantity <= 50) {
+    return 10;
+  } else if (originalQuantity <= 100) {
+    return Math.ceil(originalQuantity * 0.20);
+  } else {
+    return Math.ceil(originalQuantity * 0.15);
+  }
+};
+
+// ✅ CHECK IF LOW STOCK WARNING SHOULD BE SHOWN
+const showLowStockWarning = (current: number, original: number): boolean => {
+  if (current === 0) return false;
+  const threshold = getLowStockThreshold(original);
+  return current <= threshold;
+};
+
+// ✅ GET LOW STOCK MESSAGE
+const getLowStockMessage = (current: number, original: number): string => {
+  const threshold = getLowStockThreshold(original);
+  return `Only ${current} left (restock at ${threshold + 1})`;
+};
+
 // Computed property to auto-generate status
 const computedStatus = computed((): string => {
   if (props.animal.status) {
@@ -426,11 +501,14 @@ const computedStatus = computed((): string => {
 
   if (quantity === 0) {
     return 'Out of Stock';
-  } else if (originalQuantity && quantity <= originalQuantity * 0.3) {
-    return 'Low Stock';
-  } else {
-    return 'Available';
+  } else if (originalQuantity) {
+    const threshold = getLowStockThreshold(originalQuantity);
+    if (quantity <= threshold) {
+      return 'Low Stock';
+    }
   }
+  
+  return 'Available';
 });
 
 // Methods
@@ -500,11 +578,15 @@ const getTimeRemaining = (endTime?: string): string => {
   }
 };
 
-// Stock management methods
+// Stock management methods with dynamic thresholds
 const getStockProgressColor = (current: number, original: number): string => {
   const percentage = (current / original) * 100;
-  if (percentage <= 10) return 'bg-red-500';
-  if (percentage <= 30) return 'bg-yellow-500';
+  const threshold = getLowStockThreshold(original);
+  const thresholdPercentage = (threshold / original) * 100;
+  
+  if (current === 0) return 'bg-red-600';
+  if (percentage <= thresholdPercentage) return 'bg-yellow-500';
+  if (percentage <= thresholdPercentage * 2) return 'bg-green-400';
   return 'bg-green-500';
 };
 
@@ -512,7 +594,7 @@ const handleQuickSale = (): void => {
   if (props.animal.quantity > 0) {
     const newQuantity = Math.max(0, props.animal.quantity - 1);
     const updateData: QuantityUpdateData = {
-      animalId: props.animal.id.toString(),
+      animalId: props.animal.uuid,
       newQuantity,
       operation: 'sold'
     };
@@ -520,12 +602,37 @@ const handleQuickSale = (): void => {
   }
 };
 
+// ✅ FIXED RESTOCK LOGIC - Handles sold-out items properly
 const handleRestock = (): void => {
-  // Simple restock - add 5 items or restore to original quantity, whichever is smaller
-  const originalQty = props.animal.originalQuantity || props.animal.quantity;
-  const newQuantity = Math.min(originalQty, props.animal.quantity + 5);
+  const originalQty = props.animal.originalQuantity || props.animal.quantity || 10;
+  
+  let newQuantity: number;
+  
+  if (props.animal.quantity === 0) {
+    // ✅ When SOLD OUT: Restore to a meaningful amount
+    // Restore to 50% of original or minimum 5 items, whichever is greater
+    const restoreAmount = Math.max(5, Math.ceil(originalQty * 0.5));
+    newQuantity = Math.min(originalQty, restoreAmount);
+    
+    console.log('🔄 Restocking from sold out:', {
+      original: originalQty,
+      restoreAmount,
+      newQuantity
+    });
+  } else {
+    // ✅ Normal restock when NOT sold out: Add 5 items
+    newQuantity = Math.min(originalQty, props.animal.quantity + 5);
+    
+    console.log('🔄 Normal restock:', {
+      current: props.animal.quantity,
+      adding: 5,
+      newQuantity,
+      max: originalQty
+    });
+  }
+  
   const updateData: QuantityUpdateData = {
-    animalId: props.animal.id.toString(),
+    animalId: props.animal.uuid,
     newQuantity,
     operation: 'restocked'
   };
@@ -535,16 +642,25 @@ const handleRestock = (): void => {
 // Enhanced inventory management functions
 const getInventoryStatus = (quantity: number, originalQuantity?: number): string => {
   if (quantity === 0) return 'Out of Stock';
-  if (originalQuantity && quantity <= originalQuantity * 0.3) return 'Low Stock';
-  if (quantity <= 10) return 'Available';
-  return 'In Stock';
+  if (originalQuantity) {
+    const threshold = getLowStockThreshold(originalQuantity);
+    if (quantity <= threshold) return 'Low Stock';
+  }
+  return 'Available';
 };
 
 const getInventoryAlert = (quantity: number, originalQuantity?: number): { show: boolean; message: string; type: string } => {
   if (quantity === 0) {
     return { show: true, message: 'Out of stock', type: 'error' };
-  } else if (originalQuantity && quantity <= originalQuantity * 0.3) {
-    return { show: true, message: `Only ${quantity} left in stock`, type: 'warning' };
+  } else if (originalQuantity) {
+    const threshold = getLowStockThreshold(originalQuantity);
+    if (quantity <= threshold) {
+      return { 
+        show: true, 
+        message: `Only ${quantity} left in stock (threshold: ${threshold})`, 
+        type: 'warning' 
+      };
+    }
   }
   return { show: false, message: '', type: '' };
 };
@@ -564,6 +680,9 @@ defineExpose({
   createListingWithStatus,
   getInventoryStatus,
   getInventoryAlert,
-  computedStatus
+  computedStatus,
+  getLowStockThreshold,
+  showLowStockWarning,
+  getLowStockMessage
 });
 </script>

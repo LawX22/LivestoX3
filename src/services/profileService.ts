@@ -1,6 +1,6 @@
 // services/profileService.ts
 import { supabase } from '@/supabase'
-import type { User, ProfileDB, Address } from './user'
+import type { User, ProfileDB, Address, FarmInfoDB } from './user'
 import { dbProfileToUser } from './user'
 
 // Configuration
@@ -31,6 +31,9 @@ export class ProfileService {
    */
   static async getProfile(userId: string): Promise<User | null> {
     try {
+      console.log('📊 Fetching profile for user:', userId)
+
+      // Fetch profile data
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -53,9 +56,60 @@ export class ProfileService {
       const user = dbProfileToUser(profile as ProfileDB, email)
       user.addresses = addresses
 
+      // 🚜 Fetch farm info if user is a Farmer
+      if (profile.role === 'Farmer') {
+        console.log('🚜 Fetching farm info for farmer...')
+        const farmInfo = await this.getFarmInfo(userId)
+        
+        if (farmInfo) {
+          user.farmName = farmInfo.farm_name
+          user.farmSize = farmInfo.farm_size
+          user.farmSizeUnit = farmInfo.farm_size_unit
+          user.livestockTypes = farmInfo.livestock_types
+          user.description = farmInfo.description
+          user.farmAddress = {
+            street: farmInfo.street,
+            barangay: farmInfo.barangay,
+            city: farmInfo.city,
+            province: farmInfo.province,
+            region: farmInfo.region
+          }
+          console.log('✅ Farm info loaded:', farmInfo)
+        } else {
+          console.warn('⚠️  No farm info found for farmer')
+        }
+      }
+
       return user
     } catch (error) {
       console.error('Error in getProfile:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get farm info from farm_info table
+   */
+  static async getFarmInfo(userId: string): Promise<FarmInfoDB | null> {
+    try {
+      const { data, error } = await supabase
+        .from('farm_info')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - this is expected for users without farm info
+          return null
+        }
+        console.error('Error fetching farm info:', error)
+        return null
+      }
+
+      return data as FarmInfoDB
+    } catch (error) {
+      console.error('Error in getFarmInfo:', error)
       return null
     }
   }
@@ -65,6 +119,8 @@ export class ProfileService {
    */
   static async updateProfile(userId: string, updates: Partial<User>): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('💾 Updating profile for user:', userId)
+
       // Only update fields that definitely exist in the profiles table
       const allowedUpdates: any = {}
       
@@ -77,24 +133,123 @@ export class ProfileService {
       if (updates.bannerImage !== undefined) allowedUpdates.banner_image = updates.bannerImage
       
       // Only proceed if there are fields to update
-      if (Object.keys(allowedUpdates).length === 0) {
-        return { success: true }
+      if (Object.keys(allowedUpdates).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(allowedUpdates)
+          .eq('id', userId)
+
+        if (error) {
+          console.error('Error updating profile:', error)
+          return { success: false, error: error.message }
+        }
+        console.log('✅ Profile updated successfully')
       }
 
-      const { error } = await supabase
+      // 🚜 Update farm info if provided and user is a Farmer
+      const { data: currentProfile } = await supabase
         .from('profiles')
-        .update(allowedUpdates)
+        .select('role')
         .eq('id', userId)
+        .single()
 
-      if (error) {
-        console.error('Error updating profile:', error)
-        return { success: false, error: error.message }
+      if (currentProfile?.role === 'Farmer' && (
+        updates.farmName !== undefined ||
+        updates.farmSize !== undefined ||
+        updates.farmSizeUnit !== undefined ||
+        updates.livestockTypes !== undefined ||
+        updates.description !== undefined ||
+        updates.farmAddress !== undefined
+      )) {
+        console.log('🚜 Updating farm info...')
+        const farmUpdateResult = await this.updateFarmInfo(userId, updates)
+        
+        if (!farmUpdateResult.success) {
+          console.error('Error updating farm info:', farmUpdateResult.error)
+          return { success: false, error: farmUpdateResult.error }
+        }
+        console.log('✅ Farm info updated successfully')
       }
 
       return { success: true }
     } catch (error) {
       console.error('Error in updateProfile:', error)
       return { success: false, error: String(error) }
+    }
+  }
+
+  /**
+   * Update farm information in farm_info table
+   */
+  static async updateFarmInfo(userId: string, farmData: Partial<User>): Promise<{ success: boolean; error?: string }> {
+    try {
+      const farmUpdates: any = {
+        updated_at: new Date().toISOString()
+      }
+
+      // Map farm data fields
+      if (farmData.farmName !== undefined) farmUpdates.farm_name = farmData.farmName
+      if (farmData.farmSize !== undefined) farmUpdates.farm_size = farmData.farmSize
+      if (farmData.farmSizeUnit !== undefined) farmUpdates.farm_size_unit = farmData.farmSizeUnit
+      
+      // Handle livestock types - ensure it's an array
+      if (farmData.livestockTypes !== undefined) {
+        if (Array.isArray(farmData.livestockTypes)) {
+          farmUpdates.livestock_types = farmData.livestockTypes
+        } else if (typeof farmData.livestockTypes === 'string') {
+          // Split comma-separated string into array
+          farmUpdates.livestock_types = farmData.livestockTypes
+            .split(',')
+            .map(type => type.trim())
+            .filter(type => type.length > 0)
+        }
+      }
+      
+      if (farmData.description !== undefined) farmUpdates.description = farmData.description
+
+      // Include farm address fields
+      if (farmData.farmAddress) {
+        if (farmData.farmAddress.street !== undefined) farmUpdates.street = farmData.farmAddress.street
+        if (farmData.farmAddress.barangay !== undefined) farmUpdates.barangay = farmData.farmAddress.barangay
+        if (farmData.farmAddress.city !== undefined) farmUpdates.city = farmData.farmAddress.city
+        if (farmData.farmAddress.province !== undefined) farmUpdates.province = farmData.farmAddress.province
+        if (farmData.farmAddress.region !== undefined) farmUpdates.region = farmData.farmAddress.region
+      }
+
+      // Check if farm info exists
+      const { data: existingFarmInfo } = await supabase
+        .from('farm_info')
+        .select('id')
+        .eq('user_id', userId)
+        .single()
+
+      if (existingFarmInfo) {
+        // Update existing farm info
+        const { error: farmError } = await supabase
+          .from('farm_info')
+          .update(farmUpdates)
+          .eq('user_id', userId)
+
+        if (farmError) {
+          console.error('Error updating farm info:', farmError)
+          return { success: false, error: farmError.message }
+        }
+      } else {
+        // Insert new farm info
+        const { error: farmError } = await supabase
+          .from('farm_info')
+          .insert({ ...farmUpdates, user_id: userId })
+
+        if (farmError) {
+          console.error('Error inserting farm info:', farmError)
+          return { success: false, error: farmError.message }
+        }
+      }
+
+      return { success: true }
+    } catch (error: any) {
+      console.error('Error in updateFarmInfo:', error)
+      return { success: false, error: error.message || 'Failed to update farm info' }
     }
   }
 
@@ -592,20 +747,5 @@ export class ProfileService {
     } catch (error) {
       return { success: false, error: String(error) }
     }
-  }
-
-  /**
-   * Update farm information (DISABLED - schema not ready)
-   */
-  static async updateFarmInfo(userId: string, farmData: {
-    farmName?: string
-    farmSize?: string
-    farmSizeUnit?: string
-    livestockTypes?: string[]
-    description?: string
-    farmAddress?: any
-  }): Promise<{ success: boolean; error?: string }> {
-    console.warn('Farm info update is disabled - schema columns not available')
-    return { success: false, error: 'Farm info update is currently unavailable. Please contact support.' }
   }
 }
