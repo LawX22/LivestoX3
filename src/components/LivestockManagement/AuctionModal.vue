@@ -542,7 +542,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import type { Animal, Bid } from '../../services/animal';
+import type { Animal, Bid } from '../../services/managementTypes';
 
 type BidType = 'manual' | 'auto' | 'proxy' | 'snipe';
 

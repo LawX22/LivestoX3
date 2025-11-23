@@ -380,7 +380,7 @@ import type {
   PriceRange,
   TimeRange,
   AuctionDuration
-} from '../../services/animal';
+} from '../../services/managementTypes';
 
 // Define props interface for better type safety
 interface Props {
