@@ -1,4 +1,4 @@
-<!-- NavBar.vue -->
+<!-- NavBar.vue - OPTIMIZED FOR SPEED -->
 <template>
   <!-- Background Pattern Overlay for the navbar area -->
   <div class="fixed top-0 left-0 right-0 z-40 h-20 opacity-5 pointer-events-none">
@@ -551,20 +551,18 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
-import { NavBarService, NavBarServiceError } from '@/services/navbarService';
+import { NavBarService } from '@/services/navbarService';
 import type { NavBarUser } from '@/services/navbarService';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-// 🔥 CRITICAL: Load cached data IMMEDIATELY (synchronous, before any async calls)
+// 🚀 INSTANT LOAD: Get cached data synchronously FIRST
 const cachedNavbarUser = NavBarService.getCachedNavBarData();
 
-// Navbar data state - initialized with cached data if available
+// State - initialized with cached data for instant display
 const navbarUser = ref<NavBarUser | null>(cachedNavbarUser);
-
-// UI counters
 const cartCount = ref(0);
 const unreadNotifications = ref(0);
 const unreadMessages = ref(0);
@@ -573,31 +571,26 @@ const unreadMessages = ref(0);
 const showDropdown = ref(false);
 const showNotificationDropdown = ref(false);
 const showMessageDropdown = ref(false);
-const showLogoutModal = ref(false); 
+const showLogoutModal = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const notificationRef = ref<HTMLElement | null>(null);
 const messageRef = ref<HTMLElement | null>(null);
 
-// 🔥 KEY FIX: Use cached auth state OR live auth state
-// This computed property returns true IMMEDIATELY if cache says user was logged in
+// 🚀 COMPUTED: Use cached data OR live data for instant availability
 const isLoggedIn = computed(() => {
-  // Check live auth state first
+  // Check live auth state
   if (authStore.isAuthenticated) return true;
-  // Fall back to checking if we have cached user data
+  // Fallback: check if we have cached user data
   if (cachedNavbarUser) return true;
   return false;
 });
 
-// 🔥 KEY FIX: Use cached user OR live user data
-// This ensures user data is available immediately on page load
 const currentUser = computed(() => {
-  // Prefer live data if available
-  if (navbarUser.value) return navbarUser.value;
-  // Fall back to cached data
-  return cachedNavbarUser;
+  // Prefer live data, fallback to cache
+  return navbarUser.value || cachedNavbarUser;
 });
 
-// Handle image load errors
+// Handle image errors
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement;
   target.style.display = 'none';
@@ -606,20 +599,26 @@ const handleImageError = (event: Event) => {
   }
 };
 
-// Initialize
+// 🚀 OPTIMIZED: Initialize in parallel
 onMounted(async () => {
-  console.log('🚀 NavBar mounting...');
-  console.log('📦 Cached navbar user:', cachedNavbarUser?.displayName || 'none');
+  console.log('🚀 NavBar mounting with cached data:', cachedNavbarUser?.displayName || 'none');
   
-  // Initialize auth store (this updates isAuthenticated)
-  await authStore.initialize();
+  // Start both in parallel - don't wait for initialize()
+  const initPromise = authStore.initialize();
   
-  // If authenticated, refresh navbar data in background (don't wait)
-  if (authStore.isAuthenticated && authStore.userId) {
-    // Don't await - let it update in background
-    loadNavbarData();
+  // If we have cached user, start refreshing immediately (don't wait)
+  if (cachedNavbarUser?.id) {
+    loadNavbarData(cachedNavbarUser.id);
+  }
+  
+  // Wait for auth to finish
+  await initPromise;
+  
+  // If auth succeeded but we don't have cached data, load it now
+  if (authStore.isAuthenticated && authStore.userId && !cachedNavbarUser) {
+    await loadNavbarData(authStore.userId);
   } else if (!authStore.isAuthenticated && cachedNavbarUser) {
-    // Session expired but cache exists - clear cache and reset
+    // Session expired - clear cache
     console.log('⚠️ Session expired, clearing cache');
     NavBarService.clearNavBarCache();
     navbarUser.value = null;
@@ -634,26 +633,20 @@ onBeforeUnmount(() => {
   document.removeEventListener("keydown", handleKeyDown);
 });
 
-// Watch for auth changes
-watch(() => authStore.isAuthenticated, async (newValue, oldValue) => {
-  console.log('🔄 Auth state changed:', { newValue, oldValue });
-  
-  if (oldValue === undefined || newValue === oldValue) return;
-  
+// Watch auth changes
+watch(() => authStore.isAuthenticated, async (newValue) => {
   if (newValue && authStore.userId) {
-    // User just logged in - load navbar data
-    await loadNavbarData();
+    await loadNavbarData(authStore.userId);
   } else {
-    // User logged out - clear everything
     navbarUser.value = null;
     NavBarService.clearNavBarCache();
     cartCount.value = 0;
     unreadNotifications.value = 0;
     unreadMessages.value = 0;
   }
-}, { immediate: false });
+});
 
-// Watch for route changes
+// Watch route changes
 watch(() => route.path, () => {
   showDropdown.value = false;
   showNotificationDropdown.value = false;
@@ -661,30 +654,25 @@ watch(() => route.path, () => {
   showLogoutModal.value = false;
 });
 
-const loadNavbarData = async () => {
-  if (!authStore.userId) return;
-  
+// 🚀 OPTIMIZED: Load navbar data (async refresh in background)
+const loadNavbarData = async (userId: string) => {
   try {
-    console.log('📊 Loading fresh navbar data...');
-    const data = await NavBarService.getAllNavBarData(authStore.userId);
+    console.log('📊 Refreshing navbar data in background...');
+    const data = await NavBarService.getAllNavBarData(userId);
     
     // Update with fresh data
     navbarUser.value = data.user;
     
     console.log('✅ Navbar data refreshed:', data.user?.displayName);
-  } catch (error) {
-    console.error('❌ Error loading navbar data:', error);
+  } catch (error: any) {
+    console.error('❌ Error refreshing navbar data:', error);
     
-    if (error instanceof NavBarServiceError) {
-      if (error.code === 'USER_NOT_FOUND' || error.code === 'AUTH_ERROR') {
-        console.warn('⚠️ User account not found - logging out');
-        await handleAutoLogout(error.message);
-        return;
-      }
+    // Keep using cached data on network errors
+    // Only logout if it's an auth error
+    if (error?.code === 'AUTH_ERROR') {
+      console.warn('⚠️ Auth error - logging out');
+      await handleAutoLogout('Authentication session expired');
     }
-    
-    // Network error - keep using cached data
-    console.warn('⚠️ Network error, using cached data');
   }
 };
 
@@ -707,7 +695,7 @@ const handleAutoLogout = async (reason: string) => {
     
     router.push({
       path: "/",
-      query: { message: "Your session has expired" }
+      query: { message: reason }
     });
   } catch (error) {
     console.error("❌ Auto-logout failed:", error);

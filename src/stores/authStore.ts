@@ -1,4 +1,4 @@
-// stores/authStore.ts
+// stores/authStore.ts - OPTIMIZED FOR SPEED
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
@@ -6,7 +6,7 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from '@/supabase'
 import { auth } from '../services/auth-service'
 
-// 🔥 Storage keys for caching
+// 🚀 Storage keys for caching
 const AUTH_CACHE_KEY = 'livestox_auth_cache'
 
 interface AuthCache {
@@ -25,23 +25,20 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
   const initialized = ref(false)
 
-  // 🔥 NEW: Cached auth state (loaded synchronously from localStorage)
+  // 🚀 Cached auth state (loaded synchronously from localStorage)
   const cachedAuth = ref<AuthCache | null>(null)
 
-  // 🔥 Track if auth listener has been set up
+  // Track if auth listener has been set up
   let authListenerSetup = false
 
-  // 🔥 Debounce timer for cache writes
-  let cacheWriteTimer: ReturnType<typeof setTimeout> | null = null
-
-  // 🔥 Load cached auth immediately (synchronous)
+  // 🚀 Load cached auth immediately (synchronous)
   const loadCachedAuth = (): AuthCache | null => {
     try {
       const cached = localStorage.getItem(AUTH_CACHE_KEY)
       if (cached) {
         const parsed = JSON.parse(cached) as AuthCache
-        // Cache is valid for 24 hours
-        const isValid = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000
+        // Cache is valid for 7 days (longer to reduce re-auth)
+        const isValid = Date.now() - parsed.timestamp < 7 * 24 * 60 * 60 * 1000
         if (isValid && parsed.isAuthenticated) {
           console.log('🔄 Loaded cached auth state:', parsed)
           return parsed
@@ -53,39 +50,25 @@ export const useAuthStore = defineStore('auth', () => {
     return null
   }
 
-  // 🔥 Save auth state to cache (DEBOUNCED to prevent excessive writes)
+  // 🚀 Save auth state to cache (immediate, no debounce)
   const saveAuthCache = (userId: string | null, email: string | null, isAuth: boolean) => {
-    // Clear any pending cache write
-    if (cacheWriteTimer) {
-      clearTimeout(cacheWriteTimer)
-    }
-
-    // Debounce cache writes by 300ms
-    cacheWriteTimer = setTimeout(() => {
-      try {
-        const cache: AuthCache = {
-          userId,
-          email,
-          isAuthenticated: isAuth,
-          timestamp: Date.now()
-        }
-        localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(cache))
-        cachedAuth.value = cache
-        console.log('💾 Saved auth cache:', cache)
-      } catch (e) {
-        console.warn('Failed to save auth cache:', e)
+    try {
+      const cache: AuthCache = {
+        userId,
+        email,
+        isAuthenticated: isAuth,
+        timestamp: Date.now()
       }
-    }, 300)
+      localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(cache))
+      cachedAuth.value = cache
+      console.log('💾 Saved auth cache:', cache)
+    } catch (e) {
+      console.warn('Failed to save auth cache:', e)
+    }
   }
 
-  // 🔥 Clear auth cache
+  // 🚀 Clear auth cache
   const clearAuthCache = () => {
-    // Clear any pending cache write
-    if (cacheWriteTimer) {
-      clearTimeout(cacheWriteTimer)
-      cacheWriteTimer = null
-    }
-
     try {
       localStorage.removeItem(AUTH_CACHE_KEY)
       cachedAuth.value = null
@@ -95,22 +78,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 🔥 Initialize cached auth immediately (runs synchronously when store is created)
+  // 🚀 Initialize cached auth immediately (runs synchronously when store is created)
   cachedAuth.value = loadCachedAuth()
 
-  // 🔥 Setup auth state change listener (ONLY ONCE, inside initialize)
+  // 🚀 Setup auth state change listener (ONLY ONCE)
   const setupAuthListener = () => {
-    if (authListenerSetup) return // Prevent duplicate listeners
+    if (authListenerSetup) return
 
     supabase.auth.onAuthStateChange(async (event, _session) => {
       console.log('🔐 Auth state change:', event)
 
-      // Prevent unnecessary updates during initialization
+      // Skip redundant updates
       if (!initialized.value && event === 'INITIAL_SESSION') {
-        return // Skip initial session event - we handle this in initialize()
+        return
       }
 
-      // Prevent unnecessary updates if session hasn't actually changed
+      // Prevent unnecessary updates if session hasn't changed
       if (_session?.user?.id === user.value?.id && _session?.access_token === session.value?.access_token) {
         return
       }
@@ -118,7 +101,7 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = _session
       user.value = _session ? _session.user : null
 
-      // 🔥 Update cache on auth state change
+      // 🚀 Update cache on auth state change
       if (_session?.user) {
         saveAuthCache(_session.user.id, _session.user.email || null, true)
       } else {
@@ -130,36 +113,36 @@ export const useAuthStore = defineStore('auth', () => {
     console.log('✅ Auth listener setup complete')
   }
 
-  // AUTH ACTIONS
+  // 🚀 OPTIMIZED: Initialize with faster execution
   const initialize = async (): Promise<void> => {
     if (initialized.value) return
     
     try {
       loading.value = true
       
-      // 🔥 Setup listener BEFORE getting session
+      // 🚀 Setup listener BEFORE getting session
       setupAuthListener()
 
+      // 🚀 Use getSession instead of getUser (faster, less expensive)
       const { data } = await supabase.auth.getSession()
       session.value = data?.session ?? null
       user.value = data?.session?.user || null
       initialized.value = true
 
-      // 🔥 Update cache after successful initialization
+      // 🚀 Update cache after successful initialization
       if (data?.session?.user) {
         saveAuthCache(
           data.session.user.id,
           data.session.user.email || null,
           true
         )
-      } else {
-        // No valid session - clear cache
+      } else if (!data?.session) {
+        // No session found - clear cache
         clearAuthCache()
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to initialize auth'
       console.error('Auth initialization error:', err)
-      // Clear cache on error
       clearAuthCache()
     } finally {
       loading.value = false
@@ -181,7 +164,7 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = data?.session ?? null
       user.value = data?.user ?? null
 
-      // 🔥 Save to cache on successful login
+      // 🚀 Save to cache on successful login
       if (data?.user) {
         saveAuthCache(data.user.id, data.user.email || null, true)
       }
@@ -213,7 +196,7 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = data?.session ?? null
       user.value = data?.user ?? null
 
-      // 🔥 Save to cache on successful registration
+      // 🚀 Save to cache on successful registration
       if (data?.user) {
         saveAuthCache(data.user.id, data.user.email || null, true)
       }
@@ -236,7 +219,7 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       initialized.value = false
       
-      // 🔥 Clear cache on logout
+      // 🚀 Clear cache on logout
       clearAuthCache()
     } catch (err: any) {
       error.value = err.message || 'Logout failed'
@@ -252,7 +235,7 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = data.session
       user.value = data.session?.user || null
 
-      // 🔥 Update cache
+      // 🚀 Update cache
       if (data.session?.user) {
         saveAuthCache(data.session.user.id, data.session.user.email || null, true)
       } else {
@@ -265,7 +248,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 🔥 COMPUTED PROPERTIES - Use cached values as fallback for instant availability
+  // 🚀 COMPUTED PROPERTIES - Use cached values as fallback for instant availability
   const userId = computed(() => {
     return user.value?.id ?? cachedAuth.value?.userId ?? null
   })
@@ -327,7 +310,7 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     login,
     register,
-logout,
+    logout,
     getSession,
     clearAuthCache,
 

@@ -792,14 +792,14 @@
 import { ref, onMounted, computed } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import Chart from 'primevue/chart'
-import { DashboardService } from '@/services/dashboardService'
+import { DashboardService } from '@/services/admindashboardService'
 import type {
   DashboardStats,
   UserMetrics,
   Demographics,
   ActivityMetrics,
   RecentActivity,
-} from '@/services/dashboardService'
+} from '@/services/admindashboardService'
 
 // Loading states
 const isLoading = ref(true)

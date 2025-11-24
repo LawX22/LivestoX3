@@ -1,4 +1,4 @@
-<!-- Marketplace.vue -->
+<!-- Marketplace.vue - OPTIMIZED -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -19,29 +19,12 @@
       />
     </div>
 
-    <!-- Loading Skeleton for Header -->
-    <div v-if="isLoadingUser" class="sticky top-0 z-40 px-4 md:px-6 pt-3">
-      <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm animate-pulse">
-        <div class="flex items-center min-w-0">
-          <div class="w-12 h-12 bg-white/20 rounded-xl mr-3"></div>
-          <div class="min-w-0">
-            <div class="h-5 bg-white/20 rounded w-48 mb-2"></div>
-            <div class="h-4 bg-white/10 rounded w-64"></div>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="h-8 bg-white/20 rounded-lg w-32"></div>
-          <div class="h-8 bg-white/20 rounded-lg w-24"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Dynamic Combined Header -->
-    <div v-else class="sticky top-0 z-40 px-4 md:px-6 pt-3">
+    <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
       <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
         <!-- Left side - Logo and Title -->
         <div class="flex items-center min-w-0">
-          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
+          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg cursor-pointer" @click="scrollToTop">
             <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.3" />
               <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
@@ -52,60 +35,60 @@
             </svg>
           </div>
           <div class="min-w-0">
-            <h1 class="text-xl font-bold text-white truncate">Livestock Marketplace</h1>
-            <p class="text-green-100 text-sm opacity-90 truncate">
+            <h1 class="text-xl font-bold text-white truncate cursor-default">Livestock Marketplace</h1>
+            <p class="text-green-100 text-sm opacity-90 truncate cursor-default">
               {{ isFarmerView ? "Manage your livestock listings and auctions" : "Discover quality livestock from verified farmers" }}
             </p>
           </div>
         </div>
 
-        <!-- Right side - Dynamic Content Area -->
-        <div class="flex-1 flex justify-end min-w-0">
+        <!-- Right side - Dynamic Content Area (only render after user data loads) -->
+        <div v-if="!isLoadingUser" class="flex-1 flex justify-end min-w-0">
           <!-- Farmer View -->
-          <div v-if="isFarmerView" class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md">
+          <div v-if="isFarmerView" class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md cursor-default">
             <svg class="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
             </svg>
             <span class="text-sm font-semibold truncate ml-2">Welcome Farmer - Manage your livestock</span>
-            <button @click="navigateToLivestockManagement" class="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+            <button @click="navigateToLivestockManagement" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
               Post Livestock
             </button>
           </div>
 
           <!-- Guest Mode -->
-          <div v-else-if="!isAuthenticated" class="bg-yellow-100/80 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-yellow-200 shadow-md max-w-full">
+          <div v-else-if="!isAuthenticated" class="bg-yellow-100/80 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-yellow-200 shadow-md max-w-full cursor-default">
             <svg class="w-4 h-4 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>
             <span class="text-sm font-semibold truncate ml-2">Guest mode - Sign In for full access</span>
-            <button @click="toggleAuth" class="whitespace-nowrap bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+            <button @click="toggleAuth" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
               Sign In
             </button>
           </div>
 
           <!-- Buyer View -->
           <div v-else class="flex items-center gap-3 max-w-full">
-            <div v-if="!profileCompleted" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md">
+            <div v-if="!profileCompleted" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
               <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
               </svg>
               <span class="text-sm font-semibold truncate ml-2">Buyer account - Verify to upgrade</span>
-              <button @click="showToastNotification('This would navigate to user profile')" class="whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+              <button @click="showToastNotification('This would navigate to user profile')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
                 Verify Account
               </button>
             </div>
-            <div v-else-if="hasPendingUpgrade" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md">
+            <div v-else-if="hasPendingUpgrade" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md cursor-default">
               <svg class="w-4 h-4 text-red-500 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
               </svg>
               <span class="text-sm font-semibold">Upgrade pending</span>
             </div>
-            <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md">
+            <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
               <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
               </svg>
               <span class="text-sm font-semibold truncate ml-2">Ready to become a Farmer?</span>
-              <button @click="showToastNotification('This would navigate to upgrade form')" class="whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+              <button @click="showToastNotification('This would navigate to upgrade form')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
                 Upgrade Account
               </button>
             </div>
@@ -136,12 +119,12 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 items-center gap-3">
             <!-- Left side - Results Counter -->
             <div class="flex items-center gap-2 justify-start">
-              <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+              <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center cursor-default">
                 <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
                 </svg>
               </div>
-              <h3 class="text-sm font-bold text-gray-800">
+              <h3 class="text-sm font-bold text-gray-800 cursor-default">
                 {{ isLoadingData ? 'Loading...' : `${currentFilteredAnimals.length} ${currentFilteredAnimals.length === 1 ? 'Listing' : 'Listings'} Found` }}
               </h3>
             </div>
@@ -150,7 +133,7 @@
             <div class="flex justify-center gap-2">
               <button 
                 @click="activeTab = 'normal'"
-                :class="`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
+                :class="`cursor-pointer px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
                   activeTab === 'normal' 
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md border-green-500' 
                     : 'text-gray-600 hover:text-gray-800 border-gray-200'
@@ -167,7 +150,7 @@
 
               <button 
                 @click="activeTab = 'auction'"
-                :class="`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
+                :class="`cursor-pointer px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
                   activeTab === 'auction' 
                     ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md border-amber-500' 
                     : 'text-gray-600 hover:text-gray-800 border-gray-200'
@@ -186,7 +169,7 @@
             <!-- Right side - Status + Sort -->
             <div class="flex items-center justify-end gap-4">
               <div class="flex items-center gap-2 min-w-[160px]">
-                <div v-if="activeTab === 'auction'" class="text-xs text-gray-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 flex items-center gap-1">
+                <div v-if="activeTab === 'auction'" class="text-xs text-gray-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 flex items-center gap-1 cursor-default">
                   <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
                   <span class="hidden sm:inline">Live bidding available</span>
                   <span class="sm:hidden">Live</span>
@@ -194,8 +177,8 @@
               </div>
 
               <div class="flex items-center gap-2">
-                <label class="text-xs font-semibold text-gray-700 hidden sm:inline">Sort By:</label>
-                <select v-model="sortBy" class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm">
+                <label class="text-xs font-semibold text-gray-700 hidden sm:inline cursor-default">Sort By:</label>
+                <select v-model="sortBy" class="cursor-pointer px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm">
                   <option value="datePosted">Newest</option>
                   <option value="datePosted-asc">Oldest</option>
                   <option value="price">Price (Low)</option>
@@ -222,7 +205,7 @@
               <div
                 v-for="n in 8"
                 :key="`skeleton-${n}`"
-                class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 p-4 shadow-lg animate-pulse"
+                class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 p-4 shadow-lg animate-pulse cursor-default"
               >
                 <div class="w-full h-48 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 rounded-lg mb-4 relative overflow-hidden">
                   <div class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
@@ -267,7 +250,7 @@
 
             <!-- Enhanced Empty State -->
             <div v-else-if="!isLoadingData && currentFilteredAnimals.length === 0" class="flex flex-col items-center justify-center py-12">
-              <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md text-center shadow-xl">
+              <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md text-center shadow-xl cursor-default">
                 <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-inner">
                   <svg v-if="activeTab === 'auction'" class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -285,7 +268,7 @@
                     : 'We couldn\'t find any livestock matching your current search criteria. Try adjusting your filters or browse all available listings.'
                   }}
                 </p>
-                <button @click="resetFilters" class="px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105">
+                <button @click="resetFilters" class="cursor-pointer px-4 py-2 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 hover:from-green-700 hover:via-green-800 hover:to-emerald-800 text-white rounded-lg text-xs font-bold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
@@ -331,17 +314,17 @@
       <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-3 transform transition-all duration-300 ease-in-out">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg cursor-default">
               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
             </div>
           </div>
           <div class="ml-3 flex-1">
-            <h4 class="text-xs font-bold text-gray-900 mb-0.5">Success!</h4>
-            <div class="text-xs text-gray-700 font-medium">{{ toastMessage }}</div>
+            <h4 class="text-xs font-bold text-gray-900 mb-0.5 cursor-default">Success!</h4>
+            <div class="text-xs text-gray-700 font-medium cursor-default">{{ toastMessage }}</div>
           </div>
-          <button @click="showToast = false" class="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-0.5 hover:bg-gray-100 rounded-md">
+          <button @click="showToast = false" class="cursor-pointer ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-0.5 hover:bg-gray-100 rounded-md">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -353,7 +336,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { supabase } from '../../supabase';
 import { marketplaceService, type UserDetails } from '@/services/marketplaceService';
@@ -371,6 +354,10 @@ const router = useRouter();
 const props = defineProps<{
   viewMode?: 'buyer' | 'farmer';
 }>();
+
+// ===== PERFORMANCE OPTIMIZATIONS =====
+const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+let lastFetchTime = 0;
 
 // ===== AUTHENTICATION STATE =====
 const isAuthenticated = ref(false);
@@ -445,6 +432,15 @@ const filters = ref<Filters>({
 // ===== DATA =====
 const animals = ref<Animal[]>([]);
 
+// ===== PERFORMANCE HELPERS =====
+const debounce = (fn: Function, delay: number) => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  return (...args: any[]) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(null, args), delay);
+  };
+};
+
 // ===== COMPUTED PROPERTIES =====
 const normalListings = computed(() => animals.value.filter(animal => !animal.isAuction));
 const auctionListings = computed(() => animals.value.filter(animal => animal.isAuction));
@@ -470,11 +466,11 @@ const uniqueLocations = computed(() => {
   return Array.from(locations).sort();
 });
 
-// ===== HELPER FUNCTIONS =====
+// ===== OPTIMIZED HELPER FUNCTIONS =====
 const getAuctionStatus = (animal: Animal): string => {
   if (!animal.isAuction || !animal.endTime) return 'Unknown';
   
-  const now = new Date().getTime();
+  const now = Date.now();
   const endTime = new Date(animal.endTime).getTime();
   const timeLeft = endTime - now;
   
@@ -562,7 +558,7 @@ const currentFilteredAnimals = computed(() => {
       }
 
       if (filters.value.endTimeRanges.length > 0) {
-        const now = new Date().getTime();
+        const now = Date.now();
         const endTime = animal.endTime ? new Date(animal.endTime).getTime() : 0;
         const timeLeft = endTime - now;
         const hoursLeft = timeLeft / (1000 * 60 * 60);
@@ -658,7 +654,7 @@ const currentFilteredAnimals = computed(() => {
   });
 });
 
-// ===== FETCH CURRENT USER =====
+// ===== OPTIMIZED FETCH FUNCTIONS =====
 const fetchCurrentUser = async () => {
   try {
     console.log('🔍 ===== FETCHING CURRENT USER =====');
@@ -678,6 +674,22 @@ const fetchCurrentUser = async () => {
       isAuthenticated.value = true;
       currentUserId.value = user.id;
 
+      // Use cached data if available and recent
+      const cachedUserData = localStorage.getItem(`user_${user.id}`);
+      if (cachedUserData) {
+        const parsed = JSON.parse(cachedUserData);
+        if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
+          console.log('✅ Using cached user data');
+          currentUserDetails.value = parsed.data;
+          userName.value = parsed.data.fullName;
+          userEmail.value = parsed.data.email;
+          userRole.value = parsed.data.role as 'buyer' | 'farmer';
+          profileCompleted.value = !!(parsed.data.firstName && parsed.data.lastName);
+          isLoadingUser.value = false;
+          return;
+        }
+      }
+
       const userDetails = await marketplaceService.getUserDetails(user.id);
       
       if (userDetails) {
@@ -688,6 +700,12 @@ const fetchCurrentUser = async () => {
         userEmail.value = userDetails.email;
         userRole.value = userDetails.role as 'buyer' | 'farmer';
         profileCompleted.value = !!(userDetails.firstName && userDetails.lastName);
+        
+        // Cache user data
+        localStorage.setItem(`user_${user.id}`, JSON.stringify({
+          data: userDetails,
+          timestamp: Date.now()
+        }));
         
         console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
         console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
@@ -712,9 +730,19 @@ const fetchCurrentUser = async () => {
   }
 };
 
-// ===== FETCH LIVESTOCK LISTINGS =====
-const fetchListings = async () => {
+// ===== OPTIMIZED FETCH LIVESTOCK LISTINGS =====
+const fetchListings = async (forceRefresh = false) => {
   try {
+    // Check cache first
+    const cachedListings = localStorage.getItem('marketplace_listings');
+    if (cachedListings && !forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
+      const parsed = JSON.parse(cachedListings);
+      animals.value = parsed.data;
+      console.log('✅ Using cached listings');
+      isLoadingData.value = false;
+      return;
+    }
+
     console.log('📦 Fetching livestock listings from database...');
     isLoadingData.value = true;
     
@@ -722,6 +750,14 @@ const fetchListings = async () => {
     
     if (result.success && result.data) {
       animals.value = result.data;
+      
+      // Cache the results
+      localStorage.setItem('marketplace_listings', JSON.stringify({
+        data: result.data,
+        timestamp: Date.now()
+      }));
+      lastFetchTime = Date.now();
+      
       console.log(`✅ Successfully loaded ${result.data.length} listings`);
     } else {
       console.error('❌ Failed to fetch listings:', result.error);
@@ -742,14 +778,18 @@ const navigateToLivestockManagement = () => {
   router.push('/LivestockManagement');
 };
 
-// ===== METHODS =====
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ===== OPTIMIZED METHODS =====
 const toggleSidebar = () => {
   isSidebarExpanded.value = !isSidebarExpanded.value;
 };
 
-const handleFiltersChanged = (newFilters: Filters) => {
+const handleFiltersChanged = debounce((newFilters: Filters) => {
   filters.value = { ...newFilters };
-};
+}, 300);
 
 const showToastNotification = (message: string) => {
   toastMessage.value = message;
@@ -832,6 +872,9 @@ const handlePlaceBid = (bidData: BidData) => {
     animals.value[animalIndex].currentBid = bidData.amount;
     animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
     
+    // Invalidate cache
+    localStorage.removeItem('marketplace_listings');
+    
     showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
   }
 };
@@ -846,6 +889,10 @@ const toggleAuth = async () => {
     userRole.value = 'buyer';
     userName.value = 'Guest User';
     profileCompleted.value = false;
+    
+    // Clear cache on logout
+    localStorage.removeItem('marketplace_listings');
+    
     showToastNotification('Signed out successfully!');
   } else {
     showToastNotification('Please use the login page to sign in');
@@ -860,22 +907,32 @@ const handleLogout = async () => {
   userRole.value = 'buyer';
   userName.value = 'Guest User';
   profileCompleted.value = false;
+  
+  // Clear cache on logout
+  localStorage.removeItem('marketplace_listings');
+  
   showToastNotification('Logged out successfully!');
 };
 
-// ===== LIFECYCLE =====
+// ===== OPTIMIZED LIFECYCLE =====
 onMounted(async () => {
   console.log('🚀 ===== MARKETPLACE MOUNTED =====');
   
-  await fetchCurrentUser();
-  await fetchListings();
+  // Load user and listings in parallel
+  await Promise.all([
+    fetchCurrentUser(),
+    fetchListings()
+  ]);
 
+  // Set up auth listener
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('🔄 ===== AUTH STATE CHANGE =====', event);
     
     if (event === 'SIGNED_IN' && session) {
       isLoadingUser.value = true;
       await fetchCurrentUser();
+      // Refresh listings when user signs in
+      await fetchListings(true);
     } else if (event === 'SIGNED_OUT') {
       isAuthenticated.value = false;
       currentUserId.value = null;
@@ -884,12 +941,21 @@ onMounted(async () => {
       userName.value = 'Guest User';
       profileCompleted.value = false;
       isLoadingUser.value = false;
+      
+      // Clear cache on sign out
+      localStorage.removeItem('marketplace_listings');
     }
   });
 });
 
+// Optimized watchers
 watch(userRole, (newRole, oldRole) => {
   console.log(`🔄 userRole changed from "${oldRole}" to "${newRole}"`);
   console.log(`   isFarmerView is now: ${isFarmerView.value}`);
+});
+
+// Watch for tab changes and preload data
+watch(activeTab, (newTab) => {
+  console.log(`🔄 Tab changed to: ${newTab}`);
 });
 </script>

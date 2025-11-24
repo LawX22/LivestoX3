@@ -1,919 +1,717 @@
-// services/dashboardService.ts - FIXED VERSION
+// services/DashboardService.ts
 import { supabase } from '@/supabase'
+import type { User, Stats, TableItem, Message } from './dashboard'
 
-export interface DashboardStats {
-  totalUsers: number
-  userChange: number
-  requests: number
-  requestChange: number
-  livestock: number
-  livestockChange: number
-  reports: number
-  reportChange: number
-}
-
-export interface UserMetrics {
-  newUsers: number
-  newUsersChange: number
-  activeUsers: number
-  activeUsersChange: number
-  retention: number
-  retentionTrend: number
-  avgSession: number
-  sessionTrend: number
-}
-
-export interface Demographics {
-  farmers: number
-  farmersChange: number
-  buyers: number
-  buyersChange: number
-  guests: number
-  guestsChange: number
-  sources: {
-    organic: number
-    referral: number
-    social: number
-    direct: number
-  }
-}
-
-export interface ActivityMetrics {
-  peakHour: number
-}
-
-export interface RecentActivity {
-  user: string
-  userEmail: string
-  action: string
-  details: string
-  time: Date
+interface LivestockListingDB {
+  id: string
+  user_id: string
+  title: string
+  type: string
+  breed: string
+  price: number
+  quantity: number
   status: string
+  created_at: string
+  images: string[]
 }
 
-export interface UserGrowthData {
-  labels: string[]
-  newRegistrations: number[]
-  activeUsers: number[]
+interface TransactionDB {
+  id: string
+  buyer_id: string
+  seller_id: string
+  listing_id: string
+  quantity: number
+  total_amount: number
+  status: string
+  created_at: string
+  // Joined fields
+  listing_title?: string
+  listing_type?: string
+  listing_images?: string[]
+  seller_name?: string
+  buyer_name?: string
 }
 
-export interface DemographicsData {
-  labels: string[]
-  data: number[]
-}
-
-export interface RequestsStatusData {
-  approved: number
-  pending: number
-  rejected: number
-}
-
-export interface LivestockCategoriesData {
-  labels: string[]
-  data: number[]
-}
-
-export interface GeographicData {
-  labels: string[]
-  data: number[]
-}
-
-export interface ActivityTimelineData {
-  labels: string[]
-  data: number[]
+interface MessageDB {
+  id: string
+  sender_id: string
+  receiver_id: string
+  message: string
+  is_read: boolean
+  created_at: string
+  // Joined fields
+  sender_name?: string
+  sender_avatar?: string
 }
 
 export class DashboardService {
   /**
-   * Get main dashboard statistics
+   * ========================================
+   * USER DATA
+   * ========================================
    */
-  static async getDashboardStats(): Promise<DashboardStats> {
+
+  /**
+   * Fetch current user with profile data
+   */
+  static async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: string }> {
     try {
-      console.log('📊 Fetching dashboard stats...')
-
-      // Get current period data
-      const { count: currentUsers, error: currentUsersError } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-
-      if (currentUsersError) {
-        console.error('Error fetching current users:', currentUsersError)
+      // Get authenticated user
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError) {
+        return { success: false, error: 'Not authenticated' }
+      }
+      
+      if (!authUser) {
+        return { success: false, error: 'No user found' }
       }
 
-      // Get last month's user count
-      const lastMonth = new Date()
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
-
-      const { count: lastMonthUsers } = await supabase
+      // Fetch profile data
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', lastMonth.toISOString())
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
 
-      // Get pending upgrade requests
-      const { count: pendingRequests } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'pending')
-
-      // Get last month's pending requests for comparison
-      const lastMonthDate = new Date()
-      lastMonthDate.setMonth(lastMonthDate.getMonth() - 1)
-      lastMonthDate.setDate(1)
-      lastMonthDate.setHours(0, 0, 0, 0)
-
-      const thisMonthDate = new Date()
-      thisMonthDate.setDate(1)
-      thisMonthDate.setHours(0, 0, 0, 0)
-
-      const { count: lastMonthRequests } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'pending')
-        .gte('created_at', lastMonthDate.toISOString())
-        .lt('created_at', thisMonthDate.toISOString())
-
-      // Try to get livestock count (may not exist)
-      let livestockCount = 0
-      let lastMonthLivestock = 0
-
-      try {
-        const { count: livestock } = await supabase
-          .from('livestock')
-          .select('id', { count: 'exact', head: true })
-
-        livestockCount = livestock || 0
-
-        const { count: lastLivestock } = await supabase
-          .from('livestock')
-          .select('id', { count: 'exact', head: true })
-          .lt('created_at', lastMonth.toISOString())
-
-        lastMonthLivestock = lastLivestock || 0
-      } catch (error) {
-        console.log('⚠️ Livestock table not found, using defaults')
-        livestockCount = 0
-        lastMonthLivestock = 0
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+        return { success: false, error: 'Failed to load user profile' }
       }
 
-      // Calculate changes
-      const totalUsers = currentUsers || 0
-      const userChange = lastMonthUsers && lastMonthUsers > 0
-        ? ((totalUsers - lastMonthUsers) / lastMonthUsers) * 100
-        : 0
+      // Normalize role
+      const normalizedRole = (profile.role || 'farmer').toLowerCase()
 
-      const requests = pendingRequests || 0
-      const requestChange = lastMonthRequests && lastMonthRequests > 0
-        ? ((requests - lastMonthRequests) / lastMonthRequests) * 100
-        : 0
-
-      const livestock = livestockCount
-      const livestockChange = lastMonthLivestock && lastMonthLivestock > 0
-        ? ((livestock - lastMonthLivestock) / lastMonthLivestock) * 100
-        : 0
-
-      // For reports, you might want to create a separate reports table
-      // For now, we'll use a placeholder
-      const reports = 124
-      const reportChange = 24.1
-
-      console.log('✅ Dashboard stats fetched successfully')
-
-      return {
-        totalUsers,
-        userChange: parseFloat(userChange.toFixed(1)),
-        requests,
-        requestChange: parseFloat(requestChange.toFixed(1)),
-        livestock,
-        livestockChange: parseFloat(livestockChange.toFixed(1)),
-        reports,
-        reportChange,
+      const user: User = {
+        id: profile.id,
+        email: authUser.email || '',
+        role: normalizedRole as 'farmer' | 'buyer' | 'both',
+        firstname: profile.firstname || profile.first_name || '',
+        lastname: profile.lastname || profile.last_name || '',
+        username: profile.username || '',
+        created_at: profile.created_at || authUser.created_at
       }
-    } catch (error) {
-      console.error('❌ Error fetching dashboard stats:', error)
-      // Return default values on error
-      return {
-        totalUsers: 0,
-        userChange: 0,
-        requests: 0,
-        requestChange: 0,
-        livestock: 0,
-        livestockChange: 0,
-        reports: 0,
-        reportChange: 0,
-      }
+
+      return { success: true, data: user }
+    } catch (error: any) {
+      console.error('Error in getCurrentUser:', error)
+      return { success: false, error: error.message || 'Failed to fetch user data' }
     }
   }
 
   /**
-   * Get user metrics
+   * ========================================
+   * FARMER DASHBOARD STATS
+   * ========================================
    */
-  static async getUserMetrics(): Promise<UserMetrics> {
-    try {
-      console.log('📈 Fetching user metrics...')
-
-      const now = new Date()
-      const lastMonth = new Date()
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
-      const twoMonthsAgo = new Date()
-      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2)
-
-      // Get new users this month
-      const { count: newUsersThisMonth } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', lastMonth.toISOString())
-
-      // Get new users last month
-      const { count: newUsersLastMonth } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', twoMonthsAgo.toISOString())
-        .lt('created_at', lastMonth.toISOString())
-
-      // Get active users (users who logged in within last 30 days)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gte('updated_at', thirtyDaysAgo.toISOString())
-
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-
-      // Calculate metrics
-      const newUsers = newUsersThisMonth || 0
-      const newUsersChange = newUsersLastMonth && newUsersLastMonth > 0
-        ? ((newUsers - newUsersLastMonth) / newUsersLastMonth) * 100
-        : 0
-
-      const active = activeUsers || 0
-      const activityRate = totalUsers && totalUsers > 0 ? (active / totalUsers) * 100 : 0
-
-      console.log('✅ User metrics fetched successfully')
-
-      return {
-        newUsers,
-        newUsersChange: parseFloat(newUsersChange.toFixed(0)),
-        activeUsers: active,
-        activeUsersChange: parseFloat(activityRate.toFixed(0)),
-        retention: 78, // This would require session tracking
-        retentionTrend: 5,
-        avgSession: 24, // This would require session tracking
-        sessionTrend: 12,
-      }
-    } catch (error) {
-      console.error('❌ Error fetching user metrics:', error)
-      return {
-        newUsers: 0,
-        newUsersChange: 0,
-        activeUsers: 0,
-        activeUsersChange: 0,
-        retention: 0,
-        retentionTrend: 0,
-        avgSession: 0,
-        sessionTrend: 0,
-      }
-    }
-  }
 
   /**
-   * Get user demographics
+   * Get comprehensive stats for farmer dashboard
    */
-  static async getDemographics(): Promise<Demographics> {
+  static async getFarmerStats(userId: string, timeRange: string = 'monthly'): Promise<{ success: boolean; data?: Stats; error?: string }> {
     try {
-      console.log('👥 Fetching demographics...')
+      console.log('📊 Fetching farmer stats for user:', userId, 'Time range:', timeRange)
 
-      const lastMonth = new Date()
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
+      // Calculate date range
+      const dateFrom = this.getDateFromTimeRange(timeRange)
 
-      // Get current counts by role
-      const { count: farmers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .ilike('role', '%farmer%')
+      // Fetch all user's livestock listings
+      const { data: listings, error: listingsError } = await supabase
+        .from('livestock_listings')
+        .select('*')
+        .eq('user_id', userId)
 
-      const { count: buyers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .ilike('role', '%buyer%')
-
-      // Get users without a specific role (guests/users)
-      const { count: allUsers } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-
-      const farmersCount = farmers || 0
-      const buyersCount = buyers || 0
-      const guestsCount = (allUsers || 0) - farmersCount - buyersCount
-
-      // Get last month's counts for comparison
-      const { count: farmersLastMonth } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .ilike('role', '%farmer%')
-        .lt('created_at', lastMonth.toISOString())
-
-      const { count: buyersLastMonth } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .ilike('role', '%buyer%')
-        .lt('created_at', lastMonth.toISOString())
-
-      const { count: allUsersLastMonth } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', lastMonth.toISOString())
-
-      const farmersLastMonthCount = farmersLastMonth || 0
-      const buyersLastMonthCount = buyersLastMonth || 0
-      const guestsLastMonth = (allUsersLastMonth || 0) - farmersLastMonthCount - buyersLastMonthCount
-
-      // Calculate changes
-      const farmersChange = farmersLastMonthCount > 0
-        ? ((farmersCount - farmersLastMonthCount) / farmersLastMonthCount) * 100
-        : 0
-
-      const buyersChange = buyersLastMonthCount > 0
-        ? ((buyersCount - buyersLastMonthCount) / buyersLastMonthCount) * 100
-        : 0
-
-      const guestsChange = guestsLastMonth > 0
-        ? ((guestsCount - guestsLastMonth) / guestsLastMonth) * 100
-        : 0
-
-      console.log('✅ Demographics fetched successfully')
-
-      return {
-        farmers: farmersCount,
-        farmersChange: parseFloat(farmersChange.toFixed(0)),
-        buyers: buyersCount,
-        buyersChange: parseFloat(buyersChange.toFixed(0)),
-        guests: guestsCount,
-        guestsChange: parseFloat(guestsChange.toFixed(0)),
-        sources: {
-          organic: 45,
-          referral: 30,
-          social: 15,
-          direct: 10,
-        },
-      }
-    } catch (error) {
-      console.error('❌ Error fetching demographics:', error)
-      return {
-        farmers: 0,
-        farmersChange: 0,
-        buyers: 0,
-        buyersChange: 0,
-        guests: 0,
-        guestsChange: 0,
-        sources: {
-          organic: 0,
-          referral: 0,
-          social: 0,
-          direct: 0,
-        },
-      }
-    }
-  }
-
-  /**
-   * Get activity metrics
-   */
-  static async getActivityMetrics(): Promise<ActivityMetrics> {
-    try {
-      console.log('⏰ Fetching activity metrics...')
-
-      // Get all users with their last activity
-      const { data: users, error } = await supabase
-        .from('profiles')
-        .select('updated_at')
-        .not('updated_at', 'is', null)
-
-      if (error) {
-        console.error('Error fetching users for activity:', error)
+      if (listingsError) {
+        console.error('Error fetching listings:', listingsError)
+        return { success: false, error: listingsError.message }
       }
 
-      // Calculate peak hour
-      const hourCounts: { [key: number]: number } = {}
+      // Fetch transactions where user is seller
+      const { data: transactions, error: transError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('seller_id', userId)
+        .gte('created_at', dateFrom.toISOString())
 
-      users?.forEach((user) => {
-        const hour = new Date(user.updated_at).getHours()
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1
-      })
+      // Note: If transactions table doesn't exist yet, this will return an error
+      // We'll handle it gracefully
+      const salesData = transError ? [] : (transactions || [])
 
-      let peakHour = 14 // Default
-      let maxCount = 0
+      // Fetch messages for user
+      const { data: messages, error: msgError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('receiver_id', userId)
 
-      Object.entries(hourCounts).forEach(([hour, count]) => {
-        if (count > maxCount) {
-          maxCount = count
-          peakHour = parseInt(hour)
+      const messagesData = msgError ? [] : (messages || [])
+
+      // Calculate statistics
+      const totalListings = listings?.length || 0
+      const activeListings = listings?.filter(l => l.status === 'Available').length || 0
+      const lowStockListings = listings?.filter(l => l.status === 'Low Stock').length || 0
+      const outOfStockListings = listings?.filter(l => l.status === 'Out of Stock').length || 0
+
+      // Revenue calculations
+      const totalRevenue = salesData.reduce((sum, t) => sum + (t.total_amount || 0), 0)
+      const totalOrders = salesData.length
+      const pendingOrders = salesData.filter(t => t.status === 'pending').length || 0
+
+      // Messages stats
+      const totalMessages = messagesData.length
+      const unreadMessages = messagesData.filter(m => !m.is_read).length
+
+      // Calculate average price
+      const totalPrice = listings?.reduce((sum, l) => sum + (l.price || 0), 0) || 0
+      const averagePrice = totalListings > 0 ? Math.round(totalPrice / totalListings) : 0
+
+      // Calculate total units (quantity)
+      const totalUnits = listings?.reduce((sum, l) => sum + (l.quantity || 0), 0) || 0
+
+      // Calculate growth metrics (comparing with previous period)
+      const previousDateFrom = new Date(dateFrom)
+      if (timeRange === 'monthly') {
+        previousDateFrom.setMonth(previousDateFrom.getMonth() - 1)
+      } else if (timeRange === 'quarterly') {
+        previousDateFrom.setMonth(previousDateFrom.getMonth() - 3)
+      }
+
+      // Fetch previous period data for growth calculation
+      const { data: previousListings } = await supabase
+        .from('livestock_listings')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', previousDateFrom.toISOString())
+        .lt('created_at', dateFrom.toISOString())
+
+      const { data: previousTransactions } = await supabase
+        .from('transactions')
+        .select('total_amount')
+        .eq('seller_id', userId)
+        .gte('created_at', previousDateFrom.toISOString())
+        .lt('created_at', dateFrom.toISOString())
+
+      const previousRevenue = previousTransactions?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
+      const previousListingsCount = previousListings?.length || 0
+
+      // Calculate growth percentages
+      const listingsGrowth = this.calculateGrowth(totalListings, previousListingsCount)
+      const revenueGrowth = this.calculateGrowth(totalRevenue, previousRevenue)
+
+      // Mock data for metrics that need more complex tracking
+      const totalViews = Math.floor(totalListings * 14.25) // Simulated view count
+      const conversionRate = totalOrders > 0 && totalViews > 0 
+        ? parseFloat(((totalOrders / totalViews) * 100).toFixed(1))
+        : 0
+
+      const stats: Stats = {
+        totalListings,
+        activeListings,
+        totalRevenue,
+        totalOrders,
+        pendingOrders,
+        totalMessages,
+        unreadMessages,
+        rating: 4.5, // This would come from a reviews table
+        totalReviews: 28, // This would come from a reviews table
+        listingsGrowth,
+        revenueGrowth,
+        totalViews,
+        averagePrice,
+        priceGrowth: 8, // Would need historical price tracking
+        totalUnits,
+        unitsGrowth: 12, // Would need historical quantity tracking
+        conversionRate,
+        conversionGrowth: 3, // Would need historical conversion tracking
+        statusBreakdown: {
+          available: activeListings,
+          lowStock: lowStockListings,
+          outOfStock: outOfStockListings
         }
-      })
-
-      console.log('✅ Activity metrics fetched successfully')
-
-      return {
-        peakHour,
       }
-    } catch (error) {
-      console.error('❌ Error fetching activity metrics:', error)
-      return {
-        peakHour: 14,
-      }
+
+      console.log('✅ Farmer stats calculated:', stats)
+      return { success: true, data: stats }
+    } catch (error: any) {
+      console.error('Error in getFarmerStats:', error)
+      return { success: false, error: error.message || 'Failed to fetch farmer stats' }
     }
   }
 
   /**
-   * Get recent activities
+   * ========================================
+   * BUYER DASHBOARD STATS
+   * ========================================
    */
-  static async getRecentActivities(limit: number = 5): Promise<RecentActivity[]> {
+
+  /**
+   * Get comprehensive stats for buyer dashboard
+   */
+  static async getBuyerStats(userId: string, timeRange: string = 'monthly'): Promise<{ success: boolean; data?: Stats; error?: string }> {
     try {
-      console.log('📋 Fetching recent activities...')
+      console.log('📊 Fetching buyer stats for user:', userId, 'Time range:', timeRange)
 
-      const activities: RecentActivity[] = []
+      const dateFrom = this.getDateFromTimeRange(timeRange)
 
-      // Get recent upgrade requests
-      const { data: requests, error: requestsError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, verification_status, created_at, updated_at')
-        .eq('verification_status', 'pending')
-        .order('updated_at', { ascending: false })
-        .limit(limit)
+      // Fetch transactions where user is buyer
+      const { data: transactions, error: transError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('buyer_id', userId)
+        .gte('created_at', dateFrom.toISOString())
 
-      if (!requestsError && requests) {
-        requests.forEach((req) => {
-          activities.push({
-            user: req.first_name && req.last_name
-              ? `${req.first_name} ${req.last_name}`
-              : 'Unknown User',
-            userEmail: req.email || 'No email',
-            action: 'Account Upgrade',
-            details: 'Requested account verification',
-            time: new Date(req.updated_at || req.created_at),
-            status: 'Pending',
-          })
-        })
+      const purchaseData = transError ? [] : (transactions || [])
+
+      // Fetch messages for user
+      const { data: messages, error: msgError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('receiver_id', userId)
+
+      const messagesData = msgError ? [] : (messages || [])
+
+      // Calculate statistics
+      const totalOrders = purchaseData.length
+      const pendingOrders = purchaseData.filter(t => t.status === 'pending' || t.status === 'processing').length
+      const completedOrders = purchaseData.filter(t => t.status === 'completed').length
+      const processingOrders = purchaseData.filter(t => t.status === 'processing').length
+      const shippedOrders = purchaseData.filter(t => t.status === 'shipped').length
+
+      // Spending calculations
+      const totalSpent = purchaseData.reduce((sum, t) => sum + (t.total_amount || 0), 0)
+      const averagePrice = totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0
+
+      // Messages stats
+      const totalMessages = messagesData.length
+      const unreadMessages = messagesData.filter(m => !m.is_read).length
+
+      // Calculate growth metrics
+      const previousDateFrom = new Date(dateFrom)
+      if (timeRange === 'monthly') {
+        previousDateFrom.setMonth(previousDateFrom.getMonth() - 1)
+      } else if (timeRange === 'quarterly') {
+        previousDateFrom.setMonth(previousDateFrom.getMonth() - 3)
       }
 
-      // Get recently verified users
-      const { data: verified, error: verifiedError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, verified_at')
-        .eq('is_verified', true)
-        .not('verified_at', 'is', null)
-        .order('verified_at', { ascending: false })
-        .limit(limit)
+      const { data: previousTransactions } = await supabase
+        .from('transactions')
+        .select('total_amount')
+        .eq('buyer_id', userId)
+        .gte('created_at', previousDateFrom.toISOString())
+        .lt('created_at', dateFrom.toISOString())
 
-      if (!verifiedError && verified) {
-        verified.forEach((user) => {
-          activities.push({
-            user: user.first_name && user.last_name
-              ? `${user.first_name} ${user.last_name}`
-              : 'Unknown User',
-            userEmail: user.email || 'No email',
-            action: 'Account Verified',
-            details: 'Account verification approved',
-            time: new Date(user.verified_at!),
-            status: 'Completed',
-          })
-        })
+      const previousSpent = previousTransactions?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
+      const previousOrdersCount = previousTransactions?.length || 0
+
+      const ordersGrowth = this.calculateGrowth(totalOrders, previousOrdersCount)
+      
+      // Calculate savings percentage (comparing to average market price)
+      // This is simulated - would need actual market data
+      const savingsPercentage = 12
+
+      // Calculate orders per month
+      const monthsDiff = Math.max(1, this.getMonthsDifference(dateFrom, new Date()))
+      const ordersPerMonth = Math.round(totalOrders / monthsDiff)
+
+      // Determine preferred category
+      const categoryCount: Record<string, number> = {}
+      purchaseData.forEach(t => {
+        const type = t.listing_type || 'Unknown'
+        categoryCount[type] = (categoryCount[type] || 0) + 1
+      })
+
+      const preferredCategory = Object.entries(categoryCount)
+        .sort(([, a], [, b]) => b - a)[0]?.[0] || 'Cattle'
+      
+      const categoryPercentage = totalOrders > 0
+        ? Math.round((categoryCount[preferredCategory] / totalOrders) * 100)
+        : 0
+
+      const stats: Stats = {
+        totalOrders,
+        pendingOrders,
+        totalSpent,
+        totalMessages,
+        unreadMessages,
+        rating: 4.8, // Would come from reviews table
+        totalReviews: 15, // Would come from reviews table
+        ordersGrowth,
+        savingsPercentage,
+        averagePrice,
+        priceGrowth: -5, // Negative means savings increased
+        ordersPerMonth,
+        orderFrequencyGrowth: 15,
+        preferredCategory,
+        categoryPercentage,
+        statusBreakdown: {
+          completed: completedOrders,
+          processing: processingOrders,
+          shipped: shippedOrders
+        }
       }
 
-      // Get recently created users
-      const { data: newUsers, error: newUsersError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, created_at')
+      console.log('✅ Buyer stats calculated:', stats)
+      return { success: true, data: stats }
+    } catch (error: any) {
+      console.error('Error in getBuyerStats:', error)
+      return { success: false, error: error.message || 'Failed to fetch buyer stats' }
+    }
+  }
+
+  /**
+   * ========================================
+   * TABLE DATA
+   * ========================================
+   */
+
+  /**
+   * Get recent livestock listings for farmer
+   */
+  static async getFarmerTableData(userId: string, limit: number = 10): Promise<{ success: boolean; data?: TableItem[]; error?: string }> {
+    try {
+      console.log('📋 Fetching farmer table data for user:', userId)
+
+      const { data: listings, error } = await supabase
+        .from('livestock_listings')
+        .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit)
 
-      if (!newUsersError && newUsers) {
-        newUsers.forEach((user) => {
-          activities.push({
-            user: user.first_name && user.last_name
-              ? `${user.first_name} ${user.last_name}`
-              : 'Unknown User',
-            userEmail: user.email || 'No email',
-            action: 'New Registration',
-            details: 'Created new account',
-            time: new Date(user.created_at),
-            status: 'Completed',
-          })
-        })
+      if (error) {
+        console.error('Error fetching listings:', error)
+        return { success: false, error: error.message }
       }
 
-      // Sort by time and limit
-      activities.sort((a, b) => b.time.getTime() - a.time.getTime())
-      const limitedActivities = activities.slice(0, limit)
+      const tableData: TableItem[] = (listings || []).map(listing => ({
+        id: listing.id,
+        name: listing.title,
+        type: listing.type,
+        price: `₱${this.formatNumber(listing.price)}`,
+        status: listing.status,
+        statusClass: this.getStatusClass(listing.status),
+        stock: listing.quantity,
+        date: this.formatDate(listing.created_at),
+        image: listing.images?.[0] || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=100'
+      }))
 
-      console.log(`✅ Fetched ${limitedActivities.length} recent activities`)
-
-      return limitedActivities
-    } catch (error) {
-      console.error('❌ Error fetching recent activities:', error)
-      return []
+      console.log(`✅ Fetched ${tableData.length} table items`)
+      return { success: true, data: tableData }
+    } catch (error: any) {
+      console.error('Error in getFarmerTableData:', error)
+      return { success: false, error: error.message || 'Failed to fetch table data' }
     }
   }
 
   /**
-   * Get user growth data for charts
+   * Get recent purchases for buyer
    */
-  static async getUserGrowthData(timeRange: string = '30d'): Promise<UserGrowthData> {
+  static async getBuyerTableData(userId: string, limit: number = 10): Promise<{ success: boolean; data?: TableItem[]; error?: string }> {
     try {
-      console.log('📊 Fetching user growth data...')
+      console.log('📋 Fetching buyer table data for user:', userId)
 
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      const currentMonth = new Date().getMonth()
-      const labels: string[] = []
-      const newRegistrations: number[] = []
-      const activeUsers: number[] = []
-
-      // Get last 12 months
-      for (let i = 11; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12
-        labels.push(months[monthIndex])
-
-        const monthStart = new Date()
-        monthStart.setMonth(monthStart.getMonth() - i)
-        monthStart.setDate(1)
-        monthStart.setHours(0, 0, 0, 0)
-
-        const monthEnd = new Date(monthStart)
-        monthEnd.setMonth(monthEnd.getMonth() + 1)
-
-        // Get new registrations for this month
-        const { count: registrations } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', monthStart.toISOString())
-          .lt('created_at', monthEnd.toISOString())
-
-        newRegistrations.push(registrations || 0)
-
-        // Get active users for this month (users who were active during this month)
-        const { count: active } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .gte('updated_at', monthStart.toISOString())
-          .lt('updated_at', monthEnd.toISOString())
-
-        activeUsers.push(active || 0)
-      }
-
-      console.log('✅ User growth data fetched successfully')
-
-      return {
-        labels,
-        newRegistrations,
-        activeUsers,
-      }
-    } catch (error) {
-      console.error('❌ Error fetching user growth data:', error)
-      return {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        newRegistrations: [120, 190, 170, 220, 250, 280, 310, 290, 330, 380, 410, 450],
-        activeUsers: [800, 920, 850, 980, 1120, 1250, 1380, 1290, 1450, 1620, 1750, 1840],
-      }
-    }
-  }
-
-  /**
-   * Get demographics data for pie chart
-   */
-  static async getDemographicsData(view: string = 'types'): Promise<DemographicsData> {
-    try {
-      console.log('📊 Fetching demographics data...')
-
-      if (view === 'types') {
-        const { count: farmers } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .ilike('role', '%farmer%')
-
-        const { count: buyers } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .ilike('role', '%buyer%')
-
-        const { count: allUsers } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-
-        const farmersCount = farmers || 0
-        const buyersCount = buyers || 0
-        const guestsCount = (allUsers || 0) - farmersCount - buyersCount
-
-        return {
-          labels: ['Farmers', 'Buyers', 'Guests'],
-          data: [farmersCount, buyersCount, guestsCount],
-        }
-      } else {
-        // For sources, this would need to be tracked in your database
-        // For now, returning placeholder data
-        return {
-          labels: ['Organic', 'Referral', 'Social Media', 'Direct'],
-          data: [45, 30, 15, 10],
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error fetching demographics data:', error)
-      return {
-        labels: [],
-        data: [],
-      }
-    }
-  }
-
-  /**
-   * Get requests status data
-   */
-  static async getRequestsStatusData(): Promise<RequestsStatusData> {
-    try {
-      console.log('📊 Fetching requests status data...')
-
-      const { count: approved } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'approved')
-
-      const { count: pending } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'pending')
-
-      const { count: rejected } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'rejected')
-
-      console.log('✅ Requests status data fetched successfully')
-
-      return {
-        approved: approved || 0,
-        pending: pending || 0,
-        rejected: rejected || 0,
-      }
-    } catch (error) {
-      console.error('❌ Error fetching requests status data:', error)
-      return {
-        approved: 0,
-        pending: 0,
-        rejected: 0,
-      }
-    }
-  }
-
-  /**
-   * Get livestock categories data
-   */
-  static async getLivestockCategoriesData(): Promise<LivestockCategoriesData> {
-    try {
-      console.log('📊 Fetching livestock categories data...')
-
-      // This assumes you have a livestock table with a 'category' or 'type' column
-      // Adjust the query based on your actual table structure
-      try {
-        const { data: livestock, error } = await supabase
-          .from('livestock')
-          .select('category, type, animal_type')
-
-        if (error) throw error
-
-        // Count by category (try different column names)
-        const categoryCounts: { [key: string]: number } = {}
-
-        livestock?.forEach((item) => {
-          const category = item.category || item.type || item.animal_type || 'Others'
-          categoryCounts[category] = (categoryCounts[category] || 0) + 1
-        })
-
-        const labels = Object.keys(categoryCounts)
-        const data = Object.values(categoryCounts)
-
-        console.log('✅ Livestock categories data fetched successfully')
-
-        return {
-          labels: labels.length > 0 ? labels : ['Cattle', 'Goats', 'Sheep', 'Pigs', 'Poultry', 'Others'],
-          data: data.length > 0 ? data : [35, 25, 15, 12, 8, 5],
-        }
-      } catch (error) {
-        console.log('⚠️ Livestock table not found, using defaults')
-        return {
-          labels: ['Cattle', 'Goats', 'Sheep', 'Pigs', 'Poultry', 'Others'],
-          data: [35, 25, 15, 12, 8, 5],
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error fetching livestock categories data:', error)
-      return {
-        labels: ['Cattle', 'Goats', 'Sheep', 'Pigs', 'Poultry', 'Others'],
-        data: [35, 25, 15, 12, 8, 5],
-      }
-    }
-  }
-
-  /**
-   * Get geographic distribution data
-   */
-  static async getGeographicData(): Promise<GeographicData> {
-    try {
-      console.log('📊 Fetching geographic data...')
-
-      // This assumes you have location data in your profiles table
-      // Adjust based on your actual schema
-      try {
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('location, city, region, address')
-
-        if (error) throw error
-
-        // Count by location
-        const locationCounts: { [key: string]: number } = {}
-
-        profiles?.forEach((profile) => {
-          const location = profile.city || profile.region || profile.location || 'Others'
-          locationCounts[location] = (locationCounts[location] || 0) + 1
-        })
-
-        // Sort and get top locations
-        const sortedLocations = Object.entries(locationCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 8)
-
-        const labels = sortedLocations.map(([location]) => location)
-        const data = sortedLocations.map(([, count]) => count)
-
-        console.log('✅ Geographic data fetched successfully')
-
-        return {
-          labels: labels.length > 0 ? labels : ['Metro Manila', 'Cebu', 'Davao', 'Baguio', 'Iloilo', 'Cagayan de Oro', 'Bacolod', 'Others'],
-          data: data.length > 0 ? data : [450, 280, 180, 120, 95, 85, 70, 150],
-        }
-      } catch (error) {
-        console.log('⚠️ Location columns not found, using defaults')
-        return {
-          labels: ['Metro Manila', 'Cebu', 'Davao', 'Baguio', 'Iloilo', 'Cagayan de Oro', 'Bacolod', 'Others'],
-          data: [450, 280, 180, 120, 95, 85, 70, 150],
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error fetching geographic data:', error)
-      return {
-        labels: ['Metro Manila', 'Cebu', 'Davao', 'Baguio', 'Iloilo', 'Cagayan de Oro', 'Bacolod', 'Others'],
-        data: [450, 280, 180, 120, 95, 85, 70, 150],
-      }
-    }
-  }
-
-  /**
-   * Get activity timeline data
-   */
-  static async getActivityTimelineData(): Promise<ActivityTimelineData> {
-    try {
-      console.log('📊 Fetching activity timeline data...')
-
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('updated_at')
-        .not('updated_at', 'is', null)
-        .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      // Fetch transactions with joined listing and seller data
+      const { data: transactions, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          livestock_listings:listing_id (
+            title,
+            type,
+            images,
+            user_id
+          ),
+          profiles:seller_id (
+            firstname,
+            lastname,
+            username
+          )
+        `)
+        .eq('buyer_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
 
       if (error) {
-        console.error('Error fetching profiles for activity timeline:', error)
+        console.error('Error fetching transactions:', error)
+        
+        // If transactions table doesn't exist, return empty array with helpful message
+        if (error.code === '42P01') {
+          console.warn('⚠️ Transactions table does not exist yet. Returning empty data.')
+          return { success: true, data: [] }
+        }
+        
+        return { success: false, error: error.message }
       }
 
-      // Count by hour
-      const hourCounts: { [key: number]: number } = {}
-      for (let i = 0; i < 24; i += 2) {
-        hourCounts[i] = 0
-      }
+      const tableData: TableItem[] = (transactions || []).map(transaction => {
+        const listing = transaction.livestock_listings as any
+        const seller = transaction.profiles as any
+        
+        const sellerName = seller?.firstname && seller?.lastname
+          ? `${seller.firstname} ${seller.lastname}`
+          : seller?.username || 'Unknown Seller'
 
-      profiles?.forEach((profile) => {
-        const hour = new Date(profile.updated_at).getHours()
-        const roundedHour = Math.floor(hour / 2) * 2
-        hourCounts[roundedHour] = (hourCounts[roundedHour] || 0) + 1
+        return {
+          id: transaction.id,
+          livestock: listing?.title || 'Unknown Livestock',
+          type: listing?.type || 'Unknown',
+          seller: sellerName,
+          amount: `₱${this.formatNumber(transaction.total_amount)}`,
+          date: this.formatDate(transaction.created_at),
+          status: this.capitalizeFirst(transaction.status),
+          statusClass: this.getStatusClass(transaction.status),
+          image: listing?.images?.[0] || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=100'
+        }
       })
 
-      const labels = Object.keys(hourCounts).map((h) => `${h.padStart(2, '0')}:00`)
-      const data = Object.values(hourCounts)
-
-      console.log('✅ Activity timeline data fetched successfully')
-
-      return {
-        labels,
-        data,
-      }
-    } catch (error) {
-      console.error('❌ Error fetching activity timeline data:', error)
-      return {
-        labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
-        data: [45, 23, 12, 35, 78, 125, 165, 195, 175, 142, 98, 67],
-      }
+      console.log(`✅ Fetched ${tableData.length} transaction items`)
+      return { success: true, data: tableData }
+    } catch (error: any) {
+      console.error('Error in getBuyerTableData:', error)
+      return { success: false, error: error.message || 'Failed to fetch table data' }
     }
   }
 
   /**
-   * Get all dashboard data at once
+   * ========================================
+   * MESSAGES
+   * ========================================
    */
-  static async getAllDashboardData() {
-    try {
-      console.log('🚀 Fetching all dashboard data...')
 
-      const [
-        stats,
-        userMetrics,
-        demographics,
-        activityMetrics,
-        recentActivities,
-        userGrowthData,
-        requestsStatusData,
-        livestockCategoriesData,
-        geographicData,
-        activityTimelineData,
-      ] = await Promise.all([
-        this.getDashboardStats(),
-        this.getUserMetrics(),
-        this.getDemographics(),
-        this.getActivityMetrics(),
-        this.getRecentActivities(5),
-        this.getUserGrowthData(),
-        this.getRequestsStatusData(),
-        this.getLivestockCategoriesData(),
-        this.getGeographicData(),
-        this.getActivityTimelineData(),
+  /**
+   * Get recent messages for user
+   */
+  static async getRecentMessages(userId: string, limit: number = 10): Promise<{ success: boolean; data?: Message[]; error?: string }> {
+    try {
+      console.log('💬 Fetching messages for user:', userId)
+
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:sender_id (
+            firstname,
+            lastname,
+            username,
+            profile_picture
+          )
+        `)
+        .eq('receiver_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) {
+        console.error('Error fetching messages:', error)
+        
+        // If messages table doesn't exist, return empty array
+        if (error.code === '42P01') {
+          console.warn('⚠️ Messages table does not exist yet. Returning empty data.')
+          return { success: true, data: [] }
+        }
+        
+        return { success: false, error: error.message }
+      }
+
+      const messageData: Message[] = (messages || []).map(msg => {
+        const sender = msg.sender as any
+        
+        const senderName = sender?.firstname && sender?.lastname
+          ? `${sender.firstname} ${sender.lastname}`
+          : sender?.username || 'Unknown User'
+
+        return {
+          id: msg.id,
+          name: senderName,
+          message: msg.message,
+          time: this.getTimeAgo(msg.created_at),
+          avatar: sender?.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_id}`,
+          unread: !msg.is_read
+        }
+      })
+
+      console.log(`✅ Fetched ${messageData.length} messages`)
+      return { success: true, data: messageData }
+    } catch (error: any) {
+      console.error('Error in getRecentMessages:', error)
+      return { success: false, error: error.message || 'Failed to fetch messages' }
+    }
+  }
+
+  /**
+   * ========================================
+   * UTILITY FUNCTIONS
+   * ========================================
+   */
+
+  /**
+   * Get date from time range
+   */
+  private static getDateFromTimeRange(timeRange: string): Date {
+    const now = new Date()
+    const date = new Date()
+
+    switch (timeRange) {
+      case 'weekly':
+        date.setDate(now.getDate() - 7)
+        break
+      case 'monthly':
+        date.setMonth(now.getMonth() - 1)
+        break
+      case 'quarterly':
+        date.setMonth(now.getMonth() - 3)
+        break
+      case 'yearly':
+        date.setFullYear(now.getFullYear() - 1)
+        break
+      default:
+        date.setMonth(now.getMonth() - 1)
+    }
+
+    return date
+  }
+
+  /**
+   * Calculate growth percentage
+   */
+  private static calculateGrowth(current: number, previous: number): number {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Math.round(((current - previous) / previous) * 100)
+  }
+
+  /**
+   * Get months difference between two dates
+   */
+  private static getMonthsDifference(date1: Date, date2: Date): number {
+    return Math.max(1, 
+      (date2.getFullYear() - date1.getFullYear()) * 12 + 
+      (date2.getMonth() - date1.getMonth())
+    )
+  }
+
+  /**
+   * Format number with commas
+   */
+  private static formatNumber(num: number): string {
+    return num.toLocaleString('en-PH')
+  }
+
+  /**
+   * Format date to readable string
+   */
+  private static formatDate(dateString: string): string {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  /**
+   * Get time ago string
+   */
+  private static getTimeAgo(dateString: string): string {
+    const date = new Date(dateString)
+    const now = new Date()
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (seconds < 60) return 'just now'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`
+    return this.formatDate(dateString)
+  }
+
+  /**
+   * Get status class for badges
+   */
+  private static getStatusClass(status: string): string {
+    const statusLower = status.toLowerCase()
+    
+    if (statusLower === 'available' || statusLower === 'completed') {
+      return 'bg-green-100 text-green-800'
+    }
+    if (statusLower === 'low stock' || statusLower === 'processing') {
+      return 'bg-yellow-100 text-yellow-800'
+    }
+    if (statusLower === 'out of stock' || statusLower === 'cancelled') {
+      return 'bg-red-100 text-red-800'
+    }
+    if (statusLower === 'pending' || statusLower === 'shipped') {
+      return 'bg-blue-100 text-blue-800'
+    }
+    
+    return 'bg-gray-100 text-gray-800'
+  }
+
+  /**
+   * Capitalize first letter
+   */
+  private static capitalizeFirst(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1)
+  }
+
+  /**
+   * ========================================
+   * MAIN DASHBOARD DATA LOADER
+   * ========================================
+   */
+
+  /**
+   * Load all dashboard data for a user
+   */
+  static async loadDashboardData(userId: string, role: string, timeRange: string = 'monthly'): Promise<{
+    success: boolean
+    stats?: Stats
+    tableData?: TableItem[]
+    messages?: Message[]
+    error?: string
+  }> {
+    try {
+      console.log('🚀 Loading dashboard data for user:', userId, 'Role:', role)
+
+      // Determine which stats to fetch based on role
+      const statsPromise = role === 'buyer' 
+        ? this.getBuyerStats(userId, timeRange)
+        : this.getFarmerStats(userId, timeRange)
+
+      // Determine which table data to fetch
+      const tableDataPromise = role === 'buyer'
+        ? this.getBuyerTableData(userId, 10)
+        : this.getFarmerTableData(userId, 10)
+
+      // Fetch messages
+      const messagesPromise = this.getRecentMessages(userId, 10)
+
+      // Execute all promises in parallel
+      const [statsResult, tableResult, messagesResult] = await Promise.all([
+        statsPromise,
+        tableDataPromise,
+        messagesPromise
       ])
 
-      console.log('✅ All dashboard data fetched successfully')
+      // Check for errors
+      if (!statsResult.success) {
+        return { success: false, error: statsResult.error }
+      }
+
+      // Table and messages errors are non-critical
+      const tableData = tableResult.success ? tableResult.data : []
+      const messages = messagesResult.success ? messagesResult.data : []
+
+      console.log('✅ Dashboard data loaded successfully')
 
       return {
-        stats,
-        userMetrics,
-        demographics,
-        activityMetrics,
-        recentActivities,
-        charts: {
-          userGrowth: userGrowthData,
-          requestsStatus: requestsStatusData,
-          livestockCategories: livestockCategoriesData,
-          geographic: geographicData,
-          activityTimeline: activityTimelineData,
-        },
+        success: true,
+        stats: statsResult.data,
+        tableData,
+        messages
       }
-    } catch (error) {
-      console.error('💥 Error fetching all dashboard data:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Refresh dashboard data (for real-time updates)
-   */
-  static async refreshDashboard() {
-    try {
-      console.log('🔄 Refreshing dashboard...')
-      return await this.getAllDashboardData()
-    } catch (error) {
-      console.error('❌ Error refreshing dashboard:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Export dashboard data to CSV
-   */
-  static async exportDashboardData(): Promise<string> {
-    try {
-      console.log('📥 Exporting dashboard data...')
-
-      const data = await this.getAllDashboardData()
-
-      // Create CSV content
-      let csv = 'Dashboard Statistics\n\n'
-      csv += 'Metric,Value,Change\n'
-      csv += `Total Users,${data.stats.totalUsers},${data.stats.userChange}%\n`
-      csv += `Upgrade Requests,${data.stats.requests},${data.stats.requestChange}%\n`
-      csv += `Livestock Listings,${data.stats.livestock},${data.stats.livestockChange}%\n`
-      csv += `Reports Generated,${data.stats.reports},${data.stats.reportChange}%\n`
-      csv += '\n'
-      csv += 'User Metrics\n'
-      csv += `New Users,${data.userMetrics.newUsers},${data.userMetrics.newUsersChange}%\n`
-      csv += `Active Users,${data.userMetrics.activeUsers},${data.userMetrics.activeUsersChange}%\n`
-      csv += '\n'
-      csv += 'Demographics\n'
-      csv += `Farmers,${data.demographics.farmers},${data.demographics.farmersChange}%\n`
-      csv += `Buyers,${data.demographics.buyers},${data.demographics.buyersChange}%\n`
-      csv += `Guests,${data.demographics.guests},${data.demographics.guestsChange}%\n`
-
-      console.log('✅ Dashboard data exported successfully')
-
-      return csv
-    } catch (error) {
-      console.error('❌ Error exporting dashboard data:', error)
-      throw error
+    } catch (error: any) {
+      console.error('Error in loadDashboardData:', error)
+      return {
+        success: false,
+        error: error.message || 'Failed to load dashboard data'
+      }
     }
   }
 }

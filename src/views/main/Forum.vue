@@ -1,4 +1,4 @@
-<!-- Forum.vue -->
+<!-- Forum.vue - OPTIMIZED -->
 <template>
   <div
     class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
@@ -16,14 +16,14 @@
       <NavBar />
     </div>
 
-    <!-- DYNAMIC HEADER -->
+    <!-- DYNAMIC HEADER - MATCHING MARKETPLACE STYLE -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
       <div
         class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
         <!-- Left side - Logo and Title -->
         <div class="flex items-center min-w-0">
           <div
-            class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
+            class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg cursor-pointer" @click="scrollToTop">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24"
               stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -31,34 +31,32 @@
             </svg>
           </div>
           <div class="min-w-0">
-            <h1 class="text-xl font-bold text-white truncate">Livestock Forum</h1>
-            <p class="text-green-100 text-sm opacity-90 truncate">Connect with farmers & experts</p>
+            <h1 class="text-xl font-bold text-white truncate cursor-default">Livestock Forum</h1>
+            <p class="text-green-100 text-sm opacity-90 truncate cursor-default">{{ headerSubtitle }}</p>
           </div>
         </div>
 
         <!-- Right side - Dynamic Content Area -->
         <div class="flex-1 flex justify-end min-w-0">
-          <!-- Guest Mode Notice -->
+          <!-- Guest Mode -->
           <div v-if="!isAuthenticated" class="flex items-center gap-3 max-w-full">
             <div
-              class="bg-amber-100/80 text-amber-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-amber-200 shadow-md">
-              <div class="flex items-center min-w-0">
-                <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clip-rule="evenodd" />
-                </svg>
-                <span class="text-sm font-semibold truncate ml-2">Guest mode - Sign In for full access</span>
-              </div>
+              class="bg-yellow-100/80 text-yellow-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-yellow-200 shadow-md cursor-default">
+              <svg class="w-4 h-4 text-yellow-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span class="text-sm font-semibold truncate ml-2">Guest mode - Sign In for full access</span>
               <button @click="navigateToLogin"
-                class="whitespace-nowrap bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
+                class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
                 Sign In
               </button>
             </div>
 
             <!-- Separate Guide Button -->
             <button @click="showGuestGuide = true"
-              class="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
+              class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
@@ -70,18 +68,14 @@
 
           <!-- Authenticated User Actions -->
           <div v-else class="flex items-center gap-3 max-w-full">
-            <div
-              class="bg-green-100/80 text-green-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-green-200 shadow-md">
-              <div class="flex items-center min-w-0">
-                <svg class="w-4 h-4 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                </svg>
-                <span class="text-sm font-semibold truncate ml-2">
-                  Welcome, {{ userFullName }}!
-                </span>
-              </div>
+            <!-- Farmer View -->
+            <div v-if="isFarmerView" class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md cursor-default">
+              <svg class="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+              </svg>
+              <span class="text-sm font-semibold truncate ml-2">Welcome Farmer - Share your expertise</span>
               <button @click="showModal = true"
-                class="whitespace-nowrap bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
+                class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd"
                     d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
@@ -90,8 +84,27 @@
                 Ask Question
               </button>
             </div>
+
+            <!-- Buyer View -->
+            <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
+              <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+              </svg>
+              <span class="text-sm font-semibold truncate ml-2">Welcome - Connect with farmers & experts</span>
+              <button @click="showModal = true"
+                class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clip-rule="evenodd" />
+                </svg>
+                Ask Question
+              </button>
+            </div>
+
+            <!-- Guide Button for Authenticated Users -->
             <button @click="showUserGuide = true"
-              class="whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 cursor-pointer">
+              class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
@@ -125,14 +138,14 @@
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div class="flex items-center gap-2">
               <div
-                class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+                class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center cursor-default">
                 <svg class="w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V4z" />
                 </svg>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-gray-800">
+                <h3 class="text-sm font-bold text-gray-800 cursor-default">
                   {{ isLoadingQuestions ? 'Loading...' : `${filteredQuestions.length} ${filteredQuestions.length === 1 ? 'Question' : 'Questions'} Found` }}
                 </h3>
               </div>
@@ -140,9 +153,9 @@
 
             <!-- Sort By Filter -->
             <div class="flex items-center gap-2">
-              <label class="text-xs font-semibold text-gray-700">Sort By:</label>
+              <label class="text-xs font-semibold text-gray-700 cursor-default">Sort By:</label>
               <select v-model="sortBy"
-                class="px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm cursor-pointer">
+                class="cursor-pointer px-2 py-1 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 rounded-md bg-white shadow-sm">
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
                 <option value="most-answers">Most Answers</option>
@@ -161,7 +174,7 @@
               <div
                 v-for="n in 6"
                 :key="`skeleton-${n}`"
-                class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 p-5 shadow-lg animate-pulse"
+                class="bg-white/95 backdrop-blur-sm rounded-xl border border-white/60 p-5 shadow-lg animate-pulse cursor-default"
               >
                 <!-- Header Section -->
                 <div class="flex items-start justify-between mb-4">
@@ -255,7 +268,7 @@
             <!-- Enhanced Empty State -->
             <div v-else class="flex flex-col items-center justify-center py-16">
               <div
-                class="bg-gradient-to-br from-white/95 to-gray-50/60 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/80 max-w-md text-center shadow-2xl">
+                class="bg-gradient-to-br from-white/95 to-gray-50/60 backdrop-blur-sm p-8 rounded-2xl border-2 border-white/80 max-w-md text-center shadow-2xl cursor-default">
                 <div
                   class="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
                   <svg class="w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -268,14 +281,14 @@
                 <p class="text-sm text-gray-600 mb-6 leading-relaxed">We couldn't find any questions matching your
                   current search criteria. Try adjusting your filters or ask a new question.</p>
                 <button v-if="isAuthenticated" @click="showModal = true"
-                  class="px-6 py-3 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 text-white rounded-xl text-sm font-bold transition-all duration-300 shadow-xl flex items-center gap-2 mx-auto transform cursor-pointer">
+                  class="cursor-pointer px-6 py-3 bg-gradient-to-r from-green-600 via-green-700 to-emerald-700 text-white rounded-xl text-sm font-bold transition-all duration-300 shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Ask a Question
                 </button>
                 <button v-else @click="resetFilters"
-                  class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl text-sm font-bold transition-all duration-300 shadow-xl flex items-center gap-2 mx-auto transform cursor-pointer">
+                  class="cursor-pointer px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl text-sm font-bold transition-all duration-300 shadow-xl flex items-center gap-2 mx-auto transform hover:scale-105">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -389,40 +402,28 @@ const filters = ref({
 // Forum questions data - loaded from Supabase
 const forumQuestions = ref<ForumQuestion[]>([]);
 
+// ===== PERFORMANCE OPTIMIZATIONS =====
+const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+let lastFetchTime = 0;
+
 // Computed properties
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-// FIXED: Computed property for user full name display
-const userFullName = computed(() => {
-  console.log('Computing userFullName...');
-  console.log('Current user profile:', currentUserProfile.value);
-  console.log('Auth store user:', authStore.userId);
-  
+// ===== ENHANCED COMPUTED PROPERTIES =====
+const isFarmerView = computed(() => {
   if (!currentUserProfile.value) {
-    console.log('No profile, using authStore display name:', authStore.userDisplayName);
-    return authStore.userDisplayName || 'User';
+    return false;
   }
+  return currentUserProfile.value.role === 'farmer';
+});
 
-  // Access firstName and lastName from the User object
-  const firstName = (currentUserProfile.value.firstName || '').trim();
-  const lastName = (currentUserProfile.value.lastName || '').trim();
-  
-  console.log('Profile firstName:', firstName);
-  console.log('Profile lastName:', lastName);
-
-  if (firstName && lastName) {
-    const fullName = `${firstName} ${lastName}`;
-    console.log('Returning full name:', fullName);
-    return fullName;
-  } else if (firstName) {
-    console.log('Returning first name only:', firstName);
-    return firstName;
-  } else if (lastName) {
-    console.log('Returning last name only:', lastName);
-    return lastName;
+const headerSubtitle = computed(() => {
+  if (!isAuthenticated.value) {
+    return "Connect with farmers & experts";
+  } else if (isFarmerView.value) {
+    return "Share your expertise with the community";
   } else {
-    console.log('No name fields, using fallback');
-    return authStore.userDisplayName || 'User';
+    return "Get answers from experienced farmers";
   }
 });
 
@@ -475,7 +476,18 @@ const sortedQuestions = computed(() => {
   });
 });
 
-// Methods
+// ===== PERFORMANCE HELPERS =====
+const debounce = (fn: Function, delay: number) => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  return (...args: any[]) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => fn.apply(null, args), delay);
+  };
+};
+
+// ===== OPTIMIZED METHODS =====
 const loadUserProfile = async () => {
   if (!authStore.userId) {
     console.log('No user ID found, skipping profile load');
@@ -486,13 +498,29 @@ const loadUserProfile = async () => {
     isLoadingProfile.value = true;
     console.log('Loading profile for user:', authStore.userId);
     
+    // Check cache first
+    const cachedProfile = localStorage.getItem(`forum_profile_${authStore.userId}`);
+    if (cachedProfile) {
+      const parsed = JSON.parse(cachedProfile);
+      if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
+        console.log('✅ Using cached profile');
+        currentUserProfile.value = parsed.data;
+        isLoadingProfile.value = false;
+        return;
+      }
+    }
+
     const profile = await ProfileService.getProfile(authStore.userId);
     
     if (profile) {
       currentUserProfile.value = profile;
       console.log('Profile loaded successfully:', profile);
-      console.log('Profile firstName:', profile.firstName);
-      console.log('Profile lastName:', profile.lastName);
+      
+      // Cache profile data
+      localStorage.setItem(`forum_profile_${authStore.userId}`, JSON.stringify({
+        data: profile,
+        timestamp: Date.now()
+      }));
     } else {
       console.warn('No profile found for user');
     }
@@ -504,8 +532,18 @@ const loadUserProfile = async () => {
   }
 };
 
-const loadForumQuestions = async () => {
+const loadForumQuestions = async (forceRefresh = false) => {
   try {
+    // Check cache first
+    const cachedQuestions = localStorage.getItem('forum_questions');
+    if (cachedQuestions && !forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
+      const parsed = JSON.parse(cachedQuestions);
+      forumQuestions.value = parsed.data;
+      console.log('✅ Using cached forum questions');
+      isLoadingQuestions.value = false;
+      return;
+    }
+
     isLoadingQuestions.value = true;
     console.log('Loading forum questions from Supabase...');
     
@@ -519,6 +557,14 @@ const loadForumQuestions = async () => {
     await minLoadingTime;
     
     forumQuestions.value = questions;
+    
+    // Cache the results
+    localStorage.setItem('forum_questions', JSON.stringify({
+      data: questions,
+      timestamp: Date.now()
+    }));
+    lastFetchTime = Date.now();
+    
     console.log('Forum questions loaded successfully:', questions.length);
   } catch (error) {
     console.error('Error loading forum questions:', error);
@@ -532,13 +578,17 @@ const navigateToLogin = () => {
   router.push('/signIn');
 };
 
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const handleSidebarToggle = (expanded: boolean) => {
   isSidebarExpanded.value = expanded;
 };
 
-const handleFiltersUpdate = (updatedFilters: typeof filters.value) => {
+const handleFiltersUpdate = debounce((updatedFilters: typeof filters.value) => {
   filters.value = { ...updatedFilters };
-};
+}, 300);
 
 const resetFilters = () => {
   filters.value = {
@@ -605,12 +655,13 @@ const handlePostQuestion = async (questionData: ForumQuestion) => {
     showModal.value = false;
     showToastNotification('Your question has been posted successfully!');
     
-    // Reload questions to ensure consistency
-    await loadForumQuestions();
+    // Invalidate cache and reload questions to ensure consistency
+    localStorage.removeItem('forum_questions');
+    await loadForumQuestions(true);
   } catch (error) {
     console.error('Error after posting question:', error);
     // Question was already posted successfully, just reload
-    await loadForumQuestions();
+    await loadForumQuestions(true);
   }
 };
 
@@ -638,21 +689,29 @@ const handleAnswerSubmitted = async () => {
   }
 };
 
-// Lifecycle hooks
+// ===== OPTIMIZED LIFECYCLE =====
 onMounted(async () => {
-  console.log('Forum component mounted');
+  console.log('🚀 ===== FORUM MOUNTED =====');
   
   // Initialize auth store
   await authStore.initialize();
   
-  // Load user profile if authenticated
+  // Load user profile and forum questions in parallel
+  const loadPromises: Promise<void>[] = [];
+  
   if (authStore.isAuthenticated) {
-    await loadUserProfile();
+    loadPromises.push(loadUserProfile());
   }
   
-  // Load forum questions
-  await loadForumQuestions();
+  loadPromises.push(loadForumQuestions());
+  
+  await Promise.all(loadPromises);
 });
+
+// Clear cache on component unmount (optional cleanup)
+// onUnmounted(() => {
+//   // Keep cache for better performance across navigation
+// });
 </script>
 
 <style scoped>
