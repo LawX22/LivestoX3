@@ -249,14 +249,7 @@ import { useRouter } from 'vue-router'
 import NavBar from '@/components/NavBar.vue'
 import FarmerDashboard from '@/components/Dashboard/FarmerDashboard.vue'
 import BuyerDashboard from '@/components/Dashboard/BuyerDashboard.vue'
-
-// Import types and service from the external dashboard service
-import type { 
-  User, 
-  Stats, 
-  TableItem, 
-  Message, 
-} from '@/services/dashboard'
+import type { User, Stats, TableItem, Message, } from '@/services/dashboard'
 import { DashboardService } from '../../services/DashboardService'
 
 // State
