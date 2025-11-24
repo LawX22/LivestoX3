@@ -250,7 +250,7 @@ import NavBar from '@/components/NavBar.vue'
 import FarmerDashboard from '@/components/Dashboard/FarmerDashboard.vue'
 import BuyerDashboard from '@/components/Dashboard/BuyerDashboard.vue'
 import type { User, Stats, TableItem, Message, } from '@/services/dashboard'
-import { DashboardService } from '../../services/DashboardService'
+import { DashboardService } from '../../services/dashboardService'
 
 // State
 const loading = ref(true)
@@ -401,7 +401,7 @@ const initializeDashboard = async () => {
     }
 
     user.value = userResult.data
-    console.log('✅ User loaded:', user.value.email, 'Role:', user.value.role)
+    console.log('✅ User loaded:', user.value?.email ?? 'unknown', 'Role:', user.value?.role ?? 'unknown')
 
     // Load dashboard data based on user role
     await loadDashboardData()

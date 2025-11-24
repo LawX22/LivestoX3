@@ -1,4 +1,4 @@
-// services/DashboardService.ts
+// services/dashboardService.ts
 import { supabase } from '@/supabase'
 import type { User, Stats, TableItem, Message } from './dashboard'
 
