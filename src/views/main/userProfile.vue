@@ -724,10 +724,7 @@ import FarmInfoTab from '../../components/Profile/FarmInfo.vue'
 import LivestockPostsTab from '../../components/Profile/LivestockPosts.vue'
 import ReviewsRatingsTab from '../../components/Profile/ReviewsRatings.vue'
 import Toast from '../../components/Profile/Toast.vue'
-import type { 
-  User, 
-  Address 
-} from '../../services/user'
+import type { User, Address } from '../../types/user'
 
 const router = useRouter()
 const authStore = useAuthStore()

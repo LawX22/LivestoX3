@@ -347,7 +347,7 @@ import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
 import LivestockCard from '../../components/Market/LivestockCard.vue';
 
-import type { Animal, Filters, BidData, MessageData, CurrentUser } from '@/services/animalTypes';
+import type { Animal, Filters, BidData, MessageData, CurrentUser } from '@/types/animalTypes';
 
 const router = useRouter();
 

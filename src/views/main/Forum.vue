@@ -360,7 +360,7 @@ import Toast from '../../components/Profile/Toast.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { ProfileService } from '@/services/profileService';
 import { forumService } from '@/services/forumService';
-import type { User } from '@/services/user';
+import type { User } from '@/types/user';
 import type { ForumQuestion } from '@/services/forumService';
 
 // Router

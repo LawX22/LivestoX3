@@ -802,7 +802,7 @@
 import { ref, reactive, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { LivestockService } from '@/services/livestockService'
-import type { Animal } from '@/services/managementTypes'
+import type { Animal } from '@/types/managementTypes'
 
 const props = defineProps<{
   animal?: Animal | null

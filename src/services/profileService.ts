@@ -1,7 +1,7 @@
 // services/profileService.ts
 import { supabase } from '@/supabase'
-import type { User, ProfileDB, Address, FarmInfoDB } from './user'
-import { dbProfileToUser } from './user'
+import type { User, ProfileDB, Address, FarmInfoDB } from '../types/user'
+import { dbProfileToUser } from '../types/user'
 
 // Configuration
 const STORAGE_BUCKET = 'avatars'

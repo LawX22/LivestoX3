@@ -589,7 +589,7 @@
 import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
 import UserDetailsModal from '../../components/Admin/UserDetailsModal.vue'
-import { AdminService, type AdminUser } from '../../services/adminService'
+import { AdminService, type AdminUser } from '../../services/adminManagement'
 
 // Reactive variables
 const registeredUsers = ref<AdminUser[]>([])

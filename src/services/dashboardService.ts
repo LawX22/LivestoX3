@@ -1,6 +1,6 @@
 // services/dashboardService.ts
 import { supabase } from '@/supabase'
-import type { User, Stats, TableItem, Message } from './dashboard'
+import type { User, Stats, TableItem, Message } from '../types/dashboardTypes'
 
 interface LivestockListingDB {
   id: string

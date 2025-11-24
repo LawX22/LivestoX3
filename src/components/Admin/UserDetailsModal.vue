@@ -265,7 +265,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue'
-import { AdminService } from '@/services/adminService'
+import { AdminService } from '@/services/adminManagement'
 import { ProfileService } from '@/services/profileService'
 
 interface User {

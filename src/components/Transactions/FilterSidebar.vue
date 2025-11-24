@@ -182,7 +182,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { Filters } from '../../services/transactions'
+import type { Filters } from '../../types/transactions'
 
 interface Props {
   isExpanded: boolean

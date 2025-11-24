@@ -371,7 +371,7 @@ import type {
   DeliveryMethod, 
   PaymentMethod, 
   FormErrors
-} from '../../services/cart'
+} from '../../types/cart'
 
 const router = useRouter()
 

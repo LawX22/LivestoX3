@@ -342,7 +342,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { Filters, PriceRange, TimeRange, AuctionDuration } from '@/services/animalTypes';
+import type { Filters, PriceRange, TimeRange, AuctionDuration } from '@/types/animalTypes';
 
 const props = defineProps<{
   isExpanded: boolean;

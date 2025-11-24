@@ -396,7 +396,7 @@
 <script setup lang="ts">
 import { onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import type { DashboardProps, DashboardEmits } from '@/services/dashboard'
+import type { DashboardProps, DashboardEmits } from '@/types/dashboardTypes'
 
 // Register Chart.js components
 Chart.register(...registerables)

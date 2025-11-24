@@ -1,6 +1,6 @@
 // LivestockService.ts
 import { supabase } from '@/supabase'
-import type { Animal, Farmer, CreateListingForm, QuantityUpdateData } from './managementTypes'
+import type { Animal, Farmer, CreateListingForm, QuantityUpdateData } from '../types/managementTypes'
 
 // Database types
 interface LivestockDB {

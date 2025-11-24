@@ -424,7 +424,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Animal, QuantityUpdateData } from '../../services/managementTypes';
+import type { Animal, QuantityUpdateData } from '../../types/managementTypes';
 
 // Props interface
 interface Props {

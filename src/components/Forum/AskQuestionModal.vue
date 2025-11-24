@@ -339,7 +339,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { forumService } from '../../services/forumService'
 import type { NewQuestion } from '../../services/forumService'
-import type { User } from '@/services/user'
+import type { User } from '@/types/user'
 
 // Type definitions
 interface QuestionForm {

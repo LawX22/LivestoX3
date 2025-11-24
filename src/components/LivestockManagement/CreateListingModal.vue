@@ -494,7 +494,7 @@
 import { ref, reactive } from 'vue'
 import { LivestockService } from '@/services/livestockService'
 import { supabase } from '@/supabase'  
-import type { CreateListingForm } from '@/services/managementTypes'
+import type { CreateListingForm } from '@/types/managementTypes'
 
 // Interfaces
 interface FormErrors {

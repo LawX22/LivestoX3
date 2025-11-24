@@ -249,7 +249,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { CartItem } from '../../services/cart';
+import type { CartItem } from '../../types/cart';
 
 const router = useRouter();
 

@@ -1,4 +1,4 @@
-// services/adminService.ts
+// services/admindashboardTypes.ts
 import { supabase } from '@/supabase'
 
 export interface AdminUser {

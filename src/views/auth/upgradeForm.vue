@@ -388,7 +388,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { ProfileService } from '@/services/profileService'
 import { UpgradeService } from '@/services/upgradeService'
-import type { Address } from '@/services/user'
+import type { Address } from '@/types/user'
 import { livestockTypes, farmSizeUnits } from '@/services/UpgradeFormDetails'
 
 const router = useRouter()

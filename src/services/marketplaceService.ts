@@ -1,6 +1,6 @@
 // services/marketplaceService.ts
 import { supabase } from '../supabase'
-import type { Animal } from './animalTypes'
+import type { Animal } from '../types/animalTypes'
 
 // ===== TYPES =====
 export interface UserDetails {

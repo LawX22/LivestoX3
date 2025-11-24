@@ -243,7 +243,7 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import type { Animal } from '@/services/animalTypes';
+import type { Animal } from '@/types/animalTypes';
 
 // Props
 const props = defineProps<{

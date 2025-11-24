@@ -702,7 +702,7 @@ import AuctionDetailsModal from '../../components/LivestockManagement/AuctionMod
 import LivestockCard from '../../components/LivestockManagement/LivestockCard.vue';
 import CreateListingModal from '../../components/LivestockManagement/CreateListingModal.vue';
 import CreateAuctionModal from '../../components/LivestockManagement/CreateAuctionModal.vue';
-import type { Animal, Filters, CreateListingForm, CreateAuctionForm, QuantityUpdateData, AuctionBidData } from '../../services/managementTypes';
+import type { Animal, Filters, CreateListingForm, CreateAuctionForm, QuantityUpdateData, AuctionBidData } from '../../types/managementTypes';
 import { LivestockService } from '../../services/livestockService';
 import { supabase } from '@/supabase';
 
