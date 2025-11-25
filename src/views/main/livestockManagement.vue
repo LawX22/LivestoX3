@@ -133,7 +133,7 @@
         <div class="flex gap-3 justify-center">
           <button 
             @click="goBack"
-            class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors duration-200"
+            class="px-6 py-2 cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium transition-colors duration-200"
           >
             Go Back
           </button>
@@ -166,7 +166,7 @@
             <!-- Return Button -->
             <button 
               @click="goBack"
-              class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg transition-all duration-200 hover:scale-105"
+              class="w-10 h-10 cursor-pointer bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg transition-all duration-200 hover:scale-105"
               title="Go back"
             >
               <svg
@@ -225,7 +225,7 @@
               <!-- Create Listing Button -->
               <button
                 @click="createListing"
-                class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm border border-white/20 hover:scale-105 shadow-lg"
+                class="px-4 py-2 bg-white/20 cursor-pointer hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm border border-white/20 hover:scale-105 shadow-lg"
                 title="Create new livestock listing"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +238,7 @@
               <!-- Create Auction Button -->
               <button
                 @click="createAuction"
-                class="px-4 py-2 bg-gradient-to-r from-amber-500/90 to-orange-600/90 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:scale-105"
+                class="px-4 py-2 bg-gradient-to-r cursor-pointer from-amber-500/90 to-orange-600/90 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:scale-105"
                 title="Create new auction"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +253,7 @@
             <div class="flex bg-white/10 rounded-lg p-1 backdrop-blur-sm border border-white/20">
               <button
                 @click="displayMode = 'card'"
-                :class="`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                :class="`px-3 py-2 rounded-md cursor-pointer text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                   displayMode === 'card'
                     ? 'bg-white/20 text-white shadow-sm'
                     : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -266,7 +266,7 @@
               </button>
               <button
                 @click="displayMode = 'table'"
-                :class="`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                :class="`px-3 py-2 rounded-md cursor-pointer text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                   displayMode === 'table'
                     ? 'bg-white/20 text-white shadow-sm'
                     : 'text-white/70 hover:text-white hover:bg-white/10'

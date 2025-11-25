@@ -1,4 +1,4 @@
-// stores/authStore.ts - OPTIMIZED FOR SPEED
+// stores/authStore.ts - OPTIMIZED WITH CONNECTION RESILIENCE
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
@@ -8,6 +8,7 @@ import { auth } from '../services/auth-service'
 
 // 🚀 Storage keys for caching
 const AUTH_CACHE_KEY = 'livestox_auth_cache'
+const SESSION_CHECK_INTERVAL = 60000 // Check session every 60 seconds
 
 interface AuthCache {
   userId: string | null
@@ -30,6 +31,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Track if auth listener has been set up
   let authListenerSetup = false
+  
+  // 🆕 Session health check interval
+  let sessionCheckInterval: ReturnType<typeof setInterval> | null = null
 
   // 🚀 Load cached auth immediately (synchronous)
   const loadCachedAuth = (): AuthCache | null => {
@@ -78,6 +82,80 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 🆕 Check session health
+  const checkSessionHealth = async (): Promise<boolean> => {
+    try {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('❌ Session health check failed:', error)
+        return false
+      }
+
+      if (!currentSession) {
+        console.warn('⚠️ No active session found')
+        return false
+      }
+
+      // Check if session is about to expire (within 5 minutes)
+      const expiresAt = currentSession.expires_at
+      if (expiresAt) {
+        const now = Math.floor(Date.now() / 1000)
+        const timeUntilExpiry = expiresAt - now
+        
+        if (timeUntilExpiry < 300) { // Less than 5 minutes
+          console.warn('⚠️ Session expiring soon, refreshing...')
+          const { data: { session: refreshedSession }, error: refreshError } = 
+            await supabase.auth.refreshSession()
+          
+          if (refreshError) {
+            console.error('❌ Failed to refresh session:', refreshError)
+            return false
+          }
+          
+          if (refreshedSession) {
+            session.value = refreshedSession
+            user.value = refreshedSession.user
+            console.log('✅ Session refreshed successfully')
+          }
+        }
+      }
+
+      return true
+    } catch (error) {
+      console.error('💥 Error checking session health:', error)
+      return false
+    }
+  }
+
+  // 🆕 Start session health checks
+  const startSessionHealthChecks = () => {
+    if (sessionCheckInterval) return
+
+    sessionCheckInterval = setInterval(async () => {
+      if (session.value && user.value) {
+        const isHealthy = await checkSessionHealth()
+        if (!isHealthy) {
+          console.warn('⚠️ Session unhealthy, clearing auth state')
+          session.value = null
+          user.value = null
+          clearAuthCache()
+        }
+      }
+    }, SESSION_CHECK_INTERVAL)
+
+    console.log('✅ Session health checks started')
+  }
+
+  // 🆕 Stop session health checks
+  const stopSessionHealthChecks = () => {
+    if (sessionCheckInterval) {
+      clearInterval(sessionCheckInterval)
+      sessionCheckInterval = null
+      console.log('🛑 Session health checks stopped')
+    }
+  }
+
   // 🚀 Initialize cached auth immediately (runs synchronously when store is created)
   cachedAuth.value = loadCachedAuth()
 
@@ -104,8 +182,10 @@ export const useAuthStore = defineStore('auth', () => {
       // 🚀 Update cache on auth state change
       if (_session?.user) {
         saveAuthCache(_session.user.id, _session.user.email || null, true)
+        startSessionHealthChecks()
       } else {
         clearAuthCache()
+        stopSessionHealthChecks()
       }
     })
 
@@ -124,21 +204,31 @@ export const useAuthStore = defineStore('auth', () => {
       setupAuthListener()
 
       // 🚀 Use getSession instead of getUser (faster, less expensive)
-      const { data } = await supabase.auth.getSession()
-      session.value = data?.session ?? null
-      user.value = data?.session?.user || null
-      initialized.value = true
-
-      // 🚀 Update cache after successful initialization
-      if (data?.session?.user) {
-        saveAuthCache(
-          data.session.user.id,
-          data.session.user.email || null,
-          true
-        )
-      } else if (!data?.session) {
-        // No session found - clear cache
+      const { data, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('❌ Failed to get session:', error)
+        session.value = null
+        user.value = null
         clearAuthCache()
+      } else {
+        session.value = data?.session ?? null
+        user.value = data?.session?.user || null
+        initialized.value = true
+
+        // 🚀 Update cache after successful initialization
+        if (data?.session?.user) {
+          saveAuthCache(
+            data.session.user.id,
+            data.session.user.email || null,
+            true
+          )
+          // 🆕 Start health checks for active session
+          startSessionHealthChecks()
+        } else if (!data?.session) {
+          // No session found - clear cache
+          clearAuthCache()
+        }
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to initialize auth'
@@ -146,6 +236,40 @@ export const useAuthStore = defineStore('auth', () => {
       clearAuthCache()
     } finally {
       loading.value = false
+    }
+  }
+
+  // 🆕 Manual session refresh (call when tab becomes visible)
+  const refreshSession = async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Manually refreshing session...')
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+      
+      if (error || !currentSession) {
+        console.warn('⚠️ Session refresh failed or no session')
+        session.value = null
+        user.value = null
+        clearAuthCache()
+        stopSessionHealthChecks()
+        return false
+      }
+
+      session.value = currentSession
+      user.value = currentSession.user
+      
+      if (currentSession.user) {
+        saveAuthCache(
+          currentSession.user.id,
+          currentSession.user.email || null,
+          true
+        )
+      }
+
+      console.log('✅ Session refreshed successfully')
+      return true
+    } catch (error) {
+      console.error('💥 Error refreshing session:', error)
+      return false
     }
   }
 
@@ -167,6 +291,7 @@ export const useAuthStore = defineStore('auth', () => {
       // 🚀 Save to cache on successful login
       if (data?.user) {
         saveAuthCache(data.user.id, data.user.email || null, true)
+        startSessionHealthChecks()
       }
 
       return { data, error: null }
@@ -199,6 +324,7 @@ export const useAuthStore = defineStore('auth', () => {
       // 🚀 Save to cache on successful registration
       if (data?.user) {
         saveAuthCache(data.user.id, data.user.email || null, true)
+        startSessionHealthChecks()
       }
 
       return { data, error: null }
@@ -221,6 +347,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // 🚀 Clear cache on logout
       clearAuthCache()
+      stopSessionHealthChecks()
     } catch (err: any) {
       error.value = err.message || 'Logout failed'
     } finally {
@@ -238,8 +365,10 @@ export const useAuthStore = defineStore('auth', () => {
       // 🚀 Update cache
       if (data.session?.user) {
         saveAuthCache(data.session.user.id, data.session.user.email || null, true)
+        startSessionHealthChecks()
       } else {
         clearAuthCache()
+        stopSessionHealthChecks()
       }
     } catch (err: any) {
       error.value = err.message || 'Failed to get session'
@@ -313,6 +442,10 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     getSession,
     clearAuthCache,
+    refreshSession,
+    checkSessionHealth,
+    startSessionHealthChecks,
+    stopSessionHealthChecks,
 
     // Computed (Auth)
     userId,

@@ -1,4 +1,4 @@
-<!-- Forum.vue - OPTIMIZED -->
+<!-- Forum.vue - OPTIMIZED WITH TAB VISIBILITY DETECTION -->
 <template>
   <div
     class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
@@ -167,7 +167,7 @@
         </div>
 
         <!-- Loading State with Skeleton -->
-        <div v-if="isLoadingProfile || isLoadingQuestions" class="flex-1 overflow-y-auto">
+        <div v-if="isLoadingQuestions" class="flex-1 overflow-y-auto">
           <div class="p-3">
             <div class="space-y-4">
               <!-- Skeleton Cards -->
@@ -262,6 +262,8 @@
                 :question="question"
                 @openComments="openCommentsModal"
                 @showToast="showToastNotification"
+                @questionUpdated="handleQuestionUpdated"
+                @questionDeleted="handleQuestionDeleted"
               />
             </div>
 
@@ -306,7 +308,6 @@
     <AskQuestionModal 
       v-if="showModal" 
       :visible="showModal"
-      :current-user-profile="currentUserProfile"
       @submit="handlePostQuestion" 
       @close="showModal = false"
       @showToast="showToastNotification"
@@ -348,8 +349,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { supabase } from '../../supabase';
 import NavBar from '../../components/NavBar.vue';
 import AskQuestionModal from '../../components/Forum/AskQuestionModal.vue';
 import CommentsModal from '../../components/Forum/CommentsModal.vue';
@@ -358,18 +360,19 @@ import FilterSidebar from '../../components/Forum/FilterSidebar.vue';
 import GuideModal from '../../components/Forum/GuideModal.vue';
 import Toast from '../../components/Profile/Toast.vue';
 import { useAuthStore } from '@/stores/authStore';
-import { ProfileService } from '@/services/profileService';
 import { forumService } from '@/services/forumService';
-import type { User } from '@/types/user';
 import type { ForumQuestion } from '@/services/forumService';
 
-// Router
-const router = useRouter();
+// ===== CONSTANTS =====
+const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const MIN_LOADING_TIME = 800; // Minimum loading time for better UX
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // Refresh if away for 30+ seconds
 
-// Auth Store
+// ===== ROUTER & STORES =====
+const router = useRouter();
 const authStore = useAuthStore();
 
-// State
+// ===== STATE =====
 const showModal = ref(false);
 const showGuestGuide = ref(false);
 const showUserGuide = ref(false);
@@ -377,11 +380,14 @@ const showCommentsModal = ref(false);
 const selectedQuestion = ref<ForumQuestion | null>(null);
 const isSidebarExpanded = ref(true);
 const sortBy = ref('newest');
-const currentUserProfile = ref<User | null>(null);
-const isLoadingProfile = ref(false);
 const isLoadingQuestions = ref(false);
+const isRefreshing = ref(false);
 
-// Toast state using reactive object
+// 🆕 Track visibility
+let lastVisibilityTime = Date.now();
+let lastFetchTime = 0;
+
+// Toast state
 const toast = reactive({
   visible: false,
   type: 'success' as 'success' | 'error',
@@ -390,31 +396,26 @@ const toast = reactive({
   duration: 4000
 });
 
+// Filter constants
 const categories = ['Poultry', 'Swine', 'Cattle', 'Goat', 'Sheep', 'Feed', 'Health', 'Equipment'];
 const urgencyLevels = ['Low', 'Normal', 'High', 'Critical'];
 
+// Filter state
 const filters = ref({
   search: '',
   categories: [] as string[],
   urgency: ''
 });
 
-// Forum questions data - loaded from Supabase
+// Forum questions data
 const forumQuestions = ref<ForumQuestion[]>([]);
 
-// ===== PERFORMANCE OPTIMIZATIONS =====
-const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-let lastFetchTime = 0;
-
-// Computed properties
+// ===== COMPUTED PROPERTIES =====
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-// ===== ENHANCED COMPUTED PROPERTIES =====
 const isFarmerView = computed(() => {
-  if (!currentUserProfile.value) {
-    return false;
-  }
-  return currentUserProfile.value.role === 'farmer';
+  const role = authStore.userRole?.toLowerCase() || '';
+  return role === 'farmer';
 });
 
 const headerSubtitle = computed(() => {
@@ -430,7 +431,7 @@ const headerSubtitle = computed(() => {
 const forumStats = computed(() => ({
   totalQuestions: forumQuestions.value.length,
   totalAnswers: forumQuestions.value.reduce((sum, q) => sum + q.answers.length, 0),
-  activeUsers: 15 // This could be calculated from unique user IDs
+  activeUsers: new Set(forumQuestions.value.map(q => q.userId)).size
 }));
 
 const filteredQuestions = computed(() => {
@@ -476,7 +477,7 @@ const sortedQuestions = computed(() => {
   });
 });
 
-// ===== PERFORMANCE HELPERS =====
+// ===== UTILITY FUNCTIONS =====
 const debounce = (fn: Function, delay: number) => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   return (...args: any[]) => {
@@ -487,74 +488,51 @@ const debounce = (fn: Function, delay: number) => {
   };
 };
 
-// ===== OPTIMIZED METHODS =====
-const loadUserProfile = async () => {
-  if (!authStore.userId) {
-    console.log('No user ID found, skipping profile load');
+// 🆕 Check Supabase connection health
+const checkSupabaseConnection = async (): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('profiles').select('id').limit(1);
+    return !error;
+  } catch (error) {
+    console.error('❌ Supabase connection check failed:', error);
+    return false;
+  }
+};
+
+// ===== METHODS =====
+const loadForumQuestions = async (forceRefresh = false) => {
+  // Prevent multiple simultaneous refreshes
+  if (isRefreshing.value && !forceRefresh) {
+    console.log('🔄 Refresh already in progress, skipping...');
     return;
   }
 
   try {
-    isLoadingProfile.value = true;
-    console.log('Loading profile for user:', authStore.userId);
-    
+    isRefreshing.value = true;
+
     // Check cache first
-    const cachedProfile = localStorage.getItem(`forum_profile_${authStore.userId}`);
-    if (cachedProfile) {
-      const parsed = JSON.parse(cachedProfile);
-      if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
-        console.log('✅ Using cached profile');
-        currentUserProfile.value = parsed.data;
-        isLoadingProfile.value = false;
+    if (!forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
+      const cachedQuestions = localStorage.getItem('forum_questions');
+      if (cachedQuestions) {
+        const parsed = JSON.parse(cachedQuestions);
+        forumQuestions.value = parsed.data;
+        console.log('✅ Using cached forum questions');
+        isLoadingQuestions.value = false;
         return;
       }
     }
 
-    const profile = await ProfileService.getProfile(authStore.userId);
-    
-    if (profile) {
-      currentUserProfile.value = profile;
-      console.log('Profile loaded successfully:', profile);
-      
-      // Cache profile data
-      localStorage.setItem(`forum_profile_${authStore.userId}`, JSON.stringify({
-        data: profile,
-        timestamp: Date.now()
-      }));
-    } else {
-      console.warn('No profile found for user');
-    }
-  } catch (error) {
-    console.error('Error loading user profile:', error);
-    showToastNotification('Failed to load your profile. Some features may be limited.', 'error');
-  } finally {
-    isLoadingProfile.value = false;
-  }
-};
-
-const loadForumQuestions = async (forceRefresh = false) => {
-  try {
-    // Check cache first
-    const cachedQuestions = localStorage.getItem('forum_questions');
-    if (cachedQuestions && !forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
-      const parsed = JSON.parse(cachedQuestions);
-      forumQuestions.value = parsed.data;
-      console.log('✅ Using cached forum questions');
-      isLoadingQuestions.value = false;
-      return;
-    }
-
     isLoadingQuestions.value = true;
-    console.log('Loading forum questions from Supabase...');
+    console.log('🔄 Loading forum questions from database...');
     
-    // Add a minimum loading time for better UX
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
+    // Add minimum loading time for better UX
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
     
     // Pass userId if authenticated to get user's vote status
-    const questions = await forumService.getQuestions(authStore.userId || undefined);
+    const questionsPromise = forumService.getQuestions(authStore.userId || undefined);
     
-    // Wait for minimum loading time to complete
-    await minLoadingTime;
+    // Wait for both promises
+    const [questions] = await Promise.all([questionsPromise, minLoadingTime]);
     
     forumQuestions.value = questions;
     
@@ -565,12 +543,54 @@ const loadForumQuestions = async (forceRefresh = false) => {
     }));
     lastFetchTime = Date.now();
     
-    console.log('Forum questions loaded successfully:', questions.length);
+    console.log(`✅ Loaded ${questions.length} questions successfully`);
   } catch (error) {
-    console.error('Error loading forum questions:', error);
+    console.error('❌ Error loading forum questions:', error);
     showToastNotification('Failed to load forum questions. Please try again.', 'error');
   } finally {
     isLoadingQuestions.value = false;
+    isRefreshing.value = false;
+  }
+};
+
+// 🆕 PAGE VISIBILITY API - SMART REFRESH
+const handleVisibilityChange = async () => {
+  if (document.hidden) {
+    // Tab became hidden - record the time
+    lastVisibilityTime = Date.now();
+    console.log('👋 Forum: Tab hidden at:', new Date(lastVisibilityTime).toLocaleTimeString());
+  } else {
+    // Tab became visible - check if we need to refresh
+    const timeAway = Date.now() - lastVisibilityTime;
+    console.log('👀 Forum: Tab visible again. Time away:', Math.round(timeAway / 1000), 'seconds');
+
+    // Only refresh if we were away for more than threshold
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
+      console.log('🔄 Forum: Tab was away for a while, refreshing data...');
+
+      // Check Supabase connection health first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        console.warn('⚠️ Supabase connection issue, attempting reconnect...');
+      }
+
+      // Refresh auth session first
+      if (isAuthenticated.value) {
+        const sessionValid = await authStore.refreshSession();
+        if (!sessionValid) {
+          console.warn('⚠️ Auth session expired');
+          return;
+        }
+      }
+
+      // Refresh forum questions
+      localStorage.removeItem('forum_questions'); // Clear cache
+      await loadForumQuestions(true);
+
+      showToastNotification('Forum data refreshed successfully');
+    } else {
+      console.log('✅ Quick return, using cached data');
+    }
   }
 };
 
@@ -606,20 +626,18 @@ const showToastNotification = (message: string, type: 'success' | 'error' = 'suc
   toast.visible = true;
 };
 
-// FIXED: Open modal immediately, load data in background
 const openCommentsModal = (question: ForumQuestion) => {
-  console.log('Opening comments modal for question:', question.id);
+  console.log('📖 Opening comments modal for question:', question.id);
   
   // Open modal immediately with current question data
   selectedQuestion.value = question;
   showCommentsModal.value = true;
   
   // Load fresh data in the background (async, non-blocking)
-  loadQuestionData(question.id);
+  loadQuestionDataInBackground(question.id);
 };
 
-// Separate function to load question data in background
-const loadQuestionData = async (questionId: number) => {
+const loadQuestionDataInBackground = async (questionId: number) => {
   try {
     // Increment view count
     await forumService.incrementViews(questionId);
@@ -638,7 +656,7 @@ const loadQuestionData = async (questionId: number) => {
       }
     }
   } catch (error) {
-    console.error('Error loading question data:', error);
+    console.error('❌ Error loading question data:', error);
     // Don't show error toast since modal is already open with cached data
   }
 };
@@ -650,23 +668,58 @@ const handleCloseCommentsModal = () => {
 
 const handlePostQuestion = async (questionData: ForumQuestion) => {
   try {
-    // Add to local state immediately for instant UI feedback
-    forumQuestions.value.unshift(questionData);
+    console.log('✅ Question posted successfully, reloading questions...');
     showModal.value = false;
     showToastNotification('Your question has been posted successfully!');
     
-    // Invalidate cache and reload questions to ensure consistency
+    // Clear cache and reload questions from database
+    localStorage.removeItem('forum_questions');
+    await loadForumQuestions(true);
+    
+    // Scroll to top to show the new question
+    scrollToTop();
+  } catch (error) {
+    console.error('❌ Error after posting question:', error);
+    showToastNotification('Question posted but failed to refresh. Please reload the page.', 'error');
+  }
+};
+
+const handleQuestionUpdated = async (updatedQuestion: ForumQuestion) => {
+  try {
+    console.log('✅ Question updated, reloading questions...');
+    showToastNotification('Question updated successfully!');
+    
+    // Clear cache and reload questions from database
     localStorage.removeItem('forum_questions');
     await loadForumQuestions(true);
   } catch (error) {
-    console.error('Error after posting question:', error);
-    // Question was already posted successfully, just reload
+    console.error('❌ Error after updating question:', error);
+    showToastNotification('Question updated but failed to refresh. Please reload the page.', 'error');
+  }
+};
+
+const handleQuestionDeleted = async (questionId: number) => {
+  try {
+    console.log('✅ Question deleted, reloading questions...');
+    
+    // Remove from local state immediately for instant feedback
+    const index = forumQuestions.value.findIndex(q => q.id === questionId);
+    if (index !== -1) {
+      forumQuestions.value.splice(index, 1);
+    }
+    
+    showToastNotification('Question deleted successfully!');
+    
+    // Clear cache and reload questions from database
+    localStorage.removeItem('forum_questions');
     await loadForumQuestions(true);
+  } catch (error) {
+    console.error('❌ Error after deleting question:', error);
+    showToastNotification('Question deleted but failed to refresh. Please reload the page.', 'error');
   }
 };
 
 const handleAnswerSubmitted = async () => {
-  // Reload the current question to get the new answer
   if (selectedQuestion.value) {
     try {
       const updatedQuestion = await forumService.getQuestionById(
@@ -682,36 +735,42 @@ const handleAnswerSubmitted = async () => {
         if (index !== -1) {
           forumQuestions.value[index] = updatedQuestion;
         }
+        
+        // Clear cache to ensure fresh data on next load
+        localStorage.removeItem('forum_questions');
       }
     } catch (error) {
-      console.error('Error reloading question:', error);
+      console.error('❌ Error reloading question:', error);
     }
   }
 };
 
-// ===== OPTIMIZED LIFECYCLE =====
+// ===== LIFECYCLE =====
 onMounted(async () => {
-  console.log('🚀 ===== FORUM MOUNTED =====');
+  console.log('🚀 ===== FORUM COMPONENT MOUNTED =====');
   
-  // Initialize auth store
-  await authStore.initialize();
-  
-  // Load user profile and forum questions in parallel
-  const loadPromises: Promise<void>[] = [];
-  
-  if (authStore.isAuthenticated) {
-    loadPromises.push(loadUserProfile());
+  // Ensure auth is initialized
+  if (!authStore.initialized) {
+    console.log('🔐 Initializing auth store...');
+    await authStore.initialize();
   }
   
-  loadPromises.push(loadForumQuestions());
+  // 🆕 Add Page Visibility API listener
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  console.log('✅ Page visibility listener added');
   
-  await Promise.all(loadPromises);
+  // Load forum questions
+  await loadForumQuestions();
+  
+  console.log('✅ Forum component ready');
 });
 
-// Clear cache on component unmount (optional cleanup)
-// onUnmounted(() => {
-//   // Keep cache for better performance across navigation
-// });
+// 🆕 Cleanup on unmount
+onBeforeUnmount(() => {
+  // Remove visibility listener
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  console.log('🧹 Cleaned up Forum listeners');
+});
 </script>
 
 <style scoped>

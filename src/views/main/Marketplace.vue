@@ -1,4 +1,4 @@
-<!-- Marketplace.vue - OPTIMIZED -->
+<!-- Marketplace.vue - COMPLETE FIXED VERSION -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -285,6 +285,7 @@
     <AnimalDetailsModal 
       v-if="isModalOpen && selectedAnimal && !selectedAnimal.isAuction" 
       :animal="selectedAnimal"
+      :currentUser="currentUserForModal"
       @close="closeModal"
       @contact="contactFarmerFromModal"
     />
@@ -336,10 +337,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, onMounted, watch, onBeforeUnmount } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '../../supabase';
-import { marketplaceService, type UserDetails } from '@/services/marketplaceService';
+import { marketplaceService } from '@/services/marketplaceService';
+import type { UserDetails } from '@/services/marketplaceService';
+
+// Import components
 import NavBar from '../../components/NavBar.vue';
 import FilterSidebar from '../../components/Market/FilterSidebar.vue';
 import AnimalDetailsModal from '../../components/Market/AnimalDetailsModal.vue';
@@ -347,34 +351,51 @@ import ContactFarmerModal from '../../components/Market/ContactFarmerModal.vue';
 import AuctionDetailsModal from '../../components/Market/AuctionDetailsModal.vue';
 import LivestockCard from '../../components/Market/LivestockCard.vue';
 
-import type { Animal, Filters, BidData, MessageData, CurrentUser } from '@/types/animalTypes';
+// Import types
+import type { 
+  Animal, 
+  Filters, 
+  BidData, 
+  MessageData, 
+  CurrentUser,
+  TabType,
+  UserRole,
+  SortOption,
+  WeightUnit
+} from '@/types/animalTypes';
 
+// ===== ROUTER & ROUTE =====
 const router = useRouter();
+const route = useRoute();
 
+// ===== PROPS =====
 const props = defineProps<{
   viewMode?: 'buyer' | 'farmer';
 }>();
 
 // ===== PERFORMANCE OPTIMIZATIONS =====
 const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // Refresh if away for 30+ seconds
 let lastFetchTime = 0;
+let lastVisibilityTime = Date.now();
+const isRefreshing = ref(false);
 
 // ===== AUTHENTICATION STATE =====
-const isAuthenticated = ref(false);
+const isAuthenticated = ref<boolean>(false);
 const currentUserId = ref<string | null>(null);
-const userRole = ref<'buyer' | 'farmer' | null>(null);
-const userName = ref('Guest User');
-const userEmail = ref('');
-const profileCompleted = ref(false);
-const hasPendingUpgrade = ref(false);
+const userRole = ref<UserRole>('buyer');
+const userName = ref<string>('Guest User');
+const userEmail = ref<string>('');
+const profileCompleted = ref<boolean>(false);
+const hasPendingUpgrade = ref<boolean>(false);
 const currentUserDetails = ref<UserDetails | null>(null);
 
 // ===== LOADING STATES =====
-const isLoadingUser = ref(true);
-const isLoadingData = ref(true);
+const isLoadingUser = ref<boolean>(true);
+const isLoadingData = ref<boolean>(true);
 
 // ===== COMPUTED =====
-const isFarmerView = computed(() => {
+const isFarmerView = computed<boolean>(() => {
   if (props.viewMode) {
     return props.viewMode === 'farmer';
   }
@@ -386,31 +407,38 @@ const isFarmerView = computed(() => {
   return userRole.value === 'farmer';
 });
 
+// Proper currentUser for modal
 const currentUserForModal = computed<CurrentUser | null>(() => {
-  if (!isAuthenticated.value || !currentUserDetails.value) return null;
+  if (!isAuthenticated.value || !currentUserDetails.value) {
+    return null;
+  }
 
   return {
     name: currentUserDetails.value.fullName,
     email: currentUserDetails.value.email,
-    role: currentUserDetails.value.role
+    role: currentUserDetails.value.role as 'buyer' | 'farmer',
+    id: currentUserDetails.value.id,
+    phone: currentUserDetails.value.phone,
+    address: currentUserDetails.value.address,
+    avatar: currentUserDetails.value.avatar
   };
 });
 
 // ===== STATE =====
-const showToast = ref(false);
-const toastMessage = ref('');
+const showToast = ref<boolean>(false);
+const toastMessage = ref<string>('');
 
-const isModalOpen = ref(false);
-const isAuctionModalOpen = ref(false);
+const isModalOpen = ref<boolean>(false);
+const isAuctionModalOpen = ref<boolean>(false);
 const selectedAnimal = ref<Animal | null>(null);
 
-const isContactModalOpen = ref(false);
+const isContactModalOpen = ref<boolean>(false);
 const selectedAnimalForContact = ref<Animal | null>(null);
 
-const activeTab = ref<'normal' | 'auction'>('normal');
-const isSidebarExpanded = ref(true);
-const sortBy = ref('datePosted');
-const weightUnit = ref('kg');
+const activeTab = ref<TabType>('normal');
+const isSidebarExpanded = ref<boolean>(true);
+const sortBy = ref<SortOption>('datePosted');
+const weightUnit = ref<WeightUnit>('kg');
 
 const filters = ref<Filters>({
   search: '',
@@ -432,6 +460,9 @@ const filters = ref<Filters>({
 // ===== DATA =====
 const animals = ref<Animal[]>([]);
 
+// Auto-refresh interval
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
+
 // ===== PERFORMANCE HELPERS =====
 const debounce = (fn: Function, delay: number) => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -442,24 +473,29 @@ const debounce = (fn: Function, delay: number) => {
 };
 
 // ===== COMPUTED PROPERTIES =====
-const normalListings = computed(() => animals.value.filter(animal => !animal.isAuction));
-const auctionListings = computed(() => animals.value.filter(animal => animal.isAuction));
+const normalListings = computed<Animal[]>(() => 
+  animals.value.filter(animal => !animal.isAuction)
+);
 
-const uniqueTypes = computed(() => {
+const auctionListings = computed<Animal[]>(() => 
+  animals.value.filter(animal => animal.isAuction)
+);
+
+const uniqueTypes = computed<string[]>(() => {
   if (isLoadingData.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const types = new Set(currentAnimals.map(animal => animal.type));
   return Array.from(types).sort();
 });
 
-const uniqueBreeds = computed(() => {
+const uniqueBreeds = computed<string[]>(() => {
   if (isLoadingData.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const breeds = new Set(currentAnimals.map(animal => animal.breed));
   return Array.from(breeds).sort();
 });
 
-const uniqueLocations = computed(() => {
+const uniqueLocations = computed<string[]>(() => {
   if (isLoadingData.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const locations = new Set(currentAnimals.map(animal => animal.location));
@@ -505,7 +541,7 @@ const getBidActivityCategory = (animal: Animal): string => {
   return 'High Activity (10+ bids)';
 };
 
-const currentFilteredAnimals = computed(() => {
+const currentFilteredAnimals = computed<Animal[]>(() => {
   if (isLoadingData.value) return [];
   
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
@@ -654,8 +690,19 @@ const currentFilteredAnimals = computed(() => {
   });
 });
 
+// ===== SUPABASE CONNECTION HEALTH CHECK =====
+const checkSupabaseConnection = async (): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('profiles').select('id').limit(1);
+    return !error;
+  } catch (error) {
+    console.error('❌ Supabase connection check failed:', error);
+    return false;
+  }
+};
+
 // ===== OPTIMIZED FETCH FUNCTIONS =====
-const fetchCurrentUser = async () => {
+const fetchCurrentUser = async (skipCache = false): Promise<void> => {
   try {
     console.log('🔍 ===== FETCHING CURRENT USER =====');
     
@@ -674,19 +721,21 @@ const fetchCurrentUser = async () => {
       isAuthenticated.value = true;
       currentUserId.value = user.id;
 
-      // Use cached data if available and recent
-      const cachedUserData = localStorage.getItem(`user_${user.id}`);
-      if (cachedUserData) {
-        const parsed = JSON.parse(cachedUserData);
-        if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
-          console.log('✅ Using cached user data');
-          currentUserDetails.value = parsed.data;
-          userName.value = parsed.data.fullName;
-          userEmail.value = parsed.data.email;
-          userRole.value = parsed.data.role as 'buyer' | 'farmer';
-          profileCompleted.value = !!(parsed.data.firstName && parsed.data.lastName);
-          isLoadingUser.value = false;
-          return;
+      // Use cached data if available and recent (unless skipCache is true)
+      if (!skipCache) {
+        const cachedUserData = localStorage.getItem(`user_${user.id}`);
+        if (cachedUserData) {
+          const parsed = JSON.parse(cachedUserData);
+          if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
+            console.log('✅ Using cached user data');
+            currentUserDetails.value = parsed.data;
+            userName.value = parsed.data.fullName;
+            userEmail.value = parsed.data.email;
+            userRole.value = parsed.data.role as UserRole;
+            profileCompleted.value = !!(parsed.data.firstName && parsed.data.lastName);
+            isLoadingUser.value = false;
+            return;
+          }
         }
       }
 
@@ -698,7 +747,7 @@ const fetchCurrentUser = async () => {
         currentUserDetails.value = userDetails;
         userName.value = userDetails.fullName;
         userEmail.value = userDetails.email;
-        userRole.value = userDetails.role as 'buyer' | 'farmer';
+        userRole.value = userDetails.role as UserRole;
         profileCompleted.value = !!(userDetails.firstName && userDetails.lastName);
         
         // Cache user data
@@ -730,10 +779,18 @@ const fetchCurrentUser = async () => {
   }
 };
 
-// ===== OPTIMIZED FETCH LIVESTOCK LISTINGS =====
-const fetchListings = async (forceRefresh = false) => {
+// ===== OPTIMIZED FETCH LIVESTOCK LISTINGS WITH AUTO-RELOAD =====
+const fetchListings = async (forceRefresh = false): Promise<void> => {
+  // Prevent multiple simultaneous refreshes
+  if (isRefreshing.value && !forceRefresh) {
+    console.log('🔄 Refresh already in progress, skipping...');
+    return;
+  }
+
   try {
-    // Check cache first
+    isRefreshing.value = true;
+
+    // Check cache first (unless force refresh)
     const cachedListings = localStorage.getItem('marketplace_listings');
     if (cachedListings && !forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
       const parsed = JSON.parse(cachedListings);
@@ -770,20 +827,83 @@ const fetchListings = async (forceRefresh = false) => {
     animals.value = [];
   } finally {
     isLoadingData.value = false;
+    isRefreshing.value = false;
+  }
+};
+
+// ===== PAGE VISIBILITY API - SMART REFRESH =====
+const handleVisibilityChange = async (): Promise<void> => {
+  if (document.hidden) {
+    // Tab became hidden - record the time
+    lastVisibilityTime = Date.now();
+    console.log('👋 Tab hidden at:', new Date(lastVisibilityTime).toLocaleTimeString());
+  } else {
+    // Tab became visible - check if we need to refresh
+    const timeAway = Date.now() - lastVisibilityTime;
+    console.log('👀 Tab visible again. Time away:', Math.round(timeAway / 1000), 'seconds');
+
+    // Only refresh if we were away for more than threshold
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
+      console.log('🔄 Tab was away for a while, refreshing data...');
+
+      // Check Supabase connection health first
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        console.warn('⚠️ Supabase connection issue, attempting reconnect...');
+      }
+
+      // Refresh auth session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('✅ Auth session still valid');
+        // Refresh user data if needed
+        if (isAuthenticated.value) {
+          await fetchCurrentUser(true);
+        }
+      } else {
+        console.warn('⚠️ Auth session expired');
+        isAuthenticated.value = false;
+        currentUserId.value = null;
+        userRole.value = 'buyer';
+      }
+
+      // Check for updates flag
+      await checkForRefresh();
+
+      // Refresh listings
+      localStorage.removeItem('marketplace_listings'); // Clear cache
+      await fetchListings(true);
+
+      showToastNotification('Data refreshed successfully');
+    } else {
+      console.log('✅ Quick return, using cached data');
+    }
+  }
+};
+
+// ===== AUTO-RELOAD WHEN RETURNING FROM LIVESTOCK MANAGEMENT =====
+const checkForRefresh = async (): Promise<void> => {
+  const shouldRefresh = localStorage.getItem('marketplace_needs_refresh');
+  if (shouldRefresh === 'true') {
+    console.log('🔄 Detected changes from LivestockManagement, refreshing...');
+    localStorage.removeItem('marketplace_needs_refresh');
+    localStorage.removeItem('marketplace_listings'); // Clear cache
+    await fetchListings(true);
+    showToastNotification('Marketplace refreshed with latest listings');
   }
 };
 
 // ===== NAVIGATION =====
-const navigateToLivestockManagement = () => {
+const navigateToLivestockManagement = (): void => {
   router.push('/LivestockManagement');
 };
 
-const scrollToTop = () => {
+const scrollToTop = (): void => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 // ===== OPTIMIZED METHODS =====
-const toggleSidebar = () => {
+const toggleSidebar = (): void => {
   isSidebarExpanded.value = !isSidebarExpanded.value;
 };
 
@@ -791,13 +911,15 @@ const handleFiltersChanged = debounce((newFilters: Filters) => {
   filters.value = { ...newFilters };
 }, 300);
 
-const showToastNotification = (message: string) => {
+const showToastNotification = (message: string): void => {
   toastMessage.value = message;
   showToast.value = true;
   setTimeout(() => showToast.value = false, 4000);
 };
 
-const openModal = (animal: Animal) => {
+const openModal = (animal: Animal): void => {
+  console.log('📂 Opening modal for animal:', animal.id);
+  console.log('👤 Current user for modal:', currentUserForModal.value);
   selectedAnimal.value = animal;
   if (animal.isAuction) {
     isAuctionModalOpen.value = true;
@@ -806,17 +928,17 @@ const openModal = (animal: Animal) => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   isModalOpen.value = false;
   selectedAnimal.value = null;
 };
 
-const closeAuctionModal = () => {
+const closeAuctionModal = (): void => {
   isAuctionModalOpen.value = false;
   selectedAnimal.value = null;
 };
 
-const openContactModal = (animal: Animal) => {
+const openContactModal = (animal: Animal): void => {
   if (!isFarmerView.value && !isAuthenticated.value) {
     showToastNotification('Please sign in to contact farmers');
     return;
@@ -825,23 +947,24 @@ const openContactModal = (animal: Animal) => {
   isContactModalOpen.value = true;
 };
 
-const closeContactModal = () => {
+const closeContactModal = (): void => {
   isContactModalOpen.value = false;
   selectedAnimalForContact.value = null;
 };
 
-const sendMessage = (messageData: MessageData) => {
+const sendMessage = (messageData: MessageData): void => {
   showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
   closeContactModal();
 };
 
-const contactFarmerFromModal = (contactInfo: string) => {
-  showToastNotification(`Contact information has been copied to clipboard: ${contactInfo}`);
-  navigator.clipboard.writeText(contactInfo);
-  closeModal();
+const contactFarmerFromModal = (contactInfo: string): void => {
+  showToastNotification(`Contact information copied: ${contactInfo}`);
+  navigator.clipboard.writeText(contactInfo).catch(err => {
+    console.error('Failed to copy to clipboard:', err);
+  });
 };
 
-const resetFilters = () => {
+const resetFilters = (): void => {
   filters.value = {
     search: '',
     types: [],
@@ -862,25 +985,32 @@ const resetFilters = () => {
   showToastNotification('All filters have been reset');
 };
 
-const redirectToLogin = () => {
+const redirectToLogin = (): void => {
   showToastNotification('Please sign in to place bids');
 };
 
-const handlePlaceBid = (bidData: BidData) => {
-  const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
-  if (animalIndex !== -1) {
-    animals.value[animalIndex].currentBid = bidData.amount;
-    animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
-    
-    // Invalidate cache
-    localStorage.removeItem('marketplace_listings');
-    
-    showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
+const handlePlaceBid = async (bidData: BidData): Promise<void> => {
+  try {
+    const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
+    if (animalIndex !== -1) {
+      // Update local state immediately for instant feedback
+      animals.value[animalIndex].currentBid = bidData.amount;
+      animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
+      
+      showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
+      
+      // Clear cache and reload to ensure consistency
+      localStorage.removeItem('marketplace_listings');
+      await fetchListings(true);
+    }
+  } catch (error) {
+    console.error('❌ Error after placing bid:', error);
+    showToastNotification('Bid placed but failed to refresh. Please reload the page.');
   }
 };
 
 // ===== AUTH FUNCTIONS =====
-const toggleAuth = async () => {
+const toggleAuth = async (): Promise<void> => {
   if (isAuthenticated.value) {
     await supabase.auth.signOut();
     isAuthenticated.value = false;
@@ -892,6 +1022,7 @@ const toggleAuth = async () => {
     
     // Clear cache on logout
     localStorage.removeItem('marketplace_listings');
+    localStorage.removeItem('marketplace_needs_refresh');
     
     showToastNotification('Signed out successfully!');
   } else {
@@ -899,7 +1030,7 @@ const toggleAuth = async () => {
   }
 };
 
-const handleLogout = async () => {
+const handleLogout = async (): Promise<void> => {
   await supabase.auth.signOut();
   isAuthenticated.value = false;
   currentUserId.value = null;
@@ -910,6 +1041,7 @@ const handleLogout = async () => {
   
   // Clear cache on logout
   localStorage.removeItem('marketplace_listings');
+  localStorage.removeItem('marketplace_needs_refresh');
   
   showToastNotification('Logged out successfully!');
 };
@@ -923,6 +1055,13 @@ onMounted(async () => {
     fetchCurrentUser(),
     fetchListings()
   ]);
+
+  // Check if we need to refresh due to changes from LivestockManagement
+  await checkForRefresh();
+
+  // Add Page Visibility API listener
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  console.log('✅ Page visibility listener added');
 
   // Set up auth listener
   supabase.auth.onAuthStateChange(async (event, session) => {
@@ -944,8 +1083,39 @@ onMounted(async () => {
       
       // Clear cache on sign out
       localStorage.removeItem('marketplace_listings');
+      localStorage.removeItem('marketplace_needs_refresh');
     }
   });
+
+  // Set up periodic auto-refresh for auction countdown (every 30 seconds)
+  refreshInterval = setInterval(async () => {
+    // Only refresh if tab is visible
+    if (!document.hidden && activeTab.value === 'auction' && auctionListings.value.length > 0) {
+      // Check if cache is stale
+      if (Date.now() - lastFetchTime > CACHE_TIMEOUT) {
+        console.log('🔄 Auto-refreshing stale auction data...');
+        await fetchListings(true);
+      }
+    }
+  }, 30000); // 30 seconds
+
+  // Watch for route changes (returning from LivestockManagement)
+  watch(() => route.path, async (newPath, oldPath) => {
+    if (newPath === '/marketplace' && oldPath === '/LivestockManagement') {
+      await checkForRefresh();
+    }
+  });
+});
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+  
+  // Remove visibility listener
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  console.log('🧹 Cleaned up listeners');
 });
 
 // Optimized watchers
@@ -954,8 +1124,16 @@ watch(userRole, (newRole, oldRole) => {
   console.log(`   isFarmerView is now: ${isFarmerView.value}`);
 });
 
-// Watch for tab changes and preload data
+// Watch for tab changes
 watch(activeTab, (newTab) => {
   console.log(`🔄 Tab changed to: ${newTab}`);
 });
 </script>
+
+<style scoped>
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+</style>

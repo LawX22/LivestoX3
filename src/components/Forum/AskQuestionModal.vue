@@ -79,24 +79,6 @@
         <!-- Form Content -->
         <div v-else class="p-4 overflow-y-auto" style="max-height: calc(95vh - 80px);">
           <form @submit.prevent="handleSubmit" class="space-y-3">
-            <!-- User Info Banner -->
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-green-800">
-                    Posting as 
-                    <span class="font-semibold">{{ userDisplayName }}</span> 
-                    <span class="text-green-600"> ({{ authStore.userRole }})</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <!-- Question Title -->
             <div class="space-y-1">
               <label class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-700">
@@ -339,36 +321,34 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { forumService } from '../../services/forumService'
 import type { NewQuestion } from '../../services/forumService'
-import type { User } from '@/types/user'
 
-// Type definitions
+// ===== TYPES =====
 interface QuestionForm {
-  title: string;
-  description: string;
-  category: string;
-  urgency: string;
-  visibility: 'all' | 'farmers';
+  title: string
+  description: string
+  category: string
+  urgency: string
+  visibility: 'all' | 'farmers'
 }
 
-// Props and emits
+// ===== PROPS & EMITS =====
 const props = defineProps<{
-  visible: boolean;
-  currentUserProfile: User | null;
-}>();
+  visible: boolean
+}>()
 
 const emits = defineEmits<{
-  (e: 'close'): void;
-  (e: 'submit', question: any): void;
-  (e: 'showToast', message: string): void;
-}>();
+  (e: 'close'): void
+  (e: 'submit', question: any): void
+  (e: 'showToast', message: string): void
+}>()
 
-// Auth store
-const authStore = useAuthStore();
+// ===== AUTH STORE =====
+const authStore = useAuthStore()
 
-// State with better duplicate prevention
-const isSubmitting = ref(false);
-const hasSubmitted = ref(false);
-const submissionController = ref<AbortController | null>(null);
+// ===== STATE =====
+const isSubmitting = ref(false)
+const hasSubmitted = ref(false)
+const submissionController = ref<AbortController | null>(null)
 
 const question = ref<QuestionForm>({
   title: '',
@@ -376,29 +356,31 @@ const question = ref<QuestionForm>({
   category: '',
   urgency: '',
   visibility: 'all'
-});
+})
 
-// Computed property for user display name
+// ===== COMPUTED PROPERTIES =====
 const userDisplayName = computed(() => {
-  if (!props.currentUserProfile) {
-    return authStore.userDisplayName || 'User';
-  }
+  return authStore.userDisplayName || authStore.userEmail?.split('@')[0] || 'User'
+})
 
-  const firstName = props.currentUserProfile.firstName?.trim() || '';
-  const lastName = props.currentUserProfile.lastName?.trim() || '';
+const userRole = computed(() => {
+  const role = authStore.userRole || 'User'
+  // Capitalize first letter
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
+})
 
-  if (firstName && lastName) {
-    return `${firstName} ${lastName}`;
-  } else if (firstName) {
-    return firstName;
-  } else if (lastName) {
-    return lastName;
-  } else {
-    return authStore.userDisplayName || 'User';
-  }
-});
+const isFormValid = computed(() => {
+  return (
+    question.value.title.trim().length > 0 &&
+    question.value.category &&
+    question.value.urgency &&
+    question.value.visibility &&
+    question.value.title.length <= 150 &&
+    (question.value.description ? question.value.description.length : 0) <= 1000
+  )
+})
 
-// Watch for visibility changes to reset form
+// ===== WATCHERS =====
 watch(
   () => props.visible,
   (val) => {
@@ -410,74 +392,62 @@ watch(
         category: '',
         urgency: '',
         visibility: 'all'
-      };
+      }
       // Reset submission state
-      isSubmitting.value = false;
-      hasSubmitted.value = false;
+      isSubmitting.value = false
+      hasSubmitted.value = false
       
       // Cancel any pending submission
       if (submissionController.value) {
-        submissionController.value.abort();
-        submissionController.value = null;
+        submissionController.value.abort()
+        submissionController.value = null
       }
     }
   }
-);
+)
 
-// Computed properties
-const isFormValid = computed(() => {
-  return (
-    question.value.title.trim().length > 0 &&
-    question.value.category &&
-    question.value.urgency &&
-    question.value.visibility &&
-    question.value.title.length <= 150 &&
-    (question.value.description ? question.value.description.length : 0) <= 1000
-  );
-});
-
-// Methods
+// ===== METHODS =====
 const closeModal = (): void => {
   if (isSubmitting.value) {
     // Cancel ongoing submission
     if (submissionController.value) {
-      submissionController.value.abort();
-      submissionController.value = null;
+      submissionController.value.abort()
+      submissionController.value = null
     }
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
-  emits('close');
-};
+  emits('close')
+}
 
 const handleSubmit = async (): Promise<void> => {
   // Enhanced duplicate prevention
   if (!isFormValid.value || isSubmitting.value || hasSubmitted.value || !authStore.isAuthenticated) {
-    console.log('Submission blocked:', {
+    console.log('❌ Submission blocked:', {
       isFormValid: isFormValid.value,
       isSubmitting: isSubmitting.value,
       hasSubmitted: hasSubmitted.value,
       isAuthenticated: authStore.isAuthenticated
-    });
-    return;
+    })
+    return
   }
 
-  // CRITICAL: Check if userId is available
+  // Check if userId is available
   if (!authStore.userId) {
-    console.error('User ID is not available in auth store');
-    emits('showToast', 'Authentication error. Please log in again.');
-    return;
+    console.error('❌ User ID is not available in auth store')
+    emits('showToast', 'Authentication error. Please log in again.')
+    return
   }
 
   try {
-    isSubmitting.value = true;
-    hasSubmitted.value = true;
+    isSubmitting.value = true
+    hasSubmitted.value = true
     
     // Create abort controller for this submission
-    submissionController.value = new AbortController();
+    submissionController.value = new AbortController()
 
-    console.log('Starting form submission...');
-    console.log('User ID:', authStore.userId);
-    console.log('User Role:', authStore.userRole);
+    console.log('📤 Starting form submission...')
+    console.log('👤 User ID:', authStore.userId)
+    console.log('🎭 User Role:', authStore.userRole)
 
     // Create the new question data
     const newQuestionData: NewQuestion = {
@@ -486,62 +456,61 @@ const handleSubmit = async (): Promise<void> => {
       category: question.value.category,
       urgency: question.value.urgency,
       visibility: question.value.visibility
-    };
+    }
 
     // Submit to Supabase via forumService
     const createdQuestion = await forumService.createQuestion(
       newQuestionData,
       authStore.userId,
-      authStore.userRole
-    );
+      authStore.userRole || 'user'
+    )
 
-    console.log('Question created successfully:', createdQuestion.id);
+    console.log('✅ Question created successfully:', createdQuestion.id)
 
     // Emit success to parent - parent will handle adding to list
-    emits('submit', createdQuestion);
-    emits('showToast', 'Your question has been posted successfully!');
+    emits('submit', createdQuestion)
+    emits('showToast', 'Your question has been posted successfully!')
     
     // Close modal after small delay to show success
     setTimeout(() => {
-      closeModal();
-    }, 100);
+      closeModal()
+    }, 100)
 
   } catch (error: any) {
-    hasSubmitted.value = false; // Allow retry on error
+    hasSubmitted.value = false // Allow retry on error
     
     if (error.name === 'AbortError') {
-      console.log('Submission was cancelled');
-      return;
+      console.log('⚠️ Submission was cancelled')
+      return
     }
     
-    console.error('Failed to create question:', error);
-    emits('showToast', 'Failed to post question. Please try again.');
+    console.error('❌ Failed to create question:', error)
+    emits('showToast', 'Failed to post question. Please try again.')
   } finally {
-    isSubmitting.value = false;
-    submissionController.value = null;
+    isSubmitting.value = false
+    submissionController.value = null
   }
-};
+}
 
-// Cleanup on unmount
-onUnmounted(() => {
-  if (submissionController.value) {
-    submissionController.value.abort();
-  }
-});
-
-// Prevent form resubmission on Enter key
+// ===== LIFECYCLE =====
 onMounted(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && props.visible) {
-      e.preventDefault();
-      handleSubmit();
+      e.preventDefault()
+      handleSubmit()
     }
-  };
+  }
   
-  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown)
   
   return () => {
-    window.removeEventListener('keydown', handleKeyDown);
-  };
-});
+    window.removeEventListener('keydown', handleKeyDown)
+  }
+})
+
+onUnmounted(() => {
+  if (submissionController.value) {
+    submissionController.value.abort()
+  }
+})
 </script>

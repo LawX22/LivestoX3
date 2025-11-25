@@ -1,6 +1,7 @@
 // services/forumService.ts
 import { supabase } from '../supabase'
 
+// ===== TYPES =====
 export interface ForumAnswer {
   id: number
   text: string
@@ -50,11 +51,83 @@ export interface NewAnswer {
   text: string
 }
 
+// ===== CACHE MANAGEMENT =====
+const USER_CACHE_KEY = 'forum_user_cache'
+const USER_CACHE_TIMEOUT = 10 * 60 * 1000 // 10 minutes
+
+interface UserCache {
+  [userId: string]: {
+    fullName: string
+    role: string
+    timestamp: number
+  }
+}
+
 class ForumService {
-  // Helper method to get user details from profiles table
-  private async getUserDetails(userId: string): Promise<{ fullName: string, role: string } | null> {
+  private userCache: UserCache = {}
+
+  constructor() {
+    // Load cache from localStorage on initialization
+    this.loadUserCache()
+  }
+
+  // ===== CACHE METHODS =====
+  private loadUserCache(): void {
     try {
-      console.log('Fetching user details for user_id:', userId)
+      const cached = localStorage.getItem(USER_CACHE_KEY)
+      if (cached) {
+        this.userCache = JSON.parse(cached)
+        // Clean expired entries
+        const now = Date.now()
+        Object.keys(this.userCache).forEach(userId => {
+          if (now - this.userCache[userId].timestamp > USER_CACHE_TIMEOUT) {
+            delete this.userCache[userId]
+          }
+        })
+        this.saveUserCache()
+      }
+    } catch (error) {
+      console.warn('Failed to load user cache:', error)
+      this.userCache = {}
+    }
+  }
+
+  private saveUserCache(): void {
+    try {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(this.userCache))
+    } catch (error) {
+      console.warn('Failed to save user cache:', error)
+    }
+  }
+
+  private getCachedUser(userId: string): { fullName: string; role: string } | null {
+    const cached = this.userCache[userId]
+    if (cached && Date.now() - cached.timestamp < USER_CACHE_TIMEOUT) {
+      return { fullName: cached.fullName, role: cached.role }
+    }
+    return null
+  }
+
+  private setCachedUser(userId: string, fullName: string, role: string): void {
+    this.userCache[userId] = {
+      fullName,
+      role,
+      timestamp: Date.now()
+    }
+    this.saveUserCache()
+  }
+
+  // ===== USER DETAILS =====
+  private async getUserDetails(userId: string): Promise<{ fullName: string; role: string } | null> {
+    try {
+      // Check cache first
+      const cached = this.getCachedUser(userId)
+      if (cached) {
+        console.log('✅ Using cached user details for:', userId)
+        return cached
+      }
+
+      console.log('🔍 Fetching user details for:', userId)
       
       // Get from profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -64,8 +137,6 @@ class ForumService {
         .single()
       
       if (!profileError && profileData) {
-        console.log('Found user in profiles table:', profileData)
-        
         const firstName = (profileData.first_name || '').trim()
         const lastName = (profileData.last_name || '').trim()
         const username = (profileData.username || '').trim()
@@ -85,22 +156,16 @@ class ForumService {
           fullName = 'Unknown User'
         }
         
-        console.log('Processed user details:', { fullName, role })
+        // Cache the result
+        this.setCachedUser(userId, fullName, role)
         
-        return {
-          fullName: fullName,
-          role: role
-        }
+        return { fullName, role }
       }
       
       // Fallback to auth user
-      console.log('User not found in profiles, checking auth metadata')
-      
       const { data: { user: authUser } } = await supabase.auth.getUser()
       
       if (authUser && authUser.id === userId) {
-        console.log('Found user in auth:', authUser.email)
-        
         const email = authUser.email || ''
         const emailPrefix = email.split('@')[0] || 'Unknown User'
         
@@ -121,23 +186,20 @@ class ForumService {
           fullName = emailPrefix
         }
         
-        console.log('Processed auth user details:', { fullName, role })
+        // Cache the result
+        this.setCachedUser(userId, fullName, role)
         
-        return {
-          fullName: fullName,
-          role: role
-        }
+        return { fullName, role }
       }
       
-      console.log('No user data found for user_id:', userId)
       return null
     } catch (error) {
-      console.error('Exception while fetching user details:', error)
+      console.error('❌ Error fetching user details:', error)
       return null
     }
   }
 
-  // Helper method to get vote counts for a question
+  // ===== VOTE OPERATIONS =====
   private async getVoteCounts(questionId: number): Promise<{ upvotes: number; downvotes: number }> {
     try {
       const { data: votes, error } = await supabase
@@ -146,7 +208,7 @@ class ForumService {
         .eq('question_id', questionId)
 
       if (error) {
-        console.error('Error fetching vote counts:', error)
+        console.error('❌ Error fetching vote counts:', error)
         return { upvotes: 0, downvotes: 0 }
       }
 
@@ -155,74 +217,61 @@ class ForumService {
 
       return { upvotes, downvotes }
     } catch (error) {
-      console.error('Exception while getting vote counts:', error)
+      console.error('❌ Error getting vote counts:', error)
       return { upvotes: 0, downvotes: 0 }
     }
   }
 
-  // Helper method to sync vote counts in questions table
   private async syncQuestionVoteCounts(questionId: number): Promise<void> {
     try {
       const voteCounts = await this.getVoteCounts(questionId)
       
-      const { error } = await supabase
+      await supabase
         .from('forum_questions')
         .update({
           upvotes: voteCounts.upvotes,
           downvotes: voteCounts.downvotes
         })
         .eq('id', questionId)
-
-      if (error) {
-        console.error('Error syncing vote counts:', error)
-      }
     } catch (error) {
-      console.error('Exception while syncing vote counts:', error)
+      console.error('❌ Error syncing vote counts:', error)
     }
   }
 
-  // Helper method to enrich questions and answers with user names
+  // ===== DATA ENRICHMENT =====
   private async enrichWithUserNames(questions: any[]): Promise<ForumQuestion[]> {
     try {
-      console.log('Starting to enrich questions with user names, count:', questions.length)
+      console.log(`🔄 Enriching ${questions.length} questions with user names...`)
       
-      // Get all unique user IDs from questions and answers
+      // Get all unique user IDs
       const userIds = new Set<string>()
       
       questions.forEach(question => {
-        if (question.user_id) {
-          userIds.add(question.user_id)
-        }
+        if (question.user_id) userIds.add(question.user_id)
         question.forum_answers?.forEach((answer: any) => {
-          if (answer.user_id) {
-            userIds.add(answer.user_id)
-          }
+          if (answer.user_id) userIds.add(answer.user_id)
         })
       })
 
-      console.log('Unique user IDs found:', Array.from(userIds))
-
       if (userIds.size === 0) {
-        console.log('No user IDs found, returning questions without enrichment')
-        return questions.map(question => this.mapQuestionWithFallbackNames(question))
+        return questions.map(q => this.mapQuestionWithFallbackNames(q))
       }
 
-      // Fetch all user details in one query from profiles
+      console.log(`🔍 Looking up ${userIds.size} unique users...`)
+
+      // Batch fetch all profiles
       const { data: profilesData, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, username, role')
         .in('id', Array.from(userIds))
 
       if (error) {
-        console.error('Error fetching profiles data:', error)
+        console.error('❌ Error fetching profiles:', error)
       }
 
-      console.log('Fetched profiles data from database:', profilesData)
-
-      // Create a comprehensive lookup map
-      const userLookup: { [userId: string]: { fullName: string, role: string } } = {}
+      // Build lookup map
+      const userLookup: { [userId: string]: { fullName: string; role: string } } = {}
       
-      // Process users from profiles table
       profilesData?.forEach(profile => {
         const firstName = (profile.first_name || '').trim()
         const lastName = (profile.last_name || '').trim()
@@ -243,43 +292,29 @@ class ForumService {
           fullName = 'Unknown User'
         }
         
-        userLookup[profile.id] = {
-          fullName: fullName,
-          role: role
-        }
+        userLookup[profile.id] = { fullName, role }
         
-        console.log(`User lookup entry for ${profile.id}:`, userLookup[profile.id])
+        // Update cache
+        this.setCachedUser(profile.id, fullName, role)
       })
 
-      // For any missing users, try to get from auth or add fallback
+      // Fill in missing users with fallbacks
       for (const userId of Array.from(userIds)) {
         if (!userLookup[userId]) {
           const userDetails = await this.getUserDetails(userId)
-          
-          if (userDetails) {
-            userLookup[userId] = userDetails
-          } else {
-            userLookup[userId] = {
-              fullName: 'Unknown User',
-              role: 'user'
-            }
-          }
-          
-          console.log(`Fallback entry created for ${userId}:`, userLookup[userId])
+          userLookup[userId] = userDetails || { fullName: 'Unknown User', role: 'user' }
         }
       }
 
-      console.log('Complete user lookup map:', userLookup)
-
-      // Get real-time vote counts for all questions
+      // Get vote data for all questions
       const questionIds = questions.map(q => q.id)
       const { data: allVotes } = await supabase
         .from('forum_votes')
         .select('question_id, user_id, vote_type')
         .in('question_id', questionIds)
 
-      // Build vote counts and user votes for each question
-      const questionVoteCounts: { [questionId: number]: { upvotes: number, downvotes: number } } = {}
+      // Build vote counts and user votes
+      const questionVoteCounts: { [questionId: number]: { upvotes: number; downvotes: number } } = {}
       const questionUserVotes: { [questionId: number]: { [userId: string]: 'up' | 'down' } } = {}
 
       questionIds.forEach(qId => {
@@ -301,13 +336,9 @@ class ForumService {
         })
       }
 
-      // Enrich questions and answers with proper names
-      return questions.map(question => {
+      // Map enriched questions
+      const enrichedQuestions = questions.map(question => {
         const questionUser = userLookup[question.user_id]
-        
-        console.log(`Question ${question.id} user: ${question.user_id}`)
-        console.log(`Question user details:`, questionUser)
-        
         const voteCounts = questionVoteCounts[question.id] || { upvotes: 0, downvotes: 0 }
         
         return {
@@ -329,9 +360,6 @@ class ForumService {
           answers: question.forum_answers?.map((answer: any) => {
             const answerUser = userLookup[answer.user_id]
             
-            console.log(`Answer ${answer.id} user: ${answer.user_id}`)
-            console.log(`Answer user details:`, answerUser)
-            
             return {
               id: answer.id,
               text: answer.text,
@@ -343,13 +371,15 @@ class ForumService {
           }) || []
         }
       })
+
+      console.log(`✅ Successfully enriched ${enrichedQuestions.length} questions`)
+      return enrichedQuestions
     } catch (error) {
-      console.error('Error enriching with user names:', error)
-      return questions.map(question => this.mapQuestionWithFallbackNames(question))
+      console.error('❌ Error enriching with user names:', error)
+      return questions.map(q => this.mapQuestionWithFallbackNames(q))
     }
   }
 
-  // Helper method to map questions with fallback names when database lookup fails
   private mapQuestionWithFallbackNames(question: any): ForumQuestion {
     return {
       id: question.id,
@@ -378,10 +408,14 @@ class ForumService {
     }
   }
 
-  // Get all questions with answers and votes (with user names)
+  // ===== PUBLIC API METHODS =====
+
+  /**
+   * Get all questions with answers and votes
+   */
   async getQuestions(userId?: string): Promise<ForumQuestion[]> {
     try {
-      console.log('Fetching questions for user:', userId)
+      console.log('📊 Fetching all questions...')
       
       const { data: questionsData, error: questionsError } = await supabase
         .from('forum_questions')
@@ -398,13 +432,11 @@ class ForumService {
         .order('created_at', { ascending: false })
 
       if (questionsError) {
-        console.error('Error fetching questions:', questionsError)
-        console.error('Error details:', JSON.stringify(questionsError, null, 2))
+        console.error('❌ Error fetching questions:', questionsError)
         throw questionsError
       }
 
-      console.log('Raw questions data:', questionsData)
-
+      // Get user votes if userId provided
       let userVotes: { [questionId: number]: 'up' | 'down' } = {}
 
       if (userId) {
@@ -421,326 +453,29 @@ class ForumService {
         }
       }
 
+      // Add user votes to questions
       const questionsWithVotes = questionsData?.map(question => ({
         ...question,
         userVote: userVotes[question.id] || null
       })) || []
 
-      console.log('Questions with votes before enrichment:', questionsWithVotes.length)
-
+      // Enrich with user names
       const enrichedQuestions = await this.enrichWithUserNames(questionsWithVotes)
 
-      console.log('Final enriched questions:', enrichedQuestions.length)
+      console.log(`✅ Fetched ${enrichedQuestions.length} questions`)
       return enrichedQuestions
     } catch (error) {
-      console.error('Error fetching questions:', error)
+      console.error('❌ Error in getQuestions:', error)
       throw error
     }
   }
 
-  // Create a new question (with proper user names)
-  async createQuestion(question: NewQuestion, userId: string, userRole: string): Promise<ForumQuestion> {
-    try {
-      console.log('Creating question for user:', userId, 'role:', userRole)
-      
-      const { data, error } = await supabase
-        .from('forum_questions')
-        .insert({
-          title: question.title,
-          description: question.description,
-          user_id: userId,
-          user_role: userRole,
-          category: question.category,
-          urgency: question.urgency,
-          visibility: question.visibility || 'all',
-          views: 0,
-          upvotes: 0,
-          downvotes: 0
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating question:', error)
-        throw error
-      }
-
-      console.log('Question created:', data)
-
-      const userDetails = await this.getUserDetails(userId)
-
-      return {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        userId: data.user_id,
-        userRole: userDetails?.role || userRole,
-        userFullName: userDetails?.fullName || 'Unknown User',
-        createdAt: data.created_at,
-        category: data.category,
-        urgency: data.urgency,
-        visibility: data.visibility,
-        views: data.views || 0,
-        upvotes: data.upvotes || 0,
-        downvotes: data.downvotes || 0,
-        answers: [],
-        userVote: null,
-        userVotes: {}
-      }
-    } catch (error) {
-      console.error('Error creating question:', error)
-      throw error
-    }
-  }
-
-  // Update an existing question
-  async updateQuestion(questionId: number, updates: UpdateQuestion): Promise<ForumQuestion> {
-    try {
-      console.log('Updating question:', questionId, 'with updates:', updates)
-      
-      const { data, error } = await supabase
-        .from('forum_questions')
-        .update({
-          title: updates.title,
-          description: updates.description,
-          category: updates.category,
-          urgency: updates.urgency,
-          visibility: updates.visibility
-        })
-        .eq('id', questionId)
-        .select(`
-          *,
-          forum_answers (
-            id,
-            text,
-            user_id,
-            user_role,
-            created_at
-          )
-        `)
-        .single()
-
-      if (error) {
-        console.error('Error updating question:', error)
-        throw error
-      }
-
-      console.log('Question updated:', data)
-
-      // Enrich with user names
-      const enriched = await this.enrichWithUserNames([data])
-      return enriched[0]
-    } catch (error) {
-      console.error('Error updating question:', error)
-      throw error
-    }
-  }
-
-  // Delete a question (cascades to answers and votes)
-  async deleteQuestion(questionId: number): Promise<void> {
-    try {
-      console.log('Deleting question:', questionId)
-      
-      // First delete all answers
-      const { error: answersError } = await supabase
-        .from('forum_answers')
-        .delete()
-        .eq('question_id', questionId)
-
-      if (answersError) {
-        console.error('Error deleting answers:', answersError)
-        throw answersError
-      }
-
-      // Then delete all votes
-      const { error: votesError } = await supabase
-        .from('forum_votes')
-        .delete()
-        .eq('question_id', questionId)
-
-      if (votesError) {
-        console.error('Error deleting votes:', votesError)
-        throw votesError
-      }
-
-      // Finally delete the question
-      const { error: questionError } = await supabase
-        .from('forum_questions')
-        .delete()
-        .eq('id', questionId)
-
-      if (questionError) {
-        console.error('Error deleting question:', questionError)
-        throw questionError
-      }
-
-      console.log('Question deleted successfully')
-    } catch (error) {
-      console.error('Error deleting question:', error)
-      throw error
-    }
-  }
-
-  // Add an answer to a question (with proper user names)
-  async addAnswer(answer: NewAnswer, userId: string, userRole: string): Promise<ForumAnswer> {
-    try {
-      console.log('Adding answer for user:', userId, 'role:', userRole)
-      
-      const { data, error } = await supabase
-        .from('forum_answers')
-        .insert({
-          question_id: answer.questionId,
-          text: answer.text,
-          user_id: userId,
-          user_role: userRole
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error adding answer:', error)
-        throw error
-      }
-
-      console.log('Answer created:', data)
-
-      const userDetails = await this.getUserDetails(userId)
-
-      return {
-        id: data.id,
-        text: data.text,
-        userId: data.user_id,
-        userRole: userDetails?.role || userRole,
-        userFullName: userDetails?.fullName || 'Unknown User',
-        createdAt: data.created_at
-      }
-    } catch (error) {
-      console.error('Error adding answer:', error)
-      throw error
-    }
-  }
-
-  // Vote on a question
-  async voteQuestion(questionId: number, userId: string, voteType: 'up' | 'down'): Promise<{ upvotes: number; downvotes: number; userVote: 'up' | 'down' | null }> {
-    try {
-      console.log(`User ${userId} voting ${voteType} on question ${questionId}`)
-
-      const { data: existingVote, error: voteCheckError } = await supabase
-        .from('forum_votes')
-        .select('vote_type')
-        .eq('question_id', questionId)
-        .eq('user_id', userId)
-        .single()
-
-      if (voteCheckError && voteCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing vote:', voteCheckError)
-        throw voteCheckError
-      }
-
-      let newUserVote: 'up' | 'down' | null = null
-
-      if (existingVote) {
-        console.log('Existing vote found:', existingVote.vote_type)
-        
-        if (existingVote.vote_type === voteType) {
-          console.log('Removing existing vote')
-          
-          const { error: deleteError } = await supabase
-            .from('forum_votes')
-            .delete()
-            .eq('question_id', questionId)
-            .eq('user_id', userId)
-
-          if (deleteError) {
-            console.error('Error deleting vote:', deleteError)
-            throw deleteError
-          }
-
-          newUserVote = null
-        } else {
-          console.log(`Changing vote from ${existingVote.vote_type} to ${voteType}`)
-          
-          const { error: updateError } = await supabase
-            .from('forum_votes')
-            .update({ vote_type: voteType })
-            .eq('question_id', questionId)
-            .eq('user_id', userId)
-
-          if (updateError) {
-            console.error('Error updating vote:', updateError)
-            throw updateError
-          }
-
-          newUserVote = voteType
-        }
-      } else {
-        console.log('Adding new vote')
-        
-        const { error: insertError } = await supabase
-          .from('forum_votes')
-          .insert({
-            question_id: questionId,
-            user_id: userId,
-            vote_type: voteType
-          })
-
-        if (insertError) {
-          console.error('Error inserting vote:', insertError)
-          throw insertError
-        }
-
-        newUserVote = voteType
-      }
-
-      const voteCounts = await this.getVoteCounts(questionId)
-      console.log('Updated vote counts:', voteCounts)
-
-      await this.syncQuestionVoteCounts(questionId)
-
-      return {
-        upvotes: voteCounts.upvotes,
-        downvotes: voteCounts.downvotes,
-        userVote: newUserVote
-      }
-    } catch (error) {
-      console.error('Error voting on question:', error)
-      throw error
-    }
-  }
-
-  // Increment view count
-  async incrementViews(questionId: number): Promise<number> {
-    try {
-      const { data: currentData } = await supabase
-        .from('forum_questions')
-        .select('views')
-        .eq('id', questionId)
-        .single()
-
-      const currentViews = currentData?.views || 0
-      const newViews = currentViews + 1
-
-      const { error } = await supabase
-        .from('forum_questions')
-        .update({ views: newViews })
-        .eq('id', questionId)
-      
-      if (error) {
-        console.error('Error incrementing views:', error)
-        return currentViews
-      }
-      
-      return newViews
-    } catch (error) {
-      console.error('Error incrementing views:', error)
-      return 0
-    }
-  }
-
-  // Get a single question by ID
+  /**
+   * Get a single question by ID
+   */
   async getQuestionById(questionId: number, userId?: string): Promise<ForumQuestion | null> {
     try {
-      console.log('Fetching question by ID:', questionId, 'for user:', userId)
+      console.log('📖 Fetching question:', questionId)
       
       const { data: questionData, error: questionError } = await supabase
         .from('forum_questions')
@@ -766,8 +501,7 @@ class ForumService {
       
       if (!questionData) return null
 
-      console.log('Question data found:', questionData)
-
+      // Get user vote if userId provided
       let userVote: 'up' | 'down' | null = null
 
       if (userId) {
@@ -788,15 +522,281 @@ class ForumService {
 
       const enrichedQuestions = await this.enrichWithUserNames([questionWithVotes])
       
-      const result = enrichedQuestions[0] || null
-      console.log('Final enriched question:', result)
-      
-      return result
+      console.log('✅ Question fetched successfully')
+      return enrichedQuestions[0] || null
     } catch (error) {
-      console.error('Error fetching question by ID:', error)
+      console.error('❌ Error fetching question:', error)
       throw error
+    }
+  }
+
+  /**
+   * Create a new question
+   */
+  async createQuestion(question: NewQuestion, userId: string, userRole: string): Promise<ForumQuestion> {
+    try {
+      console.log('➕ Creating question...')
+      
+      const { data, error } = await supabase
+        .from('forum_questions')
+        .insert({
+          title: question.title,
+          description: question.description,
+          user_id: userId,
+          user_role: userRole,
+          category: question.category,
+          urgency: question.urgency,
+          visibility: question.visibility || 'all',
+          views: 0,
+          upvotes: 0,
+          downvotes: 0
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error creating question:', error)
+        throw error
+      }
+
+      const userDetails = await this.getUserDetails(userId)
+
+      console.log('✅ Question created successfully')
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        userId: data.user_id,
+        userRole: userDetails?.role || userRole,
+        userFullName: userDetails?.fullName || 'Unknown User',
+        createdAt: data.created_at,
+        category: data.category,
+        urgency: data.urgency,
+        visibility: data.visibility,
+        views: data.views || 0,
+        upvotes: data.upvotes || 0,
+        downvotes: data.downvotes || 0,
+        answers: [],
+        userVote: null,
+        userVotes: {}
+      }
+    } catch (error) {
+      console.error('❌ Error in createQuestion:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update an existing question
+   */
+  async updateQuestion(questionId: number, updates: UpdateQuestion): Promise<ForumQuestion> {
+    try {
+      console.log('✏️ Updating question:', questionId)
+      
+      const { data, error } = await supabase
+        .from('forum_questions')
+        .update({
+          title: updates.title,
+          description: updates.description,
+          category: updates.category,
+          urgency: updates.urgency,
+          visibility: updates.visibility
+        })
+        .eq('id', questionId)
+        .select(`
+          *,
+          forum_answers (
+            id,
+            text,
+            user_id,
+            user_role,
+            created_at
+          )
+        `)
+        .single()
+
+      if (error) {
+        console.error('❌ Error updating question:', error)
+        throw error
+      }
+
+      const enriched = await this.enrichWithUserNames([data])
+      console.log('✅ Question updated successfully')
+      return enriched[0]
+    } catch (error) {
+      console.error('❌ Error in updateQuestion:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete a question
+   */
+  async deleteQuestion(questionId: number): Promise<void> {
+    try {
+      console.log('🗑️ Deleting question:', questionId)
+      
+      // Delete answers
+      await supabase
+        .from('forum_answers')
+        .delete()
+        .eq('question_id', questionId)
+
+      // Delete votes
+      await supabase
+        .from('forum_votes')
+        .delete()
+        .eq('question_id', questionId)
+
+      // Delete question
+      const { error } = await supabase
+        .from('forum_questions')
+        .delete()
+        .eq('id', questionId)
+
+      if (error) throw error
+
+      console.log('✅ Question deleted successfully')
+    } catch (error) {
+      console.error('❌ Error deleting question:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Add an answer to a question
+   */
+  async addAnswer(answer: NewAnswer, userId: string, userRole: string): Promise<ForumAnswer> {
+    try {
+      console.log('💬 Adding answer...')
+      
+      const { data, error } = await supabase
+        .from('forum_answers')
+        .insert({
+          question_id: answer.questionId,
+          text: answer.text,
+          user_id: userId,
+          user_role: userRole
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error adding answer:', error)
+        throw error
+      }
+
+      const userDetails = await this.getUserDetails(userId)
+
+      console.log('✅ Answer added successfully')
+      return {
+        id: data.id,
+        text: data.text,
+        userId: data.user_id,
+        userRole: userDetails?.role || userRole,
+        userFullName: userDetails?.fullName || 'Unknown User',
+        createdAt: data.created_at
+      }
+    } catch (error) {
+      console.error('❌ Error in addAnswer:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Vote on a question
+   */
+  async voteQuestion(questionId: number, userId: string, voteType: 'up' | 'down'): Promise<{ upvotes: number; downvotes: number; userVote: 'up' | 'down' | null }> {
+    try {
+      console.log(`👍 User ${userId} voting ${voteType} on question ${questionId}`)
+
+      const { data: existingVote, error: voteCheckError } = await supabase
+        .from('forum_votes')
+        .select('vote_type')
+        .eq('question_id', questionId)
+        .eq('user_id', userId)
+        .single()
+
+      if (voteCheckError && voteCheckError.code !== 'PGRST116') {
+        throw voteCheckError
+      }
+
+      let newUserVote: 'up' | 'down' | null = null
+
+      if (existingVote) {
+        if (existingVote.vote_type === voteType) {
+          // Remove vote
+          await supabase
+            .from('forum_votes')
+            .delete()
+            .eq('question_id', questionId)
+            .eq('user_id', userId)
+
+          newUserVote = null
+        } else {
+          // Change vote
+          await supabase
+            .from('forum_votes')
+            .update({ vote_type: voteType })
+            .eq('question_id', questionId)
+            .eq('user_id', userId)
+
+          newUserVote = voteType
+        }
+      } else {
+        // Add new vote
+        await supabase
+          .from('forum_votes')
+          .insert({
+            question_id: questionId,
+            user_id: userId,
+            vote_type: voteType
+          })
+
+        newUserVote = voteType
+      }
+
+      const voteCounts = await this.getVoteCounts(questionId)
+      await this.syncQuestionVoteCounts(questionId)
+
+      console.log('✅ Vote processed successfully')
+      return {
+        upvotes: voteCounts.upvotes,
+        downvotes: voteCounts.downvotes,
+        userVote: newUserVote
+      }
+    } catch (error) {
+      console.error('❌ Error voting on question:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Increment view count
+   */
+  async incrementViews(questionId: number): Promise<number> {
+    try {
+      const { data: currentData } = await supabase
+        .from('forum_questions')
+        .select('views')
+        .eq('id', questionId)
+        .single()
+
+      const currentViews = currentData?.views || 0
+      const newViews = currentViews + 1
+
+      await supabase
+        .from('forum_questions')
+        .update({ views: newViews })
+        .eq('id', questionId)
+      
+      return newViews
+    } catch (error) {
+      console.error('❌ Error incrementing views:', error)
+      return 0
     }
   }
 }
 
+// Export singleton instance
 export const forumService = new ForumService()

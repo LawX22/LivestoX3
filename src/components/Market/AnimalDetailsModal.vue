@@ -1,4 +1,4 @@
-<!-- AnimalDetailsModal.vue -->
+<!-- AnimalDetailsModal.vue - FIXED VERSION -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -71,8 +71,8 @@
               </div>
             </div>
 
-            <!-- Status and Actions -->
-            <div class="flex items-center gap-2">
+            <!-- Status and Date -->
+            <div class="flex items-center gap-2 flex-wrap">
               <span :class="`px-2 py-1 text-xs font-bold rounded-full shadow backdrop-blur-md border cursor-default ${getStatusClass(animal.status)}`">
                 {{ animal.status }}
               </span>
@@ -80,7 +80,7 @@
                 <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                {{ getDaysListed(animal.datePosted) }} days ago
+                {{ formatDate(animal.datePosted) }}
               </div>
             </div>
           </div>
@@ -140,6 +140,7 @@
                   <div class="absolute top-4 left-4 z-20">
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-full shadow-lg border border-green-500/20 cursor-default">
                       <span class="text-lg font-bold">₱{{ animal.price.toLocaleString() }}</span>
+                      <span class="text-xs ml-1">{{ animal.priceUnit || 'per head' }}</span>
                     </div>
                   </div>
 
@@ -170,7 +171,7 @@
                 </div>
               </div>
 
-              <!-- Combined Animal Information Card with Health Status -->
+              <!-- Combined Animal Information Card -->
               <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 cursor-default">
                   <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -217,7 +218,7 @@
                         </svg>
                         <span class="text-xs font-bold text-purple-700 uppercase tracking-wide">Weight:</span>
                       </div>
-                      <span class="text-sm font-bold text-purple-800 text-center">{{ animal.weight }} kg</span>
+                      <span class="text-sm font-bold text-purple-800 text-center">{{ animal.weight }} {{ animal.weightUnit || 'kg' }}</span>
                     </div>
 
                     <!-- Age -->
@@ -255,26 +256,24 @@
                   </div>
 
                   <!-- Health Status Section -->
-                  <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200/60">
+                  <div v-if="animal.healthStatus && animal.healthStatus.length > 0" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200/60">
                     <h4 class="text-md font-bold text-gray-800 mb-3 flex items-center gap-2 cursor-default">
                       <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                       Health Status
                     </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div class="flex items-center gap-3 bg-white/60 rounded-lg p-3 border border-green-200/60 cursor-default">
-                        <div class="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                        <span class="text-green-800 font-semibold text-sm">Healthy & Vaccinated</span>
-                      </div>
-                      <div class="flex items-center gap-3 bg-white/60 rounded-lg p-3 border border-blue-200/60 cursor-default">
-                        <div class="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        <span class="text-blue-800 font-semibold text-sm">Vet Certified</span>
-                      </div>
-                      <div class="flex items-center gap-3 bg-white/60 rounded-lg p-3 border border-purple-200/60 cursor-default">
-                        <div class="w-3 h-3 bg-purple-500 rounded-full flex-shrink-0"></div>
-                        <span class="text-purple-800 font-semibold text-sm">Dewormed</span>
-                      </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span 
+                        v-for="(status, index) in animal.healthStatus" 
+                        :key="index"
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200/60 cursor-default"
+                      >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {{ status }}
+                      </span>
                     </div>
                   </div>
 
@@ -294,8 +293,8 @@
               <!-- Delivery Options Card -->
               <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 cursor-default">
-                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                   </div>
@@ -305,10 +304,37 @@
                   <span 
                     v-for="option in animal.deliveryOptions" 
                     :key="option"
-                    class="px-3 py-2 bg-green-100 text-green-800 text-sm rounded-lg capitalize font-medium border border-green-200/60 hover:bg-green-200 transition-colors cursor-default"
+                    class="px-3 py-2 bg-orange-100 text-orange-800 text-sm rounded-lg font-medium border border-orange-200/60 hover:bg-orange-200 transition-colors cursor-default"
                   >
-                    {{ option }}
+                    {{ formatDeliveryOption(option) }}
                   </span>
+                </div>
+              </div>
+
+              <!-- Payment Methods Card - ALWAYS DISPLAY -->
+              <div class="bg-white/95 backdrop-blur-sm rounded-xl p-5 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 cursor-default">
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  </div>
+                  Accepted Payment Methods
+                </h3>
+                <div v-if="animal.paymentMethods && animal.paymentMethods.length > 0" class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="method in animal.paymentMethods" 
+                    :key="method"
+                    class="inline-flex items-center px-3 py-2 bg-purple-100 text-purple-800 text-sm rounded-lg font-medium border border-purple-200/60 hover:bg-purple-200 transition-colors cursor-default"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    {{ formatPaymentMethod(method) }}
+                  </span>
+                </div>
+                <div v-else class="bg-gray-50 rounded-lg p-4 border border-gray-200/60">
+                  <p class="text-sm text-gray-600 text-center cursor-default">No payment methods specified. Please contact the farmer for payment details.</p>
                 </div>
               </div>
             </div>
@@ -367,19 +393,25 @@
 
                 <!-- Total Price Display -->
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-200/60 mb-4">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm font-semibold text-emerald-700 cursor-default">Total Price</span>
-                    <span class="text-xl font-bold text-emerald-800 cursor-default">₱{{ (animal.price * selectedQuantity).toLocaleString() }}</span>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-emerald-700 cursor-default">Unit Price</span>
+                    <span class="text-md font-bold text-emerald-800 cursor-default">₱{{ animal.price.toLocaleString() }} {{ animal.priceUnit || 'per head' }}</span>
                   </div>
-                  <div class="text-xs text-emerald-600 mt-1 cursor-default">
-                    ₱{{ animal.price.toLocaleString() }} × {{ selectedQuantity }} {{ selectedQuantity > 1 ? 'units' : 'unit' }}
+                  <div class="border-t border-emerald-200 pt-2 mt-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-semibold text-emerald-700 cursor-default">Total Price</span>
+                      <span class="text-xl font-bold text-emerald-800 cursor-default">₱{{ (animal.price * selectedQuantity).toLocaleString() }}</span>
+                    </div>
+                    <div class="text-xs text-emerald-600 mt-1 text-right cursor-default">
+                      {{ selectedQuantity }} {{ selectedQuantity > 1 ? 'units' : 'unit' }}
+                    </div>
                   </div>
                 </div>
 
                 <!-- Add to Cart Button -->
                 <button 
                   @click="addToCart"
-                  :disabled="animal.status === 'Out of Stock' || isAddingToCart"
+                  :disabled="animal.status === 'Out of Stock' || isAddingToCart || !currentUser"
                   class="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow hover:shadow-lg transform hover:-translate-y-0.5 border border-emerald-500/20 disabled:cursor-not-allowed disabled:transform-none mb-3 cursor-pointer"
                 >
                   <svg v-if="!isAddingToCart" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,7 +421,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {{ isAddingToCart ? 'Adding...' : 'Add to Cart' }}
+                  {{ !currentUser ? 'Sign in to purchase' : isAddingToCart ? 'Adding...' : 'Add to Cart' }}
                 </button>
 
                 <!-- Stock Status Warning -->
@@ -415,8 +447,8 @@
               <!-- Farmer Information Card -->
               <div class="bg-white/95 backdrop-blur-sm rounded-xl p-4 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 cursor-default">
-                  <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -426,16 +458,16 @@
                 <!-- Clickable Farmer Profile -->
                 <button 
                   @click="goToUserProfile(animal.farmer.id)"
-                  class="w-full text-left group mb-4 p-3 rounded-lg hover:bg-gradient-to-br hover:from-orange-50 hover:to-red-50 transition-all duration-300 border border-transparent hover:border-orange-200/60 cursor-pointer"
+                  class="w-full text-left group mb-4 p-3 rounded-lg hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 transition-all duration-300 border border-transparent hover:border-amber-200/60 cursor-pointer"
                 >
                   <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-200 shadow-md flex-shrink-0 group-hover:border-orange-300 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-200 shadow-md flex-shrink-0 group-hover:border-amber-300 transition-all duration-300">
                       <img :src="animal.farmer.avatar" :alt="animal.farmer.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                     </div>
                     <div class="flex-1 min-w-0">
-                      <h4 class="text-md font-bold text-gray-800 mb-1 truncate group-hover:text-orange-700 transition-colors duration-300">{{ animal.farmer.farmName || animal.farmer.name }}</h4>
+                      <h4 class="text-md font-bold text-gray-800 mb-1 truncate group-hover:text-amber-700 transition-colors duration-300">{{ animal.farmer.farmName || animal.farmer.name }}</h4>
                       <p v-if="animal.farmer.farmName" class="text-gray-600 mb-1 text-xs truncate">{{ animal.farmer.name }}</p>
-                      <div class="flex items-center gap-2 text-gray-600 group-hover:text-orange-600 transition-colors duration-300">
+                      <div class="flex items-center gap-2 text-gray-600 group-hover:text-amber-600 transition-colors duration-300">
                         <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -444,7 +476,7 @@
                       </div>
                     </div>
                     <div class="flex-shrink-0">
-                      <svg class="w-4 h-4 text-gray-400 group-hover:text-orange-500 transition-all duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4 text-gray-400 group-hover:text-amber-500 transition-all duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
@@ -512,12 +544,13 @@
                 <!-- Contact Farmer Button -->
                 <button 
                   @click="openContactModal"
-                  class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow hover:shadow-lg transform hover:-translate-y-0.5 border border-blue-500/20 mb-4 cursor-pointer"
+                  :disabled="!currentUser"
+                  class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow hover:shadow-lg transform hover:-translate-y-0.5 border border-blue-500/20 mb-4 cursor-pointer disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Contact Farmer
+                  {{ !currentUser ? 'Sign in to contact' : 'Contact Farmer' }}
                 </button>
 
                 <!-- Location Information -->
@@ -598,13 +631,16 @@ interface Animal {
   type: string;
   breed: string;
   weight: number;
+  weightUnit?: string;
   quantity: number;
   age: string;
   gender: string;
   status: string;
   healthStatus: string[];
   price: number;
+  priceUnit?: string;
   deliveryOptions: string[];
+  paymentMethods?: string[];
   images: string[];
   description: string;
   datePosted: string;
@@ -621,7 +657,7 @@ interface Animal {
   isAuction: boolean;
 }
 
-interface ServiceUser {
+interface CurrentUser {
   name: string;
   email: string;
   role: string;
@@ -632,9 +668,10 @@ interface MessageData {
   contactMethod: string;
 }
 
-// Props
+// Props - FIXED: Added currentUser prop
 const props = defineProps<{
   animal: Animal;
+  currentUser: CurrentUser | null;
 }>();
 
 // Emits
@@ -642,16 +679,6 @@ const emit = defineEmits<{
   close: [];
   contact: [contactInfo: string];
 }>();
-
-// Current User - Mock data
-const currentUser = computed<ServiceUser | null>(() => {
-  // Simulate authenticated user
-  return {
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'buyer'
-  };
-});
 
 // State
 const currentImageIndex = ref(0);
@@ -687,15 +714,39 @@ const getStatusClass = (status: string) => {
   }
 };
 
-const getDaysListed = (dateString: string) => {
-  const now = new Date();
-  const posted = new Date(dateString);
-  const diffTime = Math.abs(now.getTime() - posted.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+};
+
+const formatDeliveryOption = (option: string): string => {
+  const optionsMap: Record<string, string> = {
+    'pickup': 'Buyer Pickup',
+    'delivery': 'Farm Delivery',
+    'meetup': 'Meetup Point'
+  };
+  return optionsMap[option] || option;
+};
+
+const formatPaymentMethod = (method: string): string => {
+  const methodsMap: Record<string, string> = {
+    'cash': 'Cash on Hand',
+    'bank_transfer': 'Bank Transfer',
+    'gcash': 'GCash',
+    'paymaya': 'PayMaya'
+  };
+  return methodsMap[method] || method;
 };
 
 const openContactModal = () => {
+  if (!props.currentUser) {
+    showToastNotification('Please sign in to contact farmers', 'success');
+    return;
+  }
   isContactModalOpen.value = true;
 };
 
@@ -746,7 +797,8 @@ const validateQuantity = () => {
 
 // Add to cart functionality
 const addToCart = async () => {
-  if (props.animal.status === 'Out of Stock' || !currentUser.value) {
+  if (props.animal.status === 'Out of Stock' || !props.currentUser) {
+    showToastNotification('Please sign in to add items to cart', 'success');
     return;
   }
 
@@ -773,7 +825,9 @@ const addToCart = async () => {
 // Contact methods
 const callFarmer = () => {
   if (props.animal.farmer.contact) {
-    window.open(`tel:${props.animal.farmer.contact}`, '_self');
+    const phoneNumber = props.animal.farmer.contact;
+    emit('contact', phoneNumber);
+    window.open(`tel:${phoneNumber}`, '_self');
   }
 };
 
@@ -785,8 +839,11 @@ const emailFarmer = () => {
     const body = encodeURIComponent(
       `Hello ${props.animal.farmer.farmName || props.animal.farmer.name},\n\nI'm interested in your ${props.animal.type} (${props.animal.breed}) listed for ₱${props.animal.price.toLocaleString()}.\n\nPlease let me know more details.\n\nThank you!`
     );
+    
+    const emailAddress = props.animal.farmer.email;
+    emit('contact', emailAddress);
     window.open(
-      `mailto:${props.animal.farmer.email}?subject=${subject}&body=${body}`,
+      `mailto:${emailAddress}?subject=${subject}&body=${body}`,
       '_self'
     );
   }
@@ -808,11 +865,20 @@ const getTypeBadgeClassForImage = (type: string) => {
     case 'Cattle':
       return 'bg-green-500/90 text-white border-green-400/50';
     case 'Swine':
+    case 'Pig':
       return 'bg-pink-500/90 text-white border-pink-400/50';
     case 'Goat':
       return 'bg-amber-500/90 text-white border-amber-400/50';
     case 'Poultry':
+    case 'Chicken':
+    case 'Duck':
       return 'bg-red-500/90 text-white border-red-400/50';
+    case 'Carabao':
+      return 'bg-indigo-500/90 text-white border-indigo-400/50';
+    case 'Sheep':
+      return 'bg-purple-500/90 text-white border-purple-400/50';
+    case 'Horse':
+      return 'bg-yellow-500/90 text-white border-yellow-400/50';
     default:
       return 'bg-gray-500/90 text-white border-gray-400/50';
   }
@@ -830,3 +896,14 @@ const formatLocation = (animal: Animal): string => {
   return `${farmerAddress}, ${animalLocation}`;
 };
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

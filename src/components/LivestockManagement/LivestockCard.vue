@@ -98,7 +98,7 @@
       <div
         class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 backdrop-blur-sm z-15">
         <button @click="$emit('openModal', animal)"
-          class="bg-white/95 backdrop-blur-md text-gray-800 px-3 py-2 rounded font-semibold shadow hover:shadow-md transition-all duration-200 flex items-center gap-2 text-sm border border-white/40 hover:bg-white">
+          class="bg-white/95 backdrop-blur-md text-gray-800 px-3 py-2 rounded font-semibold shadow hover:shadow-md transition-all duration-200 flex items-center gap-2 text-sm border border-white/40 hover:bg-white cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -116,7 +116,8 @@
       <div class="flex justify-between items-start mb-3">
         <!-- Left Side - Simple Title -->
         <div class="flex-1 pr-3">
-          <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2">
+          <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2 cursor-pointer hover:text-emerald-800 transition-colors"
+            @click="$emit('openModal', animal)">
             {{ animal.title }}
           </h3>
         </div>
@@ -157,7 +158,7 @@
         <div :class="`grid gap-1.5 ${isSidebarExpanded ? 'grid-cols-2' : 'grid-cols-2'}`">
           <!-- Quantity -->
           <div
-            :class="`bg-blue-50 rounded-md border border-blue-200/60 flex items-center justify-center gap-1 relative group/quantity ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-blue-50 rounded-md border border-blue-200/60 flex items-center justify-center gap-1 relative group/quantity cursor-pointer ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-blue-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -173,7 +174,7 @@
 
           <!-- Weight -->
           <div
-            :class="`bg-purple-50 rounded-md border border-purple-200/60 flex items-center justify-center gap-1 relative group/weight ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-purple-50 rounded-md border border-purple-200/60 flex items-center justify-center gap-1 relative group/weight cursor-pointer ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-purple-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none"
               stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -189,7 +190,7 @@
 
           <!-- Gender -->
           <div
-            :class="`bg-pink-50 rounded-md border border-pink-200/60 flex items-center justify-center gap-1 relative group/gender ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-pink-50 rounded-md border border-pink-200/60 flex items-center justify-center gap-1 relative group/gender cursor-pointer ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-pink-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -205,7 +206,7 @@
 
           <!-- Age -->
           <div
-            :class="`bg-teal-50 rounded-md border border-teal-200/60 flex items-center justify-center gap-1 relative group/age ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
+            :class="`bg-teal-50 rounded-md border border-teal-200/60 flex items-center justify-center gap-1 relative group/age cursor-pointer ${isSidebarExpanded ? 'p-1.5' : 'p-2'}`">
             <svg :class="`text-teal-600 ${isSidebarExpanded ? 'w-3 h-3' : 'w-4 h-4'}`" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -248,13 +249,13 @@
             <button 
               @click="handleQuickSale"
               :disabled="animal.quantity === 0"
-              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               Sold 1
             </button>
             <button 
               @click="handleRestock"
-              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors"
+              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors cursor-pointer"
             >
               Restock
             </button>
@@ -307,7 +308,7 @@
       <!-- Title & Basic Info -->
       <td class="px-4 py-3">
         <div class="flex flex-col">
-          <div class="text-sm font-semibold text-gray-900 mb-1">{{ animal.title }}</div>
+          <div class="text-sm font-semibold text-gray-900 mb-1 cursor-pointer hover:text-green-600 transition-colors" @click="$emit('openModal', animal)">{{ animal.title }}</div>
           <div class="text-xs text-gray-600 mb-1">{{ animal.breed }} {{ animal.type }}</div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-gray-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">{{ animal.gender }}</span>
@@ -390,13 +391,13 @@
             <button 
               @click="handleQuickSale"
               :disabled="animal.quantity === 0"
-              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               Sold
             </button>
             <button 
               @click="handleRestock"
-              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors"
+              class="flex-1 px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded border border-green-200 transition-colors cursor-pointer"
             >
               +Stock
             </button>
@@ -410,7 +411,7 @@
       <!-- Actions -->
       <td class="px-4 py-3 whitespace-nowrap text-right">
         <button @click="$emit('openModal', animal)"
-          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1 shadow hover:shadow-md">
+          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors flex items-center gap-1 shadow hover:shadow-md cursor-pointer">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

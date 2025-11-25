@@ -1,4 +1,4 @@
-<!-- NavBar.vue - OPTIMIZED FOR SPEED -->
+<!-- NavBar.vue - OPTIMIZED WITH TAB VISIBILITY DETECTION -->
 <template>
   <!-- Background Pattern Overlay for the navbar area -->
   <div class="fixed top-0 left-0 right-0 z-40 h-20 opacity-5 pointer-events-none">
@@ -558,6 +558,10 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+// 🆕 Track visibility
+let lastVisibilityTime = Date.now();
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // 30 seconds
+
 // 🚀 INSTANT LOAD: Get cached data synchronously FIRST
 const cachedNavbarUser = NavBarService.getCachedNavBarData();
 
@@ -599,9 +603,40 @@ const handleImageError = (event: Event) => {
   }
 };
 
+// 🆕 Handle visibility change
+const handleVisibilityChange = async () => {
+  if (document.hidden) {
+    lastVisibilityTime = Date.now();
+    console.log('👋 NavBar: Tab hidden');
+  } else {
+    const timeAway = Date.now() - lastVisibilityTime;
+    console.log('👀 NavBar: Tab visible. Time away:', Math.round(timeAway / 1000), 'seconds');
+
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD && authStore.isAuthenticated && authStore.userId) {
+      console.log('🔄 NavBar: Refreshing after being away...');
+      
+      // Refresh auth session
+      const sessionValid = await authStore.refreshSession();
+      
+      if (sessionValid && authStore.userId) {
+        // Reload navbar data
+        await loadNavbarData(authStore.userId);
+      } else {
+        // Session expired
+        console.warn('⚠️ NavBar: Session expired');
+        navbarUser.value = null;
+        NavBarService.clearNavBarCache();
+      }
+    }
+  }
+};
+
 // 🚀 OPTIMIZED: Initialize in parallel
 onMounted(async () => {
   console.log('🚀 NavBar mounting with cached data:', cachedNavbarUser?.displayName || 'none');
+  
+  // 🆕 Add visibility listener
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   
   // Start both in parallel - don't wait for initialize()
   const initPromise = authStore.initialize();
@@ -631,6 +666,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
   document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 // Watch auth changes

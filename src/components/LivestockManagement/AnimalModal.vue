@@ -756,14 +756,34 @@
                   <label class="block text-xs font-semibold text-gray-700 mb-2">
                     Farm Location <span class="text-red-500">*</span>
                   </label>
-                  <input v-model="editForm.location" type="text" 
-                    @input="clearFieldError('location')"
-                    :class="`w-full px-3 py-2 border rounded-lg text-sm transition-all duration-300 ${
-                      fieldErrors.location 
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500 animate-shake' 
-                        : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                    }`">
+                  <div class="relative">
+                    <select v-model="editForm.location"
+                      @change="clearFieldError('location')"
+                      :class="`w-full px-3 py-2 border rounded-lg text-sm cursor-pointer transition-all duration-300 ${
+                        fieldErrors.location 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500 animate-shake' 
+                          : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                      }`">
+                      <option value="">Select from your saved addresses</option>
+                      <option v-for="address in userAddresses" :key="address.id" :value="formatAddress(address)">
+                        {{ address.label || 'Address' }} - {{ formatAddress(address) }}
+                      </option>
+                      <option value="__custom__">🖊️ Enter custom location</option>
+                    </select>
+                    
+                    <!-- Custom location input (shown when user selects custom) -->
+                    <input 
+                      v-if="editForm.location === '__custom__'" 
+                      v-model="customLocation"
+                      @blur="handleCustomLocation"
+                      type="text"
+                      class="mt-2 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., Cebu, Bogo City" />
+                  </div>
                   <p v-if="fieldErrors.location" class="text-xs text-red-600 mt-1">{{ fieldErrors.location }}</p>
+                  <p v-if="userAddresses.length === 0 && !loadingAddresses" class="text-xs text-amber-600 mt-1">
+                    💡 No saved addresses. Add addresses in your profile settings.
+                  </p>
                 </div>
               </div>
             </div>
@@ -802,7 +822,9 @@
 import { ref, reactive, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { LivestockService } from '@/services/livestockService'
+import { ProfileService } from '@/services/profileService'
 import type { Animal } from '@/types/managementTypes'
+import type { Address } from '@/types/user'
 
 const props = defineProps<{
   animal?: Animal | null
@@ -824,6 +846,9 @@ const uploadingImages = ref(false)
 const editAvailableBreeds = ref<string[]>([])
 const validationError = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
+const userAddresses = ref<Address[]>([])
+const loadingAddresses = ref(false)
+const customLocation = ref('')
 
 // Field-specific error tracking
 const fieldErrors = reactive<Record<string, string>>({
@@ -901,13 +926,52 @@ const editForm = reactive<{
   location: string
 }>(getInitialFormState())
 
-// Watch for modal close to reset state
-watch(showEditModal, (newVal) => {
-  if (!newVal) {
+// Watch for edit modal open to load addresses
+watch(showEditModal, async (newValue) => {
+  if (newValue) {
+    await loadUserAddresses()
+  } else {
     // Reset form completely when modal is closed
     resetFormCompletely()
   }
 })
+
+// Methods
+const loadUserAddresses = async (): Promise<void> => {
+  try {
+    loadingAddresses.value = true
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      console.error('No authenticated user')
+      return
+    }
+
+    console.log('📍 Loading user addresses...')
+    const addresses = await ProfileService.getAddresses(user.id)
+    userAddresses.value = addresses
+    console.log(`✅ Loaded ${addresses.length} addresses`)
+  } catch (error) {
+    console.error('Error loading addresses:', error)
+  } finally {
+    loadingAddresses.value = false
+  }
+}
+
+const formatAddress = (address: Address): string => {
+  const parts = [
+    address.province,
+    address.city
+  ].filter(Boolean)
+  
+  return parts.join(', ')
+}
+
+const handleCustomLocation = (): void => {
+  if (customLocation.value.trim()) {
+    editForm.location = customLocation.value.trim()
+  }
+}
 
 // Options for dropdowns
 const healthStatusOptions: readonly string[] = [
@@ -1011,6 +1075,9 @@ const resetFormCompletely = (): void => {
   editSelectedImageIndex.value = 0
   editAvailableBreeds.value = []
   
+  // Clear custom location
+  customLocation.value = ''
+  
   // Reset file input if it exists
   if (fileInput.value) {
     fileInput.value.value = ''
@@ -1070,7 +1137,7 @@ const validateForm = (): { isValid: boolean; firstErrorField: string | null } =>
     errors.push({ field: 'deliveryOptions', message: 'Select at least one delivery option', ref: 'deliveryOptionsField' })
   }
   
-  if (!editForm.location.trim()) {
+  if (!editForm.location.trim() || editForm.location === '__custom__') {
     errors.push({ field: 'location', message: 'Location is required', ref: 'locationField' })
   }
   

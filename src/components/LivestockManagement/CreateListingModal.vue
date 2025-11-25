@@ -18,7 +18,7 @@
             </div>
           </div>
           <button @click="closeModal" :disabled="isSubmitting"
-            class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -36,7 +36,7 @@
             <h3 class="text-sm font-semibold text-red-800">Error Creating Listing</h3>
             <p class="text-sm text-red-700 mt-1">{{ submitError }}</p>
           </div>
-          <button @click="submitError = ''" class="ml-auto text-red-500 hover:text-red-700">
+          <button @click="submitError = ''" class="ml-auto text-red-500 hover:text-red-700 cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -75,7 +75,7 @@
                     <label class="cursor-pointer">
                       <input type="file" multiple accept="image/*" @change="handleImageUpload" class="sr-only" />
                       <span
-                        class="inline-flex items-center px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors shadow-lg text-sm">
+                        class="inline-flex items-center px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors shadow-lg text-sm cursor-pointer">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -90,7 +90,7 @@
                 <!-- Navigation arrows for main preview -->
                 <div v-if="form.images.length > 1" class="absolute inset-y-0 left-0 flex items-center">
                   <button @click="previousImage" type="button"
-                    class="ml-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg">
+                    class="ml-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -98,7 +98,7 @@
                 </div>
                 <div v-if="form.images.length > 1" class="absolute inset-y-0 right-0 flex items-center">
                   <button @click="nextImage" type="button"
-                    class="mr-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg">
+                    class="mr-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -110,7 +110,7 @@
                   <label class="cursor-pointer">
                     <input type="file" multiple accept="image/*" @change="handleImageUpload" class="sr-only" />
                     <span
-                      class="inline-flex items-center px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors shadow-lg text-xs">
+                      class="inline-flex items-center px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors shadow-lg text-xs cursor-pointer">
                       <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                       </svg>
@@ -127,7 +127,7 @@
                   <img :src="image" :alt="`Thumbnail ${index + 1}`"
                     :class="`w-full h-14 object-cover rounded-lg border-2 transition-all ${selectedImageIndex === index ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200 hover:border-gray-400'}`" />
                   <button @click.stop="removeImage(index)" type="button"
-                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold shadow-lg">
+                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold shadow-lg cursor-pointer">
                     ×
                   </button>
                 </div>
@@ -242,7 +242,7 @@
                   <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Gender *</label>
                     <select v-model="form.gender"
-                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.gender ? 'border-red-300' : 'border-gray-300'}`"
+                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors cursor-pointer ${errors.gender ? 'border-red-300' : 'border-gray-300'}`"
                       required>
                       <option value="">Select gender</option>
                       <option value="Male">Male</option>
@@ -300,7 +300,7 @@
                         :class="`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.weight ? 'border-red-300' : 'border-gray-300'}`"
                         placeholder="Weight" required />
                       <select v-model="form.weightUnit"
-                        class="w-20 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        class="w-20 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
                         <option value="kg">kg</option>
                         <option value="lbs">lbs</option>
                         <option value="g">g</option>
@@ -326,7 +326,7 @@
                         :class="`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.price ? 'border-red-300' : 'border-gray-300'}`"
                         placeholder="Price" required />
                       <select v-model="form.priceUnit"
-                        class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        class="px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
                         <option value="per head">per head</option>
                         <option value="per kg">per kg</option>
                         <option value="per lbs">per lbs</option>
@@ -336,13 +336,34 @@
                     <p v-if="errors.price" class="text-red-500 text-xs mt-1">{{ errors.price }}</p>
                   </div>
 
-                  <!-- Location -->
+                  <!-- Location - Now using saved addresses -->
                   <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Location *</label>
-                    <input v-model="form.location" type="text"
-                      :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.location ? 'border-red-300' : 'border-gray-300'}`"
-                      placeholder="e.g., Pampanga, Bulacan" required />
+                    <div class="relative">
+                      <select v-model="form.location"
+                        :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer ${errors.location ? 'border-red-300' : 'border-gray-300'}`"
+                        required>
+                        <option value="">Select from your saved addresses</option>
+                        <option v-for="address in userAddresses" :key="address.id" :value="formatAddress(address)">
+                          {{ address.label || 'Address' }} - {{ formatAddress(address) }}
+                        </option>
+                        <option value="__custom__">🖊️ Enter custom location</option>
+                      </select>
+                      
+                      <!-- Custom location input (shown when user selects custom) -->
+                      <input 
+                        v-if="form.location === '__custom__'" 
+                        v-model="customLocation"
+                        @blur="handleCustomLocation"
+                        type="text"
+                        class="mt-2 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., Pampanga, Bulacan"
+                        required />
+                    </div>
                     <p v-if="errors.location" class="text-red-500 text-xs mt-1">{{ errors.location }}</p>
+                    <p v-if="userAddresses.length === 0 && !loadingAddresses" class="text-xs text-amber-600 mt-1">
+                      💡 No saved addresses. Add addresses in your profile settings.
+                    </p>
                   </div>
                 </div>
 
@@ -376,7 +397,7 @@
                   <label v-for="option in healthOptions" :key="option"
                     class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                     <input type="checkbox" :value="option" v-model="form.healthStatus"
-                      class="w-3 h-3 text-red-600 border-gray-300 rounded focus:ring-red-500" />
+                      class="w-3 h-3 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer" />
                     <span class="text-xs font-medium text-gray-700">{{ option }}</span>
                   </label>
                 </div>
@@ -396,7 +417,7 @@
                   <label v-for="option in deliveryOptions" :key="option.value"
                     class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
                     <input type="checkbox" :value="option.value" v-model="form.deliveryOptions"
-                      class="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1" />
+                      class="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1 cursor-pointer" />
                     <div>
                       <span class="text-xs font-medium text-gray-700 block">{{ option.label }}</span>
                       <p class="text-xs text-gray-500 mt-0.5">{{ option.description }}</p>
@@ -427,7 +448,7 @@
                       :value="option.value" 
                       v-model="form.paymentMethods"
                       :disabled="!option.available"
-                      class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-0.5 disabled:cursor-not-allowed disabled:opacity-50" />
+                      class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer" />
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
                         <span :class="`text-sm font-semibold ${option.available ? 'text-gray-900' : 'text-gray-500'}`">
@@ -471,7 +492,7 @@
             <div class="sticky bottom-0 pt-4 bg-gray-50 mt-auto">
               <div class="flex gap-3 justify-center">
                 <button type="submit" :disabled="isSubmitting"
-                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed">
+                  class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed cursor-pointer">
                   <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l-3-2.647z"></path>
@@ -491,10 +512,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { LivestockService } from '@/services/livestockService'
+import { ProfileService } from '@/services/profileService'
 import { supabase } from '@/supabase'  
 import type { CreateListingForm } from '@/types/managementTypes'
+import type { Address } from '@/types/user'
 
 // Interfaces
 interface FormErrors {
@@ -514,7 +537,7 @@ interface PaymentMethodOption {
   available: boolean
 }
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean
 }>()
 
@@ -530,6 +553,9 @@ const selectedImageIndex = ref(0)
 const availableBreeds = ref<string[]>([])
 const uploadingImages = ref(false)
 const imageFiles = ref<File[]>([])
+const userAddresses = ref<Address[]>([])
+const loadingAddresses = ref(false)
+const customLocation = ref('')
 
 const form = reactive<CreateListingForm>({
   title: '',
@@ -646,7 +672,50 @@ const breedsByAnimalType: Record<string, readonly string[]> = {
   ] as const
 }
 
+// Load user addresses when modal opens
+watch(() => props.isOpen, async (newValue) => {
+  if (newValue) {
+    await loadUserAddresses()
+  }
+})
+
 // Methods
+const loadUserAddresses = async (): Promise<void> => {
+  try {
+    loadingAddresses.value = true
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      console.error('No authenticated user')
+      return
+    }
+
+    console.log('📍 Loading user addresses...')
+    const addresses = await ProfileService.getAddresses(user.id)
+    userAddresses.value = addresses
+    console.log(`✅ Loaded ${addresses.length} addresses`)
+  } catch (error) {
+    console.error('Error loading addresses:', error)
+  } finally {
+    loadingAddresses.value = false
+  }
+}
+
+const formatAddress = (address: Address): string => {
+  const parts = [
+    address.province,
+    address.city
+  ].filter(Boolean)
+  
+  return parts.join(', ')
+}
+
+const handleCustomLocation = (): void => {
+  if (customLocation.value.trim()) {
+    form.location = customLocation.value.trim()
+  }
+}
+
 const updateAvailableBreeds = (): void => {
   if (form.type && breedsByAnimalType[form.type]) {
     availableBreeds.value = [...breedsByAnimalType[form.type]]
@@ -704,7 +773,7 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  if (!form.location) {
+  if (!form.location || form.location === '__custom__') {
     errors.value.location = 'Location is required'
     isValid = false
   }
@@ -828,6 +897,7 @@ const resetForm = (): void => {
   errors.value = {}
   selectedImageIndex.value = 0
   availableBreeds.value = []
+  customLocation.value = ''
 }
 
 const handleImageUpload = (event: Event): void => {
@@ -887,4 +957,11 @@ const nextImage = (): void => {
     ? selectedImageIndex.value + 1
     : 0
 }
+
+// Initialize on mount
+onMounted(() => {
+  if (props.isOpen) {
+    loadUserAddresses()
+  }
+})
 </script>
