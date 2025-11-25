@@ -20,7 +20,7 @@
       <!-- Expanded View -->
       <div v-if="isExpanded" class="h-full flex flex-col">
         <!-- Header with integrated close button -->
-        <div class="flex justify-between items-center p-3 border-b border-green-100/50">
+        <div class="flex justify-between items-center p-3 border-b border-green-100/50 cursor-default">
           <h2 class="text-base font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-1">
             <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-7 7a2 2 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -28,13 +28,13 @@
             Filters
           </h2>
           <div class="flex gap-1">
-            <button @click="resetFilters" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1">
+            <button @click="resetFilters" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1 cursor-pointer">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Reset
             </button>
-            <button @click="toggleSidebar" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1">
+            <button @click="toggleSidebar" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition flex items-center gap-1 cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -67,7 +67,6 @@
               <span v-for="location in localFilters.locations" :key="location" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ location }}</span>
               <span v-for="priceRange in localFilters.priceRanges" :key="priceRange" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ formatPriceRange(priceRange) }}</span>
               <span v-for="gender in localFilters.genders" :key="gender" class="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded-full font-medium">{{ gender }}</span>
-              <!-- Auction-specific filters -->
               <span v-for="status in localFilters.auctionStatuses" :key="status" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ status }}</span>
               <span v-for="timeRange in localFilters.endTimeRanges" :key="timeRange" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">{{ formatTimeRange(timeRange) }}</span>
               <span v-if="localFilters.bidCountMin" class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">Min Bids: {{ localFilters.bidCountMin }}</span>
@@ -80,7 +79,7 @@
         <div class="flex-1 overflow-y-auto p-3">
           <!-- Compact Filter Group -->
           <div class="space-y-3">
-            <!-- Animal Type Checkboxes - Enhanced with icons -->
+            <!-- Animal Type Checkboxes -->
             <div class="bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-green-100">
               <h3 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
                 <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -96,17 +95,7 @@
                     v-model="localFilters.types" 
                     class="h-3 w-3 text-green-600 rounded border-gray-300 focus:ring-green-500"
                   >
-                  <span class="flex items-center gap-1.5">
-                    <span class="w-4 h-4 flex items-center justify-center">
-                      <svg v-if="type === 'Cattle'" class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.3"/>
-                      </svg>
-                      <svg v-else class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </span>
-                    <span class="truncate">{{ type }}</span>
-                  </span>
+                  <span class="truncate">{{ type }}</span>
                 </label>
               </div>
             </div>
@@ -143,7 +132,7 @@
               </h3>
               <select 
                 @change="handleLocationChange($event)"
-                class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 bg-white"
+                class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 bg-white cursor-pointer"
               >
                 <option value="">Select a location</option>
                 <option v-for="location in uniqueLocations" :key="location" :value="location">{{ location }}</option>
@@ -159,7 +148,7 @@
                 Price Range
               </h3>
               <div class="space-y-1">
-                <label v-for="(range, index) in priceRanges" :key="index" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
+                <label v-for="range in priceRanges" :key="range.value" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-green-50/50 p-1 rounded cursor-pointer">
                   <input 
                     type="checkbox" 
                     :value="range.value" 
@@ -192,7 +181,7 @@
               </div>
             </div>
 
-            <!-- NEW: Auction-Specific Filters (Only show when auction tab is active) -->
+            <!-- Auction-Specific Filters -->
             <div v-if="activeTab === 'auction'" class="space-y-3">
               <!-- Auction Status -->
               <div class="bg-amber-50/80 backdrop-blur-sm rounded-lg p-2 border border-amber-200">
@@ -279,7 +268,7 @@
                   Starting Bid Range
                 </h3>
                 <div class="space-y-1">
-                  <label v-for="(range, index) in startingBidRanges" :key="index" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-amber-50/50 p-1 rounded cursor-pointer">
+                  <label v-for="range in startingBidRanges" :key="range.value" class="flex items-center gap-1.5 text-xs text-gray-700 hover:bg-amber-50/50 p-1 rounded cursor-pointer">
                     <input 
                       type="checkbox" 
                       :value="range.value" 
@@ -360,12 +349,27 @@ const emit = defineEmits<{
 }>();
 
 // Local copy of filters to avoid direct mutation
-const localFilters = ref<Filters>({ ...props.filters });
+const localFilters = ref<Filters>({
+  search: '',
+  types: [],
+  breeds: [],
+  locations: [],
+  priceRanges: [],
+  genders: [],
+  healthStatuses: [],
+  auctionStatuses: [],
+  endTimeRanges: [],
+  bidCountMin: null,
+  bidCountMax: null,
+  startingBidRanges: [],
+  auctionDurations: [],
+  bidActivities: []
+});
 
 // Watch for external filter changes
 watch(() => props.filters, (newFilters) => {
   localFilters.value = { ...newFilters };
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 // Watch for local filter changes and emit them
 watch(localFilters, (newFilters) => {
@@ -374,11 +378,11 @@ watch(localFilters, (newFilters) => {
 
 // Filter options
 const priceRanges = ref<PriceRange[]>([
-  { label: 'Below ₱5K', value: '0-5000' },
-  { label: '₱5K - ₱20K', value: '5000-20000' },
-  { label: '₱20K - ₱50K', value: '20000-50000' },
-  { label: '₱50K - ₱100K', value: '50000-100000' },
-  { label: 'Above ₱100K', value: '100000+' }
+  { label: 'Below ₱5K', value: '0-5000', min: 0, max: 5000 },
+  { label: '₱5K - ₱20K', value: '5000-20000', min: 5000, max: 20000 },
+  { label: '₱20K - ₱50K', value: '20000-50000', min: 20000, max: 50000 },
+  { label: '₱50K - ₱100K', value: '50000-100000', min: 50000, max: 100000 },
+  { label: 'Above ₱100K', value: '100000+', min: 100000 }
 ]);
 
 const genders = ref(['Male', 'Female', 'Mixed']);
@@ -387,27 +391,27 @@ const genders = ref(['Male', 'Female', 'Mixed']);
 const auctionStatuses = ref(['Live', 'Ending Soon', 'New Listing', 'Hot Auction']);
 
 const endTimeRanges = ref<TimeRange[]>([
-  { label: 'Ending in 1 hour', value: '0-1h' },
-  { label: 'Ending in 3 hours', value: '0-3h' },
-  { label: 'Ending in 6 hours', value: '0-6h' },
-  { label: 'Ending in 12 hours', value: '0-12h' },
-  { label: 'Ending in 24 hours', value: '0-24h' },
-  { label: 'More than 1 day', value: '24h+' }
+  { label: 'Ending in 1 hour', value: '0-1h', hours: 1 },
+  { label: 'Ending in 3 hours', value: '0-3h', hours: 3 },
+  { label: 'Ending in 6 hours', value: '0-6h', hours: 6 },
+  { label: 'Ending in 12 hours', value: '0-12h', hours: 12 },
+  { label: 'Ending in 24 hours', value: '0-24h', hours: 24 },
+  { label: 'More than 1 day', value: '24h+', hours: 24 }
 ]);
 
 const startingBidRanges = ref<PriceRange[]>([
-  { label: 'Below ₱10K', value: '0-10000' },
-  { label: '₱10K - ₱30K', value: '10000-30000' },
-  { label: '₱30K - ₱60K', value: '30000-60000' },
-  { label: '₱60K - ₱100K', value: '60000-100000' },
-  { label: 'Above ₱100K', value: '100000+' }
+  { label: 'Below ₱10K', value: '0-10000', min: 0, max: 10000 },
+  { label: '₱10K - ₱30K', value: '10000-30000', min: 10000, max: 30000 },
+  { label: '₱30K - ₱60K', value: '30000-60000', min: 30000, max: 60000 },
+  { label: '₱60K - ₱100K', value: '60000-100000', min: 60000, max: 100000 },
+  { label: 'Above ₱100K', value: '100000+', min: 100000 }
 ]);
 
 const auctionDurations = ref<AuctionDuration[]>([
-  { label: 'Quick (1-3 days)', value: '1-3d' },
-  { label: 'Standard (3-7 days)', value: '3-7d' },
-  { label: 'Extended (1-2 weeks)', value: '7-14d' },
-  { label: 'Long term (2+ weeks)', value: '14d+' }
+  { label: 'Quick (1-3 days)', value: '1-3d', days: 3 },
+  { label: 'Standard (3-7 days)', value: '3-7d', days: 7 },
+  { label: 'Extended (1-2 weeks)', value: '7-14d', days: 14 },
+  { label: 'Long term (2+ weeks)', value: '14d+', days: 14 }
 ]);
 
 const bidActivities = ref(['High Activity (10+ bids)', 'Moderate Activity (5-10 bids)', 'Low Activity (1-5 bids)', 'No Bids Yet']);
@@ -420,7 +424,6 @@ const hasActiveFilters = computed(() => {
     localFilters.value.locations.length > 0 || 
     localFilters.value.priceRanges.length > 0 || 
     localFilters.value.genders.length > 0 ||
-    // Auction filters
     localFilters.value.auctionStatuses.length > 0 ||
     localFilters.value.endTimeRanges.length > 0 ||
     localFilters.value.bidCountMin !== null ||
@@ -463,11 +466,10 @@ const handleLocationChange = (event: Event) => {
     localFilters.value.locations.push(selectedLocation);
   }
   
-  // Reset dropdown
   target.value = '';
 };
 
-const formatPriceRange = (range: string) => {
+const formatPriceRange = (range: string): string => {
   switch (range) {
     case '0-5000': return 'Below ₱5K';
     case '5000-20000': return '₱5K - ₱20K';
@@ -478,7 +480,7 @@ const formatPriceRange = (range: string) => {
   }
 };
 
-const formatTimeRange = (range: string) => {
+const formatTimeRange = (range: string): string => {
   switch (range) {
     case '0-1h': return 'Ending in 1 hour';
     case '0-3h': return 'Ending in 3 hours';
