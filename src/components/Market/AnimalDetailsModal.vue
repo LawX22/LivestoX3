@@ -623,8 +623,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import ContactFarmerModal from './ContactFarmerModal.vue';
+import type { CurrentUser } from '../../types/animalTypes';
 
-// Types
 interface Animal {
   id: string;
   title: string;
@@ -655,12 +655,6 @@ interface Animal {
   };
   location: string;
   isAuction: boolean;
-}
-
-interface CurrentUser {
-  name: string;
-  email: string;
-  role: string;
 }
 
 interface MessageData {

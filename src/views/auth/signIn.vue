@@ -51,7 +51,7 @@
             </div>
           </div>
           <button @click="removeToast(toast.id)"
-            class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+            class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -138,13 +138,13 @@
 
                   <!-- Navigation arrows -->
                   <button @click="previousSlide"
-                    class="absolute left-1.5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-all duration-200">
+                    class="absolute left-1.5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-all duration-200 cursor-pointer">
                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                   <button @click="nextSlide"
-                    class="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-all duration-200">
+                    class="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-all duration-200 cursor-pointer">
                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -153,7 +153,7 @@
                   <!-- Dots indicator -->
                   <div class="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 flex space-x-1.5">
                     <button v-for="(_image, index) in carouselImages" :key="index" @click="currentSlide = index" :class="[
-                      'w-1.5 h-1.5 rounded-full transition-all duration-200',
+                      'w-1.5 h-1.5 rounded-full transition-all duration-200 cursor-pointer',
                       currentSlide === index ? 'bg-white' : 'bg-white/50'
                     ]"></button>
                   </div>
@@ -222,21 +222,21 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3">
-              <div class="text-center group">
+              <div class="text-center group cursor-pointer">
                 <div
                   class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">10k+</p>
                   <p class="text-xs text-white font-medium tracking-wider">USERS</p>
                 </div>
               </div>
-              <div class="text-center group">
+              <div class="text-center group cursor-pointer">
                 <div
                   class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">50k+</p>
                   <p class="text-xs text-white font-medium tracking-wider">DEALS</p>
                 </div>
               </div>
-              <div class="text-center group">
+              <div class="text-center group cursor-pointer">
                 <div
                   class="bg-green-400 bg-opacity-30 rounded-lg p-2.5 mb-1 backdrop-blur-sm group-hover:bg-opacity-40 transition-all duration-300">
                   <p class="text-xl font-bold text-white mb-0.5">24/7</p>
@@ -269,10 +269,11 @@
             </div>
 
             <form @submit.prevent="handleSignIn" class="space-y-4">
+              <!-- Replace the email input section with this: -->
               <div class="group">
                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">
                   Email Address *
-                  <button type="button" @click="showEmailHelpToast" class="ml-1 text-blue-500 hover:text-blue-600">
+                  <button type="button" @click="showEmailHelpToast" class="ml-1 text-blue-500 hover:text-blue-600 cursor-pointer">
                     <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -280,23 +281,64 @@
                     </svg>
                   </button>
                 </label>
-                <div class="relative">
-                  <input v-model="email" type="email" required placeholder="your@email.com"
-                    class="w-full px-3 py-2 pr-9 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300" />
-                  <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-                    <svg class="w-3 h-3 text-gray-400 group-focus-within:text-green-500 transition-colors" fill="none"
-                      stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                    </svg>
+                <div class="flex gap-2">
+                  <!-- Email Username Input -->
+                  <div class="relative flex-1">
+                    <input 
+                      v-model="emailUsername" 
+                      type="text" 
+                      required 
+                      placeholder="your.email"
+                      class="w-full px-3 py-2 pr-9 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300" 
+                    />
+                    <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                      <span class="text-gray-400 text-xs font-medium">@</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Email Domain Dropdown -->
+                  <div class="relative" style="min-width: 130px;">
+                    <select 
+                      v-model="emailDomain" 
+                      class="appearance-none w-full px-3 py-2 pr-8 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300 cursor-pointer"
+                    >
+                      <option value="@gmail.com">gmail.com</option>
+                      <option value="@yahoo.com">yahoo.com</option>
+                      <option value="@outlook.com">outlook.com</option>
+                      <option value="@hotmail.com">hotmail.com</option>
+                      <option value="@icloud.com">icloud.com</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
+                
+                <!-- Custom Email Domain Input (shown when "Custom" is selected) -->
+                <div v-if="emailDomain === 'custom'" class="mt-2">
+                  <input 
+                    v-model="customEmailDomain" 
+                    type="text" 
+                    placeholder="@yourdomain.com"
+                    class="w-full px-3 py-2 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300" 
+                  />
+                </div>
+                
+                <!-- Display full email -->
+                <p class="mt-1.5 text-xs text-gray-500 flex items-center">
+                  <svg class="w-3 h-3 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="font-medium text-gray-700">{{ fullEmail || 'Enter your email' }}</span>
+                </p>
               </div>
-
               <div class="group">
                 <label class="block text-xs font-semibold text-gray-700 mb-1.5">
                   Password *
-                  <button type="button" @click="showPasswordHelpToast" class="ml-1 text-blue-500 hover:text-blue-600">
+                  <button type="button" @click="showPasswordHelpToast" class="ml-1 text-blue-500 hover:text-blue-600 cursor-pointer">
                     <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -309,7 +351,7 @@
                     placeholder="Enter your password"
                     class="w-full px-3 py-2 pr-9 text-xs border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/20 transition-all duration-300 bg-gray-50/50 hover:border-gray-300" />
                   <button @click="showPassword = !showPassword" type="button"
-                    class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-500 hover:text-green-600 transition-colors duration-200">
+                    class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-500 hover:text-green-600 transition-colors duration-200 cursor-pointer">
                     <svg v-if="showPassword" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -335,7 +377,7 @@
                 </div>
                 <div class="text-xs">
                   <router-link to="/forgotPassword"
-                    class="font-semibold text-green-600 hover:text-green-500 transition-colors duration-200 hover:underline">
+                    class="font-semibold text-green-600 hover:text-green-500 transition-colors duration-200 hover:underline cursor-pointer">
                     Forgot password?
                   </router-link>
                 </div>
@@ -345,7 +387,7 @@
                 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700': !isLoading,
                 'bg-gray-400 cursor-not-allowed': isLoading
               }"
-                class="w-full text-white py-2 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50">
+                class="w-full text-white py-2 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 cursor-pointer">
                 <span v-if="!isLoading" class="flex items-center justify-center">
                   <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -370,7 +412,7 @@
             <p class="mt-5 text-center text-xs text-gray-600">
               Don't have an account?
               <router-link to="/signup"
-                class="text-green-600 font-semibold hover:text-green-500 transition-colors duration-200 hover:underline">
+                class="text-green-600 font-semibold hover:text-green-500 transition-colors duration-200 hover:underline cursor-pointer">
                 Create Account
               </router-link>
             </p>
@@ -382,7 +424,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '@/services/auth-service'
 
@@ -417,12 +459,21 @@ const removeToast = (id: string) => {
 }
 
 // Form State
-const email = ref('')
+const emailUsername = ref('')
+const emailDomain = ref('@gmail.com')
+const customEmailDomain = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
 const isLoading = ref(false)
 const currentSlide = ref(0)
+
+// Computed full email
+const fullEmail = computed(() => {
+  if (!emailUsername.value) return ''
+  const domain = emailDomain.value === 'custom' ? customEmailDomain.value : emailDomain.value
+  return `${emailUsername.value}${domain}`
+})
 
 // Carousel images
 const carouselImages = ref([
@@ -455,11 +506,12 @@ const showEmailHelpToast = () => {
   addToast({
     type: 'info',
     title: 'Email Sign In Help',
-    content: 'Use the email address you registered with to sign in.',
+    content: 'Enter your username and select your email provider.',
     list: [
-      'Make sure there are no typos in your email',
-      'Check if caps lock is on',
-      'Contact support if you forgot your email'
+      'Type only the username part (before @)',
+      'Select your email provider from the dropdown',
+      'Choose "Custom" if your domain is not listed',
+      'Make sure there are no typos'
     ]
   })
 }
@@ -509,13 +561,32 @@ onUnmounted(() => {
 })
 
 const handleSignIn = async () => {
+  // Validate email
+  if (!emailUsername.value.trim()) {
+    addToast({
+      type: 'error',
+      title: 'Invalid Email',
+      content: 'Please enter your email username.',
+    })
+    return
+  }
+
+  if (emailDomain.value === 'custom' && !customEmailDomain.value.trim()) {
+    addToast({
+      type: 'error',
+      title: 'Invalid Email Domain',
+      content: 'Please enter your custom email domain.',
+    })
+    return
+  }
+
   isLoading.value = true
 
   try {
     console.log('🔐 Starting sign in process...')
     
-    // Sign in the user
-    const { data, error } = await auth.signIn(email.value, password.value)
+    // Sign in the user with full email
+    const { data, error } = await auth.signIn(fullEmail.value, password.value)
     
     if (error) {
       console.error('❌ Sign in error:', error)
