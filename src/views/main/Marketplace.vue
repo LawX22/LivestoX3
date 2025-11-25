@@ -1,4 +1,4 @@
-<!-- Marketplace.vue - COMPLETE FIXED VERSION -->
+<!-- Marketplace.vue - COMPLETE FIXED VERSION WITH PROPER MESSAGING -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -301,13 +301,13 @@
       @redirectToLogin="redirectToLogin"
     />
 
-    <!-- Contact Farmer Modal -->
+    <!-- Contact Farmer Modal - PROPERLY FIXED -->
     <ContactFarmerModal 
-      v-if="isContactModalOpen && selectedAnimalForContact" 
+      v-if="isContactModalOpen && selectedAnimalForContact && currentUserForModal" 
       :animal="selectedAnimalForContact"
       :currentUser="currentUserForModal"
       @close="closeContactModal"
-      @send="sendMessage"
+      @messageSent="handleMessageSent"
     />
 
     <!-- Enhanced Success Toast -->
@@ -356,7 +356,6 @@ import type {
   Animal, 
   Filters, 
   BidData, 
-  MessageData, 
   CurrentUser,
   TabType,
   UserRole,
@@ -939,10 +938,30 @@ const closeAuctionModal = (): void => {
 };
 
 const openContactModal = (animal: Animal): void => {
-  if (!isFarmerView.value && !isAuthenticated.value) {
+  console.log('🔍 Opening contact modal...');
+  console.log('   isAuthenticated:', isAuthenticated.value);
+  console.log('   isFarmerView:', isFarmerView.value);
+  console.log('   currentUserForModal:', currentUserForModal.value);
+  
+  // Check if user is authenticated
+  if (!isAuthenticated.value) {
     showToastNotification('Please sign in to contact farmers');
     return;
   }
+  
+  // Check if user has complete profile (currentUserForModal exists)
+  if (!currentUserForModal.value) {
+    showToastNotification('Please complete your profile to contact farmers');
+    return;
+  }
+  
+  // Farmers cannot contact themselves
+  if (isFarmerView.value && animal.farmer.id === currentUserId.value) {
+    showToastNotification('You cannot contact yourself');
+    return;
+  }
+  
+  console.log('✅ Opening contact modal for animal:', animal.id);
   selectedAnimalForContact.value = animal;
   isContactModalOpen.value = true;
 };
@@ -952,9 +971,14 @@ const closeContactModal = (): void => {
   selectedAnimalForContact.value = null;
 };
 
-const sendMessage = (messageData: MessageData): void => {
-  showToastNotification(`Message sent to ${selectedAnimalForContact.value?.farmer.farmName || selectedAnimalForContact.value?.farmer.name} via ${messageData.contactMethod}`);
+// FIXED: Handle message sent from ContactFarmerModal
+const handleMessageSent = (conversationId: string): void => {
+  console.log('✅ Message sent successfully, conversation ID:', conversationId);
+  showToastNotification('Message sent successfully! Opening conversation...');
   closeContactModal();
+  
+  // The ContactFarmerModal already handles navigation to the messages page
+  // So we don't need to do anything else here
 };
 
 const contactFarmerFromModal = (contactInfo: string): void => {

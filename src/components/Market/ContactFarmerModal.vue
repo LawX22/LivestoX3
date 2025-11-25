@@ -1,3 +1,4 @@
+<!-- ContactFarmerModal.vue - WITH MESSAGING INTEGRATION - FIXED -->
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click="$emit('close')">
     <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300" @click.stop>
@@ -12,10 +13,10 @@
             </div>
             <div>
               <h3 class="font-bold">Contact Farmer</h3>
-              <p class="text-green-100 text-xs opacity-90">Send message</p>
+              <p class="text-green-100 text-xs opacity-90">Send message via chat</p>
             </div>
           </div>
-          <button @click="$emit('close')" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+          <button @click="$emit('close')" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -56,12 +57,12 @@
 
         <!-- Message Type Selection -->
         <div class="mb-4">
-          <label class="block text-xs font-semibold text-gray-700 mb-2">Message type:</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-2 cursor-default">Message type:</label>
           <div class="grid grid-cols-2 gap-2 mb-3">
             <button 
               @click="messageType = 'template'"
               :class="[
-                'p-2 rounded-lg border-2 transition-all font-semibold text-xs',
+                'p-2 rounded-lg border-2 transition-all font-semibold text-xs cursor-pointer',
                 messageType === 'template' 
                   ? 'border-green-500 bg-green-50 text-green-700' 
                   : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -77,7 +78,7 @@
             <button 
               @click="messageType = 'custom'"
               :class="[
-                'p-2 rounded-lg border-2 transition-all font-semibold text-xs',
+                'p-2 rounded-lg border-2 transition-all font-semibold text-xs cursor-pointer',
                 messageType === 'custom' 
                   ? 'border-blue-500 bg-blue-50 text-blue-700' 
                   : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
@@ -95,10 +96,10 @@
 
         <!-- Template Messages -->
         <div v-if="messageType === 'template'" class="mb-4">
-          <label class="block text-xs font-semibold text-gray-700 mb-2">Choose template:</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-2 cursor-default">Choose template:</label>
           <select 
             v-model="selectedTemplate"
-            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-xs bg-white"
+            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-xs bg-white cursor-pointer"
           >
             <option :value="null" disabled>Select a message template...</option>
             <option 
@@ -106,20 +107,20 @@
               :key="template.id"
               :value="template"
             >
-              {{ template.title }} - {{ template.preview.substring(0, 40) }}...
+              {{ template.title }}
             </option>
           </select>
           
           <!-- Template Preview -->
           <div v-if="selectedTemplate" class="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Preview:</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1 cursor-default">Preview:</label>
             <div class="text-xs text-gray-800 whitespace-pre-line max-h-20 overflow-y-auto">{{ generateTemplateMessage(selectedTemplate) }}</div>
           </div>
         </div>
 
         <!-- Custom Message -->
         <div v-if="messageType === 'custom'" class="mb-4">
-          <label class="block text-xs font-semibold text-gray-700 mb-2">Your message:</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-2 cursor-default">Your message:</label>
           <textarea 
             v-model="customMessage" 
             class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 resize-none text-xs"
@@ -128,38 +129,45 @@
             maxlength="300"
           ></textarea>
           <div class="flex justify-between items-center mt-1">
-            <div class="text-xs text-gray-500">{{ customMessage.length }}/300</div>
+            <div class="text-xs text-gray-500 cursor-default">{{ customMessage.length }}/300</div>
             <button 
               @click="addAnimalDetails"
-              class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+              class="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
             >
               + Add details
             </button>
           </div>
         </div>
 
+        <!-- Error Message -->
+        <div v-if="error" class="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-xs text-red-700">{{ error }}</p>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex gap-2">
           <button 
             @click="$emit('close')" 
-            class="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold transition-colors text-sm"
+            class="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold transition-colors text-sm cursor-pointer"
+            :disabled="sending"
           >
             Cancel
           </button>
           <button 
             @click="sendMessage" 
-            :disabled="!canSendMessage"
+            :disabled="!canSendMessage || sending"
             :class="[
               'flex-1 px-3 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1 text-sm',
-              canSendMessage
-                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
+              canSendMessage && !sending
+                ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             ]"
           >
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="sending" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+            <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            Send Message
+            {{ sending ? 'Sending...' : 'Send Message' }}
           </button>
         </div>
       </div>
@@ -169,95 +177,75 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { MessagesService } from '@/services/messagesService';
 
-// Types
-interface Animal {
-  id: string;
-  title: string;
-  type: string;
-  breed: string;
-  weight: number;
-  quantity: number;
-  age: string;
-  gender: string;
-  status: string;
-  healthStatus: string[];
-  price: number;
-  deliveryOptions: string[];
-  images: string[];
-  description: string;
-  datePosted: string;
-  farmer: {
-    id: string;
-    name: string;
-    farmName: string;
-    contact: string;
-    email: string;
-    address: string;
-    avatar: string;
-  };
-  location: string;
-  isAuction: boolean;
-}
-
-interface ServiceUser {
-  name: string;
-  email: string;
-  role: string;
-}
+// Import types from shared types file
+import type { Animal, CurrentUser } from '@/types/animalTypes';
 
 interface MessageTemplate {
   id: string;
   title: string;
-  preview: string;
   template: string;
 }
 
 const props = defineProps<{
   animal: Animal;
-  currentUser: ServiceUser | null;
+  currentUser: CurrentUser | null;
 }>();
 
 const emit = defineEmits<{
   close: [];
-  send: [messageData: { message: string; contactMethod: string }];
+  messageSent: [conversationId: string];
 }>();
+
+const router = useRouter();
 
 // Reactive data
 const messageType = ref<'template' | 'custom'>('template');
 const selectedTemplate = ref<MessageTemplate | null>(null);
 const customMessage = ref<string>('');
+const sending = ref(false);
+const error = ref<string>('');
 
 // Message templates
 const messageTemplates = ref<MessageTemplate[]>([
   {
     id: 'inquiry',
     title: 'General Inquiry',
-    preview: 'Hi! I\'m interested in your livestock listing...',
-    template: 'Hi! I\'m interested in your {animalType} ({animalBreed}) listing for ₱{price}. Is it still available? I would like to know more details.\n\nThank you!\n{buyerName}'
+    template: 'Hi! I\'m interested in your {animalType} ({animalBreed}) listing for ₱{price}. Is it still available? I would like to know more details about the animal.\n\nThank you!\n{buyerName}'
   },
   {
     id: 'price',
     title: 'Price Discussion',
-    preview: 'Hello! I saw your listing and would like to discuss...',
-    template: 'Hello! I saw your {animalType} ({animalBreed}) listing for ₱{price}. I\'m very interested. Can we discuss the price?\n\nBest regards,\n{buyerName}'
+    template: 'Hello! I saw your {animalType} ({animalBreed}) listing for ₱{price}. I\'m very interested in purchasing. Can we discuss the price and payment terms?\n\nBest regards,\n{buyerName}'
   },
   {
     id: 'bulk',
     title: 'Bulk Purchase',
-    preview: 'Good day! I\'m interested in purchasing multiple...',
-    template: 'Good day! I\'m interested in purchasing multiple {animalType}s. I saw your {animalBreed} at ₱{price} each. Do you have more available?\n\nThanks!\n{buyerName}'
+    template: 'Good day! I\'m interested in purchasing multiple {animalType}s. I saw your {animalBreed} listed at ₱{price} each. Do you have more available? I\'m looking to buy in bulk.\n\nThanks!\n{buyerName}'
   },
   {
     id: 'viewing',
     title: 'Schedule Viewing',
-    preview: 'Hello! I would like to schedule a viewing...',
-    template: 'Hello! I would like to schedule a viewing for your {animalType} ({animalBreed}) listed at ₱{price}. When would be a good time?\n\nBest regards,\n{buyerName}'
+    template: 'Hello! I would like to schedule a farm visit to view your {animalType} ({animalBreed}) listed at ₱{price}. When would be a convenient time for you?\n\nBest regards,\n{buyerName}'
+  },
+  {
+    id: 'delivery',
+    title: 'Delivery Inquiry',
+    template: 'Hi! I\'m interested in your {animalType} ({animalBreed}) for ₱{price}. I\'m located in {buyerLocation}. Do you offer delivery services? What would be the delivery cost?\n\nThank you!\n{buyerName}'
+  },
+  {
+    id: 'health',
+    title: 'Health & Documentation',
+    template: 'Good day! I\'m interested in your {animalType} ({animalBreed}). Could you provide more information about its health status, vaccination records, and any available documentation?\n\nThank you,\n{buyerName}'
   }
 ]);
 
 // Computed properties
 const canSendMessage = computed(() => {
+  if (!props.currentUser) return false;
+  
   if (messageType.value === 'template') {
     return selectedTemplate.value !== null;
   } else {
@@ -279,25 +267,71 @@ const generateTemplateMessage = (template: MessageTemplate): string => {
     .replace('{animalType}', props.animal.type)
     .replace('{animalBreed}', props.animal.breed)
     .replace('{price}', props.animal.price.toLocaleString())
-    .replace('{buyerName}', props.currentUser?.name || 'Interested Buyer');
+    .replace('{buyerName}', props.currentUser?.name || 'Interested Buyer')
+    .replace('{buyerLocation}', props.currentUser?.address || 'my location');
 };
 
 const addAnimalDetails = () => {
-  const animalInfo = `\n\nDetails:\n- Type: ${props.animal.type}\n- Breed: ${props.animal.breed}\n- Price: ₱${props.animal.price.toLocaleString()}\n- Location: ${props.animal.location}`;
+  const animalInfo = `\n\nDetails:\n- Type: ${props.animal.type}\n- Breed: ${props.animal.breed}\n- Price: ₱${props.animal.price.toLocaleString()}\n- Location: ${props.animal.location}\n- Age: ${props.animal.age}`;
   if (customMessage.value.length + animalInfo.length <= 300) {
     customMessage.value += animalInfo;
   }
 };
 
-const sendMessage = () => {
-  if (!canSendMessage.value) return;
+const sendMessage = async () => {
+  if (!canSendMessage.value || sending.value) return;
   
-  const messageData = {
-    message: finalMessage.value,
-    contactMethod: 'SMS'
-  };
-  
-  emit('send', messageData);
+  if (!props.currentUser) {
+    error.value = 'You must be logged in to send messages';
+    return;
+  }
+
+  // Don't allow messaging yourself
+  if (props.currentUser.id === props.animal.farmer.id) {
+    error.value = 'You cannot message yourself';
+    return;
+  }
+
+  sending.value = true;
+  error.value = '';
+
+  try {
+    console.log('📤 Creating conversation with farmer...');
+    console.log('   Farmer ID:', props.animal.farmer.id);
+    console.log('   Listing ID:', props.animal.id);
+    console.log('   Message:', finalMessage.value);
+
+    // Create conversation with the farmer about this listing
+    const result = await MessagesService.startConversationAboutListing(
+      props.animal.farmer.id,
+      props.animal.id,
+      finalMessage.value
+    );
+
+    if (result.success && result.conversationId) {
+      console.log('✅ Conversation created:', result.conversationId);
+      
+      // Emit success event
+      emit('messageSent', result.conversationId);
+      
+      // Close modal
+      emit('close');
+      
+      // Navigate to messages page with this conversation
+      router.push({
+        path: '/messages',
+        query: { conversationId: result.conversationId }
+      });
+    } else {
+      console.error('❌ Failed to create conversation:', result.error);
+      error.value = result.error || 'Failed to send message. Please try again.';
+    }
+  } catch (err) {
+    console.error('💥 Error sending message:', err);
+    error.value = 'An unexpected error occurred. Please try again.';
+  } finally {
+    sending.value = false;
+  }
 };
 
 // Initialize with first template selected
