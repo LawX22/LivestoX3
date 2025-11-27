@@ -1,4 +1,4 @@
-<!-- Marketplace.vue - FIXED DYNAMIC HEADER (NO FLICKERING) -->
+<!-- Marketplace.vue -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -97,7 +97,7 @@
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
                 <span class="text-sm font-semibold truncate ml-2">Ready to become a Farmer?</span>
-                <button @click="showToastNotification('This would navigate to upgrade form')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+                <button @click="router.push('/upgradeForm')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-red-600 hover:to-red-700 transition-all duration-200">
                   Upgrade Account
                 </button>
               </div>
