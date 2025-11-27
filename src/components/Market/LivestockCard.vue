@@ -1,4 +1,4 @@
-<!-- LivestockCard.vue -->
+<!-- LivestockCard.vue | marketplace -->
 <template>
   <div
     class="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg border border-white/60 hover:border-green-300/60 transition-all duration-300 bg-white/95 backdrop-blur-sm flex flex-col h-full group cursor-pointer">
@@ -111,20 +111,21 @@
 
     <!-- Redesigned Card Content -->
     <div class="p-4 flex-1 flex flex-col">
-      <!-- Header with Title and Date/Location - FIXED HEIGHT -->
-      <div class="flex justify-between items-start mb-3 h-[52px]">
-        <!-- Left Side - Title -->
-        <div class="flex-1 pr-3">
-          <h3 class="font-bold text-sm text-emerald-700 mb-1 leading-tight line-clamp-2 cursor-pointer hover:text-emerald-900 transition-colors duration-200">
+      <!-- Header with Title and Date/Location - FIXED -->
+      <div class="flex justify-between items-start mb-3 min-h-[52px]">
+        <!-- Left Side - Title with ellipsis -->
+        <div class="flex-1 pr-3 overflow-hidden">
+          <h3 class="font-bold text-sm text-emerald-700 leading-tight line-clamp-2 cursor-pointer hover:text-emerald-900 transition-colors duration-200"
+            :title="animal.title">
             {{ animal.title }}
           </h3>
         </div>
 
-        <!-- Right Side - Date and Location -->
-        <div class="flex flex-col items-end text-right min-w-0">
+        <!-- Right Side - Date and Location - Fixed Width -->
+        <div class="flex flex-col items-end text-right flex-shrink-0 w-[110px]">
           <!-- Date -->
-          <div class="text-xs text-gray-500 flex items-center gap-1 mb-1 cursor-text">
-            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="text-xs text-gray-500 flex items-center gap-1 mb-1 cursor-text whitespace-nowrap">
+            <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -133,20 +134,20 @@
 
           <!-- Location -->
           <div class="text-xs text-gray-500 flex items-center gap-1 cursor-text">
-            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span class="truncate max-w-[100px]">{{ animal.location }}</span>
+            <span class="truncate" :title="animal.location">{{ animal.location }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Description - FIXED HEIGHT -->
-      <div class="mb-3 h-[32px]">
-        <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed cursor-text">
+      <!-- Description - FIXED with ellipsis -->
+      <div class="mb-3 min-h-[32px]">
+        <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed cursor-text" :title="animal.description || 'No description available'">
           {{ animal.description || 'No description available' }}
         </p>
       </div>

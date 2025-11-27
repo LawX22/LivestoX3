@@ -1,4 +1,4 @@
-<!-- CreateListingModal.vue -->
+<!-- CreateListingModal.vue - FIXED VERSION -->
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden transform transition-all duration-300">
@@ -410,20 +410,116 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  Delivery Options
+                  Delivery Options *
                 </h3>
 
-                <div class="space-y-2">
-                  <label v-for="option in deliveryOptions" :key="option.value"
-                    class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200">
-                    <input type="checkbox" :value="option.value" v-model="form.deliveryOptions"
-                      class="w-3 h-3 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1 cursor-pointer" />
-                    <div>
-                      <span class="text-xs font-medium text-gray-700 block">{{ option.label }}</span>
-                      <p class="text-xs text-gray-500 mt-0.5">{{ option.description }}</p>
+                <div class="space-y-3">
+                  <!-- Buyer Pickup Option -->
+                  <div :class="`border-2 rounded-lg p-3 transition-all ${
+                    form.deliveryOptions.some(opt => opt.startsWith('pickup:')) ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-white'
+                  }`">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                      <input type="checkbox" :checked="form.deliveryOptions.some(opt => opt.startsWith('pickup:'))" @change="togglePickup"
+                        class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1 cursor-pointer" />
+                      <div class="flex-1">
+                        <span class="text-sm font-semibold text-gray-900 block">Buyer Pickup</span>
+                        <p class="text-xs text-gray-600 mt-0.5">Buyer arranges pickup from farm location</p>
+                      </div>
+                    </label>
+
+                    <!-- Pickup Schedule (shown when pickup is selected) -->
+                    <div v-if="form.deliveryOptions.some(opt => opt.startsWith('pickup:'))" class="mt-3 pl-6 space-y-3 border-t border-orange-200 pt-3">
+                      <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2">
+                          Available Days *
+                          <span class="text-gray-500 font-normal">(Select all available days)</span>
+                        </label>
+                        <div class="grid grid-cols-4 gap-2">
+                          <label v-for="day in weekDays" :key="day"
+                            :class="`flex items-center justify-center gap-1 cursor-pointer p-2 rounded-lg border-2 transition-all text-xs font-medium ${
+                              pickupSchedule.availableDays.includes(day) 
+                                ? 'border-orange-500 bg-orange-100 text-orange-800' 
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                            }`">
+                            <input type="checkbox" :value="day" v-model="pickupSchedule.availableDays"
+                              class="sr-only" />
+                            {{ day }}
+                          </label>
+                        </div>
+                        <p v-if="errors.pickupDays" class="text-red-500 text-xs mt-1">{{ errors.pickupDays }}</p>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-semibold text-gray-700 mb-2">Start Time *</label>
+                          <input v-model="pickupSchedule.startTime" type="time"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                          <p v-if="errors.pickupStartTime" class="text-red-500 text-xs mt-1">{{ errors.pickupStartTime }}</p>
+                        </div>
+
+                        <div>
+                          <label class="block text-xs font-semibold text-gray-700 mb-2">End Time *</label>
+                          <input v-model="pickupSchedule.endTime" type="time"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                          <p v-if="errors.pickupEndTime" class="text-red-500 text-xs mt-1">{{ errors.pickupEndTime }}</p>
+                        </div>
+                      </div>
+
+                      <!-- Pickup Schedule Summary -->
+                      <div v-if="pickupSchedule.availableDays.length > 0 && pickupSchedule.startTime && pickupSchedule.endTime"
+                        class="mt-2 p-2 bg-orange-100 border border-orange-300 rounded-lg">
+                        <p class="text-xs font-medium text-orange-900">
+                          📅 Available: {{ pickupSchedule.availableDays.join(', ') }}
+                          <br>
+                          🕐 Time: {{ formatTime(pickupSchedule.startTime) }} - {{ formatTime(pickupSchedule.endTime) }}
+                        </p>
+                      </div>
                     </div>
-                  </label>
+                  </div>
+
+                  <!-- Farm Delivery Option -->
+                  <div :class="`border-2 rounded-lg p-3 transition-all ${
+                    form.deliveryOptions.some(opt => opt.startsWith('delivery:')) ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-white'
+                  }`">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                      <input type="checkbox" :checked="form.deliveryOptions.some(opt => opt.startsWith('delivery:'))" @change="toggleDelivery"
+                        class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1 cursor-pointer" />
+                      <div class="flex-1">
+                        <span class="text-sm font-semibold text-gray-900 block">Farm Delivery</span>
+                        <p class="text-xs text-gray-600 mt-0.5">We deliver to buyer location</p>
+                      </div>
+                    </label>
+
+                    <!-- Delivery Fee (shown when delivery is selected) -->
+                    <div v-if="form.deliveryOptions.some(opt => opt.startsWith('delivery:'))" class="mt-3 pl-6 space-y-3 border-t border-orange-200 pt-3">
+                      <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2">
+                          Delivery Fee (₱) *
+                          <span class="text-gray-500 font-normal">(Per delivery or negotiable)</span>
+                        </label>
+                        <input v-model.number="deliveryFee" type="number" min="0" step="50"
+                          :class="`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                            errors.deliveryFee ? 'border-red-300' : 'border-gray-300'
+                          }`"
+                          placeholder="e.g., 500" />
+                        <p v-if="errors.deliveryFee" class="text-red-500 text-xs mt-1">{{ errors.deliveryFee }}</p>
+                        <p class="text-xs text-gray-500 mt-1">💡 Tip: Set to 0 for negotiable or free delivery</p>
+                      </div>
+
+                      <!-- Delivery Fee Summary -->
+                      <div v-if="deliveryFee !== null && deliveryFee !== undefined"
+                        class="mt-2 p-2 bg-orange-100 border border-orange-300 rounded-lg">
+                        <p class="text-xs font-medium text-orange-900">
+                          🚚 Delivery Fee: 
+                          <span v-if="deliveryFee === 0" class="font-bold">Negotiable / Free</span>
+                          <span v-else class="font-bold">₱{{ deliveryFee.toLocaleString() }}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <p v-if="errors.deliveryOptions" class="text-red-500 text-xs mt-2">{{ errors.deliveryOptions }}</p>
               </div>
 
               <!-- Payment Methods -->
@@ -512,7 +608,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { LivestockService } from '@/services/livestockService'
 import { ProfileService } from '@/services/profileService'
 import { supabase } from '@/supabase'  
@@ -524,17 +620,17 @@ interface FormErrors {
   [key: string]: string
 }
 
-interface DeliveryOption {
-  value: string
-  label: string
-  description: string
-}
-
 interface PaymentMethodOption {
   value: string
   label: string
   description: string
   available: boolean
+}
+
+interface PickupSchedule {
+  availableDays: string[]
+  startTime: string
+  endTime: string
 }
 
 const props = defineProps<{
@@ -556,6 +652,17 @@ const imageFiles = ref<File[]>([])
 const userAddresses = ref<Address[]>([])
 const loadingAddresses = ref(false)
 const customLocation = ref('')
+const deliveryFee = ref<number>(0)
+
+// Pickup schedule
+const pickupSchedule = reactive<PickupSchedule>({
+  availableDays: [],
+  startTime: '',
+  endTime: ''
+})
+
+// Week days for pickup
+const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
 const form = reactive<CreateListingForm>({
   title: '',
@@ -588,24 +695,6 @@ const healthOptions: readonly string[] = [
   'Lactating',
   'Disease Free',
   'Quarantined'
-] as const
-
-const deliveryOptions: readonly DeliveryOption[] = [
-  {
-    value: 'pickup',
-    label: 'Buyer Pickup',
-    description: 'Buyer arranges pickup from farm location'
-  },
-  {
-    value: 'delivery',
-    label: 'Farm Delivery',
-    description: 'We deliver to buyer location (additional fees may apply)'
-  },
-  {
-    value: 'meetup',
-    label: 'Meetup Point',
-    description: 'Meet at agreed location between farm and buyer'
-  }
 ] as const
 
 const paymentMethodOptions: readonly PaymentMethodOption[] = [
@@ -672,9 +761,16 @@ const breedsByAnimalType: Record<string, readonly string[]> = {
   ] as const
 }
 
-// Load user addresses when modal opens
+// Load user addresses on component mount
+onMounted(async () => {
+  console.log('🚀 Component mounted, loading addresses...')
+  await loadUserAddresses()
+})
+
+// ALSO load addresses when modal opens (double check)
 watch(() => props.isOpen, async (newValue) => {
   if (newValue) {
+    console.log('🔄 Modal opened, reloading addresses...')
     await loadUserAddresses()
   }
 })
@@ -683,19 +779,37 @@ watch(() => props.isOpen, async (newValue) => {
 const loadUserAddresses = async (): Promise<void> => {
   try {
     loadingAddresses.value = true
-    const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
-      console.error('No authenticated user')
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('❌ No authenticated user:', authError)
+      userAddresses.value = []
       return
     }
 
-    console.log('📍 Loading user addresses...')
+    console.log('👤 Loading addresses for user:', user.id)
+    
+    // Fetch addresses using ProfileService
     const addresses = await ProfileService.getAddresses(user.id)
+    
     userAddresses.value = addresses
-    console.log(`✅ Loaded ${addresses.length} addresses`)
+    console.log(`✅ Successfully loaded ${addresses.length} addresses:`, addresses)
+    
+    // Log each address for debugging
+    addresses.forEach((addr, idx) => {
+      console.log(`   📍 Address ${idx + 1}:`, {
+        id: addr.id,
+        label: addr.label,
+        city: addr.city,
+        province: addr.province
+      })
+    })
+    
   } catch (error) {
-    console.error('Error loading addresses:', error)
+    console.error('💥 Error loading addresses:', error)
+    userAddresses.value = []
   } finally {
     loadingAddresses.value = false
   }
@@ -713,6 +827,47 @@ const formatAddress = (address: Address): string => {
 const handleCustomLocation = (): void => {
   if (customLocation.value.trim()) {
     form.location = customLocation.value.trim()
+  }
+}
+
+const formatTime = (time: string): string => {
+  if (!time) return ''
+  const [hours, minutes] = time.split(':')
+  const hour = parseInt(hours)
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${minutes} ${period}`
+}
+
+const togglePickup = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  if (target.checked) {
+    // Add placeholder, will be replaced when validated
+    if (!form.deliveryOptions.some(opt => opt.startsWith('pickup:'))) {
+      form.deliveryOptions.push('pickup:')
+    }
+  } else {
+    // Remove all pickup options
+    form.deliveryOptions = form.deliveryOptions.filter(opt => !opt.startsWith('pickup:'))
+    // Reset pickup schedule
+    pickupSchedule.availableDays = []
+    pickupSchedule.startTime = ''
+    pickupSchedule.endTime = ''
+  }
+}
+
+const toggleDelivery = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  if (target.checked) {
+    // Add placeholder, will be replaced when validated
+    if (!form.deliveryOptions.some(opt => opt.startsWith('delivery:'))) {
+      form.deliveryOptions.push('delivery:')
+    }
+  } else {
+    // Remove all delivery options
+    form.deliveryOptions = form.deliveryOptions.filter(opt => !opt.startsWith('delivery:'))
+    // Reset delivery fee
+    deliveryFee.value = 0
   }
 }
 
@@ -788,6 +943,47 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
+  if (form.deliveryOptions.length === 0) {
+    errors.value.deliveryOptions = 'Please select at least one delivery option'
+    isValid = false
+  }
+
+  // Validate pickup schedule if pickup is selected
+  if (form.deliveryOptions.some(opt => opt.startsWith('pickup:'))) {
+    if (pickupSchedule.availableDays.length === 0) {
+      errors.value.pickupDays = 'Please select at least one available day'
+      isValid = false
+    }
+
+    if (!pickupSchedule.startTime) {
+      errors.value.pickupStartTime = 'Start time is required'
+      isValid = false
+    }
+
+    if (!pickupSchedule.endTime) {
+      errors.value.pickupEndTime = 'End time is required'
+      isValid = false
+    }
+
+    if (pickupSchedule.startTime && pickupSchedule.endTime && pickupSchedule.startTime >= pickupSchedule.endTime) {
+      errors.value.pickupEndTime = 'End time must be after start time'
+      isValid = false
+    }
+  }
+
+  // Validate delivery fee if delivery is selected
+  if (form.deliveryOptions.some(opt => opt.startsWith('delivery:'))) {
+    if (deliveryFee.value === null || deliveryFee.value === undefined) {
+      errors.value.deliveryFee = 'Delivery fee is required (set to 0 for negotiable)'
+      isValid = false
+    }
+
+    if (deliveryFee.value < 0) {
+      errors.value.deliveryFee = 'Delivery fee cannot be negative'
+      isValid = false
+    }
+  }
+
   if (form.paymentMethods.length === 0) {
     errors.value.paymentMethods = 'Please select at least one payment method'
     isValid = false
@@ -831,8 +1027,29 @@ const handleSubmit = async (): Promise<void> => {
       console.log('✅ Images uploaded successfully:', uploadResult.urls)
     }
 
-    // Create the listing with image URLs
-    const result = await LivestockService.createListing(form)
+    // Build delivery options array with encoded data
+    const deliveryOptions: string[] = []
+    
+    if (form.deliveryOptions.some(opt => opt.startsWith('pickup:'))) {
+      const pickupData = `pickup:${pickupSchedule.availableDays.join('|')}:${pickupSchedule.startTime}:${pickupSchedule.endTime}`
+      deliveryOptions.push(pickupData)
+    }
+    
+    if (form.deliveryOptions.some(opt => opt.startsWith('delivery:'))) {
+      const deliveryData = `delivery:${deliveryFee.value}`
+      deliveryOptions.push(deliveryData)
+    }
+
+    // Create listing data with encoded delivery options
+    const listingData: CreateListingForm = {
+      ...form,
+      deliveryOptions
+    }
+
+    console.log('📦 Listing data:', listingData)
+
+    // Create the listing
+    const result = await LivestockService.createListing(listingData)
 
     if (result.success) {
       console.log('✅ Listing created successfully:', result.data)
@@ -892,6 +1109,16 @@ const resetForm = (): void => {
     images: [],
     description: ''
   })
+  
+  // Reset pickup schedule
+  Object.assign(pickupSchedule, {
+    availableDays: [],
+    startTime: '',
+    endTime: ''
+  })
+
+  // Reset delivery fee
+  deliveryFee.value = 0
   
   imageFiles.value = []
   errors.value = {}
@@ -957,11 +1184,4 @@ const nextImage = (): void => {
     ? selectedImageIndex.value + 1
     : 0
 }
-
-// Initialize on mount
-onMounted(() => {
-  if (props.isOpen) {
-    loadUserAddresses()
-  }
-})
 </script>

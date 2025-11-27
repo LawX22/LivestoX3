@@ -1,4 +1,4 @@
-<!-- NavBar.vue - OPTIMIZED WITH TAB VISIBILITY DETECTION -->
+<!-- NavBar.vue - FIXED MESSAGE INDICATOR VERSION -->
 <template>
   <!-- Background Pattern Overlay for the navbar area -->
   <div class="fixed top-0 left-0 right-0 z-40 h-20 opacity-5 pointer-events-none">
@@ -17,8 +17,7 @@
     <div class="absolute top-4 left-20 w-3 h-3 bg-green-300 rounded-full opacity-20 animate-bounce"></div>
     <div class="absolute top-8 right-32 w-2 h-2 bg-emerald-300 rounded-full opacity-30 animate-pulse"></div>
     <div class="absolute top-12 left-1/3 w-4 h-4 bg-teal-300 rounded-full opacity-15 animate-ping"></div>
-    <div class="absolute top-6 right-20 w-2 h-2 bg-green-400 rounded-full opacity-25 animate-bounce"
-      style="animation-delay: 1s"></div>
+    <div class="absolute top-6 right-20 w-2 h-2 bg-green-400 rounded-full opacity-25 animate-bounce"></div>
   </div>
 
   <nav
@@ -174,7 +173,7 @@
     <div class="flex items-center gap-3 relative" ref="dropdownRef">
       <!-- Cart, Notification and Message Icons (only shown when logged in) -->
       <template v-if="isLoggedIn && currentUser">
-        <!-- Cart Button -->
+        <!-- Cart Button with Enhanced Indicator -->
         <div class="relative">
           <router-link to="/carts"
             class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 flex items-center justify-center cursor-pointer">
@@ -185,15 +184,19 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l-2.5-5m0 0l-.5-3H2m8 14a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z" />
               </svg>
+              
+              <!-- Enhanced Cart Indicator -->
               <span v-if="cartCount > 0"
-                class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ cartCount }}
+                class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 via-pink-500 to-rose-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                <span class="relative z-10">{{ cartCount > 99 ? '99+' : cartCount }}</span>
+                <!-- Pulsing glow effect -->
+                <span class="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75"></span>
               </span>
             </div>
           </router-link>
         </div>
         
-        <!-- Notification Dropdown -->
+        <!-- Notification Dropdown with Enhanced Indicator -->
         <div class="relative" ref="notificationRef">
           <button @click="toggleNotificationDropdown"
             class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 cursor-pointer">
@@ -204,9 +207,17 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
+              
+              <!-- Enhanced Notification Indicator with Dot Style -->
               <span v-if="unreadNotifications > 0"
-                class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ unreadNotifications }}
+                class="absolute -top-0.5 -right-0.5 flex items-center justify-center">
+                <!-- Main badge -->
+                <span class="relative min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg z-10">
+                  <span class="relative z-10">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+                </span>
+                <!-- Ripple effect -->
+                <span class="absolute inset-0 rounded-full bg-orange-400 animate-ping opacity-60"></span>
+                <span class="absolute inset-0 rounded-full bg-orange-300 animate-pulse opacity-40"></span>
               </span>
             </div>
           </button>
@@ -214,7 +225,7 @@
           <!-- Notification Dropdown Content -->
           <div v-show="showNotificationDropdown"
             class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden transform transition-all duration-300 ease-out">
-            <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+            <div class="bg-gradient-to-r from-orange-600 to-amber-600 px-6 py-4">
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Notifications
@@ -240,7 +251,7 @@
 
             <div class="bg-gray-50">
               <router-link to="/notifications"
-                class="block px-6 py-3 text-sm text-center font-medium text-green-600 hover:text-green-700 transition-all duration-300 border-t border-gray-200"
+                class="block px-6 py-3 text-sm text-center font-medium text-orange-600 hover:text-orange-700 transition-all duration-300 border-t border-gray-200"
                 @click="closeNotificationDropdown">
                 See all notifications →
               </router-link>
@@ -248,7 +259,7 @@
           </div>
         </div>
 
-        <!-- Messages Dropdown -->
+        <!-- Messages Dropdown with Enhanced Indicator -->
         <div class="relative" ref="messageRef">
           <button @click="toggleMessageDropdown"
             class="relative p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 group border border-transparent hover:border-green-200 cursor-pointer">
@@ -259,17 +270,27 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
+              
+              <!-- Enhanced Message Indicator with Different Style -->
               <span v-if="unreadMessages > 0"
-                class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 ring-2 ring-white flex items-center justify-center text-xs font-bold text-white animate-pulse">
-                {{ unreadMessages }}
+                class="absolute -top-0.5 -right-0.5 flex items-center justify-center">
+                <!-- Main badge -->
+                <span class="relative min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg z-10">
+                  <span class="relative z-10">{{ unreadMessages > 99 ? '99+' : unreadMessages }}</span>
+                  <!-- Sparkle effect -->
+                  <span class="absolute inset-0 rounded-full bg-gradient-to-tr from-white/40 to-transparent opacity-50"></span>
+                </span>
+                <!-- Wave effect -->
+                <span class="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-60"></span>
+                <span class="absolute inset-0 rounded-full bg-cyan-300 animate-pulse opacity-40"></span>
               </span>
             </div>
           </button>
 
           <!-- Messages Dropdown Content -->
           <div v-show="showMessageDropdown"
-            class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden transform transition-all duration-300 ease-out">
-            <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+            class="absolute right-0 mt-3 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden transform transition-all duration-300 ease-out">
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
               <h3 class="text-base font-bold text-white flex items-center">
                 <div class="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
                 Messages
@@ -279,9 +300,78 @@
               </h3>
             </div>
 
-            <div class="max-h-80 overflow-y-auto">
+            <div class="max-h-96 overflow-y-auto">
+              <!-- Loading State -->
+              <div v-if="loadingMessages" class="space-y-2 p-3">
+                <div v-for="i in 3" :key="i" class="p-3 animate-pulse">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                      <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                      <div class="h-2 bg-gray-100 rounded w-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conversations List -->
+              <div v-else-if="recentConversations.length > 0" class="divide-y divide-gray-100">
+                <router-link 
+                  v-for="conversation in recentConversations" 
+                  :key="conversation.id"
+                  :to="`/messages?conversation=${conversation.id}`"
+                  @click="closeMessageDropdown"
+                  class="flex items-center p-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all duration-200 cursor-pointer group"
+                  :class="{ 'bg-blue-50/50': conversation.unreadCount > 0 }">
+                  <div class="relative flex-shrink-0">
+                    <img 
+                      :src="getOtherUserAvatar(conversation)" 
+                      :alt="getOtherUserName(conversation)"
+                      class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" 
+                    />
+                    <div v-if="conversation.isOnline"
+                      class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 border-2 border-white rounded-full"></div>
+                    
+                    <!-- Unread badge on avatar -->
+                    <span v-if="conversation.unreadCount > 0"
+                      class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-lg">
+                      {{ conversation.unreadCount > 9 ? '9+' : conversation.unreadCount }}
+                    </span>
+                  </div>
+
+                  <div class="ml-3 flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-1">
+                      <p class="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-700 transition-colors"
+                        :class="{ 'text-blue-700': conversation.unreadCount > 0 }">
+                        {{ getOtherUserName(conversation) }}
+                      </p>
+                      <span class="text-xs text-gray-400 ml-2 flex-shrink-0">
+                        {{ formatMessageTime(conversation.lastMessage?.createdAt) }}
+                      </span>
+                    </div>
+
+                    <p class="text-xs text-gray-600 truncate mb-1"
+                      :class="{ 'font-semibold text-gray-800': conversation.unreadCount > 0 }">
+                      {{ conversation.lastMessage?.content || 'No messages yet' }}
+                    </p>
+
+                    <!-- Listing reference if exists -->
+                    <p v-if="conversation.listing" class="text-xs text-blue-600 truncate font-medium">
+                      RE: {{ conversation.listing.name }}
+                    </p>
+                  </div>
+
+                  <!-- Unread indicator arrow -->
+                  <div v-if="conversation.unreadCount > 0" class="ml-2 flex-shrink-0">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </router-link>
+              </div>
+
               <!-- Empty State -->
-              <div class="px-6 py-8 text-center">
+              <div v-else class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -289,13 +379,14 @@
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <p class="text-sm text-gray-500">No messages yet</p>
+                <p class="text-sm text-gray-500 mb-1">No messages yet</p>
+                <p class="text-xs text-gray-400">Start a conversation by contacting a farmer</p>
               </div>
             </div>
 
-            <div class="bg-gray-50">
+            <div class="bg-gray-50 border-t border-gray-200">
               <router-link to="/messages"
-                class="block px-6 py-3 text-sm text-center font-medium text-green-600 hover:text-green-700 transition-all duration-300 border-t border-gray-200"
+                class="block px-6 py-3 text-sm text-center font-medium text-blue-600 hover:text-blue-700 transition-all duration-300"
                 @click="closeMessageDropdown">
                 See all messages →
               </router-link>
@@ -552,7 +643,9 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
 import { NavBarService } from '@/services/navbarService';
+import { MessagesService } from '@/services/messagesService';
 import type { NavBarUser } from '@/services/navbarService';
+import type { Conversation } from '@/types/messages';
 
 const router = useRouter();
 const route = useRoute();
@@ -567,9 +660,14 @@ const cachedNavbarUser = NavBarService.getCachedNavBarData();
 
 // State - initialized with cached data for instant display
 const navbarUser = ref<NavBarUser | null>(cachedNavbarUser);
-const cartCount = ref(0);
-const unreadNotifications = ref(0);
-const unreadMessages = ref(0);
+
+// 🎨 Cart Count (keeping this as demo)
+const cartCount = ref(5);
+
+// 🆕 Messages State
+const conversations = ref<Conversation[]>([]);
+const loadingMessages = ref(false);
+const unreadNotifications = ref(12); // Keep this as demo for now
 
 // UI state
 const showDropdown = ref(false);
@@ -594,6 +692,24 @@ const currentUser = computed(() => {
   return navbarUser.value || cachedNavbarUser;
 });
 
+// 🆕 Computed for unread message count
+const unreadMessages = computed(() => {
+  return conversations.value.reduce((total, conv) => total + conv.unreadCount, 0);
+});
+
+// 🆕 Computed for recent conversations (top 5)
+const recentConversations = computed(() => {
+  return conversations.value
+    .sort((a, b) => {
+      // Sort by: 1) unread first, 2) most recent
+      if (a.unreadCount !== b.unreadCount) {
+        return b.unreadCount - a.unreadCount;
+      }
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    })
+    .slice(0, 5);
+});
+
 // Handle image errors
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement;
@@ -601,6 +717,100 @@ const handleImageError = (event: Event) => {
   if (navbarUser.value) {
     navbarUser.value.profilePicture = null;
   }
+};
+
+// 🆕 Helper functions for conversations
+const getOtherUser = (conversation: Conversation) => {
+  return conversation.users.find(user => user.id !== currentUser.value?.id) || conversation.users[0];
+};
+
+const getOtherUserName = (conversation: Conversation): string => {
+  const user = getOtherUser(conversation);
+  return user.name || 'Unknown User';
+};
+
+const getOtherUserAvatar = (conversation: Conversation): string => {
+  const user = getOtherUser(conversation);
+  return user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`;
+};
+
+const formatMessageTime = (date?: Date): string => {
+  if (!date) return '';
+  
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return 'Now';
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+// 🆕 Load conversations
+const loadConversations = async () => {
+  if (!currentUser.value?.id) return;
+
+  loadingMessages.value = true;
+  
+  try {
+    const result = await MessagesService.getConversations(currentUser.value.id);
+    
+    if (result.success && result.data) {
+      conversations.value = result.data;
+      console.log('✅ Loaded', conversations.value.length, 'conversations');
+      console.log('📊 Total unread messages:', unreadMessages.value);
+    } else {
+      console.error('❌ Failed to load conversations:', result.error);
+    }
+  } catch (error) {
+    console.error('❌ Error loading conversations:', error);
+  } finally {
+    loadingMessages.value = false;
+  }
+};
+
+// 🆕 Subscribe to conversation updates
+const subscribeToConversationUpdates = () => {
+  if (!currentUser.value?.id) return;
+
+  console.log('🔴 Subscribing to conversation updates in NavBar');
+
+  MessagesService.subscribeToConversations(
+    currentUser.value.id,
+    async (conversationId: string, message: any) => {
+      console.log('📨 New message in navbar subscription:', conversationId);
+      
+      // Find and update the conversation
+      const conv = conversations.value.find(c => c.id === conversationId);
+      if (conv) {
+        conv.lastMessage = message;
+        conv.updatedAt = message.createdAt;
+        
+        // Increment unread count if not from current user
+        if (message.senderId !== currentUser.value?.id) {
+          conv.unreadCount++;
+          console.log('📊 Incremented unread count for', conversationId, 'to', conv.unreadCount);
+        }
+        
+        // Re-sort conversations
+        conversations.value.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      } else {
+        // New conversation - reload all
+        await loadConversations();
+      }
+    },
+    async (conversationId: string) => {
+      console.log('🔄 Conversation updated in navbar:', conversationId);
+      // Reload specific conversation or all conversations
+      await loadConversations();
+    }
+  );
 };
 
 // 🆕 Handle visibility change
@@ -619,12 +829,14 @@ const handleVisibilityChange = async () => {
       const sessionValid = await authStore.refreshSession();
       
       if (sessionValid && authStore.userId) {
-        // Reload navbar data
+        // Reload navbar data and conversations
         await loadNavbarData(authStore.userId);
+        await loadConversations();
       } else {
         // Session expired
         console.warn('⚠️ NavBar: Session expired');
         navbarUser.value = null;
+        conversations.value = [];
         NavBarService.clearNavBarCache();
       }
     }
@@ -644,6 +856,7 @@ onMounted(async () => {
   // If we have cached user, start refreshing immediately (don't wait)
   if (cachedNavbarUser?.id) {
     loadNavbarData(cachedNavbarUser.id);
+    loadConversations(); // Load conversations in background
   }
   
   // Wait for auth to finish
@@ -652,11 +865,17 @@ onMounted(async () => {
   // If auth succeeded but we don't have cached data, load it now
   if (authStore.isAuthenticated && authStore.userId && !cachedNavbarUser) {
     await loadNavbarData(authStore.userId);
+    await loadConversations();
+    subscribeToConversationUpdates();
   } else if (!authStore.isAuthenticated && cachedNavbarUser) {
     // Session expired - clear cache
     console.log('⚠️ Session expired, clearing cache');
     NavBarService.clearNavBarCache();
     navbarUser.value = null;
+    conversations.value = [];
+  } else if (authStore.isAuthenticated && authStore.userId) {
+    // Subscribe to real-time updates
+    subscribeToConversationUpdates();
   }
   
   document.addEventListener("click", handleClickOutside);
@@ -667,18 +886,21 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
   document.removeEventListener("keydown", handleKeyDown);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Cleanup message subscriptions
+  MessagesService.cleanup();
 });
 
 // Watch auth changes
 watch(() => authStore.isAuthenticated, async (newValue) => {
   if (newValue && authStore.userId) {
     await loadNavbarData(authStore.userId);
+    await loadConversations();
+    subscribeToConversationUpdates();
   } else {
     navbarUser.value = null;
+    conversations.value = [];
     NavBarService.clearNavBarCache();
-    cartCount.value = 0;
-    unreadNotifications.value = 0;
-    unreadMessages.value = 0;
   }
 });
 
@@ -719,10 +941,9 @@ const handleAutoLogout = async (reason: string) => {
     await authStore.logout();
     
     navbarUser.value = null;
+    conversations.value = [];
     NavBarService.clearNavBarCache();
-    cartCount.value = 0;
-    unreadNotifications.value = 0;
-    unreadMessages.value = 0;
+    await MessagesService.cleanup();
     
     showLogoutModal.value = false;
     showDropdown.value = false;
@@ -764,11 +985,16 @@ const toggleNotificationDropdown = () => {
   }
 };
 
-const toggleMessageDropdown = () => {
+const toggleMessageDropdown = async () => {
   showMessageDropdown.value = !showMessageDropdown.value;
   if (showMessageDropdown.value) {
     showDropdown.value = false;
     showNotificationDropdown.value = false;
+    
+    // Load conversations when opening dropdown
+    if (conversations.value.length === 0 && currentUser.value?.id) {
+      await loadConversations();
+    }
   }
 };
 
@@ -807,10 +1033,9 @@ const handleLogout = async () => {
     await authStore.logout();
     
     navbarUser.value = null;
+    conversations.value = [];
     NavBarService.clearNavBarCache();
-    cartCount.value = 0;
-    unreadNotifications.value = 0;
-    unreadMessages.value = 0;
+    await MessagesService.cleanup();
     
     showLogoutModal.value = false;
     showDropdown.value = false;

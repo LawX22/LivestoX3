@@ -1,4 +1,4 @@
-// managementTypes.ts - Complete type definitions for livestock management
+// managementTypes.ts - Updated type definitions (delivery info stored in delivery_options)
 
 export interface Farmer {
   id: number;
@@ -17,7 +17,7 @@ export interface Animal {
   type: string;
   breed: string;
   weight: number;
-  weightUnit?: string; // ✅ NEW: Weight unit (kg, lbs, g)
+  weightUnit?: string;
   quantity: number; 
   originalQuantity?: number; 
   age: string;
@@ -25,8 +25,8 @@ export interface Animal {
   status: string;
   healthStatus?: string[];
   price: number;
-  priceUnit?: string; // ✅ NEW: Price unit (per head, per kg, per lbs, total)
-  deliveryOptions: string[];
+  priceUnit?: string;
+  deliveryOptions: string[]; // Now stores encoded data like "pickup:Mon|Tue:09:00:17:00" or "delivery:500"
   paymentMethods?: string[];
   images: string[];
   description: string;
@@ -133,15 +133,15 @@ export interface CreateListingForm {
   type: string;
   breed: string;
   weight: number;
-  weightUnit?: string; // ✅ NEW: Weight unit
+  weightUnit?: string;
   quantity: number;
   age: string;
   gender: string;
   status: string;
   healthStatus: string[];
   price: number;
-  priceUnit?: string; // ✅ NEW: Price unit
-  deliveryOptions: string[];
+  priceUnit?: string;
+  deliveryOptions: string[]; // Now stores encoded data
   paymentMethods: string[];
   images: string[];
   description: string;
@@ -153,7 +153,7 @@ export interface CreateAuctionForm {
   type: string;
   breed: string;
   weight: number;
-  weightUnit?: string; // ✅ NEW: Weight unit
+  weightUnit?: string;
   quantity: number;
   age: string;
   gender: string;
@@ -212,4 +212,22 @@ export interface ActivityLog {
   animalTitle: string;
   timestamp: string;
   details: string;
+}
+
+// Helper types for parsing delivery options
+export interface ParsedPickupSchedule {
+  availableDays: string[];
+  startTime: string;
+  endTime: string;
+}
+
+export interface ParsedDeliveryInfo {
+  fee: number;
+}
+
+export interface ParsedDeliveryOptions {
+  hasPickup: boolean;
+  hasDelivery: boolean;
+  pickup?: ParsedPickupSchedule;
+  delivery?: ParsedDeliveryInfo;
 }

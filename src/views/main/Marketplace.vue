@@ -1,4 +1,4 @@
-<!-- Marketplace.vue - COMPLETE FIXED VERSION WITH PROPER MESSAGING -->
+<!-- Marketplace.vue - FIXED DYNAMIC HEADER (NO FLICKERING) -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -19,7 +19,7 @@
       />
     </div>
 
-    <!-- Dynamic Combined Header -->
+    <!-- FIXED Dynamic Combined Header - NO FLICKERING -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
       <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-row justify-between items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
         <!-- Left side - Logo and Title -->
@@ -37,22 +37,18 @@
           <div class="min-w-0">
             <h1 class="text-xl font-bold text-white truncate cursor-default">Livestock Marketplace</h1>
             <p class="text-green-100 text-sm opacity-90 truncate cursor-default">
-              {{ isFarmerView ? "Manage your livestock listings and auctions" : "Discover quality livestock from verified farmers" }}
+              {{ headerSubtitle }}
             </p>
           </div>
         </div>
 
-        <!-- Right side - Dynamic Content Area (only render after user data loads) -->
-        <div v-if="!isLoadingUser" class="flex-1 flex justify-end min-w-0">
-          <!-- Farmer View -->
-          <div v-if="isFarmerView" class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md cursor-default">
-            <svg class="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-            </svg>
-            <span class="text-sm font-semibold truncate ml-2">Welcome Farmer - Manage your livestock</span>
-            <button @click="navigateToLivestockManagement" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
-              Post Livestock
-            </button>
+        <!-- Right side - Dynamic Content Area -->
+        <div class="flex-1 flex justify-end min-w-0">
+          <!-- Loading State -->
+          <div v-if="isLoadingUser" class="bg-gray-100/80 px-4 py-2 rounded-lg flex items-center gap-3 border border-gray-200 shadow-md cursor-default animate-pulse">
+            <div class="w-4 h-4 bg-gray-300 rounded-full shrink-0"></div>
+            <div class="h-4 bg-gray-300 rounded w-32"></div>
+            <div class="h-6 bg-gray-300 rounded w-20"></div>
           </div>
 
           <!-- Guest Mode -->
@@ -66,31 +62,45 @@
             </button>
           </div>
 
-          <!-- Buyer View -->
+          <!-- Authenticated Users -->
           <div v-else class="flex items-center gap-3 max-w-full">
-            <div v-if="!profileCompleted" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
-              <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <!-- Farmer View -->
+            <div v-if="isFarmerView" class="bg-blue-100/80 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-blue-200 shadow-md cursor-default">
+              <svg class="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
               </svg>
-              <span class="text-sm font-semibold truncate ml-2">Buyer account - Verify to upgrade</span>
-              <button @click="showToastNotification('This would navigate to user profile')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
-                Verify Account
+              <span class="text-sm font-semibold truncate ml-2">Welcome Farmer - Manage your livestock</span>
+              <button @click="navigateToLivestockManagement" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+                Post Livestock
               </button>
             </div>
-            <div v-else-if="hasPendingUpgrade" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md cursor-default">
-              <svg class="w-4 h-4 text-red-500 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-sm font-semibold">Upgrade pending</span>
-            </div>
-            <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
-              <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-              </svg>
-              <span class="text-sm font-semibold truncate ml-2">Ready to become a Farmer?</span>
-              <button @click="showToastNotification('This would navigate to upgrade form')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
-                Upgrade Account
-              </button>
+
+            <!-- Buyer View -->
+            <div v-else class="flex items-center gap-3 max-w-full">
+              <div v-if="!profileCompleted" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
+                <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                </svg>
+                <span class="text-sm font-semibold truncate ml-2">Buyer account - Verify to upgrade</span>
+                <button @click="showToastNotification('This would navigate to user profile')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+                  Verify Account
+                </button>
+              </div>
+              <div v-else-if="hasPendingUpgrade" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md cursor-default">
+                <svg class="w-4 h-4 text-red-500 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-semibold">Upgrade pending</span>
+              </div>
+              <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
+                <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                </svg>
+                <span class="text-sm font-semibold truncate ml-2">Ready to become a Farmer?</span>
+                <button @click="showToastNotification('This would navigate to upgrade form')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0">
+                  Upgrade Account
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -404,6 +414,15 @@ const isFarmerView = computed<boolean>(() => {
   }
   
   return userRole.value === 'farmer';
+});
+
+// Header subtitle computed property (like Forum)
+const headerSubtitle = computed<string>(() => {
+  if (isFarmerView.value) {
+    return "Manage your livestock listings and auctions";
+  } else {
+    return "Discover quality livestock from verified farmers";
+  }
 });
 
 // Proper currentUser for modal

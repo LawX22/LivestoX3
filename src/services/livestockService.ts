@@ -1,6 +1,6 @@
-// LivestockService.ts
+// LivestockService.ts - FIXED VERSION WITH PROPER PICKUP PARSING
 import { supabase } from '@/supabase'
-import type { Animal, Farmer, CreateListingForm, QuantityUpdateData } from '../types/managementTypes'
+import type { Animal, Farmer, CreateListingForm, QuantityUpdateData, ParsedDeliveryOptions, ParsedPickupSchedule, ParsedDeliveryInfo } from '../types/managementTypes'
 
 // Database types
 interface LivestockDB {
@@ -21,7 +21,7 @@ interface LivestockDB {
   price: number
   price_unit: string
   location: string
-  delivery_options: string[]
+  delivery_options: string[]  // Now contains encoded data
   payment_methods: string[]
   images: string[]
   is_auction: boolean
@@ -94,6 +94,91 @@ export class LivestockService {
     }
     
     return 'Available'
+  }
+
+  /**
+   * ✅ FIXED PUBLIC METHOD - Parse delivery options from encoded string array
+   * Format: "pickup:Mon|Tue|Wed:09:00:17:00" or "delivery:500"
+   * 
+   * CRITICAL FIX: Uses regex to properly handle time format (HH:MM) which contains colons
+   */
+  static parseDeliveryInfo(deliveryOptions: string[] | null | undefined): ParsedDeliveryOptions {
+    console.log('🔍 PUBLIC parseDeliveryInfo called with:', deliveryOptions)
+    
+    const parsed: ParsedDeliveryOptions = {
+      hasPickup: false,
+      hasDelivery: false
+    }
+
+    if (!deliveryOptions || !Array.isArray(deliveryOptions) || deliveryOptions.length === 0) {
+      console.warn('⚠️ No valid delivery options provided:', deliveryOptions)
+      return parsed
+    }
+
+    for (const option of deliveryOptions) {
+      // Skip empty or invalid options
+      if (!option || typeof option !== 'string') {
+        console.warn('⚠️ Skipping invalid option:', option)
+        continue
+      }
+
+      console.log('  📦 Processing option:', option)
+      
+      if (option.startsWith('pickup:')) {
+        try {
+          // ✅ CRITICAL FIX: Use regex to properly parse time format
+          // Pattern: pickup:Days:HH:MM:HH:MM
+          // Example: "pickup:Mon|Tue|Wed:09:00:17:00"
+          const match = option.match(/^pickup:([^:]+):(\d{2}:\d{2}):(\d{2}:\d{2})$/)
+          console.log('    🔸 Pickup regex match:', match)
+          
+          if (match) {
+            const [, daysStr, startTime, endTime] = match
+            const days = daysStr.split('|').filter(day => day.trim().length > 0)
+            
+            if (days.length > 0) {
+              parsed.hasPickup = true
+              parsed.pickup = {
+                availableDays: days,
+                startTime,
+                endTime
+              }
+              console.log('    ✅ Parsed pickup:', parsed.pickup)
+            } else {
+              console.error('    ❌ No valid days found in pickup option')
+            }
+          } else {
+            console.error('    ❌ Invalid pickup format - could not match pattern:', option)
+          }
+        } catch (error) {
+          console.error('    ❌ Error parsing pickup option:', error)
+        }
+      } else if (option.startsWith('delivery:')) {
+        try {
+          // Parse delivery: "delivery:500"
+          const feeStr = option.substring(9).trim() // Remove "delivery:" prefix
+          const fee = parseFloat(feeStr)
+          console.log('    🔸 Delivery fee string:', feeStr, '-> parsed:', fee)
+          
+          if (!isNaN(fee) && fee >= 0) {
+            parsed.hasDelivery = true
+            parsed.delivery = {
+              fee
+            }
+            console.log('    ✅ Parsed delivery:', parsed.delivery)
+          } else {
+            console.error('    ❌ Invalid delivery fee:', feeStr)
+          }
+        } catch (error) {
+          console.error('    ❌ Error parsing delivery option:', error)
+        }
+      } else {
+        console.warn('    ⚠️ Unknown delivery option format:', option)
+      }
+    }
+
+    console.log('✅ PUBLIC parseDeliveryInfo result:', parsed)
+    return parsed
   }
 
   /**
@@ -181,6 +266,7 @@ export class LivestockService {
 
   /**
    * Convert database record to Animal type
+   * ✅ UPDATED: Parses delivery info from delivery_options array
    */
   private static dbToAnimal(db: LivestockDB): Animal {
     // Build farmer info
@@ -198,6 +284,17 @@ export class LivestockService {
       avatar: db.profile_picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + db.user_id
     }
 
+    // Parse delivery options using the PUBLIC method
+    console.log('🔄 Converting DB record to Animal, delivery_options:', db.delivery_options)
+    console.log('🔄 Type of delivery_options:', typeof db.delivery_options, 'Is Array:', Array.isArray(db.delivery_options))
+    
+    const parsedDelivery = this.parseDeliveryInfo(db.delivery_options)
+    
+    console.log('📦 Parsed delivery options for Animal:', {
+      raw: db.delivery_options,
+      parsed: parsedDelivery
+    })
+
     const animal: Animal = {
       id: parseInt(db.id.replace(/-/g, '').substring(0, 8), 16),
       uuid: db.id,
@@ -214,7 +311,7 @@ export class LivestockService {
       healthStatus: db.health_status,
       price: db.price,
       priceUnit: db.price_unit || 'per head',
-      deliveryOptions: db.delivery_options,
+      deliveryOptions: db.delivery_options, // Keep original encoded format
       paymentMethods: db.payment_methods,
       images: db.images.length > 0 ? db.images : [
         'https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
@@ -322,6 +419,8 @@ export class LivestockService {
    */
   static async getListing(id: string): Promise<{ success: boolean; data?: Animal; error?: string }> {
     try {
+      console.log('🔍 Fetching listing:', id)
+      
       const { data, error } = await supabase
         .from('livestock_with_farmer')
         .select('*')
@@ -333,7 +432,15 @@ export class LivestockService {
         return { success: false, error: error.message }
       }
 
+      console.log('📦 Raw listing data from DB:', data)
+      console.log('📦 Delivery options from DB:', data.delivery_options)
+      console.log('📦 Type of delivery_options:', typeof data.delivery_options, 'Is Array:', Array.isArray(data.delivery_options))
+      
       const animal = this.dbToAnimal(data as LivestockDB)
+      
+      console.log('✅ Converted to Animal object:', animal)
+      console.log('✅ Animal delivery options:', animal.deliveryOptions)
+      
       return { success: true, data: animal }
     } catch (error: any) {
       console.error('Error in getListing:', error)
@@ -364,6 +471,7 @@ export class LivestockService {
       }
 
       console.log('📝 Creating new listing...')
+      console.log('📦 Delivery options to save:', listingData.deliveryOptions)
 
       const insertData = {
         user_id: user.id,
@@ -382,11 +490,14 @@ export class LivestockService {
         price: listingData.price,
         price_unit: listingData.priceUnit || 'per head',
         location: listingData.location,
-        delivery_options: listingData.deliveryOptions,
+        delivery_options: listingData.deliveryOptions, // Already encoded
         payment_methods: listingData.paymentMethods,
         images: listingData.images,
         is_auction: false
       }
+
+      console.log('📤 Inserting data:', insertData)
+      console.log('📦 Delivery options being saved:', insertData.delivery_options)
 
       const { data, error } = await supabase
         .from('livestock_listings')
@@ -399,7 +510,7 @@ export class LivestockService {
         return { success: false, error: error.message }
       }
 
-      console.log('✅ Listing created successfully')
+      console.log('✅ Listing created successfully:', data)
 
       const result = await this.getListing(data.id)
       return result
@@ -425,6 +536,7 @@ export class LivestockService {
       }
 
       console.log('💾 Updating listing:', id)
+      console.log('📦 Delivery options in update:', updates.deliveryOptions)
 
       const updateData: any = {}
       
@@ -445,6 +557,8 @@ export class LivestockService {
       if (updates.deliveryOptions !== undefined) updateData.delivery_options = updates.deliveryOptions
       if (updates.paymentMethods !== undefined) updateData.payment_methods = updates.paymentMethods
       if (updates.images !== undefined) updateData.images = updates.images
+
+      console.log('📤 Update data being sent:', updateData)
 
       // Delete old images that were removed
       if (updates.images && oldImages) {

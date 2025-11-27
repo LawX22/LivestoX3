@@ -1,4 +1,4 @@
-// services/messagesService.ts - FIXED VERSION (No Infinite Recursion)
+// services/messagesService.ts - FIXED VERSION WITH PROPER UNREAD COUNTS
 import { supabase } from '@/supabase'
 import type { 
   Conversation, 
@@ -14,17 +14,52 @@ import { RealtimeChannel } from '@supabase/supabase-js'
 
 /**
  * MessagesService - Handles all messaging functionality
- * FIXED: Removed infinite recursion issues with RLS policies
+ * FIXED: Proper unread count calculation with fallback
  */
 export class MessagesService {
   private static activeSubscriptions: Map<string, RealtimeChannel> = new Map()
 
   /**
+   * Calculate unread count manually (fallback if RPC fails)
+   */
+  private static async calculateUnreadCount(
+    conversationId: string, 
+    userId: string
+  ): Promise<number> {
+    try {
+      // Get last read timestamp
+      const { data: participant } = await supabase
+        .from('conversation_participants')
+        .select('last_read_at')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', userId)
+        .single()
+
+      const lastReadAt = participant?.last_read_at
+
+      // Count unread messages
+      let query = supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', userId)
+        .eq('is_deleted', false)
+
+      if (lastReadAt) {
+        query = query.gt('created_at', lastReadAt)
+      }
+
+      const { count } = await query
+
+      return count || 0
+    } catch (error) {
+      console.error('❌ Error calculating unread count:', error)
+      return 0
+    }
+  }
+
+  /**
    * Start a conversation about a listing (simplified interface for ContactFarmerModal)
-   * @param recipientId - The farmer's user ID
-   * @param listingId - The livestock listing ID
-   * @param initialMessage - The first message to send
-   * @returns Promise with success status and conversation ID
    */
   static async startConversationAboutListing(
     recipientId: string,
@@ -33,10 +68,7 @@ export class MessagesService {
   ): Promise<{ success: boolean; conversationId?: string; error?: string }> {
     try {
       console.log('📤 Starting conversation about listing...')
-      console.log('   Recipient ID:', recipientId)
-      console.log('   Listing ID:', listingId)
 
-      // Get current authenticated user
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
       if (userError || !user) {
@@ -44,14 +76,10 @@ export class MessagesService {
         return { success: false, error: 'You must be logged in to send messages' }
       }
 
-      // Don't allow messaging yourself
       if (user.id === recipientId) {
         return { success: false, error: 'You cannot message yourself' }
       }
 
-      console.log('✅ Current user:', user.id)
-
-      // Get or create conversation
       const convResult = await this.getOrCreateConversation(user.id, recipientId, listingId)
       
       if (!convResult.success || !convResult.data) {
@@ -60,9 +88,7 @@ export class MessagesService {
       }
 
       const conversationId = convResult.data
-      console.log('✅ Conversation ready:', conversationId)
 
-      // Send the initial message
       const messageResult = await this.sendMessage({
         conversationId,
         content: initialMessage
@@ -88,7 +114,6 @@ export class MessagesService {
     try {
       console.log('📬 Fetching conversations for user:', userId)
 
-      // Get all conversations the user is part of
       const { data: participantData, error: participantError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
@@ -106,7 +131,6 @@ export class MessagesService {
         return { success: true, data: [] }
       }
 
-      // Get conversation details with listing info
       const { data: conversations, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
@@ -131,7 +155,6 @@ export class MessagesService {
         return { success: false, error: conversationsError.message }
       }
 
-      // Get all participants for these conversations
       const { data: allParticipants, error: allParticipantsError } = await supabase
         .from('conversation_participants')
         .select(`
@@ -154,7 +177,6 @@ export class MessagesService {
         return { success: false, error: allParticipantsError.message }
       }
 
-      // Get last message for each conversation
       const { data: lastMessages, error: lastMessagesError } = await supabase
         .from('messages')
         .select('*')
@@ -166,13 +188,26 @@ export class MessagesService {
         console.error('⚠️ Error fetching last messages:', lastMessagesError)
       }
 
-      // Get unread counts for each conversation
+      // Get unread counts with fallback
       const unreadCountsPromises = conversationIds.map(async (convId) => {
-        const { data, error } = await supabase.rpc('get_unread_count', {
-          conv_id: convId,
-          user_uuid: userId
-        })
-        return { conversationId: convId, count: error ? 0 : (data || 0) }
+        try {
+          const { data, error } = await supabase.rpc('get_unread_count', {
+            conv_id: convId,
+            user_uuid: userId
+          })
+          
+          if (error) {
+            console.warn('⚠️ RPC failed, using fallback for:', convId)
+            const count = await this.calculateUnreadCount(convId, userId)
+            return { conversationId: convId, count }
+          }
+          
+          return { conversationId: convId, count: data || 0 }
+        } catch (error) {
+          console.error('❌ Error getting unread count:', error)
+          const count = await this.calculateUnreadCount(convId, userId)
+          return { conversationId: convId, count }
+        }
       })
 
       const unreadCountsResults = await Promise.all(unreadCountsPromises)
@@ -180,7 +215,8 @@ export class MessagesService {
         unreadCountsResults.map(r => [r.conversationId, r.count])
       )
 
-      // Group participants by conversation
+      console.log('📊 Unread counts:', Object.fromEntries(unreadCounts))
+
       const participantsByConv = new Map<string, any[]>()
       allParticipants?.forEach(p => {
         if (!participantsByConv.has(p.conversation_id)) {
@@ -189,7 +225,6 @@ export class MessagesService {
         participantsByConv.get(p.conversation_id)!.push(p)
       })
 
-      // Group last messages by conversation
       const lastMessageByConv = new Map<string, any>()
       lastMessages?.forEach(msg => {
         if (!lastMessageByConv.has(msg.conversation_id)) {
@@ -197,12 +232,11 @@ export class MessagesService {
         }
       })
 
-      // Transform to Conversation objects
       const result: Conversation[] = conversations.map(conv => {
         const participants = participantsByConv.get(conv.id) || []
         const lastMsg = lastMessageByConv.get(conv.id)
+        const unreadCount = unreadCounts.get(conv.id) || 0
 
-        // Map participants to User objects
         const users: User[] = participants.map(p => ({
           id: p.profiles.id,
           name: `${p.profiles.first_name || ''} ${p.profiles.last_name || ''}`.trim() || p.profiles.username || 'User',
@@ -220,8 +254,8 @@ export class MessagesService {
             conversationId: lastMsg.conversation_id,
             createdAt: new Date(lastMsg.created_at)
           } : undefined,
-          unreadCount: unreadCounts.get(conv.id) || 0,
-          isOnline: false, // Can implement online status separately
+          unreadCount: unreadCount,
+          isOnline: false,
           listing: conv.livestock_listings && conv.livestock_listings.length > 0 ? {
             id: conv.livestock_listings[0].id,
             name: conv.livestock_listings[0].title,
@@ -237,7 +271,9 @@ export class MessagesService {
         return conversation
       })
 
-      console.log(`✅ Fetched ${result.length} conversations`)
+      const totalUnread = result.reduce((sum, conv) => sum + conv.unreadCount, 0)
+      console.log(`✅ Fetched ${result.length} conversations with ${totalUnread} total unread`)
+      
       return { success: true, data: result }
     } catch (error: any) {
       console.error('❌ Error in getConversations:', error)
@@ -245,13 +281,8 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Get a single conversation by ID
-   */
   static async getConversation(conversationId: string, userId: string): Promise<{ success: boolean; data?: Conversation; error?: string }> {
     try {
-      console.log('📬 Fetching conversation:', conversationId)
-      
       const result = await this.getConversations(userId)
       
       if (!result.success) {
@@ -271,13 +302,8 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Get messages for a specific conversation with pagination
-   */
   static async getMessages(params: GetMessagesParams): Promise<{ success: boolean; data?: GetMessagesResult; error?: string }> {
     try {
-      console.log('💬 Fetching messages for conversation:', params.conversationId)
-
       const limit = params.limit || 50
       let query = supabase
         .from('messages')
@@ -286,12 +312,10 @@ export class MessagesService {
         .eq('is_deleted', false)
         .order('created_at', { ascending: true })
 
-      // If before date is provided, get messages before that date
       if (params.before) {
         query = query.lt('created_at', params.before.toISOString())
       }
 
-      // Get one extra to check if there are more
       const { data, error } = await query.limit(limit + 1)
 
       if (error) {
@@ -309,8 +333,6 @@ export class MessagesService {
           conversationId: msg.conversation_id,
           createdAt: new Date(msg.created_at)
         }))
-
-      console.log(`✅ Fetched ${messages.length} messages, hasMore: ${hasMore}`)
       
       return { 
         success: true, 
@@ -322,15 +344,8 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Send a message in a conversation
-   * Auto-fetches sender ID from authenticated user
-   */
   static async sendMessage(params: SendMessageParams): Promise<{ success: boolean; data?: Message; error?: string }> {
     try {
-      console.log('📤 Sending message...')
-
-      // Get current authenticated user
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -354,7 +369,6 @@ export class MessagesService {
         return { success: false, error: error.message }
       }
 
-      // Update conversation updated_at timestamp
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -368,7 +382,6 @@ export class MessagesService {
         createdAt: new Date(data.created_at)
       }
 
-      console.log('✅ Message sent successfully')
       return { success: true, data: message }
     } catch (error: any) {
       console.error('❌ Error in sendMessage:', error)
@@ -376,12 +389,9 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Mark messages as read in a conversation
-   */
   static async markAsRead(conversationId: string, userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('✓ Marking messages as read...')
+      console.log('✓ Marking messages as read:', conversationId)
 
       const { error } = await supabase
         .from('conversation_participants')
@@ -394,7 +404,6 @@ export class MessagesService {
         return { success: false, error: error.message }
       }
 
-      console.log('✅ Messages marked as read')
       return { success: true }
     } catch (error: any) {
       console.error('❌ Error in markAsRead:', error)
@@ -402,28 +411,18 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Create a new conversation - USES RPC FUNCTION to avoid RLS recursion
-   */
   static async createConversation(params: CreateConversationParams): Promise<{ success: boolean; data?: string; error?: string }> {
     try {
-      console.log('🆕 Creating new conversation using RPC...')
-
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
         return { success: false, error: 'Not authenticated' }
       }
 
-      // Ensure current user is in the participants list
       if (!params.participantIds.includes(user.id)) {
         params.participantIds.push(user.id)
       }
 
-      console.log('   Participants:', params.participantIds)
-      console.log('   Listing ID:', params.listingId)
-
-      // Use RPC function to create conversation (bypasses RLS)
       const { data: conversationId, error: rpcError } = await supabase.rpc(
         'create_conversation_with_participants',
         {
@@ -441,7 +440,6 @@ export class MessagesService {
         return { success: false, error: 'Failed to create conversation' }
       }
 
-      console.log('✅ Conversation created/found:', conversationId)
       return { success: true, data: conversationId }
     } catch (error: any) {
       console.error('❌ Error in createConversation:', error)
@@ -449,21 +447,12 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Get or create conversation with a user about a listing
-   */
   static async getOrCreateConversation(
     currentUserId: string,
     otherUserId: string,
     listingId?: string
   ): Promise<{ success: boolean; data?: string; error?: string }> {
     try {
-      console.log('🔍 Getting or creating conversation...')
-      console.log('   Current user:', currentUserId)
-      console.log('   Other user:', otherUserId)
-      console.log('   Listing:', listingId)
-      
-      // Create conversation (it will check for existing one internally)
       return await this.createConversation({
         participantIds: [currentUserId, otherUserId],
         listingId
@@ -474,25 +463,19 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Delete a message (soft delete)
-   */
   static async deleteMessage(messageId: string, userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('🗑️ Deleting message:', messageId)
-
       const { error } = await supabase
         .from('messages')
         .update({ is_deleted: true })
         .eq('id', messageId)
-        .eq('sender_id', userId) // Only allow deleting own messages
+        .eq('sender_id', userId)
 
       if (error) {
         console.error('❌ Error deleting message:', error)
         return { success: false, error: error.message }
       }
 
-      console.log('✅ Message deleted')
       return { success: true }
     } catch (error: any) {
       console.error('❌ Error in deleteMessage:', error)
@@ -500,18 +483,13 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Subscribe to real-time messages in a conversation
-   */
   static subscribeToMessages(
     conversationId: string,
     onNewMessage: (message: Message) => void
   ): RealtimeChannel {
-    console.log('🔴 Subscribing to messages in conversation:', conversationId)
+    console.log('🔴 Subscribing to messages:', conversationId)
 
     const channelName = `messages:${conversationId}`
-
-    // Unsubscribe from existing channel if exists
     this.unsubscribe(channelName)
 
     const channel = supabase
@@ -525,29 +503,6 @@ export class MessagesService {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('📩 New message received:', payload)
-          const msg = payload.new as MessageDB
-          if (!msg.is_deleted) {
-            onNewMessage({
-              id: msg.id,
-              content: msg.content,
-              senderId: msg.sender_id,
-              conversationId: msg.conversation_id,
-              createdAt: new Date(msg.created_at)
-            })
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          console.log('✏️ Message updated:', payload)
           const msg = payload.new as MessageDB
           if (!msg.is_deleted) {
             onNewMessage({
@@ -566,27 +521,19 @@ export class MessagesService {
     return channel
   }
 
-  /**
-   * Unsubscribe from messages in a conversation
-   */
   static async unsubscribeFromMessages(conversationId: string): Promise<void> {
     const channelName = `messages:${conversationId}`
     this.unsubscribe(channelName)
   }
 
-  /**
-   * Subscribe to real-time conversation updates
-   */
   static subscribeToConversations(
     userId: string,
     onNewMessage: (conversationId: string, message: Message) => void,
     onConversationUpdate: (conversationId: string) => void
   ): RealtimeChannel {
-    console.log('🔴 Subscribing to conversation updates for user:', userId)
+    console.log('🔴 Subscribing to conversation updates:', userId)
 
     const channelName = `conversations:${userId}`
-
-    // Unsubscribe from existing channel if exists
     this.unsubscribe(channelName)
 
     const channel = supabase
@@ -599,10 +546,8 @@ export class MessagesService {
           table: 'messages'
         },
         async (payload) => {
-          console.log('📩 New message in conversation')
           const msg = payload.new as MessageDB
           
-          // Check if user is part of this conversation
           const { data } = await supabase
             .from('conversation_participants')
             .select('conversation_id')
@@ -629,10 +574,8 @@ export class MessagesService {
           table: 'conversations'
         },
         async (payload) => {
-          console.log('📩 Conversation updated')
           const conv = payload.new as any
           
-          // Check if user is part of this conversation
           const { data } = await supabase
             .from('conversation_participants')
             .select('conversation_id')
@@ -651,9 +594,6 @@ export class MessagesService {
     return channel
   }
 
-  /**
-   * Unsubscribe from a specific channel
-   */
   static unsubscribe(channelName: string): void {
     const channel = this.activeSubscriptions.get(channelName)
     if (channel) {
@@ -663,13 +603,9 @@ export class MessagesService {
     }
   }
 
-  /**
-   * Cleanup all active subscriptions
-   */
   static async cleanup(): Promise<void> {
     console.log('🔵 Cleaning up all subscriptions')
     this.activeSubscriptions.forEach((channel, name) => {
-      console.log('🔵 Unsubscribing from:', name)
       supabase.removeChannel(channel)
     })
     this.activeSubscriptions.clear()

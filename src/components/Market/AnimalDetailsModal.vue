@@ -1,4 +1,4 @@
-<!-- AnimalDetailsModal.vue - COMPACT VERSION -->
+<!-- AnimalDetailsModal.vue - FIXED VERSION WITH DELIVERY OPTIONS PARSING -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -290,7 +290,7 @@
                 </div>
               </div>
 
-              <!-- Delivery Options Card -->
+              <!-- ✅ ENHANCED Delivery Options Card with Parsing -->
               <div class="bg-white/95 backdrop-blur-sm rounded-lg p-4 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2 cursor-default">
                   <div class="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -300,14 +300,64 @@
                   </div>
                   Delivery Options
                 </h3>
-                <div class="flex flex-wrap gap-1">
-                  <span 
-                    v-for="option in animal.deliveryOptions" 
-                    :key="option"
-                    class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-md font-medium border border-orange-200/60 hover:bg-orange-200 transition-colors cursor-default"
-                  >
-                    {{ formatDeliveryOption(option) }}
-                  </span>
+                
+                <!-- Parsed Delivery Info Display -->
+                <div v-if="deliveryInfo.hasPickup || deliveryInfo.hasDelivery" class="space-y-3">
+                  <!-- Pickup Details -->
+                  <div v-if="deliveryInfo.hasPickup && deliveryInfo.pickup" class="p-3 bg-orange-50 border border-orange-200/60 rounded-lg">
+                    <div class="flex items-center gap-2 mb-2">
+                      <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      <span class="text-xs font-bold text-orange-900">📦 Buyer Pickup Available</span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                      <div>
+                        <span class="text-xs font-semibold text-gray-700">Available Days:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          <span v-for="day in deliveryInfo.pickup.availableDays" :key="day"
+                            class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-orange-200 text-orange-900">
+                            {{ day }}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <span class="text-xs font-semibold text-gray-700">Pickup Hours:</span>
+                        <div class="text-xs text-gray-900 mt-1 font-medium">
+                          🕐 {{ formatTime(deliveryInfo.pickup.startTime) }} - {{ formatTime(deliveryInfo.pickup.endTime) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delivery Details -->
+                  <div v-if="deliveryInfo.hasDelivery && deliveryInfo.delivery" class="p-3 bg-blue-50 border border-blue-200/60 rounded-lg">
+                    <div class="flex items-center gap-2 mb-2">
+                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                      </svg>
+                      <span class="text-xs font-bold text-blue-900">🚚 Farm Delivery Available</span>
+                    </div>
+                    
+                    <div>
+                      <span class="text-xs font-semibold text-gray-700">Delivery Fee:</span>
+                      <div class="text-sm font-bold text-blue-900 mt-1">
+                        <span v-if="deliveryInfo.delivery.fee === 0">
+                          💬 Negotiable / Free Delivery
+                        </span>
+                        <span v-else>
+                          ₱{{ deliveryInfo.delivery.fee.toLocaleString() }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fallback if no delivery info -->
+                <div v-else class="p-3 bg-gray-50 border border-gray-200/60 rounded-lg">
+                  <p class="text-xs text-gray-600 italic text-center">No delivery information available</p>
                 </div>
               </div>
 
@@ -624,6 +674,7 @@
 import { ref, computed } from 'vue';
 import ContactFarmerModal from './ContactFarmerModal.vue';
 import type { CurrentUser } from '../../types/animalTypes';
+import type { ParsedDeliveryOptions } from '@/types/managementTypes';
 
 interface Animal {
   id: string;
@@ -662,7 +713,7 @@ interface MessageData {
   contactMethod: string;
 }
 
-// Props - FIXED: Added currentUser prop
+// Props
 const props = defineProps<{
   animal: Animal;
   currentUser: CurrentUser | null;
@@ -682,6 +733,110 @@ const toastMessage = ref('');
 const toastType = ref<'success' | 'cart'>('success');
 const selectedQuantity = ref(1);
 const isAddingToCart = ref(false);
+
+// ===== ✅ DELIVERY OPTIONS PARSING =====
+
+/**
+ * Parse delivery options using regex to handle time format correctly
+ */
+const parseDeliveryOptionsRobust = (deliveryOptions: string[] | null | undefined): ParsedDeliveryOptions => {
+  console.log('🔍 MARKETPLACE MODAL: Parsing delivery options:', deliveryOptions)
+  
+  const parsed: ParsedDeliveryOptions = {
+    hasPickup: false,
+    hasDelivery: false
+  }
+
+  if (!deliveryOptions || !Array.isArray(deliveryOptions) || deliveryOptions.length === 0) {
+    console.warn('⚠️ MARKETPLACE MODAL: No valid delivery options provided')
+    return parsed
+  }
+
+  for (const option of deliveryOptions) {
+    if (!option || typeof option !== 'string') {
+      console.warn('⚠️ MARKETPLACE MODAL: Skipping invalid option:', option)
+      continue
+    }
+
+    console.log('  📦 MARKETPLACE MODAL: Processing option:', option)
+    
+    if (option.startsWith('pickup:')) {
+      try {
+        // ✅ CRITICAL FIX: Use regex to properly parse time format
+        const match = option.match(/^pickup:([^:]+):(\d{2}:\d{2}):(\d{2}:\d{2})$/)
+        console.log('    🔸 MARKETPLACE MODAL: Pickup regex match:', match)
+        
+        if (match) {
+          const [, daysStr, startTime, endTime] = match
+          const days = daysStr.split('|').filter(day => day.trim().length > 0)
+          
+          if (days.length > 0) {
+            parsed.hasPickup = true
+            parsed.pickup = {
+              availableDays: days,
+              startTime,
+              endTime
+            }
+            console.log('    ✅ MARKETPLACE MODAL: Parsed pickup:', parsed.pickup)
+          }
+        } else {
+          console.error('    ❌ MARKETPLACE MODAL: Invalid pickup format:', option)
+        }
+      } catch (error) {
+        console.error('    ❌ MARKETPLACE MODAL: Error parsing pickup option:', error)
+      }
+    } else if (option.startsWith('delivery:')) {
+      try {
+        const feeStr = option.substring(9).trim()
+        const fee = parseFloat(feeStr)
+        console.log('    🔸 MARKETPLACE MODAL: Delivery fee string:', feeStr, '-> parsed:', fee)
+        
+        if (!isNaN(fee) && fee >= 0) {
+          parsed.hasDelivery = true
+          parsed.delivery = {
+            fee
+          }
+          console.log('    ✅ MARKETPLACE MODAL: Parsed delivery:', parsed.delivery)
+        }
+      } catch (error) {
+        console.error('    ❌ MARKETPLACE MODAL: Error parsing delivery option:', error)
+      }
+    }
+  }
+
+  console.log('✅ MARKETPLACE MODAL: Final parsed delivery options:', parsed)
+  return parsed
+}
+
+/**
+ * Computed property for parsed delivery info
+ */
+const deliveryInfo = computed<ParsedDeliveryOptions>(() => {
+  if (!props.animal?.deliveryOptions) {
+    return { hasPickup: false, hasDelivery: false }
+  }
+  
+  return parseDeliveryOptionsRobust(props.animal.deliveryOptions)
+})
+
+/**
+ * Format time for display (24hr to 12hr format)
+ */
+const formatTime = (time: string): string => {
+  if (!time) return ''
+  try {
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours)
+    const period = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${period}`
+  } catch (error) {
+    console.error('Error formatting time:', error)
+    return time
+  }
+}
+
+// ===== END DELIVERY OPTIONS PARSING =====
 
 // Methods
 const nextImage = () => {
@@ -715,15 +870,6 @@ const formatDate = (dateString: string) => {
     month: 'long', 
     day: 'numeric' 
   });
-};
-
-const formatDeliveryOption = (option: string): string => {
-  const optionsMap: Record<string, string> = {
-    'pickup': 'Buyer Pickup',
-    'delivery': 'Farm Delivery',
-    'meetup': 'Meetup Point'
-  };
-  return optionsMap[option] || option;
 };
 
 const formatPaymentMethod = (method: string): string => {
