@@ -152,6 +152,8 @@ export interface FormErrors {
   postalCode?: string
   termsAgreed?: string
   pickup?: string
+  deliveryDate?: string
+  deliveryTime?: string
 }
 
 // Cart State Interface

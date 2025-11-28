@@ -1,26 +1,12 @@
-<!-- components/Transactions/TransactionsTable.vue -->
+<!-- components/Transactions/TransactionsTable.vue - DISPLAYS TRANSACTION DATA CORRECTLY -->
 <template>
   <div class="flex-1 overflow-y-auto px-4 py-3 relative">
     <!-- Decorative Background Pattern -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <!-- Grid Pattern -->
       <div class="absolute inset-0 opacity-[0.02]" style="background-image: linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px); background-size: 50px 50px;"></div>
-      
-      <!-- Floating Decorative Elements -->
       <div class="absolute top-10 right-20 w-32 h-32 bg-gradient-to-br from-green-100/30 to-emerald-100/30 rounded-full blur-3xl animate-pulse"></div>
       <div class="absolute bottom-20 left-10 w-40 h-40 bg-gradient-to-br from-teal-100/20 to-green-100/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1.5s"></div>
       <div class="absolute top-1/3 left-1/4 w-24 h-24 bg-gradient-to-br from-emerald-100/25 to-teal-100/25 rounded-full blur-2xl animate-pulse" style="animation-delay: 0.7s"></div>
-      
-      <!-- Abstract Shapes -->
-      <svg class="absolute top-16 left-8 w-16 h-16 text-green-200/10" viewBox="0 0 100 100" fill="currentColor">
-        <circle cx="50" cy="50" r="40"/>
-      </svg>
-      <svg class="absolute bottom-32 right-16 w-20 h-20 text-emerald-200/10" viewBox="0 0 100 100" fill="currentColor">
-        <rect x="20" y="20" width="60" height="60" rx="8"/>
-      </svg>
-      <svg class="absolute top-1/2 right-32 w-12 h-12 text-teal-200/10" viewBox="0 0 100 100" fill="currentColor">
-        <polygon points="50,10 90,90 10,90"/>
-      </svg>
     </div>
 
     <!-- Order Cards -->
@@ -30,12 +16,10 @@
         :key="transaction.id"
         class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:border-green-200"
       >
-        <!-- Gradient top accent -->
         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-        <!-- Main Content Container -->
         <div class="p-4">
-          <!-- Header Section: Farmer/Buyer Info + Action Buttons -->
+          <!-- Header Section -->
           <div class="flex items-start justify-between mb-4 gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <img 
@@ -58,7 +42,6 @@
             
             <!-- Action Buttons Group -->
             <div class="flex items-center gap-2 flex-shrink-0">
-              <!-- Receipt Button -->
               <template v-if="isFarmerView">
                 <button
                   @click="emit('create-receipt', transaction)"
@@ -73,7 +56,6 @@
               </template>
 
               <template v-else>
-                <!-- View Receipt Button (if receipt exists) -->
                 <button
                   v-if="transaction.hasReceipt"
                   @click="emit('view-receipt', transaction)"
@@ -85,11 +67,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                   <span class="text-xs font-semibold">Receipt</span>
-                  <!-- Active Badge -->
                   <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-white animate-pulse"></div>
                 </button>
 
-                <!-- Request Receipt Button (if no receipt yet) -->
                 <button
                   v-else
                   @click="emit('request-receipt', transaction)"
@@ -103,7 +83,6 @@
                 </button>
               </template>
 
-              <!-- Chat Button -->
               <button 
                 @click="emit('contact-person', transaction)"
                 class="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
@@ -118,7 +97,6 @@
 
           <!-- Product Section -->
           <div class="flex gap-4 mb-4 pb-4 border-b border-gray-100">
-            <!-- Product Image -->
             <div 
               class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-100 group-hover:border-green-200 transition-all shadow-sm"
               @click="emit('view-details', transaction)"
@@ -130,7 +108,6 @@
               />
             </div>
 
-            <!-- Product Details -->
             <div class="flex-1 min-w-0">
               <h4 
                 class="text-sm font-bold text-gray-900 hover:text-green-600 cursor-pointer truncate transition-colors mb-1"
@@ -151,16 +128,19 @@
                   {{ transaction.animal.gender }}
                 </span>
               </div>
-              <p class="text-[11px] text-gray-600">
-                Qty: <span class="font-semibold">{{ transaction.animal.quantity }}</span>
+              <p class="text-[11px] text-gray-600 mb-1">
+                Qty: <span class="font-semibold">{{ transaction.animal.quantity }}</span> × 
+                ₱{{ transaction.animal.price.toLocaleString() }}
+              </p>
+              <p class="text-xs text-gray-500">
+                Unit Price: ₱{{ transaction.animal.price.toLocaleString() }}/{{ transaction.animal.priceUnit }}
               </p>
             </div>
 
-            <!-- Price Badge -->
             <div class="flex flex-col items-end justify-center gap-2 flex-shrink-0">
               <div class="text-right">
                 <p class="text-2xl font-bold text-green-600">
-                  ₱<span class="text-lg">{{ (transaction.amount / 1000).toFixed(1) }}k</span>
+                  ₱{{ transaction.amount.toLocaleString() }}
                 </p>
                 <p class="text-[10px] text-gray-500 mt-0.5">Total</p>
               </div>
@@ -182,11 +162,15 @@
                 </svg>
                 {{ transaction.paymentMethod }}
               </span>
-              <span class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg">
-                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              <span :class="[
+                'flex items-center gap-1.5 px-2 py-1 rounded-lg font-semibold',
+                transaction.deliveryMethod === 'pickup' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
+              ]">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path v-if="transaction.deliveryMethod === 'pickup'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
-                {{ transaction.deliveryMethod }}
+                {{ transaction.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}
               </span>
             </div>
             <span :class="getStatusClasses(transaction.status)" class="flex-shrink-0 whitespace-nowrap font-semibold">
@@ -194,8 +178,51 @@
             </span>
           </div>
 
-          <!-- Tracking Info for shipped orders -->
-          <div v-if="!isFarmerView && (transaction as BuyerTransaction).trackingNumber" class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+          <!-- Shipping/Pickup Status Bar -->
+          <div v-if="transaction.shippingUpdates && transaction.shippingUpdates.length > 0" class="mb-3">
+            <div :class="[
+              'rounded-lg p-3 border',
+              transaction.deliveryMethod === 'pickup' 
+                ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200'
+                : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+            ]">
+              <div class="flex items-start gap-2">
+                <svg :class="[
+                  'w-4 h-4 mt-0.5 flex-shrink-0',
+                  transaction.deliveryMethod === 'pickup' ? 'text-purple-600' : 'text-blue-600'
+                ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path v-if="transaction.deliveryMethod === 'pickup'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <div class="flex-1">
+                  <p :class="[
+                    'text-xs font-semibold',
+                    transaction.deliveryMethod === 'pickup' ? 'text-purple-900' : 'text-blue-900'
+                  ]">
+                    {{ getLatestShippingUpdate(transaction)?.message }}
+                  </p>
+                  <p :class="[
+                    'text-[10px] mt-1',
+                    transaction.deliveryMethod === 'pickup' ? 'text-purple-600' : 'text-blue-600'
+                  ]">
+                    {{ formatShippingTime(getLatestShippingUpdate(transaction)?.timestamp) }}
+                  </p>
+                </div>
+                <button 
+                  @click="emit('view-details', transaction)"
+                  :class="[
+                    'text-xs font-semibold',
+                    transaction.deliveryMethod === 'pickup' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'
+                  ]"
+                >
+                  Track
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tracking Info (Delivery Only) -->
+          <div v-if="!isFarmerView && transaction.deliveryMethod === 'delivery' && (transaction as BuyerTransaction).trackingNumber" class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
             <div class="flex items-center justify-between gap-2">
               <span class="text-[11px] text-gray-700 flex items-center gap-2 min-w-0">
                 <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,9 +234,28 @@
             </div>
           </div>
 
+          <!-- Pickup Schedule Info (Pickup Only) -->
+          <div v-if="transaction.deliveryMethod === 'pickup' && transaction.pickupSchedule" class="mb-3 p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div class="flex-1">
+                <p class="text-xs font-bold text-purple-900 mb-1">Pickup Schedule</p>
+                <p class="text-[10px] text-purple-700">
+                  <span class="font-semibold">Days:</span> {{ transaction.pickupSchedule.availableDays.join(', ') }}
+                </p>
+                <p class="text-[10px] text-purple-700">
+                  <span class="font-semibold">Time:</span> {{ transaction.pickupSchedule.startTime }} - {{ transaction.pickupSchedule.endTime }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Action Buttons -->
           <div class="grid grid-cols-2 gap-2">
             <template v-if="isFarmerView">
+              <!-- PENDING STATUS -->
               <button 
                 v-if="transaction.status === 'Pending'"
                 @click="handleUpdateStatus(transaction.id, 'Accepted')"
@@ -224,8 +270,37 @@
               >
                 ✕ Decline
               </button>
+              
+              <!-- ACCEPTED STATUS - DIFFERENT BUTTONS FOR DELIVERY VS PICKUP -->
+              <template v-if="transaction.status === 'Accepted'">
+                <!-- DELIVERY METHOD -->
+                <button 
+                  v-if="transaction.deliveryMethod === 'delivery'"
+                  @click="handleMarkAsShipped(transaction.id)"
+                  class="col-span-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  📦 Mark as Shipped
+                </button>
+
+                <!-- PICKUP METHOD -->
+                <button 
+                  v-if="transaction.deliveryMethod === 'pickup'"
+                  @click="handleMarkReadyPickup(transaction.id)"
+                  class="col-span-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ✅ Ready for Pickup
+                </button>
+              </template>
+              
+              <!-- COMPLETED/REJECTED -->
               <button 
-                v-if="transaction.status !== 'Pending'"
+                v-if="transaction.status !== 'Pending' && transaction.status !== 'Accepted'"
                 @click="emit('view-details', transaction)"
                 class="col-span-2 px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-700 rounded-lg text-xs font-bold transition-all cursor-pointer border border-gray-200"
               >
@@ -234,13 +309,28 @@
             </template>
 
             <template v-if="!isFarmerView">
+              <!-- SHIPPED STATUS (Delivery) - Confirm Delivery -->
               <button 
-                v-if="transaction.status === 'Shipped'"
+                v-if="transaction.status === 'Shipped' && transaction.deliveryMethod === 'delivery'"
                 @click="emit('confirm-delivery', transaction.id)"
                 class="col-span-2 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer"
               >
                 📦 Order Received
               </button>
+
+              <!-- SHIPPED STATUS (Pickup) - Confirm Pickup -->
+              <button 
+                v-if="transaction.status === 'Shipped' && transaction.deliveryMethod === 'pickup'"
+                @click="handleConfirmPickup(transaction.id)"
+                class="col-span-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ✅ Confirm Pickup
+              </button>
+
+              <!-- CANCEL BUTTON -->
               <button 
                 v-if="transaction.status === 'Pending' || transaction.status === 'Accepted'"
                 @click="handleCancelOrder(transaction.id)"
@@ -248,12 +338,16 @@
               >
                 Cancel
               </button>
+
+              <!-- BUY AGAIN -->
               <button 
                 v-if="transaction.status === 'Completed'"
                 class="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer"
               >
                 🔁 Buy Again
               </button>
+
+              <!-- VIEW DETAILS -->
               <button 
                 @click="emit('view-details', transaction)"
                 class="px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-700 rounded-lg text-xs font-bold transition-all cursor-pointer border border-gray-200"
@@ -321,7 +415,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Transaction, FarmerTransaction, BuyerTransaction } from '@/types/transactionTypes'
+import type { Transaction, FarmerTransaction, BuyerTransaction, ShippingUpdate } from '@/types/transactionTypes'
 
 interface Props {
   transactions: Transaction[]
@@ -335,6 +429,9 @@ const emit = defineEmits<{
   'update-status': [id: string, status: 'Accepted' | 'Rejected']
   'cancel-order': [id: string]
   'confirm-delivery': [id: string]
+  'mark-as-shipped': [id: string]
+  'mark-ready-pickup': [id: string]
+  'confirm-pickup': [id: string]
   'contact-person': [transaction: Transaction]
   'create-receipt': [transaction: Transaction]
   'view-receipt': [transaction: Transaction]
@@ -360,6 +457,30 @@ const handleUpdateStatus = (id: string, status: 'Accepted' | 'Rejected') => {
   }
 }
 
+const handleMarkAsShipped = (id: string) => {
+  confirmTitle.value = 'Mark as Shipped'
+  confirmMessage.value = 'Confirm that this order has been shipped and is on its way to the buyer?'
+  confirmButtonText.value = 'Yes, Mark as Shipped'
+  pendingAction.value = () => emit('mark-as-shipped', id)
+  showConfirmModal.value = true
+}
+
+const handleMarkReadyPickup = (id: string) => {
+  confirmTitle.value = 'Ready for Pickup'
+  confirmMessage.value = 'Confirm that this order is ready for the buyer to pick up?'
+  confirmButtonText.value = 'Yes, Ready for Pickup'
+  pendingAction.value = () => emit('mark-ready-pickup', id)
+  showConfirmModal.value = true
+}
+
+const handleConfirmPickup = (id: string) => {
+  confirmTitle.value = 'Confirm Pickup'
+  confirmMessage.value = 'Confirm that you have picked up this order from the farmer?'
+  confirmButtonText.value = 'Yes, Confirm Pickup'
+  pendingAction.value = () => emit('confirm-pickup', id)
+  showConfirmModal.value = true
+}
+
 const handleCancelOrder = (id: string) => {
   confirmTitle.value = 'Cancel Order'
   confirmMessage.value = 'Are you sure you want to cancel this order? This action cannot be undone.'
@@ -381,18 +502,36 @@ const cancelAction = () => {
   pendingAction.value = null
 }
 
+const getLatestShippingUpdate = (transaction: Transaction): ShippingUpdate | undefined => {
+  if (!transaction.shippingUpdates || transaction.shippingUpdates.length === 0) return undefined
+  return transaction.shippingUpdates[transaction.shippingUpdates.length - 1]
+}
+
+const formatShippingTime = (timestamp: string | undefined): string => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+}
+
 const getPersonInfo = (transaction: Transaction) => {
   if ('buyer' in transaction) {
+    // Farmer view - showing buyer info
     return {
       name: transaction.buyer.name,
       avatar: transaction.buyer.avatar || 'https://via.placeholder.com/40',
-      farmName: transaction.buyer.farm
+      farmName: transaction.buyer.farm // Buyer's farm if they're also a farmer
     }
   } else {
+    // Buyer view - showing farmer info
     return {
       name: transaction.farmer.name,
       avatar: transaction.farmer.avatar,
-      farmName: transaction.farmer.farmName
+      farmName: transaction.farmer.farmName // ✅ This is the farmer's farm name from farm_info
     }
   }
 }

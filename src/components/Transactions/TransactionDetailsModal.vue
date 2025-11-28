@@ -1,4 +1,4 @@
-<!-- components/Transactions/TransactionDetailsModal.vue -->
+<!-- components/Transactions/TransactionDetailsModal.vue - ADD DELIVERY INFO SECTION -->
 <template>
   <div v-if="transaction" class="fixed inset-0 overflow-hidden z-50">
     <div class="absolute inset-0 overflow-hidden">
@@ -40,7 +40,7 @@
                     <div v-for="(step, index) in getOrderSteps()" :key="step.label" class="flex flex-col items-center">
                       <div :class="[
                         'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all z-10',
-                        step.completed ? 'bg-orange-500 text-white' : 'bg-white border-2 border-gray-300 text-gray-400'
+                        step.completed ? 'bg-green-500 text-white' : 'bg-white border-2 border-gray-300 text-gray-400'
                       ]">
                         <svg v-if="step.completed" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -72,7 +72,7 @@
                       {{ transaction.animal.gender }}
                     </p>
                     <p class="text-xs text-gray-500 mt-1">Quantity: {{ transaction.animal.quantity }}</p>
-                    <p class="text-lg font-bold text-orange-500 mt-2">₱{{ transaction.amount.toLocaleString() }}</p>
+                    <p class="text-lg font-bold text-green-600 mt-2">₱{{ transaction.amount.toLocaleString() }}</p>
                   </div>
                 </div>
               </div>
@@ -94,6 +94,84 @@
                       {{ getPersonData(transaction).farmName }}
                     </p>
                     <p class="text-xs text-gray-500 mt-1">{{ getPersonData(transaction).contact }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== NEW: DELIVERY INFORMATION SECTION ===== -->
+              <div v-if="transaction.deliveryMethod === 'Delivery' && transaction.deliveryAddress" class="px-6 py-4 border-b bg-blue-50">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Delivery Address
+                </h3>
+                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                      {{ transaction.deliveryAddress.label }}
+                    </span>
+                  </div>
+                  <p class="text-sm font-semibold text-gray-900">{{ transaction.deliveryAddress.contactPerson }}</p>
+                  <p class="text-xs text-gray-600 mt-1">{{ transaction.deliveryAddress.phone }}</p>
+                  <p class="text-xs text-gray-700 mt-2 leading-relaxed">
+                    {{ transaction.deliveryAddress.street }}, {{ transaction.deliveryAddress.city }}, 
+                    {{ transaction.deliveryAddress.province }} {{ transaction.deliveryAddress.postalCode }}
+                  </p>
+                </div>
+
+                <!-- Delivery Schedule -->
+                <div v-if="transaction.deliveryDate && transaction.deliveryTime" class="mt-3 bg-white rounded-lg p-3 border border-blue-200">
+                  <h4 class="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Preferred Delivery Schedule
+                  </h4>
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-xs">
+                      <span class="text-gray-600">Date:</span>
+                      <span class="font-semibold text-gray-900">{{ formatDate(transaction.deliveryDate) }}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                      <span class="text-gray-600">Time:</span>
+                      <span class="font-semibold text-gray-900">{{ formatDeliveryTime(transaction.deliveryTime) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Delivery Notes -->
+                <div v-if="transaction.deliveryNotes" class="mt-3 bg-white rounded-lg p-3 border border-blue-200">
+                  <h4 class="text-xs font-semibold text-gray-900 mb-2">Delivery Instructions</h4>
+                  <p class="text-xs text-gray-700">{{ transaction.deliveryNotes }}</p>
+                </div>
+              </div>
+
+              <!-- ===== NEW: PICKUP INFORMATION SECTION ===== -->
+              <div v-if="transaction.deliveryMethod === 'Pickup' && transaction.pickupSchedule" class="px-6 py-4 border-b bg-emerald-50">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Pickup Schedule
+                </h3>
+                <div class="bg-white rounded-lg p-3 border border-emerald-200">
+                  <div class="mb-2">
+                    <p class="text-xs font-semibold text-gray-700 mb-1">Available Days:</p>
+                    <div class="flex flex-wrap gap-1">
+                      <span v-for="day in transaction.pickupSchedule.availableDays" :key="day"
+                            class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded">
+                        {{ day }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 bg-emerald-50 rounded-md p-2 border border-emerald-200">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-sm font-bold text-emerald-700">
+                      {{ formatTime(transaction.pickupSchedule.startTime) }} - {{ formatTime(transaction.pickupSchedule.endTime) }}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -148,15 +226,19 @@
                 <div class="space-y-2">
                   <div class="flex justify-between text-sm">
                     <span class="text-gray-600">Subtotal</span>
-                    <span class="text-gray-900">₱{{ transaction.amount.toLocaleString() }}</span>
+                    <span class="text-gray-900">₱{{ (transaction.amount - (transaction.shippingFee || 0)).toLocaleString() }}</span>
                   </div>
-                  <div class="flex justify-between text-sm">
+                  <div v-if="transaction.shippingFee" class="flex justify-between text-sm">
+                    <span class="text-gray-600">Shipping Fee</span>
+                    <span class="text-gray-900">₱{{ transaction.shippingFee.toLocaleString() }}</span>
+                  </div>
+                  <div v-else class="flex justify-between text-sm">
                     <span class="text-gray-600">Shipping Fee</span>
                     <span class="text-gray-900">₱0</span>
                   </div>
                   <div class="flex justify-between text-base font-bold pt-2 border-t">
                     <span class="text-gray-900">Total</span>
-                    <span class="text-orange-500">₱{{ transaction.amount.toLocaleString() }}</span>
+                    <span class="text-green-600">₱{{ transaction.amount.toLocaleString() }}</span>
                   </div>
                 </div>
               </div>
@@ -169,7 +251,7 @@
                   <button 
                     v-if="transaction.status === 'Pending'"
                     @click="emit('update-status', transaction.id, 'Accepted')"
-                    class="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors cursor-pointer"
+                    class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     Accept Order
                   </button>
@@ -186,7 +268,7 @@
                   <button 
                     v-if="transaction.status === 'Shipped'"
                     @click="emit('confirm-delivery', transaction.id)"
-                    class="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors cursor-pointer"
+                    class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     Confirm Received
                   </button>
@@ -275,6 +357,27 @@ const formatDate = (dateString: string): string => {
     month: 'long', 
     day: 'numeric'
   })
+}
+
+const formatTime = (time: string): string => {
+  if (!time) return ''
+  try {
+    const [hours, minutes] = time.split(':').map(Number)
+    const period = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`
+  } catch (error) {
+    return time
+  }
+}
+
+const formatDeliveryTime = (timeSlot: string): string => {
+  const timeMap: Record<string, string> = {
+    'morning': 'Morning (8:00 AM - 12:00 PM)',
+    'afternoon': 'Afternoon (12:00 PM - 5:00 PM)',
+    'evening': 'Evening (5:00 PM - 8:00 PM)'
+  }
+  return timeMap[timeSlot] || timeSlot
 }
 
 const getStatusClasses = (status: string): string => {

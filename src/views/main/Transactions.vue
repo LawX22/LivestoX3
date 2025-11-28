@@ -1,4 +1,4 @@
-<!-- Transactions.vue -->
+<!-- Transactions.vue - FIXED WITH PICKUP CONFIRMATION FLOW -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -16,7 +16,6 @@
     <!-- Header -->
     <div class="sticky top-0 z-40 px-4 md:px-6 pt-3">
       <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-green-200 shadow-lg backdrop-blur-sm">
-        <!-- Left side - Logo and Title -->
         <div class="flex items-center min-w-0">
           <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3 backdrop-blur-sm shadow-lg">
             <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -39,7 +38,7 @@
           </div>
         </div>
 
-        <!-- Right side - View Toggle (for farmers only) -->
+        <!-- View Toggle Buttons - Only show if user is a farmer -->
         <div v-if="userIsFarmer" class="flex gap-2">
           <button 
             @click="currentView = 'farmer'"
@@ -82,9 +81,16 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoadingTransactions" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="inline-block w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-lg font-semibold text-gray-700">Loading transactions...</p>
+      </div>
+    </div>
+
     <!-- Main Content Container -->
-    <div class="flex flex-1 overflow-hidden mt-4">
-      <!-- Filters Sidebar Component -->
+    <div v-else class="flex flex-1 overflow-hidden mt-4">
       <FiltersSidebar
         :is-expanded="isSidebarExpanded"
         :filters="filters"
@@ -98,9 +104,8 @@
         @reset="resetFilters"
       />
 
-      <!-- Main Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Status Tabs (Now positioned above table) -->
+        <!-- Status Tabs -->
         <div class="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-green-100">
           <div class="px-4 md:px-6">
             <div class="flex overflow-x-auto hide-scrollbar">
@@ -161,7 +166,6 @@
           </div>
         </div>
 
-        <!-- Transactions Table Component -->
         <TransactionsTable
           :transactions="filteredTransactions"
           :is-farmer-view="currentView === 'farmer'"
@@ -169,6 +173,9 @@
           @update-status="updateStatus"
           @cancel-order="cancelOrder"
           @confirm-delivery="confirmDelivery"
+          @mark-as-shipped="markAsShipped"
+          @mark-ready-pickup="markReadyForPickup"
+          @confirm-pickup="confirmPickup"
           @contact-person="contactPerson"
           @create-receipt="openCreateReceiptModal"
           @view-receipt="openViewReceiptModal"
@@ -178,7 +185,6 @@
       </div>
     </div>
 
-    <!-- Transaction Details Modal Component -->
     <TransactionDetailsModal
       :transaction="selectedTransaction"
       :is-farmer-view="currentView === 'farmer'"
@@ -186,9 +192,11 @@
       @update-status="updateStatus"
       @cancel-order="cancelOrder"
       @confirm-delivery="confirmDelivery"
+      @mark-as-shipped="markAsShipped"
+      @mark-ready-pickup="markReadyForPickup"
+      @confirm-pickup="confirmPickup"
     />
 
-    <!-- Receipt Modal Component -->
     <ReceiptModal
       :show-modal="showCreateReceiptModal || showViewReceiptModal"
       :mode="showCreateReceiptModal ? 'create' : 'view'"
@@ -205,14 +213,20 @@
       <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-3 transform transition-all duration-300 ease-in-out">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
-              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div :class="[
+              'w-8 h-8 rounded-xl flex items-center justify-center shadow-lg',
+              toastType === 'success' ? 'bg-gradient-to-br from-green-400 to-emerald-500' : 'bg-gradient-to-br from-red-400 to-red-500'
+            ]">
+              <svg v-if="toastType === 'success'" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <svg v-else class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
             </div>
           </div>
           <div class="ml-3 flex-1">
-            <h4 class="text-xs font-bold text-gray-900 mb-0.5">Success!</h4>
+            <h4 class="text-xs font-bold text-gray-900 mb-0.5">{{ toastType === 'success' ? 'Success!' : 'Error!' }}</h4>
             <div class="text-xs text-gray-700 font-medium">{{ toastMessage }}</div>
           </div>
           <button @click="showToast = false" class="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-0.5 hover:bg-gray-100 rounded-md cursor-pointer">
@@ -229,11 +243,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/supabase'
 import NavBar from '@/components/NavBar.vue'
 import FiltersSidebar from '@/components/Transactions/FilterSidebar.vue'
 import TransactionDetailsModal from '@/components/Transactions/TransactionDetailsModal.vue'
 import TransactionsTable from '@/components/Transactions/TransactionsTable.vue'
 import ReceiptModal from '@/components/Transactions/ReceiptModal.vue'
+import { transactionService } from '../../services/transactionsService'
 import type { 
   Transaction, 
   FarmerTransaction, 
@@ -247,15 +263,15 @@ import type {
 const router = useRouter()
 
 const currentUser = ref({
-  isAuthenticated: true,
-  role: 'farmer', // 'farmer' or 'buyer' only
-  id: '1',
-  email: 'user@example.com',
-  name: 'John Doe'
+  isAuthenticated: false,
+  role: 'buyer',
+  id: '',
+  email: '',
+  name: ''
 })
 
-const userIsFarmer = computed(() => currentUser.value.role === 'farmer')
-const userIsBuyer = computed(() => currentUser.value.role === 'buyer' || currentUser.value.role === 'user')
+const userIsFarmer = computed(() => currentUser.value.role === 'Farmer')
+const userIsBuyer = computed(() => currentUser.value.role === 'Buyer' || currentUser.value.role === 'User')
 
 const currentView = ref<'farmer' | 'buyer'>('buyer')
 const isSidebarExpanded = ref(true)
@@ -263,7 +279,9 @@ const selectedTransaction = ref<Transaction | null>(null)
 const sortBy = ref('date-desc')
 const showToast = ref(false)
 const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
 const selectedStatusTab = ref<string>('all')
+const isLoadingTransactions = ref(false)
 
 const filters = ref<TransactionFilters>({
   search: '',
@@ -354,12 +372,10 @@ const hasActiveFilters = computed(() => {
 const filteredTransactions = computed(() => {
   let filtered: Transaction[] = currentTransactions.value
 
-  // Filter by selected status tab
   if (selectedStatusTab.value !== 'all') {
     filtered = filtered.filter(t => t.status === selectedStatusTab.value)
   }
   
-  // Apply other filters
   filtered = filtered.filter(transaction => {
     const f = filters.value
     let matchesSearch = !f.search
@@ -403,7 +419,6 @@ const filteredTransactions = computed(() => {
     return matchesSearch && matchesType && matchesFarmer && matchesDate
   })
 
-  // Sort
   return filtered.sort((a, b) => {
     const dateA = new Date(a.date).getTime()
     const dateB = new Date(b.date).getTime()
@@ -442,11 +457,12 @@ const resetFilters = () => {
     dateTo: ''
   }
   selectedStatusTab.value = 'all'
-  showToastNotification('All filters have been reset')
+  showToastNotification('All filters have been reset', 'success')
 }
 
-const showToastNotification = (message: string) => {
+const showToastNotification = (message: string, type: 'success' | 'error' = 'success') => {
   toastMessage.value = message
+  toastType.value = type
   showToast.value = true
   setTimeout(() => showToast.value = false, 4000)
 }
@@ -455,47 +471,114 @@ const viewDetails = (transaction: Transaction): void => {
   selectedTransaction.value = transaction
 }
 
-const updateStatus = (id: string, status: 'Accepted' | 'Rejected'): void => {
+const updateStatus = async (id: string, status: 'Accepted' | 'Rejected'): Promise<void> => {
   if (currentView.value === 'farmer') {
-    const index = farmerTransactions.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      farmerTransactions.value[index].status = status
+    const dbStatus = status === 'Accepted' ? 'confirmed' : 'cancelled'
+    const result = await transactionService.updateOrderStatus(id, dbStatus)
+    
+    if (result.success) {
+      await loadTransactionData()
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
-      showToastNotification(`Order ${status.toLowerCase()} successfully!`)
+      showToastNotification(`Order ${status.toLowerCase()} successfully!`, 'success')
+    } else {
+      showToastNotification(result.error || 'Failed to update order status', 'error')
     }
   }
 }
 
-const cancelOrder = (id: string): void => {
+const cancelOrder = async (id: string): Promise<void> => {
   if (currentView.value === 'buyer') {
-    const index = buyerTransactions.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      buyerTransactions.value[index].status = 'Cancelled'
+    const result = await transactionService.cancelOrder(id)
+    
+    if (result.success) {
+      await loadTransactionData()
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
-      showToastNotification('Order cancelled successfully!')
+      showToastNotification('Order cancelled successfully!', 'success')
+    } else {
+      showToastNotification(result.error || 'Failed to cancel order', 'error')
     }
   }
 }
 
-const confirmDelivery = (id: string): void => {
+const confirmDelivery = async (id: string): Promise<void> => {
   if (currentView.value === 'buyer') {
-    const index = buyerTransactions.value.findIndex(t => t.id === id)
-    if (index !== -1) {
-      buyerTransactions.value[index].status = 'Completed'
+    const result = await transactionService.confirmDelivery(id)
+    
+    if (result.success) {
+      await loadTransactionData()
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
-      showToastNotification('Delivery confirmed! Thank you for your purchase.')
+      showToastNotification('Delivery confirmed! Thank you for your purchase.', 'success')
+    } else {
+      showToastNotification(result.error || 'Failed to confirm delivery', 'error')
+    }
+  }
+}
+
+// DELIVERY METHODS
+const markAsShipped = async (id: string): Promise<void> => {
+  console.log('🚀 markAsShipped called with ID:', id)
+  
+  if (currentView.value === 'farmer') {
+    console.log('✅ Farmer view confirmed, calling service...')
+    const result = await transactionService.markAsShipped(id)
+    
+    console.log('📦 Service result:', result)
+    
+    if (result.success) {
+      console.log('✅ Success! Reloading transactions...')
+      await loadTransactionData()
+      showToastNotification('Order marked as shipped! Buyer will be notified.', 'success')
+    } else {
+      console.error('❌ Error:', result.error)
+      showToastNotification(result.error || 'Failed to mark order as shipped', 'error')
+    }
+  } else {
+    console.warn('⚠️ Not in farmer view')
+  }
+}
+
+// PICKUP METHODS - FIXED
+const markReadyForPickup = async (id: string): Promise<void> => {
+  console.log('📦 markReadyForPickup called with ID:', id)
+  
+  if (currentView.value === 'farmer') {
+    const result = await transactionService.markReadyForPickup(id)
+    
+    if (result.success) {
+      await loadTransactionData()
+      showToastNotification('Order marked as ready for pickup! Buyer will be notified.', 'success')
+    } else {
+      showToastNotification(result.error || 'Failed to mark order as ready for pickup', 'error')
+    }
+  }
+}
+
+const confirmPickup = async (id: string): Promise<void> => {
+  console.log('✅ confirmPickup called with ID:', id)
+  
+  if (currentView.value === 'buyer') {
+    const result = await transactionService.confirmPickup(id)
+    
+    if (result.success) {
+      await loadTransactionData()
+      if (selectedTransaction.value?.id === id) {
+        selectedTransaction.value = null
+      }
+      showToastNotification('Pickup confirmed! Thank you for your purchase.', 'success')
+    } else {
+      showToastNotification(result.error || 'Failed to confirm pickup', 'error')
     }
   }
 }
 
 const contactPerson = (transaction: Transaction): void => {
-  showToastNotification('Opening chat...')
+  showToastNotification('Opening chat...', 'success')
 }
 
 // ==================== RECEIPT METHODS ====================
@@ -510,9 +593,7 @@ const generateReceiptNumber = (): string => {
 const openCreateReceiptModal = (transaction: Transaction): void => {
   selectedReceiptTransaction.value = transaction
   
-  // Pre-fill form with transaction data
   if ('buyer' in transaction) {
-    // Farmer view
     receiptForm.value = {
       receiptNumber: generateReceiptNumber(),
       issueDate: new Date().toISOString().split('T')[0],
@@ -529,7 +610,6 @@ const openCreateReceiptModal = (transaction: Transaction): void => {
       notes: `Payment Method: ${transaction.paymentMethod}\nDelivery Method: ${transaction.deliveryMethod}`
     }
   } else {
-    // Buyer view
     receiptForm.value = {
       receiptNumber: generateReceiptNumber(),
       issueDate: new Date().toISOString().split('T')[0],
@@ -562,11 +642,10 @@ const closeReceiptModals = (): void => {
 }
 
 const requestReceipt = (transaction: Transaction): void => {
-  showToastNotification('Receipt request sent to farmer!')
+  showToastNotification('Receipt request sent to farmer!', 'success')
 }
 
 const saveReceipt = (form: ReceiptForm): void => {
-  // Update transaction to mark hasReceipt as true
   if (selectedReceiptTransaction.value) {
     const id = selectedReceiptTransaction.value.id
     
@@ -583,7 +662,7 @@ const saveReceipt = (form: ReceiptForm): void => {
     }
   }
   
-  showToastNotification('Receipt saved successfully!')
+  showToastNotification('Receipt saved successfully!', 'success')
   closeReceiptModals()
 }
 
@@ -592,140 +671,96 @@ const printReceipt = (): void => {
 }
 
 const downloadReceipt = (form: ReceiptForm): void => {
-  showToastNotification('Receipt download started...')
-  // Implement PDF download logic here
+  showToastNotification('Receipt download started...', 'success')
 }
 
-const loadTransactionData = () => {
-  if (userIsFarmer.value) {
-    farmerTransactions.value = [
-      {
-        id: 'TXN-78901',
-        animal: {
-          id: 1,
-          uuid: 'uuid-animal-001',
-          title: 'Premium Angus Cattle',
-          type: 'Cattle',
-          breed: 'Angus',
-          weight: 550,
-          weightUnit: 'kg',
-          quantity: 1,
-          age: '2 years',
-          gender: 'Male',
-          status: 'Available',
-          healthStatus: ['Vaccinated', 'Dewormed'],
-          price: 45000,
-          priceUnit: 'per head',
-          deliveryOptions: ['Pickup', 'Delivery'],
-          paymentMethods: ['Cash', 'Bank Transfer'],
-          images: ['https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'],
-          description: 'Healthy Angus cattle, vaccinated and dewormed',
-          datePosted: new Date(Date.now() - 86400000 * 30).toISOString(),
-          farmer: {
-            id: 1,
-            name: 'John Farmer',
-            farmName: 'Green Valley Farm',
-            contact: '+63 917 111 2222',
-            email: 'farmer@example.com',
-            address: 'Laguna, Philippines',
-            avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-          },
-          location: 'Laguna, Philippines'
-        },
-        buyer: {
-          id: 101,
-          name: 'Juan Dela Cruz',
-          contact: '+63 917 123 4567',
-          email: 'juan@example.com',
-          address: '123 Main St, Quezon City',
-          avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-        },
-        date: new Date(Date.now() - 86400000 * 2).toISOString(),
-        status: 'Pending',
-        amount: 45000,
-        paymentMethod: 'Cash on Delivery',
-        deliveryMethod: 'Pickup',
-        message: 'I would like to visit your farm to see the cattle before finalizing the purchase.',
-        hasReceipt: false
-      }
-    ]
-  }
-
-  buyerTransactions.value = [
-    {
-      id: 'ORD-56789',
-      animal: {
-        id: 5,
-        uuid: 'uuid-animal-005',
-        title: 'Premium Holstein Dairy Cattle',
-        type: 'Cattle',
-        breed: 'Holstein',
-        weight: 600,
-        weightUnit: 'kg',
-        quantity: 1,
-        age: '3 years',
-        gender: 'Female',
-        status: 'Available',
-        healthStatus: ['Vaccinated', 'Health Certified'],
-        price: 85000,
-        priceUnit: 'per head',
-        deliveryOptions: ['Delivery'],
-        paymentMethods: ['Cash', 'Bank Transfer'],
-        images: ['https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'],
-        description: 'Dairy cattle, excellent milk production',
-        datePosted: new Date(Date.now() - 86400000 * 15).toISOString(),
-        farmer: {
-          id: 201,
-          name: 'Green Valley Farm',
-          farmName: 'Green Valley Dairy',
-          contact: '+63 917 555 0123',
-          email: 'greenvalley@example.com',
-          address: 'Km 15 National Highway, Laguna',
-          avatar: 'https://randomuser.me/api/portraits/men/78.jpg'
-        },
-        location: 'Laguna, Philippines'
-      },
-      farmer: {
-        id: 201,
-        name: 'Green Valley Farm',
-        farmName: 'Green Valley Dairy',
-        contact: '+63 917 555 0123',
-        email: 'greenvalley@example.com',
-        address: 'Km 15 National Highway, Laguna',
-        avatar: 'https://randomuser.me/api/portraits/men/78.jpg'
-      },
-      date: new Date(Date.now() - 86400000 * 1).toISOString(),
-      status: 'Pending',
-      amount: 85000,
-      paymentMethod: 'Cash on Delivery',
-      deliveryMethod: 'Delivery',
-      estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString(),
-      trackingNumber: 'TRK-2024-002',
-      hasReceipt: false
+const loadTransactionData = async () => {
+  isLoadingTransactions.value = true
+  
+  try {
+    // ALWAYS load buyer transactions for ALL users (farmers and buyers)
+    console.log('🛒 Loading buyer transactions...')
+    const buyerResult = await transactionService.getBuyerTransactions()
+    if (buyerResult.success && buyerResult.data) {
+      buyerTransactions.value = buyerResult.data
+      console.log('✅ Loaded buyer transactions:', buyerTransactions.value.length)
+    } else {
+      console.error('❌ Failed to load buyer transactions:', buyerResult.error)
     }
-  ]
+
+    // Only load farmer transactions if user is a farmer
+    if (userIsFarmer.value) {
+      console.log('🚜 Loading farmer transactions...')
+      const farmerResult = await transactionService.getFarmerTransactions()
+      if (farmerResult.success && farmerResult.data) {
+        farmerTransactions.value = farmerResult.data
+        console.log('✅ Loaded farmer transactions:', farmerTransactions.value.length)
+      } else {
+        console.error('❌ Failed to load farmer transactions:', farmerResult.error)
+      }
+    }
+  } catch (error) {
+    console.error('💥 Error loading transactions:', error)
+    showToastNotification('Failed to load transactions', 'error')
+  } finally {
+    isLoadingTransactions.value = false
+  }
 }
 
 const setInitialView = () => {
-  if (userIsBuyer.value && !userIsFarmer.value) {
-    currentView.value = 'buyer'
-  } else if (userIsFarmer.value) {
+  if (userIsFarmer.value) {
     currentView.value = 'farmer'
+    console.log('📱 Initial view set to: farmer (My Sales)')
   } else {
     currentView.value = 'buyer'
+    console.log('📱 Initial view set to: buyer (My Purchases)')
+  }
+}
+
+const loadUserProfile = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (profile) {
+      currentUser.value = {
+        isAuthenticated: true,
+        role: profile.role || 'Buyer',
+        id: user.id,
+        email: user.email || '',
+        name: profile.first_name && profile.last_name 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile.username
+      }
+      console.log('👤 User loaded:', currentUser.value)
+    }
+  } catch (error) {
+    console.error('Error loading user profile:', error)
   }
 }
 
 // ==================== LIFECYCLE ====================
 
-onMounted(() => {
+onMounted(async () => {
+  await loadUserProfile()
+  
   if (!currentUser.value.isAuthenticated) {
     router.push('/login')
     return
   }
   
   setInitialView()
-  loadTransactionData()
+  await loadTransactionData()
 })
 
 watch(showToast, (newVal) => {
@@ -736,3 +771,14 @@ watch(showToast, (newVal) => {
   }
 })
 </script>
+
+<style scoped>
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

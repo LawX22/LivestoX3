@@ -1,5 +1,4 @@
-// transactionTypes.ts - Transaction Type Definitions
-
+// types/transactionTypes.ts - COMPLETE TYPE DEFINITIONS
 export interface Farmer {
   id: number
   name: string
@@ -53,7 +52,31 @@ export interface Buyer {
   email?: string
   address: string
   avatar?: string
-  farm?: string
+  farm?: string | null
+}
+
+export interface DeliveryAddress {
+  label: string
+  contactPerson: string
+  phone: string
+  street: string
+  city: string
+  province: string
+  postalCode: string
+}
+
+export interface PickupSchedule {
+  availableDays: string[]
+  startTime: string
+  endTime: string
+}
+
+// Shipping tracking information
+export interface ShippingUpdate {
+  status: 'confirmed' | 'processing' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered'
+  message: string
+  location?: string
+  timestamp: string
 }
 
 export interface FarmerTransaction {
@@ -67,6 +90,17 @@ export interface FarmerTransaction {
   deliveryMethod: string
   message?: string
   hasReceipt?: boolean
+  deliveryAddress?: DeliveryAddress
+  deliveryDate?: string
+  deliveryTime?: string
+  deliveryNotes?: string
+  pickupSchedule?: PickupSchedule
+  shippingFee?: number
+  // Shipping tracking
+  shippingUpdates?: ShippingUpdate[]
+  currentShippingStatus?: string
+  estimatedDeliveryDate?: string
+  actualDeliveryDate?: string
 }
 
 export interface BuyerTransaction {
@@ -82,6 +116,17 @@ export interface BuyerTransaction {
   trackingNumber?: string
   message?: string
   hasReceipt?: boolean
+  deliveryAddress?: DeliveryAddress
+  deliveryDate?: string
+  deliveryTime?: string
+  deliveryNotes?: string
+  pickupSchedule?: PickupSchedule
+  shippingFee?: number
+  // Shipping tracking
+  shippingUpdates?: ShippingUpdate[]
+  currentShippingStatus?: string
+  estimatedDeliveryDate?: string
+  actualDeliveryDate?: string
 }
 
 export type Transaction = FarmerTransaction | BuyerTransaction

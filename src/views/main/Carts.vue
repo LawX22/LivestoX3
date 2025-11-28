@@ -1,4 +1,4 @@
-<!-- Cart.vue - Compact Design -->
+<!-- Cart.vue - BACKEND INTEGRATED VERSION -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 relative overflow-hidden">
     <!-- Enhanced Background Elements -->
@@ -24,7 +24,7 @@
               <div>
                 <h1 class="text-lg font-bold text-white mb-0.5">Shopping Cart</h1>
                 <p class="text-green-100 text-xs font-medium">
-                  {{ cartItems.length }} {{ cartItems.length === 1 ? 'item' : 'items' }} in your cart
+                  {{ isLoading ? 'Loading...' : `${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart` }}
                 </p>
               </div>
             </div>
@@ -36,8 +36,16 @@
         </div>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="isLoading" class="bg-white/80 backdrop-blur-xl rounded-xl p-8 text-center shadow-lg border border-white/50">
+        <div class="flex flex-col items-center gap-4">
+          <div class="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-gray-700 font-semibold">Loading your cart...</p>
+        </div>
+      </div>
+
       <!-- Cart Content -->
-      <div class="flex flex-col xl:flex-row gap-4">
+      <div v-else class="flex flex-col xl:flex-row gap-4">
         <!-- Cart Items Section -->
         <div class="flex-1">
           <!-- Empty State -->
@@ -58,35 +66,36 @@
           </div>
 
           <!-- Cart Items List -->
-          <div v-else class="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar" ref="scrollContainer">
+          <div v-else class="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
             <div 
               v-for="item in cartItems" 
-              :key="item.id" 
+              :key="item.uuid" 
               class="bg-white/80 backdrop-blur-xl rounded-xl p-4 shadow-md border border-white/50 transition-all duration-300 hover:shadow-lg hover:border-green-200 relative group"
-              :class="{ 'ring-2 ring-green-500 bg-green-50/50 shadow-green-100': selectedItems.includes(item.id) }"
+              :class="{ 'ring-2 ring-green-500 bg-green-50/50 shadow-green-100': selectedItems.includes(item.uuid) }"
             >
               <!-- Header with checkbox and remove -->
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                   <input 
                     type="checkbox" 
-                    :checked="selectedItems.includes(item.id)"
-                    @change="toggleItemSelection(item.id)"
+                    :checked="selectedItems.includes(item.uuid)"
+                    @change="toggleItemSelection(item.uuid)"
                     class="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer transition-all"
                   >
-                  <label class="text-xs text-gray-700 font-medium cursor-pointer select-none" @click="toggleItemSelection(item.id)">
+                  <label class="text-xs text-gray-700 font-medium cursor-pointer select-none" @click="toggleItemSelection(item.uuid)">
                     Select Item
                   </label>
                 </div>
                 
                 <button 
-                  @click="removeFromCart(item.id)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-xs font-semibold transition-all duration-200 border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md opacity-70 group-hover:opacity-100"
+                  @click="removeFromCart(item.uuid)"
+                  :disabled="isRemoving"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-xs font-semibold transition-all duration-200 border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md opacity-70 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Remove
+                  {{ isRemoving ? 'Removing...' : 'Remove' }}
                 </button>
               </div>
               
@@ -142,8 +151,8 @@
                       <span class="text-xs font-semibold text-gray-700">Quantity:</span>
                       <div class="flex items-center border-2 border-gray-300 rounded-lg bg-white shadow-sm">
                         <button 
-                          @click="updateQuantity(item.id, item.quantity - 1)" 
-                          :disabled="item.quantity <= 1"
+                          @click="updateQuantity(item.uuid, item.quantity - 1)" 
+                          :disabled="item.quantity <= 1 || isUpdating"
                           class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:text-green-600"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,8 +161,8 @@
                         </button>
                         <span class="px-4 py-1 text-gray-900 font-bold text-sm border-l-2 border-r-2 border-gray-300 min-w-[50px] text-center">{{ item.quantity }}</span>
                         <button 
-                          @click="updateQuantity(item.id, item.quantity + 1)" 
-                          :disabled="item.quantity >= item.maxQuantity"
+                          @click="updateQuantity(item.uuid, item.quantity + 1)" 
+                          :disabled="item.quantity >= item.maxQuantity || isUpdating"
                           class="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:text-green-600"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +272,7 @@
               </div>
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="text-sm font-bold text-gray-900 mb-0.5">Success!</h4>
+              <h4 class="text-sm font-bold text-gray-900 mb-0.5">{{ toastTitle }}</h4>
               <p class="text-xs text-gray-700">{{ toastMessage }}</p>
             </div>
             <button @click="showToast = false" class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg">
@@ -281,100 +290,26 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { cartCheckoutService } from '@/services/cartCheckoutService'
 import type { CartItem } from '@/types/cartTypes'
 
 const router = useRouter()
 
-// Refs with typed interfaces
+// State
 const cartItems = ref<CartItem[]>([])
+const isLoading = ref<boolean>(true)
 const isProcessingOrder = ref<boolean>(false)
+const isUpdating = ref<boolean>(false)
+const isRemoving = ref<boolean>(false)
 const showToast = ref<boolean>(false)
+const toastTitle = ref<string>('')
 const toastMessage = ref<string>('')
-const selectedItems = ref<number[]>([])
-const scrollContainer = ref<HTMLElement | null>(null)
+const selectedItems = ref<string[]>([])
 
-// Sample cart items data matching Animal/CartItem interface
-const sampleCartItems: CartItem[] = [
-  {
-    id: 1,
-    uuid: 'cart-001',
-    title: 'Premium Angus Cattle',
-    type: 'Cattle',
-    breed: 'Angus',
-    weight: 450,
-    weightUnit: 'kg',
-    quantity: 2,
-    originalQuantity: 5,
-    maxQuantity: 5,
-    age: '24 months',
-    gender: 'Male',
-    status: 'Available',
-    healthStatus: ['Vaccinated', 'Dewormed'],
-    price: 45000,
-    priceUnit: 'per head',
-    deliveryOptions: ['pickup', 'delivery'],
-    paymentMethods: ['cash', 'bank_transfer'],
-    images: [
-      'https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Healthy Angus cattle, vaccinated and dewormed. Raised in open pasture with organic feed.',
-    datePosted: new Date(Date.now() - 604800000).toISOString(),
-    dateAdded: new Date().toISOString(),
-    farmer: {
-      id: 2,
-      name: 'Maria Santos',
-      farmName: 'Santos Ranch',
-      contact: '+63 921 777 8888',
-      email: 'maria.santos@example.com',
-      address: '123 Poultry Lane, Barangay Fowl, Pampanga',
-      avatar: 'https://randomuser.me/api/portraits/women/68.jpg'
-    },
-    location: 'Pampanga',
-    isAuction: false
-  },
-  {
-    id: 4,
-    uuid: 'cart-004',
-    title: 'Native Chicken Batch',
-    type: 'Chicken',
-    breed: 'Native',
-    weight: 1.2,
-    weightUnit: 'kg',
-    quantity: 10,
-    originalQuantity: 20,
-    maxQuantity: 20,
-    age: '6 months',
-    gender: 'Mixed',
-    status: 'Available',
-    healthStatus: ['Healthy', 'Active'],
-    price: 350,
-    priceUnit: 'per head',
-    deliveryOptions: ['pickup', 'delivery'],
-    paymentMethods: ['cash', 'gcash'],
-    images: [
-      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-    ],
-    description: 'Free-range native chickens, healthy and active.',
-    datePosted: new Date(Date.now() - 259200000).toISOString(),
-    dateAdded: new Date(Date.now() - 259200000).toISOString(),
-    farmer: {
-      id: 5,
-      name: 'Lorna Tolentino',
-      farmName: 'Tolentino Poultry',
-      contact: '+63 921 333 9012',
-      email: 'lorna.tolentino@example.com',
-      address: '321 Poultry Avenue, Barangay Fowl, Batangas',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-    },
-    location: 'Batangas',
-    isAuction: false
-  }
-]
-
-// Computed properties with proper return types
+// Computed properties
 const subtotal = computed((): number => {
   return cartItems.value
-    .filter(item => selectedItems.value.includes(item.id))
+    .filter(item => selectedItems.value.includes(item.uuid))
     .reduce((total, item) => total + (item.price * item.quantity), 0)
 })
 
@@ -384,7 +319,7 @@ const totalPrice = computed((): number => {
 
 const totalSelectedItems = computed((): number => {
   return cartItems.value
-    .filter(item => selectedItems.value.includes(item.id))
+    .filter(item => selectedItems.value.includes(item.uuid))
     .reduce((total, item) => total + item.quantity, 0)
 })
 
@@ -392,49 +327,103 @@ const allItemsSelected = computed((): boolean => {
   return selectedItems.value.length === cartItems.value.length && cartItems.value.length > 0
 })
 
-// Methods with proper typing
-const loadCartItems = (): void => {
-  // Load sample data instead of localStorage
-  cartItems.value = [...sampleCartItems]
-}
-
-const updateQuantity = (id: number, newQuantity: number): void => {
-  const item = cartItems.value.find(item => item.id === id)
-  if (item) {
-    // Ensure quantity is within valid range
-    if (newQuantity < 1) newQuantity = 1
-    if (newQuantity > item.maxQuantity) newQuantity = item.maxQuantity
+// Methods
+const loadCartItems = async (): Promise<void> => {
+  isLoading.value = true
+  
+  try {
+    const result = await cartCheckoutService.getCartItems()
     
-    item.quantity = newQuantity
-    
-    showToast.value = true
-    toastMessage.value = 'Quantity updated successfully'
-    setTimeout(() => showToast.value = false, 3000)
-  }
-}
-
-const removeFromCart = (id: number): void => {
-  const index = cartItems.value.findIndex(item => item.id === id)
-  if (index !== -1) {
-    const removedItem = cartItems.value[index]
-    cartItems.value.splice(index, 1)
-    
-    // Remove from selected items if it was selected
-    const selectedIndex = selectedItems.value.indexOf(id)
-    if (selectedIndex !== -1) {
-      selectedItems.value.splice(selectedIndex, 1)
+    if (result.success && result.data) {
+      cartItems.value = result.data
+      console.log('✅ Cart loaded:', cartItems.value.length, 'items')
+    } else {
+      console.error('❌ Failed to load cart:', result.error)
+      showToastNotification('Error', result.error || 'Failed to load cart')
     }
-    
-    showToast.value = true
-    toastMessage.value = `${removedItem.type} removed from cart`
-    setTimeout(() => showToast.value = false, 3000)
+  } catch (error) {
+    console.error('❌ Error loading cart:', error)
+    showToastNotification('Error', 'Failed to load cart items')
+  } finally {
+    isLoading.value = false
   }
 }
 
-const toggleItemSelection = (id: number): void => {
-  const index = selectedItems.value.indexOf(id)
+const updateQuantity = async (listingId: string, newQuantity: number): Promise<void> => {
+  const item = cartItems.value.find(item => item.uuid === listingId)
+  if (!item) return
+  
+  // Validate quantity
+  if (newQuantity < 1) newQuantity = 1
+  if (newQuantity > item.maxQuantity) newQuantity = item.maxQuantity
+  
+  // Optimistic update
+  const oldQuantity = item.quantity
+  item.quantity = newQuantity
+  
+  isUpdating.value = true
+  
+  try {
+    const result = await cartCheckoutService.updateCartQuantity(listingId, newQuantity)
+    
+    if (result.success) {
+      showToastNotification('Success', 'Quantity updated successfully')
+    } else {
+      // Revert on error
+      item.quantity = oldQuantity
+      showToastNotification('Error', result.error || 'Failed to update quantity')
+    }
+  } catch (error) {
+    // Revert on error
+    item.quantity = oldQuantity
+    console.error('❌ Error updating quantity:', error)
+    showToastNotification('Error', 'Failed to update quantity')
+  } finally {
+    isUpdating.value = false
+  }
+}
+
+const removeFromCart = async (listingId: string): Promise<void> => {
+  const item = cartItems.value.find(item => item.uuid === listingId)
+  if (!item) return
+  
+  const confirmed = confirm(`Remove ${item.type} - ${item.breed} from cart?`)
+  if (!confirmed) return
+  
+  isRemoving.value = true
+  
+  try {
+    const result = await cartCheckoutService.removeFromCart(listingId)
+    
+    if (result.success) {
+      // Remove from local state
+      const index = cartItems.value.findIndex(item => item.uuid === listingId)
+      if (index !== -1) {
+        cartItems.value.splice(index, 1)
+      }
+      
+      // Remove from selected items
+      const selectedIndex = selectedItems.value.indexOf(listingId)
+      if (selectedIndex !== -1) {
+        selectedItems.value.splice(selectedIndex, 1)
+      }
+      
+      showToastNotification('Success', `${item.type} removed from cart`)
+    } else {
+      showToastNotification('Error', result.error || 'Failed to remove item')
+    }
+  } catch (error) {
+    console.error('❌ Error removing from cart:', error)
+    showToastNotification('Error', 'Failed to remove item')
+  } finally {
+    isRemoving.value = false
+  }
+}
+
+const toggleItemSelection = (listingId: string): void => {
+  const index = selectedItems.value.indexOf(listingId)
   if (index === -1) {
-    selectedItems.value.push(id)
+    selectedItems.value.push(listingId)
   } else {
     selectedItems.value.splice(index, 1)
   }
@@ -442,37 +431,43 @@ const toggleItemSelection = (id: number): void => {
 
 const toggleAllItemsSelection = (): void => {
   if (allItemsSelected.value) {
-    // Deselect all items
     selectedItems.value = []
   } else {
-    // Select all items
-    selectedItems.value = cartItems.value.map(item => item.id)
+    selectedItems.value = cartItems.value.map(item => item.uuid)
   }
 }
 
 const proceedToCheckout = (): void => {
-  if (selectedItems.value.length === 0) return
+  if (selectedItems.value.length === 0) {
+    showToastNotification('Notice', 'Please select items to checkout')
+    return
+  }
   
   isProcessingOrder.value = true
   
   // Get selected items data
-  const selectedItemsData = cartItems.value.filter(item => selectedItems.value.includes(item.id))
+  const selectedItemsData = cartItems.value.filter(item => selectedItems.value.includes(item.uuid))
   
   // Save to localStorage for checkout page
   localStorage.setItem('checkoutItems', JSON.stringify(selectedItemsData))
   
-  // Simulate processing delay
+  // Navigate to checkout page
   setTimeout(() => {
     isProcessingOrder.value = false
-    
-    // Navigate to checkout page
     router.push('/checkOut')
-  }, 1000)
+  }, 500)
 }
 
-// Lifecycle hooks
-onMounted(() => {
-  loadCartItems()
+const showToastNotification = (title: string, message: string): void => {
+  toastTitle.value = title
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => (showToast.value = false), 4000)
+}
+
+// Lifecycle
+onMounted(async () => {
+  await loadCartItems()
 })
 </script>
 

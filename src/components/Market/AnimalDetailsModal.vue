@@ -1,4 +1,4 @@
-<!-- AnimalDetailsModal.vue - FIXED VERSION WITH DELIVERY OPTIONS PARSING -->
+<!-- AnimalDetailsModal.vue - COMPLETE VERSION WITH CART INTEGRATION -->
 <template>
   <!-- Full Screen Modal Overlay with Marketplace styling -->
   <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
@@ -290,7 +290,7 @@
                 </div>
               </div>
 
-              <!-- ✅ ENHANCED Delivery Options Card with Parsing -->
+              <!-- Enhanced Delivery Options Card with Parsing -->
               <div class="bg-white/95 backdrop-blur-sm rounded-lg p-4 border border-white/60 shadow-md hover:shadow-lg transition-all duration-300">
                 <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2 cursor-default">
                   <div class="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -649,14 +649,23 @@
       <div class="max-w-sm w-full bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border border-green-200/60 p-2 transform transition-all duration-300 ease-in-out">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg">
-              <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div :class="`w-7 h-7 rounded-lg flex items-center justify-center shadow-lg ${
+              toastType === 'error' 
+                ? 'bg-gradient-to-br from-red-400 to-rose-500' 
+                : 'bg-gradient-to-br from-green-400 to-emerald-500'
+            }`">
+              <svg v-if="toastType === 'error'" class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+              <svg v-else class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
             </div>
           </div>
           <div class="ml-2 flex-1">
-            <h4 class="text-xs font-bold text-gray-900 mb-0.5 cursor-default">{{ toastType === 'success' ? 'Success!' : 'Added to Cart!' }}</h4>
+            <h4 class="text-xs font-bold text-gray-900 mb-0.5 cursor-default">
+              {{ toastType === 'error' ? 'Error' : toastType === 'success' ? 'Success!' : 'Added to Cart!' }}
+            </h4>
             <div class="text-xs text-gray-700 font-medium cursor-default">{{ toastMessage }}</div>
           </div>
           <button @click="showToast = false" class="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-0.5 hover:bg-gray-100 rounded-md cursor-pointer">
@@ -675,6 +684,7 @@ import { ref, computed } from 'vue';
 import ContactFarmerModal from './ContactFarmerModal.vue';
 import type { CurrentUser } from '../../types/animalTypes';
 import type { ParsedDeliveryOptions } from '@/types/managementTypes';
+import { cartCheckoutService } from '@/services/cartCheckoutService';
 
 interface Animal {
   id: string;
@@ -723,6 +733,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   contact: [contactInfo: string];
+  cartUpdated: [];
 }>();
 
 // State
@@ -730,11 +741,11 @@ const currentImageIndex = ref(0);
 const isContactModalOpen = ref(false);
 const showToast = ref(false);
 const toastMessage = ref('');
-const toastType = ref<'success' | 'cart'>('success');
+const toastType = ref<'success' | 'cart' | 'error'>('success');
 const selectedQuantity = ref(1);
 const isAddingToCart = ref(false);
 
-// ===== ✅ DELIVERY OPTIONS PARSING =====
+// ===== DELIVERY OPTIONS PARSING =====
 
 /**
  * Parse delivery options using regex to handle time format correctly
@@ -762,7 +773,7 @@ const parseDeliveryOptionsRobust = (deliveryOptions: string[] | null | undefined
     
     if (option.startsWith('pickup:')) {
       try {
-        // ✅ CRITICAL FIX: Use regex to properly parse time format
+        // Use regex to properly parse time format
         const match = option.match(/^pickup:([^:]+):(\d{2}:\d{2}):(\d{2}:\d{2})$/)
         console.log('    🔸 MARKETPLACE MODAL: Pickup regex match:', match)
         
@@ -902,7 +913,7 @@ const sendMessage = (messageData: MessageData) => {
   closeContactModal();
 };
 
-const showToastNotification = (message: string, type: 'success' | 'cart' = 'success') => {
+const showToastNotification = (message: string, type: 'success' | 'cart' | 'error' = 'success') => {
   toastMessage.value = message;
   toastType.value = type;
   showToast.value = true;
@@ -935,32 +946,77 @@ const validateQuantity = () => {
   }
 };
 
-// Add to cart functionality
+// ===== ADD TO CART FUNCTIONALITY =====
+
+/**
+ * Add item to cart using the cart service
+ */
 const addToCart = async () => {
-  if (props.animal.status === 'Out of Stock' || !props.currentUser) {
-    showToastNotification('Please sign in to add items to cart', 'success');
+  // Validation checks
+  if (!props.currentUser) {
+    showToastNotification('Please sign in to add items to cart', 'error');
+    return;
+  }
+
+  if (props.animal.status === 'Out of Stock') {
+    showToastNotification('This item is currently out of stock', 'error');
+    return;
+  }
+
+  if (selectedQuantity.value < 1 || selectedQuantity.value > props.animal.quantity) {
+    showToastNotification('Please select a valid quantity', 'error');
     return;
   }
 
   isAddingToCart.value = true;
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('🛒 Adding to cart:', {
+      listingId: props.animal.id,
+      quantity: selectedQuantity.value
+    });
 
-    showToastNotification(
-      `${selectedQuantity.value} ${props.animal.type}(s) added to cart!`,
-      'cart'
+    // Call the cart service
+    const result = await cartCheckoutService.addToCart(
+      props.animal.id,
+      selectedQuantity.value
     );
 
-    selectedQuantity.value = 1;
-  } catch (error) {
-    console.error('Error adding to cart:', error);
-    showToastNotification('Failed to add item to cart. Please try again.', 'success');
+    if (result.success) {
+      // Show success message
+      showToastNotification(
+        result.message || `${selectedQuantity.value} ${props.animal.type}(s) added to cart!`,
+        'cart'
+      );
+
+      // Reset quantity to 1
+      selectedQuantity.value = 1;
+
+      // Emit event to update cart count in parent component
+      emit('cartUpdated');
+
+      console.log('✅ Item added to cart successfully');
+    } else {
+      // Show error message
+      showToastNotification(
+        result.error || 'Failed to add item to cart. Please try again.',
+        'error'
+      );
+
+      console.error('❌ Error adding to cart:', result.error);
+    }
+  } catch (error: any) {
+    console.error('💥 Error in addToCart:', error);
+    showToastNotification(
+      'An unexpected error occurred. Please try again.',
+      'error'
+    );
   } finally {
     isAddingToCart.value = false;
   }
 };
+
+// ===== END ADD TO CART FUNCTIONALITY =====
 
 // Contact methods
 const callFarmer = () => {
