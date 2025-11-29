@@ -44,6 +44,54 @@ interface MessageDB {
   sender_avatar?: string
 }
 
+interface ProfileDB {
+  id: string
+  role: string
+  firstname?: string
+  first_name?: string
+  lastname?: string
+  last_name?: string
+  username?: string
+  created_at: string
+  profile_picture?: string
+}
+
+interface LivestockJoined {
+  title: string
+  type: string
+  images: string[]
+  user_id: string
+}
+
+interface ProfileJoined {
+  firstname?: string
+  lastname?: string
+  username?: string
+}
+
+interface TransactionWithJoins {
+  id: string
+  buyer_id: string
+  seller_id: string
+  listing_id: string
+  quantity: number
+  total_amount: number
+  status: string
+  created_at: string
+  livestock_listings: LivestockJoined | LivestockJoined[] | null
+  profiles: ProfileJoined | ProfileJoined[] | null
+}
+
+interface MessageWithJoins {
+  id: string
+  sender_id: string
+  receiver_id: string
+  message: string
+  is_read: boolean
+  created_at: string
+  sender: ProfileJoined | ProfileJoined[] | null
+}
+
 export class DashboardService {
   /**
    * ========================================
@@ -79,17 +127,19 @@ export class DashboardService {
         return { success: false, error: 'Failed to load user profile' }
       }
 
+      const profileData = profile as ProfileDB
+
       // Normalize role
-      const normalizedRole = (profile.role || 'farmer').toLowerCase()
+      const normalizedRole = (profileData.role || 'farmer').toLowerCase()
 
       const user: User = {
-        id: profile.id,
+        id: profileData.id,
         email: authUser.email || '',
         role: normalizedRole as 'farmer' | 'buyer' | 'both',
-        firstname: profile.firstname || profile.first_name || '',
-        lastname: profile.lastname || profile.last_name || '',
-        username: profile.username || '',
-        created_at: profile.created_at || authUser.created_at
+        firstname: profileData.firstname || profileData.first_name || '',
+        lastname: profileData.lastname || profileData.last_name || '',
+        username: profileData.username || '',
+        created_at: profileData.created_at || authUser.created_at
       }
 
       return { success: true, data: user }
@@ -126,6 +176,8 @@ export class DashboardService {
         return { success: false, error: listingsError.message }
       }
 
+      const listingsData = listings as LivestockListingDB[] | null
+
       // Fetch transactions where user is seller
       const { data: transactions, error: transError } = await supabase
         .from('transactions')
@@ -135,7 +187,7 @@ export class DashboardService {
 
       // Note: If transactions table doesn't exist yet, this will return an error
       // We'll handle it gracefully
-      const salesData = transError ? [] : (transactions || [])
+      const salesData = transError ? [] : ((transactions as TransactionDB[] | null) || [])
 
       // Fetch messages for user
       const { data: messages, error: msgError } = await supabase
@@ -143,13 +195,13 @@ export class DashboardService {
         .select('*')
         .eq('receiver_id', userId)
 
-      const messagesData = msgError ? [] : (messages || [])
+      const messagesData = msgError ? [] : ((messages as MessageDB[] | null) || [])
 
       // Calculate statistics
-      const totalListings = listings?.length || 0
-      const activeListings = listings?.filter(l => l.status === 'Available').length || 0
-      const lowStockListings = listings?.filter(l => l.status === 'Low Stock').length || 0
-      const outOfStockListings = listings?.filter(l => l.status === 'Out of Stock').length || 0
+      const totalListings = listingsData?.length || 0
+      const activeListings = listingsData?.filter(l => l.status === 'Available').length || 0
+      const lowStockListings = listingsData?.filter(l => l.status === 'Low Stock').length || 0
+      const outOfStockListings = listingsData?.filter(l => l.status === 'Out of Stock').length || 0
 
       // Revenue calculations
       const totalRevenue = salesData.reduce((sum, t) => sum + (t.total_amount || 0), 0)
@@ -161,11 +213,11 @@ export class DashboardService {
       const unreadMessages = messagesData.filter(m => !m.is_read).length
 
       // Calculate average price
-      const totalPrice = listings?.reduce((sum, l) => sum + (l.price || 0), 0) || 0
+      const totalPrice = listingsData?.reduce((sum, l) => sum + (l.price || 0), 0) || 0
       const averagePrice = totalListings > 0 ? Math.round(totalPrice / totalListings) : 0
 
       // Calculate total units (quantity)
-      const totalUnits = listings?.reduce((sum, l) => sum + (l.quantity || 0), 0) || 0
+      const totalUnits = listingsData?.reduce((sum, l) => sum + (l.quantity || 0), 0) || 0
 
       // Calculate growth metrics (comparing with previous period)
       const previousDateFrom = new Date(dateFrom)
@@ -190,8 +242,8 @@ export class DashboardService {
         .gte('created_at', previousDateFrom.toISOString())
         .lt('created_at', dateFrom.toISOString())
 
-      const previousRevenue = previousTransactions?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
-      const previousListingsCount = previousListings?.length || 0
+      const previousRevenue = (previousTransactions as TransactionDB[] | null)?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
+      const previousListingsCount = (previousListings as any[] | null)?.length || 0
 
       // Calculate growth percentages
       const listingsGrowth = this.calculateGrowth(totalListings, previousListingsCount)
@@ -259,7 +311,7 @@ export class DashboardService {
         .eq('buyer_id', userId)
         .gte('created_at', dateFrom.toISOString())
 
-      const purchaseData = transError ? [] : (transactions || [])
+      const purchaseData = transError ? [] : ((transactions as TransactionDB[] | null) || [])
 
       // Fetch messages for user
       const { data: messages, error: msgError } = await supabase
@@ -267,7 +319,7 @@ export class DashboardService {
         .select('*')
         .eq('receiver_id', userId)
 
-      const messagesData = msgError ? [] : (messages || [])
+      const messagesData = msgError ? [] : ((messages as MessageDB[] | null) || [])
 
       // Calculate statistics
       const totalOrders = purchaseData.length
@@ -299,8 +351,8 @@ export class DashboardService {
         .gte('created_at', previousDateFrom.toISOString())
         .lt('created_at', dateFrom.toISOString())
 
-      const previousSpent = previousTransactions?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
-      const previousOrdersCount = previousTransactions?.length || 0
+      const previousSpent = (previousTransactions as TransactionDB[] | null)?.reduce((sum, t) => sum + (t.total_amount || 0), 0) || 0
+      const previousOrdersCount = (previousTransactions as TransactionDB[] | null)?.length || 0
 
       const ordersGrowth = this.calculateGrowth(totalOrders, previousOrdersCount)
       
@@ -382,14 +434,16 @@ export class DashboardService {
         return { success: false, error: error.message }
       }
 
-      const tableData: TableItem[] = (listings || []).map(listing => ({
+      const listingsData = listings as LivestockListingDB[] | null
+
+      const tableData: TableItem[] = (listingsData || []).map(listing => ({
         id: listing.id,
         name: listing.title,
         type: listing.type,
         price: `₱${this.formatNumber(listing.price)}`,
         status: listing.status,
         statusClass: this.getStatusClass(listing.status),
-        stock: listing.quantity,
+        stock: listing.quantity.toString(),
         date: this.formatDate(listing.created_at),
         image: listing.images?.[0] || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=100'
       }))
@@ -442,9 +496,17 @@ export class DashboardService {
         return { success: false, error: error.message }
       }
 
-      const tableData: TableItem[] = (transactions || []).map(transaction => {
-        const listing = transaction.livestock_listings as any
-        const seller = transaction.profiles as any
+      const transactionsData = (transactions as TransactionWithJoins[] | null) ?? []
+
+      const tableData: TableItem[] = transactionsData.map((transaction): TableItem => {
+        // Handle both single object and array responses from Supabase joins
+        const listing = Array.isArray(transaction.livestock_listings) 
+          ? transaction.livestock_listings[0] 
+          : transaction.livestock_listings
+        
+        const seller = Array.isArray(transaction.profiles)
+          ? transaction.profiles[0]
+          : transaction.profiles
         
         const sellerName = seller?.firstname && seller?.lastname
           ? `${seller.firstname} ${seller.lastname}`
@@ -456,6 +518,7 @@ export class DashboardService {
           type: listing?.type || 'Unknown',
           seller: sellerName,
           amount: `₱${this.formatNumber(transaction.total_amount)}`,
+          price: `₱${this.formatNumber(transaction.total_amount)}`,
           date: this.formatDate(transaction.created_at),
           status: this.capitalizeFirst(transaction.status),
           statusClass: this.getStatusClass(transaction.status),
@@ -511,8 +574,13 @@ export class DashboardService {
         return { success: false, error: error.message }
       }
 
-      const messageData: Message[] = (messages || []).map(msg => {
-        const sender = msg.sender as any
+      const messagesData = messages as MessageWithJoins[] | null
+
+      const messageData: Message[] = (messagesData || []).map(msg => {
+        // Handle both single object and array responses from Supabase joins
+        const sender = Array.isArray(msg.sender)
+          ? msg.sender[0]
+          : msg.sender
         
         const senderName = sender?.firstname && sender?.lastname
           ? `${sender.firstname} ${sender.lastname}`
@@ -523,7 +591,7 @@ export class DashboardService {
           name: senderName,
           message: msg.message,
           time: this.getTimeAgo(msg.created_at),
-          avatar: sender?.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_id}`,
+          avatar: (sender as any)?.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_id}`,
           unread: !msg.is_read
         }
       })

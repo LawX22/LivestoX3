@@ -11,6 +11,7 @@ export interface User {
   address?: string
   profile_picture?: string
   farm_name?: string
+  created_at?: string
 }
 
 export interface Stats {
