@@ -1,4 +1,4 @@
-// stores/authStore.ts - OPTIMIZED WITH CONNECTION RESILIENCE
+// stores/authStore.ts
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'

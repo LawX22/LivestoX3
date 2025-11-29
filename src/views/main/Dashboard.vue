@@ -12,10 +12,10 @@
           <h3 class="mt-2 text-base font-medium text-gray-900">Error Loading Dashboard</h3>
           <p class="mt-1 text-sm text-gray-500">{{ error }}</p>
           <div class="mt-4 flex space-x-3 justify-center">
-            <button @click="retryLoad" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700">
+            <button @click="retryLoad" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer">
               Try Again
             </button>
-            <button @click="resetDashboard" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+            <button @click="resetDashboard" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
               Reset
             </button>
           </div>
@@ -111,7 +111,7 @@
                 </div>
               </div>
 
-              <!-- Right side - User info and refresh button -->
+              <!-- Right side - User info and buttons -->
               <div class="flex items-center space-x-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                 <div class="text-xs bg-white/20 backdrop-blur-md px-3 py-1.5 rounded text-white border border-white/30 flex-1 sm:flex-none">
                   <span class="opacity-90">Welcome,</span>
@@ -121,7 +121,7 @@
                   <span class="opacity-90">Updated:</span>
                   <span class="font-medium ml-1">{{ lastUpdated }}</span>
                 </div>
-                <button @click="refreshData" :disabled="refreshing" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded shadow-sm transition-colors backdrop-blur-md border border-white/30 disabled:opacity-50">
+                <button @click="refreshData" :disabled="refreshing" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded shadow-sm transition-colors backdrop-blur-md border border-white/30 disabled:opacity-50 cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="{ 'animate-spin': refreshing }" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
@@ -223,6 +223,7 @@
               :time-range="timeRange"
               @refresh="refreshData"
               @time-range-change="setTimeRange"
+              @open-sales-report="showSalesPerformanceModal = true"
             />
             <BuyerDashboard
               v-else
@@ -240,6 +241,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Sales Performance Modal -->
+    <SalesPerformanceModal
+      :show="showSalesPerformanceModal"
+      :transactions="farmerTransactions"
+      :is-farmer-view="true"
+      @close="showSalesPerformanceModal = false"
+    />
   </div>
 </template>
 
@@ -249,8 +258,11 @@ import { useRouter } from 'vue-router'
 import NavBar from '@/components/NavBar.vue'
 import FarmerDashboard from '@/components/Dashboard/FarmerDashboard.vue'
 import BuyerDashboard from '@/components/Dashboard/BuyerDashboard.vue'
-import type { User, Stats, TableItem, Message, } from '@/types/dashboardTypes'
+import SalesPerformanceModal from '../../components/Transactions/SalesPerformanceModal.vue'
+import type { User, Stats, TableItem, Message } from '@/types/dashboardTypes'
+import type { FarmerTransaction } from '@/types/transactionTypes'
 import { DashboardService } from '../../services/dashboardService'
+import { transactionService } from '../../services/transactionsService'
 
 // State
 const loading = ref(true)
@@ -262,6 +274,8 @@ const stats = ref<Stats>({})
 const tableData = ref<TableItem[]>([])
 const messages = ref<Message[]>([])
 const lastUpdated = ref(new Date().toLocaleString())
+const showSalesPerformanceModal = ref(false)
+const farmerTransactions = ref<FarmerTransaction[]>([])
 
 // Router
 const router = useRouter()
@@ -329,6 +343,9 @@ const refreshData = async () => {
   refreshing.value = true
   try {
     await loadDashboardData()
+    if (dashboardType.value === 'farmer') {
+      await loadFarmerTransactions()
+    }
     lastUpdated.value = new Date().toLocaleString()
   } finally {
     refreshing.value = false
@@ -348,6 +365,25 @@ const resetDashboard = () => {
   messages.value = []
   loading.value = true
   initializeDashboard()
+}
+
+/**
+ * Load farmer transactions for sales performance modal
+ */
+const loadFarmerTransactions = async () => {
+  try {
+    console.log('📊 Loading farmer transactions for sales modal...')
+    const result = await transactionService.getFarmerTransactions()
+    
+    if (result.success && result.data) {
+      farmerTransactions.value = result.data
+      console.log('✅ Loaded farmer transactions:', farmerTransactions.value.length)
+    } else {
+      console.error('❌ Failed to load farmer transactions:', result.error)
+    }
+  } catch (err) {
+    console.error('💥 Error loading farmer transactions:', err)
+  }
 }
 
 /**
@@ -406,6 +442,11 @@ const initializeDashboard = async () => {
     // Load dashboard data based on user role
     await loadDashboardData()
 
+    // Load farmer transactions if farmer
+    if (dashboardType.value === 'farmer') {
+      await loadFarmerTransactions()
+    }
+
   } catch (err) {
     console.error('Dashboard initialization error:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load dashboard'
@@ -423,6 +464,9 @@ const initializeDashboard = async () => {
 watch(dashboardType, () => {
   if (user.value) {
     loadDashboardData()
+    if (dashboardType.value === 'farmer') {
+      loadFarmerTransactions()
+    }
   }
 })
 

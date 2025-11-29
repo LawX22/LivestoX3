@@ -1,4 +1,4 @@
-<!-- NavBar.vue - FIXED MESSAGE INDICATOR VERSION -->
+<!-- NavBar.vue -->
 <template>
   <!-- Background Pattern Overlay for the navbar area -->
   <div class="fixed top-0 left-0 right-0 z-40 h-20 opacity-5 pointer-events-none">
@@ -185,7 +185,7 @@
                   d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l-2.5-5m0 0l-.5-3H2m8 14a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z" />
               </svg>
               
-              <!-- Enhanced Cart Indicator -->
+              <!-- Enhanced Cart Indicator - NOW DYNAMIC -->
               <span v-if="cartCount > 0"
                 class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 via-pink-500 to-rose-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                 <span class="relative z-10">{{ cartCount > 99 ? '99+' : cartCount }}</span>
@@ -644,6 +644,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/authStore';
 import { NavBarService } from '@/services/navbarService';
 import { MessagesService } from '@/services/messagesService';
+import { cartCheckoutService } from '@/services/cartCheckoutService';
 import type { NavBarUser } from '@/services/navbarService';
 import type { Conversation } from '@/types/messages';
 
@@ -661,8 +662,8 @@ const cachedNavbarUser = NavBarService.getCachedNavBarData();
 // State - initialized with cached data for instant display
 const navbarUser = ref<NavBarUser | null>(cachedNavbarUser);
 
-// 🎨 Cart Count (keeping this as demo)
-const cartCount = ref(5);
+// 🎯 FIXED: Dynamic Cart Count from Database
+const cartCount = ref(0);
 
 // 🆕 Messages State
 const conversations = ref<Conversation[]>([]);
@@ -752,6 +753,29 @@ const formatMessageTime = (date?: Date): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// 🎯 Load actual cart count from database
+const loadCartCount = async () => {
+  if (!authStore.isAuthenticated) {
+    cartCount.value = 0;
+    return;
+  }
+
+  try {
+    const result = await cartCheckoutService.getCartCount();
+    
+    if (result.success && result.data !== undefined) {
+      cartCount.value = result.data;
+      console.log('🛒 Cart count loaded:', cartCount.value);
+    } else {
+      console.warn('⚠️ Failed to load cart count:', result.error);
+      cartCount.value = 0;
+    }
+  } catch (error) {
+    console.error('❌ Error loading cart count:', error);
+    cartCount.value = 0;
+  }
+};
+
 // 🆕 Load conversations
 const loadConversations = async () => {
   if (!currentUser.value?.id) return;
@@ -829,14 +853,16 @@ const handleVisibilityChange = async () => {
       const sessionValid = await authStore.refreshSession();
       
       if (sessionValid && authStore.userId) {
-        // Reload navbar data and conversations
+        // Reload navbar data, conversations, and cart count
         await loadNavbarData(authStore.userId);
         await loadConversations();
+        await loadCartCount();
       } else {
         // Session expired
         console.warn('⚠️ NavBar: Session expired');
         navbarUser.value = null;
         conversations.value = [];
+        cartCount.value = 0;
         NavBarService.clearNavBarCache();
       }
     }
@@ -857,6 +883,7 @@ onMounted(async () => {
   if (cachedNavbarUser?.id) {
     loadNavbarData(cachedNavbarUser.id);
     loadConversations(); // Load conversations in background
+    loadCartCount(); // 🎯 Load cart count in background
   }
   
   // Wait for auth to finish
@@ -866,6 +893,7 @@ onMounted(async () => {
   if (authStore.isAuthenticated && authStore.userId && !cachedNavbarUser) {
     await loadNavbarData(authStore.userId);
     await loadConversations();
+    await loadCartCount(); // 🎯 Load cart count
     subscribeToConversationUpdates();
   } else if (!authStore.isAuthenticated && cachedNavbarUser) {
     // Session expired - clear cache
@@ -873,9 +901,11 @@ onMounted(async () => {
     NavBarService.clearNavBarCache();
     navbarUser.value = null;
     conversations.value = [];
+    cartCount.value = 0;
   } else if (authStore.isAuthenticated && authStore.userId) {
     // Subscribe to real-time updates
     subscribeToConversationUpdates();
+    await loadCartCount(); // 🎯 Load cart count
   }
   
   document.addEventListener("click", handleClickOutside);
@@ -896,20 +926,27 @@ watch(() => authStore.isAuthenticated, async (newValue) => {
   if (newValue && authStore.userId) {
     await loadNavbarData(authStore.userId);
     await loadConversations();
+    await loadCartCount(); // 🎯 Load cart count when logging in
     subscribeToConversationUpdates();
   } else {
     navbarUser.value = null;
     conversations.value = [];
+    cartCount.value = 0;
     NavBarService.clearNavBarCache();
   }
 });
 
 // Watch route changes
-watch(() => route.path, () => {
+watch(() => route.path, async (newPath) => {
   showDropdown.value = false;
   showNotificationDropdown.value = false;
   showMessageDropdown.value = false;
   showLogoutModal.value = false;
+  
+  // 🎯 Refresh cart count when navigating away from cart page
+  if (authStore.isAuthenticated && !newPath.includes('/cart')) {
+    await loadCartCount();
+  }
 });
 
 // 🚀 OPTIMIZED: Load navbar data (async refresh in background)
@@ -942,6 +979,7 @@ const handleAutoLogout = async (reason: string) => {
     
     navbarUser.value = null;
     conversations.value = [];
+    cartCount.value = 0;
     NavBarService.clearNavBarCache();
     await MessagesService.cleanup();
     
@@ -1034,6 +1072,7 @@ const handleLogout = async () => {
     
     navbarUser.value = null;
     conversations.value = [];
+    cartCount.value = 0;
     NavBarService.clearNavBarCache();
     await MessagesService.cleanup();
     

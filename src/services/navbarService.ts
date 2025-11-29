@@ -1,4 +1,4 @@
-// services/navbarService.ts - OPTIMIZED FOR SPEED
+// services/navbarService.ts 
 import { supabase } from '@/supabase'
 
 // 🚀 Storage key for caching navbar user data

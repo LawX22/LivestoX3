@@ -1,4 +1,4 @@
-// services/transactionService.ts - COMPLETE VERSION WITH RPC FIX
+// services/transactionService.ts - COMPLETE VERSION WITH AUTOMATIC QUANTITY DEDUCTION
 import { supabase } from '../supabase'
 import type { 
   FarmerTransaction, 
@@ -358,6 +358,167 @@ class TransactionService {
     }
   }
 
+  // ===== QUANTITY MANAGEMENT HELPERS =====
+
+  /**
+   * Calculate the low stock threshold based on original quantity
+   */
+  private getLowStockThreshold(originalQuantity: number): number {
+    if (originalQuantity <= 5) {
+      return 2
+    } else if (originalQuantity <= 10) {
+      return 3
+    } else if (originalQuantity <= 20) {
+      return 5
+    } else if (originalQuantity <= 50) {
+      return 10
+    } else if (originalQuantity <= 100) {
+      return Math.ceil(originalQuantity * 0.20)
+    } else {
+      return Math.ceil(originalQuantity * 0.15)
+    }
+  }
+
+  /**
+   * Calculate status based on quantity with dynamic thresholds
+   */
+  private calculateStatus(quantity: number, originalQuantity: number): string {
+    if (quantity === 0) {
+      return 'Out of Stock'
+    }
+    
+    const threshold = this.getLowStockThreshold(originalQuantity)
+    
+    if (quantity <= threshold) {
+      return 'Low Stock'
+    }
+    
+    return 'Available'
+  }
+
+  /**
+   * ✅ NEW: Deduct quantity from listing when order is placed
+   * This is called automatically when an order transitions from 'pending' to 'confirmed'
+   */
+  private async deductListingQuantity(
+    listingId: string, 
+    quantityToDeduct: number
+  ): Promise<{ success: boolean; error?: string; newQuantity?: number; newStatus?: string }> {
+    try {
+      console.log(`📦 Deducting ${quantityToDeduct} from listing ${listingId}`)
+
+      // Fetch current listing
+      const { data: listing, error: fetchError } = await supabase
+        .from('livestock_listings')
+        .select('quantity, original_quantity, status')
+        .eq('id', listingId)
+        .single()
+
+      if (fetchError) {
+        console.error('❌ Error fetching listing:', fetchError)
+        return { success: false, error: 'Listing not found' }
+      }
+
+      const currentQuantity = listing.quantity
+      const newQuantity = currentQuantity - quantityToDeduct
+
+      // Validate we have enough stock
+      if (newQuantity < 0) {
+        console.error('❌ Insufficient stock:', { current: currentQuantity, requested: quantityToDeduct })
+        return { success: false, error: 'Insufficient stock available' }
+      }
+
+      // Calculate new status
+      const newStatus = this.calculateStatus(newQuantity, listing.original_quantity)
+
+      console.log('📊 Quantity update:', {
+        listingId,
+        oldQuantity: currentQuantity,
+        deducted: quantityToDeduct,
+        newQuantity,
+        oldStatus: listing.status,
+        newStatus
+      })
+
+      // Update the listing
+      const { error: updateError } = await supabase
+        .from('livestock_listings')
+        .update({
+          quantity: newQuantity,
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', listingId)
+
+      if (updateError) {
+        console.error('❌ Error updating listing quantity:', updateError)
+        return { success: false, error: updateError.message }
+      }
+
+      console.log('✅ Quantity deducted successfully:', { newQuantity, newStatus })
+      return { success: true, newQuantity, newStatus }
+    } catch (error: any) {
+      console.error('💥 Error in deductListingQuantity:', error)
+      return { success: false, error: error.message || 'Failed to deduct quantity' }
+    }
+  }
+
+  /**
+   * ✅ NEW: Restore quantity to listing when order is cancelled
+   */
+  private async restoreListingQuantity(
+    listingId: string, 
+    quantityToRestore: number
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log(`📦 Restoring ${quantityToRestore} to listing ${listingId}`)
+
+      // Fetch current listing
+      const { data: listing, error: fetchError } = await supabase
+        .from('livestock_listings')
+        .select('quantity, original_quantity')
+        .eq('id', listingId)
+        .single()
+
+      if (fetchError) {
+        console.error('❌ Error fetching listing:', fetchError)
+        return { success: false, error: 'Listing not found' }
+      }
+
+      const newQuantity = listing.quantity + quantityToRestore
+      const newStatus = this.calculateStatus(newQuantity, listing.original_quantity)
+
+      console.log('📊 Quantity restoration:', {
+        listingId,
+        oldQuantity: listing.quantity,
+        restored: quantityToRestore,
+        newQuantity,
+        newStatus
+      })
+
+      // Update the listing
+      const { error: updateError } = await supabase
+        .from('livestock_listings')
+        .update({
+          quantity: newQuantity,
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', listingId)
+
+      if (updateError) {
+        console.error('❌ Error restoring listing quantity:', updateError)
+        return { success: false, error: updateError.message }
+      }
+
+      console.log('✅ Quantity restored successfully:', { newQuantity, newStatus })
+      return { success: true }
+    } catch (error: any) {
+      console.error('💥 Error in restoreListingQuantity:', error)
+      return { success: false, error: error.message || 'Failed to restore quantity' }
+    }
+  }
+
   async getFarmerTransactions(): Promise<ApiResponse<FarmerTransaction[]>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -457,6 +618,7 @@ class TransactionService {
           amount: farmerItem.subtotal,
           paymentMethod: order.payment_method,
           deliveryMethod: order.delivery_method,
+          quantity: orderedQuantity,
           message: order.delivery_notes || undefined,
           hasReceipt: false,
           deliveryAddress,
@@ -575,6 +737,7 @@ class TransactionService {
             amount: item.subtotal,
             paymentMethod: order.payment_method,
             deliveryMethod: order.delivery_method,
+            quantity: orderedQuantity,
             estimatedDelivery,
             trackingNumber: `TRK-${order.order_number}`,
             hasReceipt: false,
@@ -650,6 +813,9 @@ class TransactionService {
     }
   }
 
+  /**
+   * ✅ UPDATED: Now automatically deducts quantity when order is confirmed
+   */
   async updateOrderStatus(
     orderNumber: string, 
     newStatus: 'confirmed' | 'processing' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'cancelled' | 'completed'
@@ -710,6 +876,28 @@ class TransactionService {
         return { 
           success: false, 
           error: `Cannot change status from ${order.status} to ${newStatus}` 
+        }
+      }
+
+      // ✅ CRITICAL: Deduct quantity when confirming order (pending -> confirmed)
+      if (order.status === 'pending' && newStatus === 'confirmed') {
+        console.log('🎯 Order being confirmed - deducting quantities from listings...')
+        
+        for (const item of order.order_items || []) {
+          const deductResult = await this.deductListingQuantity(
+            item.listing_id,
+            item.quantity
+          )
+
+          if (!deductResult.success) {
+            console.error('❌ Failed to deduct quantity:', deductResult.error)
+            return { 
+              success: false, 
+              error: `Cannot confirm order: ${deductResult.error}` 
+            }
+          }
+
+          console.log(`✅ Deducted ${item.quantity} from listing ${item.listing_id}`)
         }
       }
 
@@ -824,9 +1012,6 @@ class TransactionService {
     }
   }
 
-  // ========================================
-  // RPC VERSION - MARK READY FOR PICKUP
-  // ========================================
   async markReadyForPickup(orderNumber: string): Promise<ApiResponse<void>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -887,9 +1072,6 @@ class TransactionService {
     }
   }
 
-  // ========================================
-  // RPC VERSION - CONFIRM PICKUP
-  // ========================================
   async confirmPickup(orderNumber: string): Promise<ApiResponse<void>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -950,6 +1132,9 @@ class TransactionService {
     }
   }
 
+  /**
+   * ✅ UPDATED: Now restores quantity when order is cancelled
+   */
   async cancelOrder(orderNumber: string): Promise<ApiResponse<void>> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -981,6 +1166,25 @@ class TransactionService {
         return { success: false, error: 'Order cannot be cancelled at this stage' }
       }
 
+      // ✅ CRITICAL: Restore quantity if order was confirmed
+      if (order.status === 'confirmed') {
+        console.log('🔄 Order was confirmed - restoring quantities to listings...')
+        
+        for (const item of order.order_items || []) {
+          const restoreResult = await this.restoreListingQuantity(
+            item.listing_id,
+            item.quantity
+          )
+
+          if (!restoreResult.success) {
+            console.warn('⚠️ Failed to restore quantity:', restoreResult.error)
+            // Continue anyway - cancellation is more important
+          } else {
+            console.log(`✅ Restored ${item.quantity} to listing ${item.listing_id}`)
+          }
+        }
+      }
+
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
@@ -993,27 +1197,6 @@ class TransactionService {
       if (updateError) {
         console.error('❌ Error cancelling order:', updateError)
         return { success: false, error: updateError.message }
-      }
-
-      for (const item of order.order_items || []) {
-        const { data: listing } = await supabase
-          .from('livestock_listings')
-          .select('quantity, original_quantity')
-          .eq('id', item.listing_id)
-          .single()
-
-        if (listing) {
-          const newQuantity = listing.quantity + item.quantity
-          const newStatus = this.calculateStatus(newQuantity, listing.original_quantity)
-
-          await supabase
-            .from('livestock_listings')
-            .update({
-              quantity: newQuantity,
-              status: newStatus
-            })
-            .eq('id', item.listing_id)
-        }
       }
 
       await this.addShippingUpdate(orderNumber, 'cancelled', 'Order cancelled by buyer')
@@ -1059,36 +1242,6 @@ class TransactionService {
     } catch (error: any) {
       console.error('💥 Error in confirmDelivery:', error)
       return { success: false, error: error.message || 'Failed to confirm delivery' }
-    }
-  }
-
-  private calculateStatus(quantity: number, originalQuantity: number): string {
-    if (quantity === 0) {
-      return 'Out of Stock'
-    }
-    
-    const threshold = this.getLowStockThreshold(originalQuantity)
-    
-    if (quantity <= threshold) {
-      return 'Low Stock'
-    }
-    
-    return 'Available'
-  }
-
-  private getLowStockThreshold(originalQuantity: number): number {
-    if (originalQuantity <= 5) {
-      return 2
-    } else if (originalQuantity <= 10) {
-      return 3
-    } else if (originalQuantity <= 20) {
-      return 5
-    } else if (originalQuantity <= 50) {
-      return 10
-    } else if (originalQuantity <= 100) {
-      return Math.ceil(originalQuantity * 0.20)
-    } else {
-      return Math.ceil(originalQuantity * 0.15)
     }
   }
 }

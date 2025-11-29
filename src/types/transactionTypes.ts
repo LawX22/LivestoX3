@@ -96,6 +96,7 @@ export interface FarmerTransaction {
   deliveryNotes?: string
   pickupSchedule?: PickupSchedule
   shippingFee?: number
+  quantity: number
   // Shipping tracking
   shippingUpdates?: ShippingUpdate[]
   currentShippingStatus?: string
@@ -122,6 +123,7 @@ export interface BuyerTransaction {
   deliveryNotes?: string
   pickupSchedule?: PickupSchedule
   shippingFee?: number
+  quantity: number
   // Shipping tracking
   shippingUpdates?: ShippingUpdate[]
   currentShippingStatus?: string
@@ -154,4 +156,65 @@ export interface ReceiptForm {
   buyerContact: string
   buyerEmail: string
   notes: string
+}
+
+// ==================== SALES PERFORMANCE TYPES ====================
+
+export interface CategoryStat {
+  name: string
+  revenue: number
+  count: number
+  percentage: number
+}
+
+export interface StatusStat {
+  name: string
+  count: number
+  percentage: number
+  color: string
+}
+
+export interface PaymentMethodStat {
+  name: string
+  count: number
+  percentage: number
+}
+
+export interface DeliveryMethodStat {
+  name: string
+  count: number
+  percentage: number
+}
+
+export interface PerformanceStats {
+  totalRevenue: number
+  totalOrders: number
+  completedOrders: number
+  avgOrderValue: number
+  totalItems: number
+  revenueChange: number
+  topCategory?: {
+    name: string
+    revenue: number
+  }
+}
+
+export interface RecentActivity {
+  id: string
+  title: string
+  description: string
+  amount: number
+  date: string
+}
+
+export interface TopTransaction {
+  id: string
+  animal: {
+    type: string
+    breed: string
+  }
+  quantity: number
+  amount: number
+  date: string
+  status: string
 }

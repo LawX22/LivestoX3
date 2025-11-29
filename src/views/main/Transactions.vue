@@ -1,4 +1,4 @@
-<!-- Transactions.vue - FIXED WITH PICKUP CONFIRMATION FLOW -->
+<!-- Transactions.vue - WITH SALES PERFORMANCE SIDEBAR & MODAL -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Main Content Container -->
-    <div v-else class="flex flex-1 overflow-hidden mt-4">
+    <div v-else class="flex flex-1 overflow-hidden mt-4 gap-4 px-4 md:px-6">
       <FiltersSidebar
         :is-expanded="isSidebarExpanded"
         :filters="filters"
@@ -106,7 +106,7 @@
 
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Status Tabs -->
-        <div class="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-green-100">
+        <div class="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-green-100 rounded-t-xl">
           <div class="px-4 md:px-6">
             <div class="flex overflow-x-auto hide-scrollbar">
               <button
@@ -183,6 +183,15 @@
           @reset-filters="resetFilters"
         />
       </div>
+
+      <!-- Sales Performance Sidebar -->
+      <div class="hidden xl:block">
+        <SalesPerformanceSidebar
+          :transactions="currentTransactions"
+          :is-farmer-view="currentView === 'farmer'"
+          @view-full="showPerformanceModal = true"
+        />
+      </div>
     </div>
 
     <TransactionDetailsModal
@@ -206,6 +215,14 @@
       @save="saveReceipt"
       @download="downloadReceipt"
       @print="printReceipt"
+    />
+
+    <!-- Sales Performance Modal -->
+    <SalesPerformanceModal
+      :show="showPerformanceModal"
+      :transactions="currentTransactions"
+      :is-farmer-view="currentView === 'farmer'"
+      @close="showPerformanceModal = false"
     />
 
     <!-- Enhanced Success Toast -->
@@ -249,6 +266,8 @@ import FiltersSidebar from '@/components/Transactions/FilterSidebar.vue'
 import TransactionDetailsModal from '@/components/Transactions/TransactionDetailsModal.vue'
 import TransactionsTable from '@/components/Transactions/TransactionsTable.vue'
 import ReceiptModal from '@/components/Transactions/ReceiptModal.vue'
+import SalesPerformanceSidebar from '@/components/Transactions/SalesPerformanceSidebar.vue'
+import SalesPerformanceModal from '../../components/Transactions/SalesPerformanceModal.vue'
 import { transactionService } from '../../services/transactionsService'
 import type { 
   Transaction, 
@@ -282,6 +301,7 @@ const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
 const selectedStatusTab = ref<string>('all')
 const isLoadingTransactions = ref(false)
+const showPerformanceModal = ref(false)
 
 const filters = ref<TransactionFilters>({
   search: '',

@@ -1,4 +1,4 @@
-<!-- Marketplace.vue -->
+<!-- Marketplace.vue - WITH AUTO-REFRESH ON VISIBILITY -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -86,19 +86,34 @@
                   Verify Account
                 </button>
               </div>
-              <div v-else-if="hasPendingUpgrade" class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-red-200 shadow-md cursor-default">
-                <svg class="w-4 h-4 text-red-500 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <div v-else-if="hasPendingUpgrade" class="bg-orange-100/80 text-orange-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-orange-200 shadow-md cursor-default">
+                <svg class="w-4 h-4 text-orange-500 animate-pulse shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                 </svg>
-                <span class="text-sm font-semibold">Upgrade pending</span>
+                <span class="text-sm font-semibold">Upgrade pending - Awaiting admin approval</span>
               </div>
               <div v-else class="bg-red-100/80 text-red-800 px-4 py-2 rounded-lg flex items-center gap-3 border border-red-200 shadow-md cursor-default">
                 <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
                 <span class="text-sm font-semibold truncate ml-2">Ready to become a Farmer?</span>
-                <button @click="router.push('/upgradeForm')" class="cursor-pointer whitespace-nowrap bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 hover:from-red-600 hover:to-red-700 transition-all duration-200">
-                  Upgrade Account
+                <button 
+                  @click="handleUpgradeClick" 
+                  :disabled="isUpgradeProcessing || hasPendingUpgrade"
+                  :class="`whitespace-nowrap px-3 py-1 rounded-md text-xs font-semibold shadow-md flex items-center gap-1 shrink-0 transition-all duration-200 ${
+                    isUpgradeProcessing || hasPendingUpgrade
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:from-red-600 hover:to-red-700'
+                  }`"
+                >
+                  <span v-if="isUpgradeProcessing" class="flex items-center gap-1">
+                    <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                  <span v-else>Upgrade Account</span>
                 </button>
               </div>
             </div>
@@ -311,7 +326,7 @@
       @redirectToLogin="redirectToLogin"
     />
 
-    <!-- Contact Farmer Modal - PROPERLY FIXED -->
+    <!-- Contact Farmer Modal -->
     <ContactFarmerModal 
       v-if="isContactModalOpen && selectedAnimalForContact && currentUserForModal" 
       :animal="selectedAnimalForContact"
@@ -352,6 +367,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '../../supabase';
 import { marketplaceService } from '@/services/marketplaceService';
 import type { UserDetails } from '@/services/marketplaceService';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // Import components
 import NavBar from '../../components/NavBar.vue';
@@ -382,13 +398,6 @@ const props = defineProps<{
   viewMode?: 'buyer' | 'farmer';
 }>();
 
-// ===== PERFORMANCE OPTIMIZATIONS =====
-const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // Refresh if away for 30+ seconds
-let lastFetchTime = 0;
-let lastVisibilityTime = Date.now();
-const isRefreshing = ref(false);
-
 // ===== AUTHENTICATION STATE =====
 const isAuthenticated = ref<boolean>(false);
 const currentUserId = ref<string | null>(null);
@@ -398,6 +407,15 @@ const userEmail = ref<string>('');
 const profileCompleted = ref<boolean>(false);
 const hasPendingUpgrade = ref<boolean>(false);
 const currentUserDetails = ref<UserDetails | null>(null);
+const isUpgradeProcessing = ref<boolean>(false);
+
+// ===== REALTIME SUBSCRIPTIONS =====
+let upgradeRequestsChannel: RealtimeChannel | null = null;
+let listingsChannel: RealtimeChannel | null = null;
+
+// ===== 🆕 VISIBILITY TRACKING =====
+let lastVisibilityTime = Date.now();
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // 30 seconds
 
 // ===== LOADING STATES =====
 const isLoadingUser = ref<boolean>(true);
@@ -416,7 +434,6 @@ const isFarmerView = computed<boolean>(() => {
   return userRole.value === 'farmer';
 });
 
-// Header subtitle computed property (like Forum)
 const headerSubtitle = computed<string>(() => {
   if (isFarmerView.value) {
     return "Manage your livestock listings and auctions";
@@ -425,7 +442,6 @@ const headerSubtitle = computed<string>(() => {
   }
 });
 
-// Proper currentUser for modal
 const currentUserForModal = computed<CurrentUser | null>(() => {
   if (!isAuthenticated.value || !currentUserDetails.value) {
     return null;
@@ -478,9 +494,6 @@ const filters = ref<Filters>({
 // ===== DATA =====
 const animals = ref<Animal[]>([]);
 
-// Auto-refresh interval
-let refreshInterval: ReturnType<typeof setInterval> | null = null;
-
 // ===== PERFORMANCE HELPERS =====
 const debounce = (fn: Function, delay: number) => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -520,7 +533,7 @@ const uniqueLocations = computed<string[]>(() => {
   return Array.from(locations).sort();
 });
 
-// ===== OPTIMIZED HELPER FUNCTIONS =====
+// ===== HELPER FUNCTIONS =====
 const getAuctionStatus = (animal: Animal): string => {
   if (!animal.isAuction || !animal.endTime) return 'Unknown';
   
@@ -708,19 +721,185 @@ const currentFilteredAnimals = computed<Animal[]>(() => {
   });
 });
 
-// ===== SUPABASE CONNECTION HEALTH CHECK =====
-const checkSupabaseConnection = async (): Promise<boolean> => {
+// ===== CHECK FOR PENDING UPGRADE REQUEST =====
+const checkPendingUpgradeRequest = async (userId: string): Promise<void> => {
   try {
-    const { error } = await supabase.from('profiles').select('id').limit(1);
-    return !error;
+    console.log('🔍 Checking for pending upgrade request for user:', userId);
+    
+    const { data, error } = await supabase
+      .from('upgrade_requests')
+      .select('status')
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (error) {
+      console.error('❌ Error checking upgrade request:', error);
+      hasPendingUpgrade.value = false;
+      return;
+    }
+
+    if (data) {
+      console.log('✅ Found pending upgrade request');
+      hasPendingUpgrade.value = true;
+    } else {
+      console.log('✅ No pending upgrade request');
+      hasPendingUpgrade.value = false;
+    }
   } catch (error) {
-    console.error('❌ Supabase connection check failed:', error);
-    return false;
+    console.error('💥 Exception checking upgrade request:', error);
+    hasPendingUpgrade.value = false;
   }
 };
 
-// ===== OPTIMIZED FETCH FUNCTIONS =====
-const fetchCurrentUser = async (skipCache = false): Promise<void> => {
+// ===== SETUP REALTIME SUBSCRIPTION FOR UPGRADE REQUESTS =====
+const setupUpgradeRequestSubscription = (userId: string): void => {
+  try {
+    console.log('🔔 Setting up realtime subscription for upgrade requests');
+    
+    // Clean up existing subscription
+    if (upgradeRequestsChannel) {
+      supabase.removeChannel(upgradeRequestsChannel);
+      upgradeRequestsChannel = null;
+    }
+
+    // Create new subscription
+    upgradeRequestsChannel = supabase
+      .channel(`upgrade_requests_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'upgrade_requests',
+          filter: `user_id=eq.${userId}`
+        },
+        async (payload) => {
+          console.log('🔔 Upgrade request change detected:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            console.log('✅ New upgrade request submitted');
+            hasPendingUpgrade.value = true;
+            showToastNotification('Upgrade request submitted! Awaiting admin approval.');
+          } else if (payload.eventType === 'UPDATE') {
+            const newRecord = payload.new as any;
+            console.log('✅ Upgrade request updated, status:', newRecord.status);
+            
+            if (newRecord.status === 'approved') {
+              console.log('🎉 Upgrade request approved! Refreshing user data...');
+              hasPendingUpgrade.value = false;
+              await fetchCurrentUser(true);
+              showToastNotification('Congratulations! Your upgrade to Farmer has been approved!');
+            } else if (newRecord.status === 'rejected') {
+              console.log('❌ Upgrade request rejected');
+              hasPendingUpgrade.value = false;
+              showToastNotification('Your upgrade request was not approved. Please try again or contact support.');
+            } else if (newRecord.status === 'pending') {
+              hasPendingUpgrade.value = true;
+            }
+          } else if (payload.eventType === 'DELETE') {
+            console.log('🗑️ Upgrade request deleted');
+            hasPendingUpgrade.value = false;
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔔 Upgrade requests subscription status:', status);
+      });
+    
+    console.log('✅ Realtime subscription setup complete');
+  } catch (error) {
+    console.error('💥 Error setting up upgrade request subscription:', error);
+  }
+};
+
+// ===== SETUP REALTIME SUBSCRIPTION FOR LISTINGS =====
+const setupListingsSubscription = (): void => {
+  try {
+    console.log('🔔 Setting up realtime subscription for livestock listings');
+    
+    // Clean up existing subscription
+    if (listingsChannel) {
+      supabase.removeChannel(listingsChannel);
+      listingsChannel = null;
+    }
+
+    // Create new subscription for all listings
+    listingsChannel = supabase
+      .channel('livestock_listings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'livestock_listings'
+        },
+        async (payload) => {
+          console.log('🔔 Listing change detected:', payload.eventType);
+          
+          // Refresh listings on any change
+          await fetchListings(true);
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔔 Listings subscription status:', status);
+      });
+    
+    console.log('✅ Listings realtime subscription setup complete');
+  } catch (error) {
+    console.error('💥 Error setting up listings subscription:', error);
+  }
+};
+
+// ===== 🆕 HANDLE VISIBILITY CHANGE =====
+const handleVisibilityChange = async (): Promise<void> => {
+  if (document.hidden) {
+    // Tab hidden - record the time
+    lastVisibilityTime = Date.now();
+    console.log('👋 Marketplace: Tab hidden at', new Date().toLocaleTimeString());
+  } else {
+    // Tab visible again - check if we should refresh
+    const timeAway = Date.now() - lastVisibilityTime;
+    const secondsAway = Math.round(timeAway / 1000);
+    
+    console.log('👀 Marketplace: Tab visible again. Time away:', secondsAway, 'seconds');
+
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
+      console.log('🔄 Marketplace: Auto-refreshing data after being away...');
+      
+      // Show a subtle toast notification
+      showToastNotification('Refreshing latest data...');
+      
+      // Refresh both user data and listings
+      await Promise.all([
+        fetchCurrentUser(true),
+        fetchListings(true)
+      ]);
+      
+      console.log('✅ Marketplace: Auto-refresh complete');
+    } else {
+      console.log('⏭️ Marketplace: Not refreshing (away for only', secondsAway, 'seconds)');
+    }
+  }
+};
+
+// ===== CLEANUP REALTIME SUBSCRIPTIONS =====
+const cleanupSubscriptions = (): void => {
+  if (upgradeRequestsChannel) {
+    console.log('🧹 Cleaning up upgrade request subscription');
+    supabase.removeChannel(upgradeRequestsChannel);
+    upgradeRequestsChannel = null;
+  }
+  
+  if (listingsChannel) {
+    console.log('🧹 Cleaning up listings subscription');
+    supabase.removeChannel(listingsChannel);
+    listingsChannel = null;
+  }
+};
+
+// ===== FETCH FUNCTIONS =====
+const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
   try {
     console.log('🔍 ===== FETCHING CURRENT USER =====');
     
@@ -739,24 +918,6 @@ const fetchCurrentUser = async (skipCache = false): Promise<void> => {
       isAuthenticated.value = true;
       currentUserId.value = user.id;
 
-      // Use cached data if available and recent (unless skipCache is true)
-      if (!skipCache) {
-        const cachedUserData = localStorage.getItem(`user_${user.id}`);
-        if (cachedUserData) {
-          const parsed = JSON.parse(cachedUserData);
-          if (Date.now() - parsed.timestamp < CACHE_TIMEOUT) {
-            console.log('✅ Using cached user data');
-            currentUserDetails.value = parsed.data;
-            userName.value = parsed.data.fullName;
-            userEmail.value = parsed.data.email;
-            userRole.value = parsed.data.role as UserRole;
-            profileCompleted.value = !!(parsed.data.firstName && parsed.data.lastName);
-            isLoadingUser.value = false;
-            return;
-          }
-        }
-      }
-
       const userDetails = await marketplaceService.getUserDetails(user.id);
       
       if (userDetails) {
@@ -768,71 +929,54 @@ const fetchCurrentUser = async (skipCache = false): Promise<void> => {
         userRole.value = userDetails.role as UserRole;
         profileCompleted.value = !!(userDetails.firstName && userDetails.lastName);
         
-        // Cache user data
-        localStorage.setItem(`user_${user.id}`, JSON.stringify({
-          data: userDetails,
-          timestamp: Date.now()
-        }));
-        
         console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
         console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
+        
+        // Check for pending upgrade request (only for buyers)
+        if (userDetails.role === 'buyer') {
+          await checkPendingUpgradeRequest(user.id);
+          setupUpgradeRequestSubscription(user.id);
+        } else {
+          hasPendingUpgrade.value = false;
+          // Cleanup subscription for farmers
+          if (upgradeRequestsChannel) {
+            supabase.removeChannel(upgradeRequestsChannel);
+            upgradeRequestsChannel = null;
+          }
+        }
       } else {
         console.log('⚠️ No user details found, using defaults');
         userName.value = user.email?.split('@')[0] || 'User';
         userEmail.value = user.email || '';
         userRole.value = 'buyer';
         profileCompleted.value = false;
+        hasPendingUpgrade.value = false;
       }
     } else {
       console.log('❌ No authenticated user');
       isAuthenticated.value = false;
       userRole.value = 'buyer';
+      hasPendingUpgrade.value = false;
     }
   } catch (error) {
     console.error('💥 Exception fetching current user:', error);
     isAuthenticated.value = false;
     userRole.value = 'buyer';
+    hasPendingUpgrade.value = false;
   } finally {
     isLoadingUser.value = false;
   }
 };
 
-// ===== OPTIMIZED FETCH LIVESTOCK LISTINGS WITH AUTO-RELOAD =====
 const fetchListings = async (forceRefresh = false): Promise<void> => {
-  // Prevent multiple simultaneous refreshes
-  if (isRefreshing.value && !forceRefresh) {
-    console.log('🔄 Refresh already in progress, skipping...');
-    return;
-  }
-
   try {
-    isRefreshing.value = true;
-
-    // Check cache first (unless force refresh)
-    const cachedListings = localStorage.getItem('marketplace_listings');
-    if (cachedListings && !forceRefresh && Date.now() - lastFetchTime < CACHE_TIMEOUT) {
-      const parsed = JSON.parse(cachedListings);
-      animals.value = parsed.data;
-      console.log('✅ Using cached listings');
-      isLoadingData.value = false;
-      return;
-    }
-
-    console.log('📦 Fetching livestock listings from database...');
+    console.log('📦 Fetching livestock listings from Supabase...');
     isLoadingData.value = true;
     
     const result = await marketplaceService.getAllListings();
     
     if (result.success && result.data) {
       animals.value = result.data;
-      
-      // Cache the results
-      localStorage.setItem('marketplace_listings', JSON.stringify({
-        data: result.data,
-        timestamp: Date.now()
-      }));
-      lastFetchTime = Date.now();
-      
       console.log(`✅ Successfully loaded ${result.data.length} listings`);
     } else {
       console.error('❌ Failed to fetch listings:', result.error);
@@ -845,69 +989,6 @@ const fetchListings = async (forceRefresh = false): Promise<void> => {
     animals.value = [];
   } finally {
     isLoadingData.value = false;
-    isRefreshing.value = false;
-  }
-};
-
-// ===== PAGE VISIBILITY API - SMART REFRESH =====
-const handleVisibilityChange = async (): Promise<void> => {
-  if (document.hidden) {
-    // Tab became hidden - record the time
-    lastVisibilityTime = Date.now();
-    console.log('👋 Tab hidden at:', new Date(lastVisibilityTime).toLocaleTimeString());
-  } else {
-    // Tab became visible - check if we need to refresh
-    const timeAway = Date.now() - lastVisibilityTime;
-    console.log('👀 Tab visible again. Time away:', Math.round(timeAway / 1000), 'seconds');
-
-    // Only refresh if we were away for more than threshold
-    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
-      console.log('🔄 Tab was away for a while, refreshing data...');
-
-      // Check Supabase connection health first
-      const isConnected = await checkSupabaseConnection();
-      if (!isConnected) {
-        console.warn('⚠️ Supabase connection issue, attempting reconnect...');
-      }
-
-      // Refresh auth session first
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log('✅ Auth session still valid');
-        // Refresh user data if needed
-        if (isAuthenticated.value) {
-          await fetchCurrentUser(true);
-        }
-      } else {
-        console.warn('⚠️ Auth session expired');
-        isAuthenticated.value = false;
-        currentUserId.value = null;
-        userRole.value = 'buyer';
-      }
-
-      // Check for updates flag
-      await checkForRefresh();
-
-      // Refresh listings
-      localStorage.removeItem('marketplace_listings'); // Clear cache
-      await fetchListings(true);
-
-      showToastNotification('Data refreshed successfully');
-    } else {
-      console.log('✅ Quick return, using cached data');
-    }
-  }
-};
-
-// ===== AUTO-RELOAD WHEN RETURNING FROM LIVESTOCK MANAGEMENT =====
-const checkForRefresh = async (): Promise<void> => {
-  const shouldRefresh = localStorage.getItem('marketplace_needs_refresh');
-  if (shouldRefresh === 'true') {
-    console.log('🔄 Detected changes from LivestockManagement, refreshing...');
-    localStorage.removeItem('marketplace_needs_refresh');
-    localStorage.removeItem('marketplace_listings'); // Clear cache
-    await fetchListings(true);
-    showToastNotification('Marketplace refreshed with latest listings');
   }
 };
 
@@ -920,7 +1001,21 @@ const scrollToTop = (): void => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ===== OPTIMIZED METHODS =====
+// ===== HANDLE UPGRADE CLICK =====
+const handleUpgradeClick = (): void => {
+  if (isUpgradeProcessing.value || hasPendingUpgrade.value) {
+    return;
+  }
+  
+  isUpgradeProcessing.value = true;
+  router.push('/upgradeForm');
+  
+  setTimeout(() => {
+    isUpgradeProcessing.value = false;
+  }, 1000);
+};
+
+// ===== METHODS =====
 const toggleSidebar = (): void => {
   isSidebarExpanded.value = !isSidebarExpanded.value;
 };
@@ -936,8 +1031,6 @@ const showToastNotification = (message: string): void => {
 };
 
 const openModal = (animal: Animal): void => {
-  console.log('📂 Opening modal for animal:', animal.id);
-  console.log('👤 Current user for modal:', currentUserForModal.value);
   selectedAnimal.value = animal;
   if (animal.isAuction) {
     isAuctionModalOpen.value = true;
@@ -957,30 +1050,21 @@ const closeAuctionModal = (): void => {
 };
 
 const openContactModal = (animal: Animal): void => {
-  console.log('🔍 Opening contact modal...');
-  console.log('   isAuthenticated:', isAuthenticated.value);
-  console.log('   isFarmerView:', isFarmerView.value);
-  console.log('   currentUserForModal:', currentUserForModal.value);
-  
-  // Check if user is authenticated
   if (!isAuthenticated.value) {
     showToastNotification('Please sign in to contact farmers');
     return;
   }
   
-  // Check if user has complete profile (currentUserForModal exists)
   if (!currentUserForModal.value) {
     showToastNotification('Please complete your profile to contact farmers');
     return;
   }
   
-  // Farmers cannot contact themselves
   if (isFarmerView.value && animal.farmer.id === currentUserId.value) {
     showToastNotification('You cannot contact yourself');
     return;
   }
   
-  console.log('✅ Opening contact modal for animal:', animal.id);
   selectedAnimalForContact.value = animal;
   isContactModalOpen.value = true;
 };
@@ -990,14 +1074,9 @@ const closeContactModal = (): void => {
   selectedAnimalForContact.value = null;
 };
 
-// FIXED: Handle message sent from ContactFarmerModal
 const handleMessageSent = (conversationId: string): void => {
-  console.log('✅ Message sent successfully, conversation ID:', conversationId);
   showToastNotification('Message sent successfully! Opening conversation...');
   closeContactModal();
-  
-  // The ContactFarmerModal already handles navigation to the messages page
-  // So we don't need to do anything else here
 };
 
 const contactFarmerFromModal = (contactInfo: string): void => {
@@ -1036,14 +1115,12 @@ const handlePlaceBid = async (bidData: BidData): Promise<void> => {
   try {
     const animalIndex = animals.value.findIndex(a => a.id === bidData.animalId);
     if (animalIndex !== -1) {
-      // Update local state immediately for instant feedback
       animals.value[animalIndex].currentBid = bidData.amount;
       animals.value[animalIndex].bidCount = (animals.value[animalIndex].bidCount || 0) + 1;
       
       showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
       
-      // Clear cache and reload to ensure consistency
-      localStorage.removeItem('marketplace_listings');
+      // Realtime will auto-refresh, but force refresh for immediate feedback
       await fetchListings(true);
     }
   } catch (error) {
@@ -1055,6 +1132,8 @@ const handlePlaceBid = async (bidData: BidData): Promise<void> => {
 // ===== AUTH FUNCTIONS =====
 const toggleAuth = async (): Promise<void> => {
   if (isAuthenticated.value) {
+    cleanupSubscriptions();
+    
     await supabase.auth.signOut();
     isAuthenticated.value = false;
     currentUserId.value = null;
@@ -1062,10 +1141,7 @@ const toggleAuth = async (): Promise<void> => {
     userRole.value = 'buyer';
     userName.value = 'Guest User';
     profileCompleted.value = false;
-    
-    // Clear cache on logout
-    localStorage.removeItem('marketplace_listings');
-    localStorage.removeItem('marketplace_needs_refresh');
+    hasPendingUpgrade.value = false;
     
     showToastNotification('Signed out successfully!');
   } else {
@@ -1074,6 +1150,8 @@ const toggleAuth = async (): Promise<void> => {
 };
 
 const handleLogout = async (): Promise<void> => {
+  cleanupSubscriptions();
+  
   await supabase.auth.signOut();
   isAuthenticated.value = false;
   currentUserId.value = null;
@@ -1081,17 +1159,17 @@ const handleLogout = async (): Promise<void> => {
   userRole.value = 'buyer';
   userName.value = 'Guest User';
   profileCompleted.value = false;
-  
-  // Clear cache on logout
-  localStorage.removeItem('marketplace_listings');
-  localStorage.removeItem('marketplace_needs_refresh');
+  hasPendingUpgrade.value = false;
   
   showToastNotification('Logged out successfully!');
 };
 
-// ===== OPTIMIZED LIFECYCLE =====
+// ===== LIFECYCLE =====
 onMounted(async () => {
   console.log('🚀 ===== MARKETPLACE MOUNTED =====');
+  
+  // 🆕 Add visibility change listener
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   
   // Load user and listings in parallel
   await Promise.all([
@@ -1099,12 +1177,8 @@ onMounted(async () => {
     fetchListings()
   ]);
 
-  // Check if we need to refresh due to changes from LivestockManagement
-  await checkForRefresh();
-
-  // Add Page Visibility API listener
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  console.log('✅ Page visibility listener added');
+  // Setup realtime subscription for listings
+  setupListingsSubscription();
 
   // Set up auth listener
   supabase.auth.onAuthStateChange(async (event, session) => {
@@ -1112,62 +1186,51 @@ onMounted(async () => {
     
     if (event === 'SIGNED_IN' && session) {
       isLoadingUser.value = true;
-      await fetchCurrentUser();
-      // Refresh listings when user signs in
+      await fetchCurrentUser(true);
       await fetchListings(true);
     } else if (event === 'SIGNED_OUT') {
+      cleanupSubscriptions();
+      
       isAuthenticated.value = false;
       currentUserId.value = null;
       currentUserDetails.value = null;
       userRole.value = 'buyer';
       userName.value = 'Guest User';
       profileCompleted.value = false;
+      hasPendingUpgrade.value = false;
       isLoadingUser.value = false;
-      
-      // Clear cache on sign out
-      localStorage.removeItem('marketplace_listings');
-      localStorage.removeItem('marketplace_needs_refresh');
+    } else if (event === 'USER_UPDATED') {
+      console.log('🔄 User updated, refreshing user data...');
+      await fetchCurrentUser(true);
     }
   });
 
-  // Set up periodic auto-refresh for auction countdown (every 30 seconds)
-  refreshInterval = setInterval(async () => {
-    // Only refresh if tab is visible
-    if (!document.hidden && activeTab.value === 'auction' && auctionListings.value.length > 0) {
-      // Check if cache is stale
-      if (Date.now() - lastFetchTime > CACHE_TIMEOUT) {
-        console.log('🔄 Auto-refreshing stale auction data...');
-        await fetchListings(true);
-      }
-    }
-  }, 30000); // 30 seconds
-
-  // Watch for route changes (returning from LivestockManagement)
+  // Watch for route changes
   watch(() => route.path, async (newPath, oldPath) => {
-    if (newPath === '/marketplace' && oldPath === '/LivestockManagement') {
-      await checkForRefresh();
+    if (newPath === '/marketplace' && oldPath === '/upgradeForm') {
+      console.log('🔄 Returning from upgrade form, refreshing user data...');
+      if (currentUserId.value) {
+        await fetchCurrentUser(true);
+      }
     }
   });
 });
 
 // Cleanup on unmount
 onBeforeUnmount(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-  }
-  
-  // Remove visibility listener
+  // 🆕 Remove visibility listener
   document.removeEventListener('visibilitychange', handleVisibilityChange);
-  console.log('🧹 Cleaned up listeners');
+  
+  cleanupSubscriptions();
+  console.log('🧹 Cleaned up all subscriptions and listeners');
 });
 
-// Optimized watchers
+// Watchers
 watch(userRole, (newRole, oldRole) => {
   console.log(`🔄 userRole changed from "${oldRole}" to "${newRole}"`);
   console.log(`   isFarmerView is now: ${isFarmerView.value}`);
 });
 
-// Watch for tab changes
 watch(activeTab, (newTab) => {
   console.log(`🔄 Tab changed to: ${newTab}`);
 });
