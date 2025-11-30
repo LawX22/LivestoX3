@@ -1,4 +1,4 @@
-<!-- adminDashboard.vue - WITH SKELETON LOADING -->
+<!-- adminDashboard.vue - COMPLETE WITH ACTIVITY MODAL -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100">
     <!-- Floating Background Elements -->
@@ -6,10 +6,6 @@
       <div class="absolute top-20 left-10 w-16 h-16 bg-green-300 rounded-full opacity-30 animate-bounce"></div>
       <div class="absolute top-32 right-16 w-12 h-12 bg-emerald-300 rounded-full opacity-40 animate-pulse"></div>
       <div class="absolute bottom-24 left-24 w-20 h-20 bg-teal-300 rounded-full opacity-25 animate-ping"></div>
-      <div class="absolute top-1/2 right-8 w-10 h-10 bg-green-400 rounded-full opacity-35 animate-bounce"
-        style="animation-delay: 1s"></div>
-      <div class="absolute bottom-1/3 right-1/3 w-8 h-8 bg-emerald-400 rounded-full opacity-20 animate-pulse"
-        style="animation-delay: 0.5s"></div>
     </div>
 
     <!-- Background Pattern -->
@@ -107,7 +103,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Stats Cards with Skeleton -->
+        <!-- Enhanced Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <!-- Skeleton Loading for Stats Cards -->
           <template v-if="isLoading">
@@ -272,7 +268,7 @@
             </router-link>
 
             <router-link
-              to="/admin/reports"
+              to="/admin/forum"
               class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 transition-all hover:shadow-2xl group relative overflow-hidden"
             >
               <div
@@ -280,25 +276,25 @@
               ></div>
               <div class="relative z-10 flex items-start justify-between">
                 <div>
-                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reports Generated</p>
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Forum Questions</p>
                   <h3 class="text-2xl font-bold mt-1 text-gray-900">
-                    {{ formatNumber(stats.reports) }}
+                    {{ formatNumber(stats.forumQuestions) }}
                   </h3>
                   <div class="flex items-center mt-2">
                     <span
                       :class="[
                         'text-xs font-medium px-1.5 py-0.5 rounded inline-flex items-center',
-                        stats.reportChange >= 0
+                        stats.forumChange >= 0
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800',
                       ]"
                     >
-                      <svg v-if="stats.reportChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <svg v-if="stats.forumChange >= 0" class="-ml-0.5 mr-0.5 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                           d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
                           clip-rule="evenodd" />
                       </svg>
-                      {{ stats.reportChange >= 0 ? '+' : '' }}{{ stats.reportChange }}%
+                      {{ stats.forumChange >= 0 ? '+' : '' }}{{ stats.forumChange }}%
                     </span>
                     <span class="text-xs text-gray-500 ml-2">vs last month</span>
                   </div>
@@ -309,7 +305,7 @@
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                     />
                   </svg>
                 </div>
@@ -318,11 +314,11 @@
           </template>
         </div>
 
-        <!-- Enhanced Charts Section with Skeleton -->
+        <!-- Charts Section -->
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
           <!-- Skeleton Loading for Charts -->
           <template v-if="isLoading">
-            <!-- User Growth Chart Skeleton - Span 8 columns -->
+            <!-- User Growth Chart Skeleton -->
             <div class="xl:col-span-8">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
@@ -332,33 +328,12 @@
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="grid grid-cols-2 gap-4 mb-6 animate-pulse">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="h-8 bg-gray-300 rounded w-16 mb-2"></div>
-                      <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                      <div class="h-3 bg-gray-200 rounded w-32"></div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="h-8 bg-gray-300 rounded w-16 mb-2"></div>
-                      <div class="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                      <div class="h-3 bg-gray-200 rounded w-32"></div>
-                    </div>
-                  </div>
-                  <div class="h-80 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 45%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 60%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 40%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 70%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 55%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 80%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 65%"></div>
-                    <div class="w-8 bg-gray-300 rounded-t" style="height: 50%"></div>
-                  </div>
+                  <div class="h-64 bg-gray-100 rounded animate-pulse"></div>
                 </div>
               </div>
             </div>
 
-            <!-- Demographics Chart Skeleton - Span 4 columns -->
+            <!-- Demographics Chart Skeleton -->
             <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-teal-600 to-cyan-600">
@@ -368,74 +343,21 @@
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="grid grid-cols-3 gap-4 mb-6 animate-pulse">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
-                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                      <div class="h-3 bg-gray-200 rounded w-12"></div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
-                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                      <div class="h-3 bg-gray-200 rounded w-12"></div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="h-8 bg-gray-300 rounded w-12 mb-2"></div>
-                      <div class="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                      <div class="h-3 bg-gray-200 rounded w-12"></div>
-                    </div>
-                  </div>
-                  <div class="h-64 flex items-center justify-center animate-pulse">
-                    <div class="w-48 h-48 rounded-full bg-gray-300"></div>
+                  <div class="h-56 flex items-center justify-center animate-pulse">
+                    <div class="w-40 h-40 rounded-full bg-gray-300"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Other Chart Skeletons -->
-            <div class="xl:col-span-6">
+            <!-- Other Charts Skeletons -->
+            <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
                   <div class="h-5 bg-white/30 rounded w-32 mb-2"></div>
-                  <div class="h-3 bg-white/20 rounded w-40"></div>
                 </div>
                 <div class="p-6">
-                  <div class="h-64 flex items-center justify-center animate-pulse">
-                    <div class="w-56 h-56 rounded-full bg-gray-300"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="xl:col-span-6">
-              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
-                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
-                  <div class="h-5 bg-white/30 rounded w-40 mb-2"></div>
-                  <div class="h-3 bg-white/20 rounded w-36"></div>
-                </div>
-                <div class="p-6">
-                  <div class="h-64 flex items-center justify-center animate-pulse">
-                    <div class="w-56 h-56 rounded-full bg-gray-300"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="xl:col-span-8">
-              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
-                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
-                  <div class="h-5 bg-white/30 rounded w-44 mb-2"></div>
-                  <div class="h-3 bg-white/20 rounded w-28"></div>
-                </div>
-                <div class="p-6">
-                  <div class="h-80 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 70%"></div>
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 50%"></div>
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 35%"></div>
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 60%"></div>
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 45%"></div>
-                    <div class="w-12 bg-gray-300 rounded-t" style="height: 55%"></div>
-                  </div>
+                  <div class="h-56 bg-gray-100 rounded animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -443,26 +365,40 @@
             <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
-                  <div class="h-5 bg-white/30 rounded w-32 mb-2"></div>
-                  <div class="h-3 bg-white/20 rounded w-40"></div>
+                  <div class="h-5 bg-white/30 rounded w-40 mb-2"></div>
                 </div>
                 <div class="p-6">
-                  <div class="h-64 bg-gray-100 rounded animate-pulse flex items-end justify-around px-4 pb-4">
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 35%"></div>
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 25%"></div>
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 15%"></div>
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 40%"></div>
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 60%"></div>
-                    <div class="w-6 bg-gray-300 rounded-t" style="height: 85%"></div>
-                  </div>
+                  <div class="h-56 bg-gray-100 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="xl:col-span-4">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-44 mb-2"></div>
+                </div>
+                <div class="p-6">
+                  <div class="h-56 bg-gray-100 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="xl:col-span-12">
+              <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 animate-pulse">
+                  <div class="h-5 bg-white/30 rounded w-32 mb-2"></div>
+                </div>
+                <div class="p-6">
+                  <div class="h-56 bg-gray-100 rounded animate-pulse"></div>
                 </div>
               </div>
             </div>
           </template>
 
-          <!-- Actual Charts (same as before) -->
+          <!-- Actual Charts -->
           <template v-else>
-            <!-- User Growth Chart - Span 8 columns -->
+            <!-- User Growth Chart -->
             <div class="xl:col-span-8">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 to-emerald-600">
@@ -497,7 +433,6 @@
                 </div>
                 
                 <div class="p-6">
-                  <!-- Growth Metrics -->
                   <div class="grid grid-cols-2 gap-4 mb-6">
                     <div class="bg-gray-50 rounded-lg p-4">
                       <div class="text-2xl font-bold text-emerald-700">{{ userMetrics.newUsers }}</div>
@@ -511,7 +446,7 @@
                     </div>
                   </div>
 
-                  <div class="h-80">
+                  <div class="h-64">
                     <Chart 
                       type="line" 
                       :data="userGrowthData" 
@@ -523,39 +458,18 @@
               </div>
             </div>
 
-            <!-- User Demographics Chart - Span 4 columns -->
+            <!-- User Demographics Chart -->
             <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-teal-600 to-cyan-600">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h3 class="text-lg font-semibold text-white">User Demographics</h3>
-                      <p class="mt-1 text-xs text-cyan-100">User distribution</p>
-                    </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">User Demographics</h3>
+                    <p class="mt-1 text-xs text-cyan-100">User distribution</p>
                   </div>
                 </div>
                 
                 <div class="p-6">
-                  <!-- Demographic Metrics -->
-                  <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="text-2xl font-bold text-teal-700">{{ demographics.farmers }}</div>
-                      <div class="text-sm text-teal-600">Farmers</div>
-                      <div class="text-xs text-teal-500 mt-1">{{ demographics.farmersChange }}%</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="text-2xl font-bold text-cyan-700">{{ demographics.buyers }}</div>
-                      <div class="text-sm text-cyan-600">Buyers</div>
-                      <div class="text-xs text-cyan-500 mt-1">{{ demographics.buyersChange }}%</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                      <div class="text-2xl font-bold text-purple-700">{{ demographics.guests }}</div>
-                      <div class="text-sm text-purple-600">Guests</div>
-                      <div class="text-xs text-purple-500 mt-1">{{ demographics.guestsChange }}%</div>
-                    </div>
-                  </div>
-
-                  <div class="h-64">
+                  <div class="h-56">
                     <Chart 
                       type="doughnut" 
                       :data="demographicsChartData" 
@@ -567,8 +481,8 @@
               </div>
             </div>
 
-            <!-- Requests Status Chart - Span 6 columns -->
-            <div class="xl:col-span-6">
+            <!-- Requests Status Chart -->
+            <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
                   <div class="flex items-center justify-between">
@@ -588,7 +502,7 @@
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="h-64">
+                  <div class="h-56">
                     <Chart 
                       type="doughnut" 
                       :data="requestsStatusChartData" 
@@ -600,19 +514,17 @@
               </div>
             </div>
 
-            <!-- Livestock Categories Chart - Span 6 columns -->
-            <div class="xl:col-span-6">
+            <!-- Livestock Categories Chart -->
+            <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h3 class="text-lg font-semibold text-white">Livestock Categories</h3>
-                      <p class="mt-1 text-xs text-emerald-100">Distribution by animal type</p>
-                    </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Livestock Categories</h3>
+                    <p class="mt-1 text-xs text-emerald-100">Distribution by animal type</p>
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="h-64">
+                  <div class="h-56">
                     <Chart 
                       type="polarArea" 
                       :data="livestockCategoriesChartData" 
@@ -624,19 +536,17 @@
               </div>
             </div>
 
-            <!-- Geographic Distribution - Span 8 columns -->
-            <div class="xl:col-span-8">
+            <!-- Geographic Distribution -->
+            <div class="xl:col-span-4">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
                 <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h3 class="text-lg font-semibold text-white">Geographic Distribution</h3>
-                      <p class="mt-1 text-xs text-emerald-100">Users by location</p>
-                    </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-white">Geographic Distribution</h3>
+                    <p class="mt-1 text-xs text-emerald-100">Users by location</p>
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="h-80">
+                  <div class="h-56">
                     <Chart 
                       type="bar" 
                       :data="geographicChartData" 
@@ -648,29 +558,59 @@
               </div>
             </div>
 
-            <!-- Activity Timeline - Span 4 columns -->
-            <div class="xl:col-span-4">
+            <!-- Forum Analytics -->
+            <div class="xl:col-span-12">
               <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
-                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
+                <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h3 class="text-lg font-semibold text-white">Daily Activity</h3>
-                      <p class="mt-1 text-xs text-emerald-100">User engagement patterns</p>
+                      <h3 class="text-lg font-semibold text-white">Forum Analytics</h3>
+                      <p class="mt-1 text-xs text-purple-100">Community engagement metrics</p>
                     </div>
-                    <div class="text-right">
-                      <div class="text-lg font-bold text-white">{{ activityMetrics.peakHour }}:00</div>
-                      <div class="text-xs text-emerald-100">Peak hour</div>
-                    </div>
+                    <router-link
+                      to="/admin/forum"
+                      class="text-xs font-medium text-white hover:text-purple-100 flex items-center"
+                    >
+                      View forum
+                      <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </router-link>
                   </div>
                 </div>
                 <div class="p-6">
-                  <div class="h-64">
-                    <Chart 
-                      type="line" 
-                      :data="activityTimelineChartData" 
-                      :options="activityTimelineOptions" 
-                      class="w-full h-full"
-                    />
+                  <div class="grid grid-cols-5 gap-4 mb-6">
+                    <div class="bg-purple-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-purple-700">{{ forumAnalytics.totalQuestions }}</div>
+                      <div class="text-sm text-purple-600">Total Questions</div>
+                    </div>
+                    <div class="bg-indigo-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-indigo-700">{{ forumAnalytics.totalAnswers }}</div>
+                      <div class="text-sm text-indigo-600">Total Answers</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-blue-700">{{ forumAnalytics.avgAnswersPerQuestion }}</div>
+                      <div class="text-sm text-blue-600">Avg. Answers/Question</div>
+                    </div>
+                    <div class="bg-cyan-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-cyan-700">{{ forumAnalytics.recentActivity }}</div>
+                      <div class="text-sm text-cyan-600">Questions (Last 7 Days)</div>
+                    </div>
+                    <div class="bg-teal-50 rounded-lg p-4">
+                      <div class="text-2xl font-bold text-teal-700">{{ forumAnalytics.topCategories.length }}</div>
+                      <div class="text-sm text-teal-600">Active Categories</div>
+                    </div>
+                  </div>
+
+                  <div v-if="forumAnalytics.topCategories.length > 0" class="mt-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Top Categories</h4>
+                    <div class="grid grid-cols-5 gap-3">
+                      <div v-for="(cat, index) in forumAnalytics.topCategories" :key="index"
+                        class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <div class="text-lg font-bold text-gray-800">{{ cat.count }}</div>
+                        <div class="text-xs text-gray-600 truncate">{{ cat.category }}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -678,7 +618,7 @@
           </template>
         </div>
 
-        <!-- Recent Activity with Skeleton -->
+        <!-- Recent Activity -->
         <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/30 transition-all hover:shadow-2xl">
           <div class="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600">
             <div class="flex items-center justify-between">
@@ -686,15 +626,16 @@
                 <h3 class="text-lg font-semibold text-white">Recent Activity</h3>
                 <p class="mt-1 text-xs text-emerald-100">Latest system activities</p>
               </div>
-              <router-link
-                to="/admin/activity"
-                class="text-xs font-medium text-white hover:text-emerald-100 flex items-center"
+              <!-- ✅ ACTIVITY MODAL BUTTON - UPDATED -->
+              <button
+                @click="showActivityModal = true"
+                class="text-xs font-medium text-white hover:text-emerald-100 flex items-center transition-colors"
               >
                 View all
                 <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
-              </router-link>
+              </button>
             </div>
           </div>
           <div class="overflow-x-auto">
@@ -709,7 +650,6 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200/50">
-                <!-- Skeleton Loading for Table -->
                 <template v-if="isLoading">
                   <tr v-for="n in 5" :key="n" class="animate-pulse">
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -736,7 +676,6 @@
                   </tr>
                 </template>
 
-                <!-- Actual Data -->
                 <template v-else>
                   <tr v-for="(activity, index) in recentActivities" :key="index" class="hover:bg-gray-50/80 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -785,15 +724,29 @@
         </div>
       </main>
     </div>
+
+    <!-- ✅ ACTIVITY MODAL COMPONENT -->
+    <ActivityModal 
+      :is-open="showActivityModal" 
+      @close="showActivityModal = false" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import AdminSidebar from '../../components/AdminSideBar.vue'
+import ActivityModal from '../../components/Admin/ActivityModal.vue'
 import Chart from 'primevue/chart'
 import { DashboardService } from '@/services/admindashboardService'
-import type { DashboardStats , UserMetrics , Demographics , ActivityMetrics , RecentActivity , } from '@/services/admindashboardService'
+import type { 
+  DashboardStats, 
+  UserMetrics, 
+  Demographics, 
+  ActivityMetrics, 
+  RecentActivity,
+  ForumAnalyticsData 
+} from '@/services/admindashboardService'
 
 // Loading states
 const isLoading = ref(true)
@@ -804,6 +757,9 @@ const lastUpdated = ref('')
 const selectedTimeRange = ref('30d')
 const userGrowthView = ref('registrations')
 
+// ✅ ACTIVITY MODAL STATE
+const showActivityModal = ref(false)
+
 // Data from backend
 const stats = ref<DashboardStats>({
   totalUsers: 0,
@@ -812,8 +768,8 @@ const stats = ref<DashboardStats>({
   requestChange: 0,
   livestock: 0,
   livestockChange: 0,
-  reports: 0,
-  reportChange: 0,
+  forumQuestions: 0,
+  forumChange: 0,
 })
 
 const userMetrics = ref<UserMetrics>({
@@ -847,6 +803,14 @@ const activityMetrics = ref<ActivityMetrics>({
 })
 
 const recentActivities = ref<RecentActivity[]>([])
+
+const forumAnalytics = ref<ForumAnalyticsData>({
+  totalQuestions: 0,
+  totalAnswers: 0,
+  avgAnswersPerQuestion: 0,
+  topCategories: [],
+  recentActivity: 0
+})
 
 // Chart data
 const userGrowthData = ref({
@@ -918,25 +882,6 @@ const geographicChartData = ref({
   ],
 })
 
-const activityTimelineChartData = ref({
-  labels: [] as string[],
-  datasets: [
-    {
-      label: 'Active Users',
-      data: [] as number[],
-      borderColor: '#3B82F6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#3B82F6',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 5,
-    },
-  ],
-})
-
 // Chart options
 const enhancedUserGrowthOptions = ref({
   responsive: true,
@@ -950,9 +895,9 @@ const enhancedUserGrowthOptions = ref({
       position: 'top' as const,
       labels: {
         usePointStyle: true,
-        padding: 20,
+        padding: 15,
         font: {
-          size: 12,
+          size: 11,
         },
       },
     },
@@ -988,7 +933,7 @@ const enhancedUserGrowthOptions = ref({
       },
       ticks: {
         font: {
-          size: 11,
+          size: 10,
         },
       },
     },
@@ -1002,7 +947,7 @@ const enhancedUserGrowthOptions = ref({
       },
       ticks: {
         font: {
-          size: 11,
+          size: 10,
         },
         callback: function (value: any) {
           return new Intl.NumberFormat().format(value)
@@ -1021,9 +966,9 @@ const demographicsOptions = ref({
       position: 'bottom' as const,
       labels: {
         usePointStyle: true,
-        padding: 20,
+        padding: 15,
         font: {
-          size: 12,
+          size: 10,
         },
       },
     },
@@ -1054,9 +999,9 @@ const requestsStatusOptions = ref({
       position: 'bottom' as const,
       labels: {
         usePointStyle: true,
-        padding: 20,
+        padding: 15,
         font: {
-          size: 12,
+          size: 10,
         },
       },
     },
@@ -1086,9 +1031,9 @@ const livestockCategoriesOptions = ref({
       position: 'bottom' as const,
       labels: {
         usePointStyle: true,
-        padding: 15,
+        padding: 12,
         font: {
-          size: 11,
+          size: 9,
         },
       },
     },
@@ -1149,7 +1094,7 @@ const geographicOptions = ref({
       },
       ticks: {
         font: {
-          size: 11,
+          size: 10,
         },
       },
     },
@@ -1159,56 +1104,7 @@ const geographicOptions = ref({
       },
       ticks: {
         font: {
-          size: 11,
-        },
-      },
-    },
-  },
-})
-
-const activityTimelineOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: 'white',
-      bodyColor: 'white',
-      borderColor: 'rgba(255, 255, 255, 0.2)',
-      borderWidth: 1,
-      cornerRadius: 8,
-      callbacks: {
-        title: function (context: any) {
-          return `${context[0].label}`
-        },
-        label: function (context: any) {
-          return `Active Users: ${context.parsed.y}`
-        },
-      },
-    },
-  },
-  scales: {
-    x: {
-      grid: {
-        display: false,
-      },
-      ticks: {
-        font: {
-          size: 11,
-        },
-      },
-    },
-    y: {
-      beginAtZero: true,
-      grid: {
-        color: 'rgba(0, 0, 0, 0.05)',
-      },
-      ticks: {
-        font: {
-          size: 11,
+          size: 10,
         },
       },
     },
@@ -1223,14 +1119,13 @@ const loadDashboardData = async () => {
 
     const data = await DashboardService.getAllDashboardData()
 
-    // Update all data
     stats.value = data.stats
     userMetrics.value = data.userMetrics
     demographics.value = data.demographics
     activityMetrics.value = data.activityMetrics
     recentActivities.value = data.recentActivities
+    forumAnalytics.value = data.charts.forumAnalytics
 
-    // Update chart data
     updateUserGrowthChart(data.charts.userGrowth)
     
     requestsStatusChartData.value.datasets[0].data = [
@@ -1244,9 +1139,6 @@ const loadDashboardData = async () => {
 
     geographicChartData.value.labels = data.charts.geographic.labels
     geographicChartData.value.datasets[0].data = data.charts.geographic.data
-
-    activityTimelineChartData.value.labels = data.charts.activityTimeline.labels
-    activityTimelineChartData.value.datasets[0].data = data.charts.activityTimeline.data
 
     lastUpdated.value = new Date().toLocaleString()
 
@@ -1286,7 +1178,7 @@ const updateUserGrowthChart = (data: any) => {
       pointBackgroundColor: '#10B981',
       pointBorderColor: '#ffffff',
       pointBorderWidth: 2,
-      pointRadius: 6,
+      pointRadius: 5,
     },
     {
       label: 'Active Users',
@@ -1299,7 +1191,7 @@ const updateUserGrowthChart = (data: any) => {
       pointBackgroundColor: '#3B82F6',
       pointBorderColor: '#ffffff',
       pointBorderWidth: 2,
-      pointRadius: 6,
+      pointRadius: 5,
     }
   ]
   updateUserGrowthChartView()
@@ -1319,7 +1211,7 @@ const updateUserGrowthChartView = () => {
         pointBackgroundColor: '#10B981',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-        pointRadius: 6,
+        pointRadius: 5,
       },
     ]
   } else {
@@ -1335,7 +1227,7 @@ const updateUserGrowthChartView = () => {
         pointBackgroundColor: '#3B82F6',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-        pointRadius: 6,
+        pointRadius: 5,
       },
     ]
   }
@@ -1367,27 +1259,12 @@ const getUserInitials = (name: string) => {
     .toUpperCase()
 }
 
-// Lifecycle
 onMounted(() => {
   loadDashboardData()
 })
 </script>
 
 <style scoped>
-/* Additional shimmer animation for skeleton */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
