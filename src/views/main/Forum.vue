@@ -661,7 +661,7 @@ const loadForumQuestions = async (forceRefresh = false) => {
 };
 
 const navigateToLogin = () => {
-  router.push('/signIn');
+  router.push('/login');
 };
 
 const scrollToTop = () => {

@@ -469,7 +469,7 @@ const isExpertRole = (role: string) => {
 };
 
 const navigateToLogin = () => {
-    router.push('/signIn');
+    router.push('/login');
 };
 
 const upvoteQuestion = async () => {

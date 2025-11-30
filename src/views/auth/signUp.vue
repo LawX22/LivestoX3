@@ -649,7 +649,7 @@
             <!-- Already have an account link -->
             <p class="mt-5 text-center text-xs text-gray-600">
               Already have an account?
-              <router-link to="/signin"
+              <router-link to="/login"
                 class="text-green-600 font-semibold hover:text-green-500 transition-colors duration-200 hover:underline cursor-pointer">
                 Sign In
               </router-link>
@@ -1156,7 +1156,7 @@ const handleSignUp = async () => {
       content: 'Your account has been created and verified. You can now sign in with your credentials.'
     })
 
-    router.push('/signin')
+    router.push('/login')
   } catch (error: any) {
     console.error('❌ Sign up error:', error)
 

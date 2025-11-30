@@ -376,7 +376,7 @@
       </p>
       <button 
         v-if="!isFarmerView"
-        @click="emit('reset-filters')"
+        @click="navigateToMarketplace"
         class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-sm font-bold transition-all shadow-lg hover:shadow-xl cursor-pointer"
       >
         Browse Marketplace
@@ -415,6 +415,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Transaction, FarmerTransaction, BuyerTransaction, ShippingUpdate } from '@/types/transactionTypes'
 
 interface Props {
@@ -439,11 +440,17 @@ const emit = defineEmits<{
   'reset-filters': []
 }>()
 
+const router = useRouter()
+
 const showConfirmModal = ref(false)
 const pendingAction = ref<(() => void) | null>(null)
 const confirmTitle = ref('')
 const confirmMessage = ref('')
 const confirmButtonText = ref('')
+
+const navigateToMarketplace = () => {
+  router.push('/marketplace')
+}
 
 const handleUpdateStatus = (id: string, status: 'Accepted' | 'Rejected') => {
   if (status === 'Rejected') {

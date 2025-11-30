@@ -247,7 +247,7 @@
           <!-- Back to Sign In link (only show on step 1) -->
           <p v-if="currentStep === 1" class="mt-6 text-center text-sm text-gray-600">
             Remember your password?
-            <router-link to="/signin"
+            <router-link to="/login"
               class="text-green-600 font-semibold hover:text-green-500 transition-colors duration-200 hover:underline">
               Sign In
             </router-link>
@@ -319,7 +319,7 @@ const showEmailHelpToast = () => {
 
 // Navigation functions
 const goToSignIn = () => {
-  router.push('/signin')
+  router.push('/login')
 }
 
 // Step 1: Send reset link via Supabase

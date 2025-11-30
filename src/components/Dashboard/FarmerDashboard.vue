@@ -72,10 +72,10 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Messages</p>
-            <p class="text-lg font-bold text-gray-900 mt-0.5">{{ stats.totalMessages || 0 }}</p>
+            <p class="text-lg font-bold text-gray-900 mt-0.5">{{ actualTotalMessages }}</p>
             <div class="mt-1">
               <span class="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800">
-                {{ stats.unreadMessages || 0 }} unread
+                {{ actualUnreadMessages }} unread
               </span>
             </div>
           </div>
@@ -305,7 +305,7 @@
             </div>
           </div>
           <div class="divide-y divide-gray-200/50">
-            <div v-if="messages.length === 0" class="p-4 text-center text-gray-500">
+            <div v-if="displayMessages.length === 0" class="p-4 text-center text-gray-500">
               <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
@@ -313,7 +313,7 @@
             </div>
             <div v-else>
               <ul class="divide-y divide-gray-200/50">
-                <li v-for="message in messages.slice(0, 2)" :key="message.id" class="px-4 py-3 hover:bg-gray-50/50 transition-colors">
+                <li v-for="message in displayMessages.slice(0, 2)" :key="message.id" class="px-4 py-3 hover:bg-gray-50/50 transition-colors">
                   <div class="flex items-start">
                     <img class="h-7 w-7 rounded-full" :src="message.avatar" :alt="message.name" />
                     <div class="ml-2.5 flex-1">
@@ -323,8 +323,8 @@
                       </div>
                       <p class="text-[10px] text-gray-600 mt-0.5 truncate">{{ message.message }}</p>
                       <div class="mt-1.5 flex space-x-2">
-                        <button class="text-[10px] font-medium text-emerald-600 hover:text-emerald-700">Reply</button>
-                        <button class="text-[10px] font-medium text-gray-600 hover:text-gray-700">View Listing</button>
+                        <router-link to="/messages" class="text-[10px] font-medium text-emerald-600 hover:text-emerald-700">Reply</router-link>
+                        <button v-if="message.listingId" @click="viewListing(message.listingId)" class="text-[10px] font-medium text-gray-600 hover:text-gray-700">View Listing</button>
                       </div>
                     </div>
                     <span v-if="message.unread" class="ml-2 flex-shrink-0">
@@ -444,18 +444,23 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { Chart, registerables } from 'chart.js'
 import type { DashboardProps, DashboardEmits } from '@/types/dashboardTypes'
 import { transactionService } from '@/services/transactionsService'
 import type { FarmerTransaction } from '@/types/transactionTypes'
 import type { Animal } from '@/types/managementTypes'
 import { LivestockService } from '@/services/livestockService'
+import { MessagesService } from '@/services/messagesService'
+import type { Conversation } from '@/types/messages'
+import { supabase } from '@/supabase'
 
 // Register Chart.js components
 Chart.register(...registerables)
 
 const props = defineProps<DashboardProps>()
 const emit = defineEmits<DashboardEmits>()
+const router = useRouter()
 
 // Generate unique chart ID
 const chartId = Math.random().toString(36).substring(7)
@@ -472,6 +477,9 @@ const transactionsData = ref<FarmerTransaction[]>([])
 // Store posted livestock data
 const postedLivestock = ref<Animal[]>([])
 
+// Store conversations data
+const conversations = ref<Conversation[]>([])
+
 const formatNumber = (num: number): string => {
   return num.toLocaleString()
 }
@@ -479,6 +487,69 @@ const formatNumber = (num: number): string => {
 const handleOpenSalesReport = () => {
   emit('open-sales-report')
 }
+
+/**
+ * Format relative time
+ */
+const formatRelativeTime = (date: Date): string => {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7) return `${days}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/**
+ * Navigate to listing detail
+ */
+const viewListing = (listingId: string) => {
+  router.push(`/marketplace/${listingId}`)
+}
+
+/**
+ * Computed property for display messages
+ */
+const displayMessages = computed(() => {
+  return conversations.value
+    .sort((a, b) => {
+      const dateA = a.lastMessage?.createdAt || a.updatedAt
+      const dateB = b.lastMessage?.createdAt || b.updatedAt
+      return dateB.getTime() - dateA.getTime()
+    })
+    .map(conv => {
+      const otherUser = conv.users.find(u => u.id !== currentUserId.value)
+      
+      return {
+        id: conv.id,
+        name: otherUser?.name || 'Unknown User',
+        avatar: otherUser?.avatar || 'https://ui-avatars.com/api/?name=Unknown&background=10b981&color=fff',
+        message: conv.lastMessage?.content || 'No messages yet',
+        time: conv.lastMessage ? formatRelativeTime(conv.lastMessage.createdAt) : formatRelativeTime(conv.createdAt),
+        unread: conv.unreadCount > 0,
+        listingId: conv.listing?.id
+      }
+    })
+})
+
+/**
+ * Computed property for actual total messages
+ */
+const actualTotalMessages = computed(() => {
+  return conversations.value.length
+})
+
+/**
+ * Computed property for actual unread messages
+ */
+const actualUnreadMessages = computed(() => {
+  return conversations.value.reduce((total, conv) => total + conv.unreadCount, 0)
+})
 
 /**
  * Computed property for total sold revenue (from completed transactions)
@@ -561,6 +632,40 @@ const postedLivestockBreakdown = computed(() => {
       color: colors[index % colors.length]
     }))
 })
+
+// Current user ID
+const currentUserId = ref<string>('')
+
+/**
+ * Load current user ID
+ */
+const loadCurrentUser = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      currentUserId.value = user.id
+    }
+  } catch (error) {
+    console.error('❌ Error loading current user:', error)
+  }
+}
+
+/**
+ * Load conversations data
+ */
+const loadConversations = async () => {
+  try {
+    if (!currentUserId.value) return
+    
+    const result = await MessagesService.getConversations(currentUserId.value)
+    if (result.success && result.data) {
+      conversations.value = result.data
+      console.log('✅ Loaded conversations:', conversations.value.length, 'conversations')
+    }
+  } catch (error) {
+    console.error('❌ Error loading conversations:', error)
+  }
+}
 
 /**
  * Load transaction data
@@ -1089,8 +1194,10 @@ const createStatusChart = () => {
 // Initialize all charts
 const initializeCharts = async () => {
   await nextTick()
+  await loadCurrentUser()
   await loadTransactionData()
   await loadPostedLivestock()
+  await loadConversations()
   await createRevenueChart()
   await createCategoryChart()
   createDistributionChart()

@@ -699,7 +699,7 @@
       <div v-else-if="!user && !loading && !error" class="max-w-7xl mx-auto p-6 pt-8 relative z-10">
         <div class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg p-6 text-center">
           <div class="text-yellow-800 mb-4">No user is logged in.</div>
-          <router-link to="/signin" class="text-blue-600 font-medium hover:underline cursor-pointer">Sign in</router-link>
+          <router-link to="/login" class="text-blue-600 font-medium hover:underline cursor-pointer">Sign in</router-link>
           <span class="text-gray-600"> to view your profile.</span>
         </div>
       </div>

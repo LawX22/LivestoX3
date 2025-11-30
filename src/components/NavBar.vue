@@ -574,7 +574,7 @@
       <!-- Not logged in -->
       <template v-else-if="!isLoggedIn">
         <div class="flex items-center gap-3">
-          <router-link to="/signIn"
+          <router-link to="/login"
             class="border-2 border-green-500 px-5 py-2 rounded-xl text-sm font-medium hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:text-green-700 transition-all duration-300 flex items-center gap-2 group hover:border-green-600 hover:shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg"
               class="h-4 w-4 group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24"

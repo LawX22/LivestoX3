@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Auth Pages
-import signIn from '../views/auth/signIn.vue';
+import signIn from '../views/auth/login.vue';
 import signUp from '../views/auth/signUp.vue';
 import ForgotPassword from '../views/auth/ForgotPassword.vue';
 
@@ -34,7 +34,7 @@ import DesignSystemGuide from '../views/utility/DesignSystemGuide.vue';
 // Define Routes
 const routes = [
   // Auth Routes
-  { path: '/signIn', component: signIn, name: 'SignIn' },
+  { path: '/login', component: signIn, name: 'SignIn' },
   { path: '/signUp', component: signUp, name: 'SignUp' },
   { path: '/forgotPassword', component: ForgotPassword, name: 'ForgotPassword.vue' },
   { path: '/upgradeForm', component: upgradeForm, name: 'upgradeForm' },
