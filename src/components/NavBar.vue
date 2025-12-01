@@ -1,4 +1,4 @@
-<!-- NavBar.vue -->
+<!-- NavBar.vue - COMPLETE WITH NOTIFICATIONS INTEGRATION -->
 <template>
   <!-- Background Pattern Overlay for the navbar area -->
   <div class="fixed top-0 left-0 right-0 z-40 h-20 opacity-5 pointer-events-none">
@@ -236,8 +236,93 @@
             </div>
 
             <div class="max-h-80 overflow-y-auto">
+              <!-- Loading State -->
+              <div v-if="loadingNotifications" class="space-y-2 p-3">
+                <div v-for="i in 3" :key="i" class="p-3 animate-pulse">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                      <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+                      <div class="h-2 bg-gray-100 rounded w-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notifications List -->
+              <div v-else-if="recentNotifications.length > 0" class="divide-y divide-gray-100">
+                <div 
+                  v-for="notification in recentNotifications" 
+                  :key="notification.id"
+                  @click="handleNotificationClick(notification)"
+                  class="flex items-start p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all duration-200 cursor-pointer group"
+                  :class="{ 'bg-orange-50/50': !notification.read }">
+                  
+                  <!-- Notification Icon -->
+                  <div class="flex-shrink-0 mr-3">
+                    <div :class="[
+                      'w-10 h-10 rounded-full flex items-center justify-center',
+                      getNotificationBgColor(notification.type)
+                    ]">
+                      <svg class="w-5 h-5" :class="getNotificationIconColor(notification.type)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <!-- Message icon -->
+                        <path v-if="notification.type === 'message'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        
+                        <!-- Forum icon -->
+                        <path v-else-if="notification.type === 'forum'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                        
+                        <!-- Listing icon -->
+                        <path v-else-if="notification.type === 'listing'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        
+                        <!-- System icon -->
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <!-- Notification Content -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between mb-1">
+                      <p class="text-sm font-semibold text-gray-800 truncate group-hover:text-orange-700 transition-colors"
+                        :class="{ 'text-orange-700': !notification.read }">
+                        {{ notification.title }}
+                      </p>
+                      <span class="text-xs text-gray-400 ml-2 flex-shrink-0">
+                        {{ formatMessageTime(notification.createdAt) }}
+                      </span>
+                    </div>
+
+                    <p class="text-xs text-gray-600 truncate mb-1 line-clamp-2"
+                      :class="{ 'font-medium text-gray-800': !notification.read }">
+                      {{ notification.message }}
+                    </p>
+
+                    <!-- Notification Type Badge -->
+                    <div class="flex items-center gap-2 mt-2">
+                      <span class="text-[10px] px-2 py-0.5 rounded-full capitalize"
+                        :class="getNotificationBgColor(notification.type) + ' ' + getNotificationIconColor(notification.type)">
+                        {{ notification.type }}
+                      </span>
+                      <span v-if="notification.priority === 'high'" 
+                        class="text-[10px] px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-medium">
+                        High Priority
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Unread indicator -->
+                  <div v-if="!notification.read" class="ml-2 flex-shrink-0">
+                    <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Empty State -->
-              <div class="px-6 py-8 text-center">
+              <div v-else class="px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -645,6 +730,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { NavBarService } from '@/services/navbarService';
 import { MessagesService } from '@/services/messagesService';
 import { cartCheckoutService } from '@/services/cartCheckoutService';
+import { NotificationsService, type Notification } from '@/services/notificationsService'; // 🔔 Import notifications
 import type { NavBarUser } from '@/services/navbarService';
 import type { Conversation } from '@/types/messages';
 
@@ -662,13 +748,17 @@ const cachedNavbarUser = NavBarService.getCachedNavBarData();
 // State - initialized with cached data for instant display
 const navbarUser = ref<NavBarUser | null>(cachedNavbarUser);
 
-// 🎯 FIXED: Dynamic Cart Count from Database
+// 🎯 Dynamic Cart Count from Database
 const cartCount = ref(0);
 
 // 🆕 Messages State
 const conversations = ref<Conversation[]>([]);
 const loadingMessages = ref(false);
-const unreadNotifications = ref(12); // Keep this as demo for now
+
+// 🔔 Notifications State
+const notifications = ref<Notification[]>([]);
+const loadingNotifications = ref(false);
+let notificationUnsubscribe: (() => void) | null = null;
 
 // UI state
 const showDropdown = ref(false);
@@ -696,6 +786,18 @@ const currentUser = computed(() => {
 // 🆕 Computed for unread message count
 const unreadMessages = computed(() => {
   return conversations.value.reduce((total, conv) => total + conv.unreadCount, 0);
+});
+
+// 🔔 Computed for unread notification count
+const unreadNotifications = computed(() => {
+  return notifications.value.filter(n => !n.read).length;
+});
+
+// 🔔 Computed for recent notifications (top 5)
+const recentNotifications = computed(() => {
+  return notifications.value
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 5);
 });
 
 // 🆕 Computed for recent conversations (top 5)
@@ -751,6 +853,110 @@ const formatMessageTime = (date?: Date): string => {
   if (diffDays < 7) return `${diffDays}d`;
   
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+// 🔔 Load notifications
+const loadNotifications = async () => {
+  if (!currentUser.value?.id) return;
+
+  loadingNotifications.value = true;
+  
+  try {
+    const result = await NotificationsService.getNotifications();
+    
+    if (result.success && result.data) {
+      notifications.value = result.data;
+      console.log('🔔 Loaded', notifications.value.length, 'notifications');
+      console.log('📊 Unread notifications:', unreadNotifications.value);
+    } else {
+      console.error('❌ Failed to load notifications:', result.error);
+    }
+  } catch (error) {
+    console.error('❌ Error loading notifications:', error);
+  } finally {
+    loadingNotifications.value = false;
+  }
+};
+
+// 🔔 Subscribe to notification updates
+const subscribeToNotificationUpdates = () => {
+  if (!currentUser.value?.id) return;
+
+  console.log('🔴 Subscribing to notification updates in NavBar');
+
+  const subscription = NotificationsService.subscribeToUpdates(
+    currentUser.value.id,
+    (newNotification) => {
+      console.log('🔔 New notification in navbar:', newNotification.title);
+      
+      // Add to the beginning of the array
+      notifications.value.unshift(newNotification);
+      
+      // Optional: Show browser notification if supported
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(newNotification.title, {
+          body: newNotification.message,
+          icon: '/src/assets/Logo.png'
+        });
+      }
+    }
+  );
+
+  notificationUnsubscribe = subscription.unsubscribe;
+};
+
+// 🔔 Handle notification click
+const handleNotificationClick = (notification: Notification) => {
+  // Mark as read
+  NotificationsService.markAsRead(notification.id);
+  
+  // Update local state
+  const index = notifications.value.findIndex(n => n.id === notification.id);
+  if (index !== -1) {
+    notifications.value[index].read = true;
+  }
+
+  // Close dropdown
+  closeNotificationDropdown();
+
+  // Navigate based on notification type
+  if (notification.referenceId && notification.referenceType) {
+    if (notification.referenceType === 'conversation') {
+      router.push(`/messages?conversation=${notification.referenceId}`);
+    } else if (notification.referenceType === 'forum_question') {
+      router.push(`/forum/question/${notification.referenceId}`);
+    } else if (notification.referenceType === 'livestock_listing') {
+      router.push(`/marketplace/${notification.referenceId}`);
+    }
+  }
+};
+
+// 🔔 Get notification icon color
+const getNotificationIconColor = (type: Notification['type']): string => {
+  const colors = {
+    message: 'text-purple-600',
+    forum: 'text-blue-600',
+    listing: 'text-green-600',
+    system: 'text-gray-600',
+    order: 'text-green-600',
+    payment: 'text-blue-600',
+    reminder: 'text-orange-600'
+  };
+  return colors[type] || colors.system;
+};
+
+// 🔔 Get notification background color
+const getNotificationBgColor = (type: Notification['type']): string => {
+  const colors = {
+    message: 'bg-purple-100',
+    forum: 'bg-blue-100',
+    listing: 'bg-green-100',
+    system: 'bg-gray-100',
+    order: 'bg-green-100',
+    payment: 'bg-blue-100',
+    reminder: 'bg-orange-100'
+  };
+  return colors[type] || colors.system;
 };
 
 // 🎯 Load actual cart count from database
@@ -853,15 +1059,17 @@ const handleVisibilityChange = async () => {
       const sessionValid = await authStore.refreshSession();
       
       if (sessionValid && authStore.userId) {
-        // Reload navbar data, conversations, and cart count
+        // Reload navbar data, conversations, notifications, and cart count
         await loadNavbarData(authStore.userId);
         await loadConversations();
+        await loadNotifications(); // 🔔 Load notifications
         await loadCartCount();
       } else {
         // Session expired
         console.warn('⚠️ NavBar: Session expired');
         navbarUser.value = null;
         conversations.value = [];
+        notifications.value = []; // 🔔 Clear notifications
         cartCount.value = 0;
         NavBarService.clearNavBarCache();
       }
@@ -876,6 +1084,11 @@ onMounted(async () => {
   // 🆕 Add visibility listener
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
+  // 🔔 Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  
   // Start both in parallel - don't wait for initialize()
   const initPromise = authStore.initialize();
   
@@ -883,7 +1096,8 @@ onMounted(async () => {
   if (cachedNavbarUser?.id) {
     loadNavbarData(cachedNavbarUser.id);
     loadConversations(); // Load conversations in background
-    loadCartCount(); // 🎯 Load cart count in background
+    loadNotifications(); // 🔔 Load notifications in background
+    loadCartCount(); // Load cart count in background
   }
   
   // Wait for auth to finish
@@ -893,19 +1107,23 @@ onMounted(async () => {
   if (authStore.isAuthenticated && authStore.userId && !cachedNavbarUser) {
     await loadNavbarData(authStore.userId);
     await loadConversations();
-    await loadCartCount(); // 🎯 Load cart count
+    await loadNotifications(); // 🔔 Load notifications
+    await loadCartCount();
     subscribeToConversationUpdates();
+    subscribeToNotificationUpdates(); // 🔔 Subscribe to notifications
   } else if (!authStore.isAuthenticated && cachedNavbarUser) {
     // Session expired - clear cache
     console.log('⚠️ Session expired, clearing cache');
     NavBarService.clearNavBarCache();
     navbarUser.value = null;
     conversations.value = [];
+    notifications.value = []; // 🔔 Clear notifications
     cartCount.value = 0;
   } else if (authStore.isAuthenticated && authStore.userId) {
     // Subscribe to real-time updates
     subscribeToConversationUpdates();
-    await loadCartCount(); // 🎯 Load cart count
+    subscribeToNotificationUpdates(); // 🔔 Subscribe to notifications
+    await loadCartCount();
   }
   
   document.addEventListener("click", handleClickOutside);
@@ -919,6 +1137,12 @@ onBeforeUnmount(() => {
   
   // Cleanup message subscriptions
   MessagesService.cleanup();
+  
+  // 🔔 Cleanup notification subscriptions
+  if (notificationUnsubscribe) {
+    notificationUnsubscribe();
+  }
+  NotificationsService.cleanup();
 });
 
 // Watch auth changes
@@ -926,11 +1150,14 @@ watch(() => authStore.isAuthenticated, async (newValue) => {
   if (newValue && authStore.userId) {
     await loadNavbarData(authStore.userId);
     await loadConversations();
-    await loadCartCount(); // 🎯 Load cart count when logging in
+    await loadNotifications(); // 🔔 Load notifications
+    await loadCartCount();
     subscribeToConversationUpdates();
+    subscribeToNotificationUpdates(); // 🔔 Subscribe to notifications
   } else {
     navbarUser.value = null;
     conversations.value = [];
+    notifications.value = []; // 🔔 Clear notifications
     cartCount.value = 0;
     NavBarService.clearNavBarCache();
   }
@@ -943,9 +1170,14 @@ watch(() => route.path, async (newPath) => {
   showMessageDropdown.value = false;
   showLogoutModal.value = false;
   
-  // 🎯 Refresh cart count when navigating away from cart page
+  // Refresh cart count when navigating away from cart page
   if (authStore.isAuthenticated && !newPath.includes('/cart')) {
     await loadCartCount();
+  }
+  
+  // 🔔 Refresh notifications when navigating
+  if (authStore.isAuthenticated && currentUser.value?.id) {
+    await loadNotifications();
   }
 });
 
@@ -979,9 +1211,12 @@ const handleAutoLogout = async (reason: string) => {
     
     navbarUser.value = null;
     conversations.value = [];
+    notifications.value = []; // 🔔 Clear notifications
     cartCount.value = 0;
     NavBarService.clearNavBarCache();
     await MessagesService.cleanup();
+    if (notificationUnsubscribe) notificationUnsubscribe(); // 🔔 Cleanup
+    NotificationsService.cleanup(); // 🔔 Cleanup
     
     showLogoutModal.value = false;
     showDropdown.value = false;
@@ -1015,11 +1250,16 @@ const toggleDropdown = () => {
   }
 };
 
-const toggleNotificationDropdown = () => {
+const toggleNotificationDropdown = async () => {
   showNotificationDropdown.value = !showNotificationDropdown.value;
   if (showNotificationDropdown.value) {
     showDropdown.value = false;
     showMessageDropdown.value = false;
+    
+    // 🔔 Load notifications when opening dropdown
+    if (currentUser.value?.id) {
+      await loadNotifications();
+    }
   }
 };
 
@@ -1072,9 +1312,12 @@ const handleLogout = async () => {
     
     navbarUser.value = null;
     conversations.value = [];
+    notifications.value = []; // 🔔 Clear notifications
     cartCount.value = 0;
     NavBarService.clearNavBarCache();
     await MessagesService.cleanup();
+    if (notificationUnsubscribe) notificationUnsubscribe(); // 🔔 Cleanup
+    NotificationsService.cleanup(); // 🔔 Cleanup
     
     showLogoutModal.value = false;
     showDropdown.value = false;

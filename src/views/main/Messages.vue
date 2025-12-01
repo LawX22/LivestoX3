@@ -1,4 +1,4 @@
-<!-- Messages.vue - WITH SKELETON LOADING & FIXED LAYOUT -->
+<!-- Messages.vue - WITH EDIT/DELETE MESSAGE & DELETE CONVERSATION -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 p-4 relative">
     <!-- Floating Background Elements -->
@@ -293,6 +293,16 @@
                 </svg>
                 View Listing
               </button>
+
+              <!-- Delete Conversation Button -->
+              <button @click="confirmDeleteConversation"
+                class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-all duration-300 shadow-sm flex items-center cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Chat
+              </button>
             </div>
           </div>
         </div>
@@ -384,26 +394,74 @@
                 </router-link>
 
                 <!-- Message Bubble -->
-                <div class="rounded-2xl px-4 py-3 shadow-sm relative group break-words" :class="{
-                  'bg-gradient-to-r from-green-500 to-emerald-600 text-white': message.senderId === currentUser?.id,
-                  'bg-white border border-gray-200 text-gray-800': message.senderId !== currentUser?.id,
-                }">
-                  <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ message.content }}</p>
-                  <p class="text-xs mt-2 opacity-70" :class="{
-                    'text-green-100': message.senderId === currentUser?.id,
-                    'text-gray-500': message.senderId !== currentUser?.id,
-                  }">
-                    {{ formatTime(message.createdAt) }}
-                  </p>
+                <div class="relative group">
+                  <!-- Message Actions (Edit/Delete) - Only for own messages -->
+                  <div v-if="message.senderId === currentUser?.id && editingMessageId !== message.id"
+                    class="absolute -top-8 right-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white rounded-lg shadow-lg p-1 z-10">
+                    <button @click="startEditMessage(message)"
+                      class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                      title="Edit">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button @click="confirmDeleteMessage(message.id)"
+                      class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                      title="Delete">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
 
-                  <!-- Message Status -->
-                  <div v-if="message.senderId === currentUser?.id"
-                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                    <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd" />
-                    </svg>
+                  <!-- Edit Mode -->
+                  <div v-if="editingMessageId === message.id" class="flex flex-col space-y-2 bg-white border-2 border-blue-500 rounded-2xl p-3 shadow-lg min-w-[300px]">
+                    <textarea v-model="editMessageContent"
+                      @keydown.enter.exact.prevent="saveEditMessage"
+                      @keydown.escape="cancelEditMessage"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                      rows="3"
+                      placeholder="Edit your message..."></textarea>
+                    <div class="flex justify-end space-x-2">
+                      <button @click="cancelEditMessage"
+                        class="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                        Cancel
+                      </button>
+                      <button @click="saveEditMessage"
+                        :disabled="!editMessageContent.trim() || editingMessage"
+                        class="px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        {{ editingMessage ? 'Saving...' : 'Save' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Normal Message Display -->
+                  <div v-else class="rounded-2xl px-4 py-3 shadow-sm relative break-words" :class="{
+                    'bg-gradient-to-r from-green-500 to-emerald-600 text-white': message.senderId === currentUser?.id,
+                    'bg-white border border-gray-200 text-gray-800': message.senderId !== currentUser?.id,
+                  }">
+                    <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ message.content }}</p>
+                    <div class="flex items-center justify-between mt-2">
+                      <p class="text-xs opacity-70" :class="{
+                        'text-green-100': message.senderId === currentUser?.id,
+                        'text-gray-500': message.senderId !== currentUser?.id,
+                      }">
+                        {{ formatTime(message.createdAt) }}
+                        <span v-if="message.isEdited" class="ml-1">(edited)</span>
+                      </p>
+                    </div>
+
+                    <!-- Message Status -->
+                    <div v-if="message.senderId === currentUser?.id"
+                      class="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                      <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -459,6 +517,35 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100000] p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">{{ confirmModalTitle }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ confirmModalMessage }}</p>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button @click="cancelConfirm"
+            class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+            Cancel
+          </button>
+          <button @click="executeConfirm"
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer">
+            {{ confirmModalAction }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -487,6 +574,18 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const isNearTop = ref(false);
 const isTyping = ref(false);
 let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// Edit Message State
+const editingMessageId = ref<string | null>(null);
+const editMessageContent = ref('');
+const editingMessage = ref(false);
+
+// Confirmation Modal State
+const showConfirmModal = ref(false);
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalAction = ref('');
+const confirmCallback = ref<(() => void) | null>(null);
 
 // Filters
 const filters = ref<Filter[]>([
@@ -611,35 +710,44 @@ const selectConversation = async (conversation: Conversation) => {
   }
 
   // Subscribe to new messages
-  MessagesService.subscribeToMessages(conversation.id, (message: Message) => {
-    console.log('📨 New message received in conversation:', message);
-    
-    // Only add if not already in list
-    if (!messages.value.find(m => m.id === message.id)) {
-      messages.value.push(message);
-      nextTick(scrollToBottom);
+  MessagesService.subscribeToMessages(
+    conversation.id,
+    (message: Message) => {
+      console.log('📨 New message received:', message);
       
-      // Mark as read if conversation is selected
-      if (currentUser.value && selectedConversation.value?.id === message.conversationId) {
-        MessagesService.markAsRead(conversation.id, currentUser.value.id);
+      if (!messages.value.find(m => m.id === message.id)) {
+        messages.value.push(message);
+        nextTick(scrollToBottom);
+        
+        if (currentUser.value && selectedConversation.value?.id === message.conversationId) {
+          MessagesService.markAsRead(conversation.id, currentUser.value.id);
+        }
       }
-    }
 
-    // Update conversation last message
-    const conv = conversations.value.find(c => c.id === message.conversationId);
-    if (conv) {
-      conv.lastMessage = message;
-      conv.updatedAt = message.createdAt;
-      
-      // Increment unread if not the current conversation or if sender is not current user
-      if (message.senderId !== currentUser.value?.id && selectedConversation.value?.id !== conversation.id) {
-        conv.unreadCount++;
+      const conv = conversations.value.find(c => c.id === message.conversationId);
+      if (conv) {
+        conv.lastMessage = message;
+        conv.updatedAt = message.createdAt;
+        
+        if (message.senderId !== currentUser.value?.id && selectedConversation.value?.id !== conversation.id) {
+          conv.unreadCount++;
+        }
+        
+        conversations.value.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
       }
-      
-      // Re-sort conversations
-      conversations.value.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    },
+    (message: Message) => {
+      console.log('✏️ Message updated:', message);
+      const index = messages.value.findIndex(m => m.id === message.id);
+      if (index !== -1) {
+        messages.value[index] = message;
+      }
+    },
+    (messageId: string) => {
+      console.log('🗑️ Message deleted:', messageId);
+      messages.value = messages.value.filter(m => m.id !== messageId);
     }
-  });
+  );
 };
 
 const loadMessages = async () => {
@@ -675,7 +783,6 @@ const loadMoreMessages = async () => {
   });
 
   if (result.success && result.data) {
-    // Prepend older messages
     messages.value = [...result.data.messages, ...messages.value];
     hasMoreMessages.value = result.data.hasMore;
   }
@@ -698,31 +805,132 @@ const sendMessage = async () => {
   sendingMessage.value = false;
 
   if (result.success && result.data) {
-    // Message will be added via realtime subscription
-    // But add it immediately for better UX
     if (!messages.value.find(m => m.id === result.data!.id)) {
       messages.value.push(result.data);
       nextTick(scrollToBottom);
     }
 
-    // Update conversation
     const conv = conversations.value.find(c => c.id === selectedConversation.value?.id);
     if (conv) {
       conv.lastMessage = result.data;
       conv.updatedAt = result.data.createdAt;
-      // Re-sort conversations
       conversations.value.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
   } else {
     console.error('Failed to send message:', result.error);
     alert('Failed to send message. Please try again.');
-    newMessage.value = messageContent; // Restore message
+    newMessage.value = messageContent;
   }
+};
+
+// Edit Message Functions
+const startEditMessage = (message: Message) => {
+  editingMessageId.value = message.id;
+  editMessageContent.value = message.content;
+};
+
+const cancelEditMessage = () => {
+  editingMessageId.value = null;
+  editMessageContent.value = '';
+  editingMessage.value = false;
+};
+
+const saveEditMessage = async () => {
+  if (!editMessageContent.value.trim() || !editingMessageId.value || !currentUser.value) return;
+
+  editingMessage.value = true;
+
+  const result = await MessagesService.editMessage(
+    editingMessageId.value,
+    currentUser.value.id,
+    editMessageContent.value.trim()
+  );
+
+  editingMessage.value = false;
+
+  if (result.success && result.data) {
+    const index = messages.value.findIndex(m => m.id === editingMessageId.value);
+    if (index !== -1) {
+      messages.value[index] = result.data;
+    }
+    cancelEditMessage();
+  } else {
+    console.error('Failed to edit message:', result.error);
+    alert('Failed to edit message. Please try again.');
+  }
+};
+
+// Delete Message Functions
+const confirmDeleteMessage = (messageId: string) => {
+  confirmModalTitle.value = 'Delete Message';
+  confirmModalMessage.value = 'Are you sure you want to delete this message? This action cannot be undone.';
+  confirmModalAction.value = 'Delete';
+  confirmCallback.value = () => deleteMessage(messageId);
+  showConfirmModal.value = true;
+};
+
+const deleteMessage = async (messageId: string) => {
+  if (!currentUser.value) return;
+
+  const result = await MessagesService.deleteMessage(messageId, currentUser.value.id);
+
+  if (result.success) {
+    messages.value = messages.value.filter(m => m.id !== messageId);
+  } else {
+    console.error('Failed to delete message:', result.error);
+    alert('Failed to delete message. Please try again.');
+  }
+};
+
+// Delete Conversation Functions
+const confirmDeleteConversation = () => {
+  confirmModalTitle.value = 'Delete Conversation';
+  confirmModalMessage.value = 'Are you sure you want to delete this entire conversation? All messages will be permanently deleted. This action cannot be undone.';
+  confirmModalAction.value = 'Delete Conversation';
+  confirmCallback.value = deleteConversation;
+  showConfirmModal.value = true;
+};
+
+const deleteConversation = async () => {
+  if (!selectedConversation.value || !currentUser.value) return;
+
+  const conversationId = selectedConversation.value.id;
+  const result = await MessagesService.deleteConversation(conversationId, currentUser.value.id);
+
+  if (result.success) {
+    // Remove from conversations list
+    conversations.value = conversations.value.filter(c => c.id !== conversationId);
+    
+    // Clear selection
+    selectedConversation.value = null;
+    messages.value = [];
+    
+    // Auto-select first conversation if exists
+    if (conversations.value.length > 0) {
+      await selectConversation(conversations.value[0]);
+    }
+  } else {
+    console.error('Failed to delete conversation:', result.error);
+    alert('Failed to delete conversation. Please try again.');
+  }
+};
+
+// Confirmation Modal Functions
+const cancelConfirm = () => {
+  showConfirmModal.value = false;
+  confirmCallback.value = null;
+};
+
+const executeConfirm = () => {
+  if (confirmCallback.value) {
+    confirmCallback.value();
+  }
+  showConfirmModal.value = false;
+  confirmCallback.value = null;
 };
 
 const handleTyping = () => {
   // Implement typing indicator logic here if needed
-  // This could emit events to show "User is typing..." to other participants
 };
 
 const scrollToBottom = () => {
@@ -760,7 +968,6 @@ const loadConversations = async () => {
   
   loadingConversations.value = false;
 
-  // Auto-select first conversation if exists
   if (conversations.value.length > 0 && !selectedConversation.value) {
     await selectConversation(conversations.value[0]);
   }
@@ -768,14 +975,12 @@ const loadConversations = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Get current user
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     router.push('/login');
     return;
   }
 
-  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -795,19 +1000,15 @@ onMounted(async () => {
       isOnline: true
     };
 
-    // Load conversations
     await loadConversations();
 
-    // Subscribe to conversation updates
     MessagesService.subscribeToConversations(
       user.id,
       (conversationId: string, message: Message) => {
         console.log('📬 New message in conversation:', conversationId);
-        // Update is handled by individual conversation subscription
       },
       async (conversationId: string) => {
         console.log('🔄 Conversation updated:', conversationId);
-        // Reload this specific conversation
         const conv = conversations.value.find(c => c.id === conversationId);
         if (conv && currentUser.value) {
           const result = await MessagesService.getConversation(conversationId, currentUser.value.id);
@@ -821,11 +1022,9 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  // Cleanup all subscriptions
   await MessagesService.cleanup();
 });
 
-// Watch for scroll to load more messages
 watch(isNearTop, (isNear) => {
   if (isNear && hasMoreMessages.value && !loadingMessages.value) {
     loadMoreMessages();

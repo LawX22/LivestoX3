@@ -1,4 +1,4 @@
-// services/messagesService.ts - FIXED VERSION WITH PROPER UNREAD COUNTS
+// services/messagesService.ts - WITH EDIT, DELETE MESSAGE & DELETE CONVERSATION
 import { supabase } from '@/supabase'
 import type { 
   Conversation, 
@@ -14,7 +14,7 @@ import { RealtimeChannel } from '@supabase/supabase-js'
 
 /**
  * MessagesService - Handles all messaging functionality
- * FIXED: Proper unread count calculation with fallback
+ * FEATURES: Edit messages, Delete messages, Delete conversations
  */
 export class MessagesService {
   private static activeSubscriptions: Map<string, RealtimeChannel> = new Map()
@@ -27,7 +27,6 @@ export class MessagesService {
     userId: string
   ): Promise<number> {
     try {
-      // Get last read timestamp
       const { data: participant } = await supabase
         .from('conversation_participants')
         .select('last_read_at')
@@ -37,7 +36,6 @@ export class MessagesService {
 
       const lastReadAt = participant?.last_read_at
 
-      // Count unread messages
       let query = supabase
         .from('messages')
         .select('id', { count: 'exact', head: true })
@@ -59,7 +57,7 @@ export class MessagesService {
   }
 
   /**
-   * Start a conversation about a listing (simplified interface for ContactFarmerModal)
+   * Start a conversation about a listing
    */
   static async startConversationAboutListing(
     recipientId: string,
@@ -108,7 +106,7 @@ export class MessagesService {
   }
 
   /**
-   * Get all conversations for a user with unread counts and last messages
+   * Get all conversations for a user
    */
   static async getConversations(userId: string): Promise<{ success: boolean; data?: Conversation[]; error?: string }> {
     try {
@@ -215,8 +213,6 @@ export class MessagesService {
         unreadCountsResults.map(r => [r.conversationId, r.count])
       )
 
-      console.log('📊 Unread counts:', Object.fromEntries(unreadCounts))
-
       const participantsByConv = new Map<string, any[]>()
       allParticipants?.forEach(p => {
         if (!participantsByConv.has(p.conversation_id)) {
@@ -252,7 +248,9 @@ export class MessagesService {
             content: lastMsg.content,
             senderId: lastMsg.sender_id,
             conversationId: lastMsg.conversation_id,
-            createdAt: new Date(lastMsg.created_at)
+            createdAt: new Date(lastMsg.created_at),
+            isEdited: lastMsg.is_edited || false,
+            editedAt: lastMsg.edited_at ? new Date(lastMsg.edited_at) : undefined
           } : undefined,
           unreadCount: unreadCount,
           isOnline: false,
@@ -331,7 +329,9 @@ export class MessagesService {
           content: msg.content,
           senderId: msg.sender_id,
           conversationId: msg.conversation_id,
-          createdAt: new Date(msg.created_at)
+          createdAt: new Date(msg.created_at),
+          isEdited: msg.is_edited || false,
+          editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined
         }))
       
       return { 
@@ -359,7 +359,8 @@ export class MessagesService {
           sender_id: user.id,
           content: params.content,
           created_at: new Date().toISOString(),
-          is_deleted: false
+          is_deleted: false,
+          is_edited: false
         })
         .select()
         .single()
@@ -379,13 +380,138 @@ export class MessagesService {
         content: data.content,
         senderId: data.sender_id,
         conversationId: data.conversation_id,
-        createdAt: new Date(data.created_at)
+        createdAt: new Date(data.created_at),
+        isEdited: false
       }
 
       return { success: true, data: message }
     } catch (error: any) {
       console.error('❌ Error in sendMessage:', error)
       return { success: false, error: error.message || 'Failed to send message' }
+    }
+  }
+
+  /**
+   * Edit a message
+   */
+  static async editMessage(messageId: string, userId: string, newContent: string): Promise<{ success: boolean; data?: Message; error?: string }> {
+    try {
+      console.log('✏️ Editing message:', messageId)
+
+      const { data, error } = await supabase
+        .from('messages')
+        .update({ 
+          content: newContent,
+          is_edited: true,
+          edited_at: new Date().toISOString()
+        })
+        .eq('id', messageId)
+        .eq('sender_id', userId)
+        .eq('is_deleted', false)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error editing message:', error)
+        return { success: false, error: error.message }
+      }
+
+      if (!data) {
+        return { success: false, error: 'Message not found or you do not have permission to edit it' }
+      }
+
+      const message: Message = {
+        id: data.id,
+        content: data.content,
+        senderId: data.sender_id,
+        conversationId: data.conversation_id,
+        createdAt: new Date(data.created_at),
+        isEdited: true,
+        editedAt: new Date(data.edited_at)
+      }
+
+      console.log('✅ Message edited successfully')
+      return { success: true, data: message }
+    } catch (error: any) {
+      console.error('❌ Error in editMessage:', error)
+      return { success: false, error: error.message || 'Failed to edit message' }
+    }
+  }
+
+  /**
+   * Delete a single message
+   */
+  static async deleteMessage(messageId: string, userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log('🗑️ Deleting message:', messageId)
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_deleted: true })
+        .eq('id', messageId)
+        .eq('sender_id', userId)
+
+      if (error) {
+        console.error('❌ Error deleting message:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('✅ Message deleted successfully')
+      return { success: true }
+    } catch (error: any) {
+      console.error('❌ Error in deleteMessage:', error)
+      return { success: false, error: error.message || 'Failed to delete message' }
+    }
+  }
+
+  /**
+   * Delete entire conversation (all messages)
+   */
+  static async deleteConversation(conversationId: string, userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log('🗑️ Deleting conversation:', conversationId)
+
+      // Verify user is a participant
+      const { data: participant, error: participantError } = await supabase
+        .from('conversation_participants')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .eq('user_id', userId)
+        .single()
+
+      if (participantError || !participant) {
+        return { success: false, error: 'You are not a participant in this conversation' }
+      }
+
+      // Soft delete all messages in the conversation
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .update({ is_deleted: true })
+        .eq('conversation_id', conversationId)
+
+      if (messagesError) {
+        console.error('❌ Error deleting messages:', messagesError)
+        return { success: false, error: messagesError.message }
+      }
+
+      // Optionally: Remove the participant from the conversation
+      // This will make the conversation disappear from the user's list
+      const { error: removeError } = await supabase
+        .from('conversation_participants')
+        .delete()
+        .eq('conversation_id', conversationId)
+        .eq('user_id', userId)
+
+      if (removeError) {
+        console.error('❌ Error removing participant:', removeError)
+        return { success: false, error: removeError.message }
+      }
+
+      console.log('✅ Conversation deleted successfully')
+      return { success: true }
+    } catch (error: any) {
+      console.error('❌ Error in deleteConversation:', error)
+      return { success: false, error: error.message || 'Failed to delete conversation' }
     }
   }
 
@@ -463,29 +589,11 @@ export class MessagesService {
     }
   }
 
-  static async deleteMessage(messageId: string, userId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ is_deleted: true })
-        .eq('id', messageId)
-        .eq('sender_id', userId)
-
-      if (error) {
-        console.error('❌ Error deleting message:', error)
-        return { success: false, error: error.message }
-      }
-
-      return { success: true }
-    } catch (error: any) {
-      console.error('❌ Error in deleteMessage:', error)
-      return { success: false, error: error.message || 'Failed to delete message' }
-    }
-  }
-
   static subscribeToMessages(
     conversationId: string,
-    onNewMessage: (message: Message) => void
+    onNewMessage: (message: Message) => void,
+    onMessageUpdate: (message: Message) => void,
+    onMessageDelete: (messageId: string) => void
   ): RealtimeChannel {
     console.log('🔴 Subscribing to messages:', conversationId)
 
@@ -510,7 +618,34 @@ export class MessagesService {
               content: msg.content,
               senderId: msg.sender_id,
               conversationId: msg.conversation_id,
-              createdAt: new Date(msg.created_at)
+              createdAt: new Date(msg.created_at),
+              isEdited: msg.is_edited || false,
+              editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined
+            })
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          const msg = payload.new as MessageDB
+          if (msg.is_deleted) {
+            onMessageDelete(msg.id)
+          } else {
+            onMessageUpdate({
+              id: msg.id,
+              content: msg.content,
+              senderId: msg.sender_id,
+              conversationId: msg.conversation_id,
+              createdAt: new Date(msg.created_at),
+              isEdited: msg.is_edited || false,
+              editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined
             })
           }
         }
@@ -561,7 +696,9 @@ export class MessagesService {
               content: msg.content,
               senderId: msg.sender_id,
               conversationId: msg.conversation_id,
-              createdAt: new Date(msg.created_at)
+              createdAt: new Date(msg.created_at),
+              isEdited: msg.is_edited || false,
+              editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined
             })
           }
         }

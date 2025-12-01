@@ -1,4 +1,4 @@
-<!-- Notifications.vue -->
+<!-- Notifications.vue - UPDATED WITH REAL SERVICE INTEGRATION -->
 <template>
   <!-- Background Gradient with Floating Elements -->
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 p-4 relative overflow-hidden">
@@ -24,7 +24,7 @@
       </svg>
     </div>
 
-    <!-- Main Content Container - Now with fixed height -->
+    <!-- Main Content Container -->
     <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-w-7xl mx-auto border border-white/30 relative z-10 flex flex-col" style="height: 90vh;">
       <!-- Header -->
       <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 p-6 text-white relative overflow-hidden">
@@ -50,6 +50,11 @@
                 <p class="text-green-100 text-sm opacity-90">Stay updated with your latest activities</p>
               </div>
             </div>
+            <button @click="refreshNotifications" :disabled="loading" class="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" :class="['h-5 w-5', loading ? 'animate-spin' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -76,7 +81,7 @@
         </div>
       </div>
 
-      <!-- Content Area - Now flex-col with fixed height container -->
+      <!-- Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden p-6">
         <!-- Action Buttons -->
         <div class="flex flex-wrap gap-3 mb-4">
@@ -97,7 +102,7 @@
           </button>
         </div>
 
-        <!-- Stats Cards - Made more compact -->
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
             <div class="flex items-center justify-between">
@@ -127,10 +132,21 @@
           </div>
         </div>
 
-        <!-- Notifications List Container - Compact Design -->
+        <!-- Notifications List Container -->
         <div class="flex-1 flex flex-col overflow-hidden bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200">
+          <!-- Loading State -->
+          <div v-if="loading" class="flex-1 p-6 text-center flex items-center justify-center">
+            <div class="flex flex-col items-center">
+              <svg class="animate-spin h-10 w-10 text-green-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p class="text-gray-600">Loading notifications...</p>
+            </div>
+          </div>
+
           <!-- Empty State -->
-          <div v-if="filteredNotifications.length === 0" 
+          <div v-else-if="filteredNotifications.length === 0" 
             class="flex-1 p-6 text-center flex items-center justify-center">
             <div>
               <div class="w-12 h-12 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -143,18 +159,18 @@
             </div>
           </div>
 
-          <!-- Compact Notifications List - Scrollable Area -->
+          <!-- Notifications List - Scrollable Area -->
           <div v-else class="flex-1 overflow-y-auto divide-y divide-gray-200/60">
             <div v-for="notification in filteredNotifications" :key="notification.id"
               :class="[
                 'transition-colors duration-150 hover:bg-gray-50/50 cursor-pointer',
                 notification.read ? 'bg-white' : 'bg-green-50/30'
               ]"
-              @click="markAsRead(notification.id)">
+              @click="handleNotificationClick(notification)">
               
               <div class="p-3">
                 <div class="flex items-start gap-3">
-                  <!-- Notification Icon - Made smaller -->
+                  <!-- Notification Icon -->
                   <div class="flex-shrink-0 mt-0.5">
                     <div :class="[
                       'w-8 h-8 rounded-md flex items-center justify-center',
@@ -165,7 +181,7 @@
                     </div>
                   </div>
 
-                  <!-- Notification Content - Compact layout -->
+                  <!-- Notification Content -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2 mb-1">
                       <h3 :class="[
@@ -192,7 +208,7 @@
                       {{ notification.message }}
                     </p>
 
-                    <!-- Notification Metadata - Compact -->
+                    <!-- Notification Metadata -->
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1">
                         <span :class="[
@@ -208,7 +224,7 @@
                         </span>
                       </div>
 
-                      <!-- Quick Actions - Always visible but subtle -->
+                      <!-- Quick Actions -->
                       <div class="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
                         <button @click.stop="toggleRead(notification.id)"
                           class="p-1 hover:bg-gray-100 rounded transition-colors duration-150"
@@ -220,14 +236,6 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                           </svg>
                         </button>
-                        
-                        <button @click.stop="deleteNotification(notification.id)"
-                          class="p-1 hover:bg-red-50 text-red-500 rounded transition-colors duration-150"
-                          title="Delete Notification">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -236,114 +244,26 @@
             </div>
           </div>
         </div>
-
-        <!-- Load More Button - Made more compact -->
-        <div v-if="hasMore" class="text-center mt-3 pt-3 border-t border-gray-200">
-          <button @click="loadMore" :disabled="loading"
-            class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg text-xs font-medium transition-all duration-300 flex items-center gap-1 mx-auto group shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg v-if="loading" class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span v-if="!loading">Load More</span>
-            <span v-else>Loading...</span>
-          </button>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
+import { NotificationsService, type Notification } from '@/services/notificationsService'
 
 const router = useRouter()
-
-// Types
-interface Notification {
-  id: number
-  type: 'order' | 'payment' | 'system' | 'message' | 'reminder'
-  title: string
-  message: string
-  read: boolean
-  priority: 'low' | 'medium' | 'high'
-  createdAt: Date
-}
 
 // Reactive data
 const notifications = ref<Notification[]>([])
 const activeFilter = ref<string>('all')
 const loading = ref(false)
-const hasMore = ref(true)
 
-// Sample data
-const sampleNotifications: Notification[] = [
-  {
-    id: 1,
-    type: 'order',
-    title: 'Order Confirmed',
-    message: 'Your order #1234 has been confirmed by the seller and is being prepared for shipment.',
-    read: false,
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: 2,
-    type: 'payment',
-    title: 'Payment Due Reminder',
-    message: 'Your payment for order #1233 is due tomorrow. Please complete the payment to avoid any delays.',
-    read: false,
-    priority: 'high',
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 3,
-    type: 'message',
-    title: 'New Message from John Doe',
-    message: 'You have received a new message regarding your livestock listing. Click to view the conversation.',
-    read: true,
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000)
-  },
-  {
-    id: 4,
-    type: 'system',
-    title: 'Profile Updated Successfully',
-    message: 'Your profile information has been updated successfully. All changes are now live on your account.',
-    read: true,
-    priority: 'low',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: 5,
-    type: 'reminder',
-    title: 'Livestock Health Checkup Due',
-    message: "It's time for your livestock health checkup. Schedule an appointment with your veterinarian.",
-    read: false,
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
-  },
-  {
-    id: 6,
-    type: 'order',
-    title: 'Order Shipped',
-    message: 'Great news! Your order #1232 has been shipped. Track your package using the provided tracking number.',
-    read: true,
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-  },
-  ...Array.from({ length: 10 }, (_, i) => ({
-    id: i + 7,
-    type: ['order', 'payment', 'message', 'system', 'reminder'][Math.floor(Math.random() * 5)] as Notification['type'],
-    title: `Notification ${i + 7}`,
-    message: `This is a sample notification message #${i + 7} to demonstrate scrolling functionality.`,
-    read: Math.random() > 0.5,
-    priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as Notification['priority'],
-    createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000))
-  }))
-]
+// Realtime subscription cleanup
+let realtimeUnsubscribe: (() => void) | null = null
 
 // Computed properties
 const filteredNotifications = computed(() => {
@@ -359,38 +279,108 @@ const unreadCount = computed(() => {
 const filters = computed(() => [
   { key: 'all', label: 'All', count: notifications.value.length },
   { key: 'unread', label: 'Unread', count: unreadCount.value },
-  { key: 'order', label: 'Orders', count: notifications.value.filter(n => n.type === 'order').length },
-  { key: 'payment', label: 'Payments', count: notifications.value.filter(n => n.type === 'payment').length },
   { key: 'message', label: 'Messages', count: notifications.value.filter(n => n.type === 'message').length },
-  { key: 'system', label: 'System', count: notifications.value.filter(n => n.type === 'system').length },
-  { key: 'reminder', label: 'Reminders', count: notifications.value.filter(n => n.type === 'reminder').length }
+  { key: 'forum', label: 'Forum', count: notifications.value.filter(n => n.type === 'forum').length },
+  { key: 'listing', label: 'Listings', count: notifications.value.filter(n => n.type === 'listing').length },
+  { key: 'system', label: 'System', count: notifications.value.filter(n => n.type === 'system').length }
 ])
 
 // Methods
 const goBack = () => router.go(-1)
 
+const loadNotifications = async () => {
+  loading.value = true
+  try {
+    const result = await NotificationsService.getNotifications()
+    
+    if (result.success && result.data) {
+      notifications.value = result.data
+    } else {
+      console.error('Failed to load notifications:', result.error)
+    }
+  } catch (error) {
+    console.error('Error loading notifications:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const refreshNotifications = async () => {
+  await loadNotifications()
+}
+
+const handleNotificationClick = (notification: Notification) => {
+  // Mark as read
+  NotificationsService.markAsRead(notification.id)
+  
+  // Update local state
+  const index = notifications.value.findIndex(n => n.id === notification.id)
+  if (index !== -1) {
+    notifications.value[index].read = true
+  }
+
+  // Navigate based on notification type
+  if (notification.referenceId && notification.referenceType) {
+    if (notification.referenceType === 'conversation') {
+      router.push(`/messages/${notification.referenceId}`)
+    } else if (notification.referenceType === 'forum_question') {
+      router.push(`/forum/question/${notification.referenceId}`)
+    } else if (notification.referenceType === 'livestock_listing') {
+      router.push(`/livestock/${notification.referenceId}`)
+    }
+  }
+}
+
+const markAsRead = (id: string) => {
+  NotificationsService.markAsRead(id)
+  const n = notifications.value.find(n => n.id === id)
+  if (n) n.read = true
+}
+
+const toggleRead = (id: string) => {
+  NotificationsService.toggleRead(id)
+  const n = notifications.value.find(n => n.id === id)
+  if (n) n.read = !n.read
+}
+
+const markAllAsRead = async () => {
+  const result = await NotificationsService.markAllAsRead()
+  if (result.success) {
+    notifications.value.forEach(n => n.read = true)
+  }
+}
+
+const clearAll = async () => {
+  if (confirm('Are you sure you want to clear all notifications?')) {
+    const result = await NotificationsService.clearAll()
+    if (result.success) {
+      notifications.value = []
+    }
+  }
+}
+
 const getNotificationIcon = (type: string) => {
   const icons = {
-    order: () => h('svg', {
-      xmlns: 'http://www.w3.org/2000/svg',
-      fill: 'none',
-      viewBox: '0 0 24 24',
-      stroke: 'currentColor'
-    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M5 13l4 4L19 7' })]),
-
-    payment: () => h('svg', {
-      xmlns: 'http://www.w3.org/2000/svg',
-      fill: 'none',
-      viewBox: '0 0 24 24',
-      stroke: 'currentColor'
-    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' })]),
-
     message: () => h('svg', {
       xmlns: 'http://www.w3.org/2000/svg',
       fill: 'none',
       viewBox: '0 0 24 24',
       stroke: 'currentColor'
     }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' })]),
+
+    forum: () => h('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor'
+    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z' })]),
+
+    listing: () => h('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor'
+    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4' })]),
 
     system: () => h('svg', {
       xmlns: 'http://www.w3.org/2000/svg',
@@ -408,6 +398,20 @@ const getNotificationIcon = (type: string) => {
       })
     ]),
 
+    order: () => h('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor'
+    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M5 13l4 4L19 7' })]),
+
+    payment: () => h('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor'
+    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' })]),
+
     reminder: () => h('svg', {
       xmlns: 'http://www.w3.org/2000/svg',
       fill: 'none',
@@ -421,6 +425,26 @@ const getNotificationIcon = (type: string) => {
 
 const getNotificationStyle = (type: string) => {
   const styles = {
+    message: {
+      bg: 'bg-gradient-to-r from-purple-400 to-pink-500',
+      text: 'text-purple-600',
+      badge: 'bg-purple-100 text-purple-600'
+    },
+    forum: {
+      bg: 'bg-gradient-to-r from-indigo-400 to-blue-500',
+      text: 'text-indigo-600',
+      badge: 'bg-indigo-100 text-indigo-600'
+    },
+    listing: {
+      bg: 'bg-gradient-to-r from-green-400 to-emerald-500',
+      text: 'text-green-600',
+      badge: 'bg-green-100 text-green-600'
+    },
+    system: {
+      bg: 'bg-gradient-to-r from-gray-400 to-gray-500',
+      text: 'text-gray-600',
+      badge: 'bg-gray-100 text-gray-600'
+    },
     order: {
       bg: 'bg-gradient-to-r from-green-400 to-emerald-500',
       text: 'text-green-600',
@@ -430,16 +454,6 @@ const getNotificationStyle = (type: string) => {
       bg: 'bg-gradient-to-r from-blue-400 to-indigo-500',
       text: 'text-blue-600',
       badge: 'bg-blue-100 text-blue-600'
-    },
-    message: {
-      bg: 'bg-gradient-to-r from-purple-400 to-pink-500',
-      text: 'text-purple-600',
-      badge: 'bg-purple-100 text-purple-600'
-    },
-    system: {
-      bg: 'bg-gradient-to-r from-gray-400 to-gray-500',
-      text: 'text-gray-600',
-      badge: 'bg-gray-100 text-gray-600'
     },
     reminder: {
       bg: 'bg-gradient-to-r from-orange-400 to-red-500',
@@ -452,10 +466,12 @@ const getNotificationStyle = (type: string) => {
 
 const getTypeLabel = (type: string) => {
   const labels = {
+    message: 'Message',
+    forum: 'Forum',
+    listing: 'Listing',
+    system: 'System',
     order: 'Order',
     payment: 'Payment',
-    message: 'Message',
-    system: 'System',
     reminder: 'Reminder'
   }
   return labels[type as keyof typeof labels] || 'Unknown'
@@ -473,50 +489,43 @@ const formatTimeAgo = (date: Date) => {
 const getEmptyStateMessage = () => {
   switch (activeFilter.value) {
     case 'unread': return 'All caught up! You have no unread notifications.'
-    case 'order': return 'No order notifications at the moment.'
-    case 'payment': return 'No payment notifications at the moment.'
     case 'message': return 'No message notifications at the moment.'
+    case 'forum': return 'No forum notifications at the moment.'
+    case 'listing': return 'No listing notifications at the moment.'
     case 'system': return 'No system notifications at the moment.'
-    case 'reminder': return 'No reminder notifications at the moment.'
     default: return 'You have no notifications at the moment.'
   }
 }
 
-const markAsRead = (id: number) => {
-  const n = notifications.value.find(n => n.id === id)
-  if (n && !n.read) n.read = true
-}
-
-const toggleRead = (id: number) => {
-  const n = notifications.value.find(n => n.id === id)
-  if (n) n.read = !n.read
-}
-
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
-}
-
-const deleteNotification = (id: number) => {
-  const index = notifications.value.findIndex(n => n.id === id)
-  if (index !== -1) notifications.value.splice(index, 1)
-}
-
-const clearAll = () => {
-  if (confirm('Are you sure you want to clear all notifications?')) {
-    notifications.value = []
-  }
-}
-
-const loadMore = () => {
-  loading.value = true
-  setTimeout(() => {
-    hasMore.value = false
-    loading.value = false
-  }, 1000)
-}
-
 // Lifecycle
-onMounted(() => {
-  notifications.value = sampleNotifications
+onMounted(async () => {
+  await loadNotifications()
+  
+  // Subscribe to real-time updates
+  const { data: { user } } = await import('@/supabase').then(m => m.supabase.auth.getUser())
+  
+  if (user) {
+    const subscription = NotificationsService.subscribeToUpdates(
+      user.id,
+      (newNotification) => {
+        // Add new notification to the list
+        notifications.value.unshift(newNotification)
+        
+        // Optional: Show toast notification
+        console.log('📬 New notification received:', newNotification.title)
+      }
+    )
+    
+    realtimeUnsubscribe = subscription.unsubscribe
+  }
+})
+
+onUnmounted(() => {
+  // Cleanup realtime subscriptions
+  if (realtimeUnsubscribe) {
+    realtimeUnsubscribe()
+  }
+  
+  NotificationsService.cleanup()
 })
 </script>
