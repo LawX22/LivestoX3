@@ -1,4 +1,4 @@
-<!-- components/Transactions/TransactionsTable.vue - DISPLAYS TRANSACTION DATA CORRECTLY -->
+<!-- components/Transactions/TransactionsTable.vue - FIXED ROUTER NAVIGATION & LISTING ID -->
 <template>
   <div class="flex-1 overflow-y-auto px-4 py-3 relative">
     <!-- Decorative Background Pattern -->
@@ -14,9 +14,20 @@
       <div
         v-for="transaction in transactions"
         :key="transaction.id"
-        class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:border-green-200"
+        :class="[
+          'group relative rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden',
+          transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+            ? 'bg-red-50 border-2 border-red-300 hover:border-red-400'
+            : 'bg-white border border-gray-100 hover:border-green-200'
+        ]"
       >
-        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <!-- Top Gradient Bar -->
+        <div :class="[
+          'absolute top-0 left-0 right-0 h-1 transition-opacity duration-300',
+          transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+            ? 'bg-gradient-to-r from-red-500 via-red-600 to-red-700 opacity-100'
+            : 'bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100'
+        ]"></div>
 
         <div class="p-4">
           <!-- Header Section -->
@@ -25,10 +36,20 @@
               <img 
                 :src="getPersonInfo(transaction).avatar" 
                 :alt="getPersonInfo(transaction).name"
-                class="w-12 h-12 rounded-full object-cover border-2 border-green-100 flex-shrink-0 group-hover:border-green-300 transition-colors"
+                :class="[
+                  'w-12 h-12 rounded-full object-cover border-2 flex-shrink-0 transition-colors',
+                  transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+                    ? 'border-red-300 opacity-75'
+                    : 'border-green-100 group-hover:border-green-300'
+                ]"
               />
               <div class="min-w-0 flex-1">
-                <h3 class="text-sm font-bold text-gray-900 truncate group-hover:text-green-600 transition-colors">
+                <h3 :class="[
+                  'text-sm font-bold truncate transition-colors',
+                  transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+                    ? 'text-red-900'
+                    : 'text-gray-900 group-hover:text-green-600'
+                ]">
                   {{ getPersonInfo(transaction).name }}
                 </h3>
                 <p v-if="getPersonInfo(transaction).farmName" class="text-xs text-gray-500 truncate">
@@ -84,21 +105,75 @@
               </template>
 
               <button 
-                @click="emit('contact-person', transaction)"
-                class="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-xs font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
+                @click="handleChatWithPerson(transaction)"
+                :disabled="isStartingChat"
+                :class="[
+                  'px-3 py-2 rounded-lg text-xs font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5',
+                  isStartingChat 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white cursor-pointer'
+                ]"
               >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg 
+                  v-if="isStartingChat" 
+                  class="w-3.5 h-3.5 animate-spin" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <svg 
+                  v-else
+                  class="w-3.5 h-3.5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                Chat
+                {{ isStartingChat ? 'Starting...' : 'Chat' }}
               </button>
             </div>
           </div>
 
+          <!-- Cancelled/Rejected Banner -->
+          <div 
+            v-if="transaction.status === 'Cancelled' || transaction.status === 'Rejected'"
+            class="mb-4 p-3 bg-red-100 border-2 border-red-300 rounded-lg flex items-center gap-3"
+          >
+            <div class="flex-shrink-0 w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-bold text-red-900">
+                {{ transaction.status === 'Cancelled' ? 'Order Cancelled' : 'Order Declined' }}
+              </p>
+              <p class="text-xs text-red-700 mt-0.5">
+                {{ transaction.status === 'Cancelled' 
+                  ? 'This order has been cancelled' 
+                  : 'This order was declined by the farmer'
+                }}
+              </p>
+            </div>
+          </div>
+
           <!-- Product Section -->
-          <div class="flex gap-4 mb-4 pb-4 border-b border-gray-100">
+          <div :class="[
+            'flex gap-4 mb-4 pb-4 border-b',
+            transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+              ? 'border-red-200 opacity-75'
+              : 'border-gray-100'
+          ]">
             <div 
-              class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-100 group-hover:border-green-200 transition-all shadow-sm"
+              :class="[
+                'w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 transition-all shadow-sm',
+                transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+                  ? 'border-red-200 opacity-75'
+                  : 'border-gray-100 group-hover:border-green-200'
+              ]"
               @click="emit('view-details', transaction)"
             >
               <img 
@@ -110,7 +185,12 @@
 
             <div class="flex-1 min-w-0">
               <h4 
-                class="text-sm font-bold text-gray-900 hover:text-green-600 cursor-pointer truncate transition-colors mb-1"
+                :class="[
+                  'text-sm font-bold hover:text-green-600 cursor-pointer truncate transition-colors mb-1',
+                  transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+                    ? 'text-red-900'
+                    : 'text-gray-900'
+                ]"
                 @click="emit('view-details', transaction)"
               >
                 {{ transaction.animal.type }} • {{ transaction.animal.breed }}
@@ -139,7 +219,12 @@
 
             <div class="flex flex-col items-end justify-center gap-2 flex-shrink-0">
               <div class="text-right">
-                <p class="text-2xl font-bold text-green-600">
+                <p :class="[
+                  'text-2xl font-bold',
+                  transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+                    ? 'text-red-600 line-through opacity-75'
+                    : 'text-green-600'
+                ]">
                   ₱{{ transaction.amount.toLocaleString() }}
                 </p>
                 <p class="text-[10px] text-gray-500 mt-0.5">Total</p>
@@ -148,7 +233,12 @@
           </div>
 
           <!-- Logistics & Status Row -->
-          <div class="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
+          <div :class="[
+            'flex items-center justify-between gap-3 mb-3 pb-3 border-b',
+            transaction.status === 'Cancelled' || transaction.status === 'Rejected'
+              ? 'border-red-200 opacity-75'
+              : 'border-gray-100'
+          ]">
             <div class="flex items-center gap-3 text-[11px] text-gray-600 flex-wrap">
               <span class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg">
                 <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,76 +268,102 @@
             </span>
           </div>
 
-          <!-- Shipping/Pickup Status Bar -->
-          <div v-if="transaction.shippingUpdates && transaction.shippingUpdates.length > 0" class="mb-3">
+          <!-- CONSOLIDATED Shipping/Tracking Info Section -->
+          <div v-if="transaction.shippingUpdates && transaction.shippingUpdates.length > 0 && transaction.status !== 'Cancelled' && transaction.status !== 'Rejected'" class="mb-3">
             <div :class="[
               'rounded-lg p-3 border',
               transaction.deliveryMethod === 'pickup' 
                 ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200'
                 : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
             ]">
-              <div class="flex items-start gap-2">
-                <svg :class="[
-                  'w-4 h-4 mt-0.5 flex-shrink-0',
-                  transaction.deliveryMethod === 'pickup' ? 'text-purple-600' : 'text-blue-600'
-                ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path v-if="transaction.deliveryMethod === 'pickup'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-                <div class="flex-1">
-                  <p :class="[
-                    'text-xs font-semibold',
-                    transaction.deliveryMethod === 'pickup' ? 'text-purple-900' : 'text-blue-900'
-                  ]">
-                    {{ getLatestShippingUpdate(transaction)?.message }}
-                  </p>
-                  <p :class="[
-                    'text-[10px] mt-1',
+              <!-- Symmetrical Single Row Layout -->
+              <div class="flex items-center gap-4">
+                <!-- Latest Update - 1/3 width -->
+                <div class="flex items-start gap-2 flex-1 min-w-0">
+                  <svg :class="[
+                    'w-4 h-4 mt-0.5 flex-shrink-0',
                     transaction.deliveryMethod === 'pickup' ? 'text-purple-600' : 'text-blue-600'
-                  ]">
-                    {{ formatShippingTime(getLatestShippingUpdate(transaction)?.timestamp) }}
-                  </p>
+                  ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="transaction.deliveryMethod === 'pickup'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  <div class="flex-1 min-w-0">
+                    <p :class="[
+                      'text-xs font-semibold truncate',
+                      transaction.deliveryMethod === 'pickup' ? 'text-purple-900' : 'text-blue-900'
+                    ]">
+                      {{ getLatestShippingUpdate(transaction)?.message }}
+                    </p>
+                    <p :class="[
+                      'text-[10px] mt-0.5',
+                      transaction.deliveryMethod === 'pickup' ? 'text-purple-600' : 'text-blue-600'
+                    ]">
+                      {{ formatShippingTime(getLatestShippingUpdate(transaction)?.timestamp) }}
+                    </p>
+                  </div>
                 </div>
-                <button 
-                  @click="emit('view-details', transaction)"
-                  :class="[
-                    'text-xs font-semibold',
-                    transaction.deliveryMethod === 'pickup' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'
-                  ]"
-                >
-                  Track
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <!-- Tracking Info (Delivery Only) -->
-          <div v-if="!isFarmerView && transaction.deliveryMethod === 'delivery' && (transaction as BuyerTransaction).trackingNumber" class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] text-gray-700 flex items-center gap-2 min-w-0">
-                <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-                <span class="font-bold truncate">{{ (transaction as BuyerTransaction).trackingNumber }}</span>
-              </span>
-              <span class="text-blue-600 font-bold text-[10px] flex-shrink-0 whitespace-nowrap bg-blue-200 px-2 py-1 rounded-full">In Transit</span>
-            </div>
-          </div>
+                <!-- Divider -->
+                <div :class="[
+                  'h-12 w-px',
+                  transaction.deliveryMethod === 'pickup' ? 'bg-purple-200' : 'bg-blue-200'
+                ]"></div>
 
-          <!-- Pickup Schedule Info (Pickup Only) -->
-          <div v-if="transaction.deliveryMethod === 'pickup' && transaction.pickupSchedule" class="mb-3 p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-            <div class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <div class="flex-1">
-                <p class="text-xs font-bold text-purple-900 mb-1">Pickup Schedule</p>
-                <p class="text-[10px] text-purple-700">
-                  <span class="font-semibold">Days:</span> {{ transaction.pickupSchedule.availableDays.join(', ') }}
-                </p>
-                <p class="text-[10px] text-purple-700">
-                  <span class="font-semibold">Time:</span> {{ transaction.pickupSchedule.startTime }} - {{ transaction.pickupSchedule.endTime }}
-                </p>
+                <!-- Additional Info: Tracking Number (Delivery) OR Pickup Schedule (Pickup) - 1/3 width -->
+                <div class="flex-1 min-w-0">
+                  <!-- Delivery: Tracking Number -->
+                  <template v-if="!isFarmerView && transaction.deliveryMethod === 'delivery' && (transaction as BuyerTransaction).trackingNumber">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      <div class="flex-1 min-w-0">
+                        <span class="text-[10px] text-gray-600 block">Tracking Number</span>
+                        <span class="text-[11px] text-gray-900 font-bold truncate block">{{ (transaction as BuyerTransaction).trackingNumber }}</span>
+                      </div>
+                      <span class="text-blue-700 font-bold text-[10px] bg-blue-200 px-2 py-1 rounded-full whitespace-nowrap">In Transit</span>
+                    </div>
+                  </template>
+
+                  <!-- Pickup: Schedule Info -->
+                  <template v-if="transaction.deliveryMethod === 'pickup' && transaction.pickupSchedule">
+                    <div class="flex items-center gap-2">
+                      <svg class="w-3.5 h-3.5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[10px] text-purple-600 font-semibold">Pickup Schedule</p>
+                        <p class="text-[11px] text-purple-900 font-bold truncate">
+                          {{ transaction.pickupSchedule.availableDays.join(', ') }} • {{ transaction.pickupSchedule.startTime }}-{{ transaction.pickupSchedule.endTime }}
+                        </p>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Divider -->
+                <div :class="[
+                  'h-12 w-px',
+                  transaction.deliveryMethod === 'pickup' ? 'bg-purple-200' : 'bg-blue-200'
+                ]"></div>
+
+                <!-- Track Button - Fixed width for symmetry -->
+                <div class="w-24 flex justify-center">
+                  <button 
+                    @click="emit('view-details', transaction)"
+                    :class="[
+                      'px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm hover:shadow-md flex items-center gap-1.5 cursor-pointer',
+                      transaction.deliveryMethod === 'pickup' 
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ]"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    Track
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -273,29 +389,81 @@
               
               <!-- ACCEPTED STATUS - DIFFERENT BUTTONS FOR DELIVERY VS PICKUP -->
               <template v-if="transaction.status === 'Accepted'">
-                <!-- DELIVERY METHOD -->
+                <!-- DELIVERY METHOD - Only show if NOT already shipped -->
                 <button 
-                  v-if="transaction.deliveryMethod === 'delivery'"
+                  v-if="transaction.deliveryMethod === 'delivery' && !isAlreadyShipped(transaction)"
                   @click="handleMarkAsShipped(transaction.id)"
-                  class="col-span-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                  :disabled="processingIds.has(transaction.id)"
+                  :class="[
+                    'col-span-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2',
+                    processingIds.has(transaction.id)
+                      ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg cursor-pointer'
+                  ]"
+                  class="text-white"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg 
+                    v-if="processingIds.has(transaction.id)" 
+                    class="w-4 h-4 animate-spin" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <svg 
+                    v-else
+                    class="w-4 h-4" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                   </svg>
-                  📦 Mark as Shipped
+                  {{ processingIds.has(transaction.id) ? 'Processing...' : '📦 Mark as Shipped' }}
                 </button>
 
-                <!-- PICKUP METHOD -->
+                <!-- PICKUP METHOD - Only show if NOT already ready -->
                 <button 
-                  v-if="transaction.deliveryMethod === 'pickup'"
+                  v-if="transaction.deliveryMethod === 'pickup' && !isReadyForPickup(transaction)"
                   @click="handleMarkReadyPickup(transaction.id)"
-                  class="col-span-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                  :disabled="processingIds.has(transaction.id)"
+                  :class="[
+                    'col-span-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2',
+                    processingIds.has(transaction.id)
+                      ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 hover:shadow-lg cursor-pointer'
+                  ]"
+                  class="text-white"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg 
+                    v-if="processingIds.has(transaction.id)" 
+                    class="w-4 h-4 animate-spin" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <svg 
+                    v-else
+                    class="w-4 h-4" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  ✅ Ready for Pickup
+                  {{ processingIds.has(transaction.id) ? 'Processing...' : '✅ Ready for Pickup' }}
                 </button>
+
+                <!-- Show status message if already shipped/ready -->
+                <div 
+                  v-if="isAlreadyShipped(transaction) || isReadyForPickup(transaction)"
+                  class="col-span-2 px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-xs font-bold text-green-700 text-center"
+                >
+                  {{ isAlreadyShipped(transaction) ? '✅ Order Shipped - Awaiting Delivery Confirmation' : '✅ Order Ready - Awaiting Pickup Confirmation' }}
+                </div>
               </template>
               
               <!-- COMPLETED/REJECTED -->
@@ -410,6 +578,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Chat Error Toast -->
+    <Transition
+      enter-active-class="transition ease-out duration-300"
+      enter-from-class="opacity-0 translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-4"
+    >
+      <div
+        v-if="chatError"
+        class="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-xl z-50 max-w-md"
+      >
+        <div class="flex items-start gap-3">
+          <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="flex-1">
+            <p class="font-semibold mb-1">Unable to Start Chat</p>
+            <p class="text-sm opacity-90">{{ chatError }}</p>
+          </div>
+          <button @click="chatError = null" class="flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -417,6 +615,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Transaction, FarmerTransaction, BuyerTransaction, ShippingUpdate } from '@/types/transactionTypes'
+import { getListingId } from '@/types/transactionTypes'
+import { MessagesService } from '@/services/messagesService'
+import { supabase } from '@/supabase'
 
 interface Props {
   transactions: Transaction[]
@@ -448,8 +649,112 @@ const confirmTitle = ref('')
 const confirmMessage = ref('')
 const confirmButtonText = ref('')
 
+// Track which transactions are being processed
+const processingIds = ref(new Set<string>())
+
+// Chat state
+const isStartingChat = ref(false)
+const chatError = ref<string | null>(null)
+
 const navigateToMarketplace = () => {
   router.push('/marketplace')
+}
+
+/**
+ * ✅ FIXED: Handle chat with person - Updated router navigation with proper listing ID
+ */
+const handleChatWithPerson = async (transaction: Transaction) => {
+  try {
+    isStartingChat.value = true
+    chatError.value = null
+
+    console.log('💬 Starting chat for transaction:', transaction.id)
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      chatError.value = 'You must be logged in to start a chat'
+      setTimeout(() => chatError.value = null, 5000)
+      return
+    }
+
+    // Determine the other person's ID
+    let otherPersonId: string
+    let otherPersonName: string
+
+    if ('buyer' in transaction) {
+      // Farmer view - chat with buyer
+      otherPersonId = transaction.buyer.id
+      otherPersonName = transaction.buyer.name
+    } else {
+      // Buyer view - chat with farmer
+      otherPersonId = transaction.farmer.id
+      otherPersonName = transaction.farmer.name
+    }
+
+    // ✅ Get listing ID using the helper function
+    const listingId = getListingId(transaction.animal)
+
+    // Create initial message about the transaction
+    const initialMessage = `Hi! I'm contacting you regarding Order #${transaction.id.slice(0, 8)} - ${transaction.animal.type} • ${transaction.animal.breed} (₱${transaction.amount.toLocaleString()})`
+
+    console.log('📤 Creating conversation with:', {
+      otherPersonId,
+      listingId,
+      otherPersonName
+    })
+
+    // Start conversation (this will create or get existing conversation)
+    const result = await MessagesService.startConversationAboutListing(
+      otherPersonId,
+      listingId, 
+      initialMessage
+    )
+
+    if (!result.success || !result.conversationId) {
+      throw new Error(result.error || 'Failed to start conversation')
+    }
+
+    console.log('✅ Conversation started:', result.conversationId)
+
+    // ✅ Navigate to messages page with conversation ID
+    await router.push({
+      name: 'Messages',
+      params: { conversationId: result.conversationId }
+    })
+
+  } catch (error: any) {
+    console.error('❌ Error starting chat:', error)
+    chatError.value = error.message || 'Failed to start chat. Please try again.'
+    setTimeout(() => chatError.value = null, 5000)
+  } finally {
+    isStartingChat.value = false
+  }
+}
+
+// Helper function to check if order has been shipped
+const isAlreadyShipped = (transaction: Transaction): boolean => {
+  // Check if there's a shipping update with 'shipped' status
+  if (transaction.shippingUpdates && transaction.shippingUpdates.length > 0) {
+    return transaction.shippingUpdates.some(update => 
+      ['shipped', 'in_transit', 'out_for_delivery'].includes(update.status)
+    )
+  }
+  // Also check currentShippingStatus
+  return ['shipped', 'in_transit', 'out_for_delivery'].includes(transaction.currentShippingStatus || '')
+}
+
+// Helper function to check if order is ready for pickup
+const isReadyForPickup = (transaction: Transaction): boolean => {
+  // Check if there's a shipping update with 'ready_for_pickup' status
+  if (transaction.shippingUpdates && transaction.shippingUpdates.length > 0) {
+    return transaction.shippingUpdates.some(update => 
+      update.status === 'ready_for_pickup'
+    )
+  }
+  // Also check currentShippingStatus
+  return transaction.currentShippingStatus === 'ready_for_pickup'
 }
 
 const handleUpdateStatus = (id: string, status: 'Accepted' | 'Rejected') => {
@@ -465,18 +770,38 @@ const handleUpdateStatus = (id: string, status: 'Accepted' | 'Rejected') => {
 }
 
 const handleMarkAsShipped = (id: string) => {
+  // Prevent double-clicking
+  if (processingIds.value.has(id)) return
+  
   confirmTitle.value = 'Mark as Shipped'
   confirmMessage.value = 'Confirm that this order has been shipped and is on its way to the buyer?'
   confirmButtonText.value = 'Yes, Mark as Shipped'
-  pendingAction.value = () => emit('mark-as-shipped', id)
+  pendingAction.value = () => {
+    processingIds.value.add(id)
+    emit('mark-as-shipped', id)
+    // Remove from processing after 2 seconds (adjust based on your API response time)
+    setTimeout(() => {
+      processingIds.value.delete(id)
+    }, 2000)
+  }
   showConfirmModal.value = true
 }
 
 const handleMarkReadyPickup = (id: string) => {
+  // Prevent double-clicking
+  if (processingIds.value.has(id)) return
+  
   confirmTitle.value = 'Ready for Pickup'
   confirmMessage.value = 'Confirm that this order is ready for the buyer to pick up?'
   confirmButtonText.value = 'Yes, Ready for Pickup'
-  pendingAction.value = () => emit('mark-ready-pickup', id)
+  pendingAction.value = () => {
+    processingIds.value.add(id)
+    emit('mark-ready-pickup', id)
+    // Remove from processing after 2 seconds (adjust based on your API response time)
+    setTimeout(() => {
+      processingIds.value.delete(id)
+    }, 2000)
+  }
   showConfirmModal.value = true
 }
 
@@ -529,6 +854,7 @@ const getPersonInfo = (transaction: Transaction) => {
   if ('buyer' in transaction) {
     // Farmer view - showing buyer info
     return {
+      id: transaction.buyer.id,
       name: transaction.buyer.name,
       avatar: transaction.buyer.avatar || 'https://via.placeholder.com/40',
       farmName: transaction.buyer.farm // Buyer's farm if they're also a farmer
@@ -536,9 +862,10 @@ const getPersonInfo = (transaction: Transaction) => {
   } else {
     // Buyer view - showing farmer info
     return {
+      id: transaction.farmer.id,
       name: transaction.farmer.name,
       avatar: transaction.farmer.avatar,
-      farmName: transaction.farmer.farmName // ✅ This is the farmer's farm name from farm_info
+      farmName: transaction.farmer.farmName
     }
   }
 }
@@ -578,7 +905,7 @@ const getStatusClasses = (status: string): string => {
       return `${baseClasses} bg-green-100 text-green-700 border border-green-300`
     case 'Rejected':
     case 'Cancelled':
-      return `${baseClasses} bg-gray-100 text-gray-700 border border-gray-300`
+      return `${baseClasses} bg-red-100 text-red-700 border-2 border-red-400 font-bold`
     default:
       return `${baseClasses} bg-gray-100 text-gray-700 border border-gray-300`
   }

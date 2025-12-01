@@ -1,4 +1,4 @@
-// services/notificationsService.ts 
+// services/notificationsService.ts - WITH TRANSACTION NOTIFICATIONS
 import { supabase } from '@/supabase'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { MessagesService } from './messagesService'
@@ -7,7 +7,7 @@ import { forumService } from './forumService'
 // ===== TYPES =====
 export interface Notification {
   id: string
-  type: 'order' | 'payment' | 'system' | 'message' | 'reminder' | 'listing' | 'forum'
+  type: 'order' | 'payment' | 'system' | 'message' | 'reminder' | 'listing' | 'forum' | 'transaction'
   title: string
   message: string
   read: boolean
@@ -15,6 +15,14 @@ export interface Notification {
   referenceId?: string
   referenceType?: string
   createdAt: Date
+  metadata?: {
+    orderNumber?: string
+    orderStatus?: string
+    amount?: number
+    buyerName?: string
+    farmerName?: string
+    animalTitle?: string
+  }
 }
 
 interface NotificationState {
@@ -23,6 +31,7 @@ interface NotificationState {
     messages: string
     forum: string
     listings: string
+    transactions: string
   }
 }
 
@@ -46,9 +55,10 @@ export class NotificationsService {
     return {
       readIds: [],
       lastChecked: {
-        messages: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Start 24h ago
+        messages: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         forum: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        listings: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        listings: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        transactions: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       }
     }
   }
@@ -94,16 +104,13 @@ export class NotificationsService {
       const state = this.getState()
 
       for (const conversation of result.data) {
-        // Only create notifications for unread messages from others
         if (conversation.unreadCount > 0 && conversation.lastMessage) {
           const lastMsg = conversation.lastMessage
           
-          // Don't notify about own messages
           if (lastMsg.senderId === userId) continue
 
           const notifId = this.generateId('message', lastMsg.id)
           
-          // Skip if created before last check (only show new messages)
           if (lastMsg.createdAt < new Date(state.lastChecked.messages)) {
             continue
           }
@@ -142,17 +149,14 @@ export class NotificationsService {
       const state = this.getState()
 
       for (const question of questions) {
-        // Only notify about answers to YOUR questions
         if (question.userId !== userId) continue
 
         for (const answer of question.answers) {
-          // Don't notify about your own answers
           if (answer.userId === userId) continue
 
           const notifId = this.generateId('forum', answer.id.toString())
           const answerDate = new Date(answer.createdAt)
 
-          // Skip if created before last check
           if (answerDate < new Date(state.lastChecked.forum)) {
             continue
           }
@@ -183,7 +187,6 @@ export class NotificationsService {
    */
   private static async getListingNotifications(userId: string): Promise<Notification[]> {
     try {
-      // Check if user has any low stock listings
       const { data, error } = await supabase
         .from('livestock_listings')
         .select('id, title, quantity, status, updated_at')
@@ -201,7 +204,6 @@ export class NotificationsService {
         const notifId = this.generateId('listing', listing.id)
         const updatedAt = new Date(listing.updated_at)
 
-        // Skip if updated before last check
         if (updatedAt < new Date(state.lastChecked.listings)) {
           continue
         }
@@ -232,6 +234,217 @@ export class NotificationsService {
   }
 
   /**
+   * ✅ NEW: Get transaction notifications (for both farmers and buyers)
+   */
+  private static async getTransactionNotifications(userId: string): Promise<Notification[]> {
+    try {
+      const notifications: Notification[] = []
+      const state = this.getState()
+
+      // Get orders where user is the buyer
+      const { data: buyerOrders, error: buyerError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            *,
+            livestock_listings (
+              id,
+              title,
+              user_id,
+              profiles:user_id (
+                first_name,
+                last_name,
+                username
+              )
+            )
+          )
+        `)
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+
+      if (!buyerError && buyerOrders) {
+        for (const order of buyerOrders) {
+          const updatedAt = new Date(order.updated_at)
+          
+          if (updatedAt < new Date(state.lastChecked.transactions)) {
+            continue
+          }
+
+          // Get first item details
+          const firstItem = order.order_items?.[0]
+          const listing = firstItem?.livestock_listings
+          const farmerProfile = listing?.profiles
+          
+          const farmerName = farmerProfile?.first_name && farmerProfile?.last_name
+            ? `${farmerProfile.first_name} ${farmerProfile.last_name}`
+            : farmerProfile?.username || 'Farmer'
+
+          const notifId = this.generateId('transaction-buyer', order.order_number)
+
+          // Create notification based on order status
+          let title = ''
+          let message = ''
+          let priority: 'low' | 'medium' | 'high' = 'medium'
+
+          switch (order.status) {
+            case 'confirmed':
+              title = '✅ Order Confirmed'
+              message = `${farmerName} confirmed your order #${order.order_number}`
+              priority = 'high'
+              break
+            case 'processing':
+              title = '📦 Order Processing'
+              message = `Your order #${order.order_number} is being prepared`
+              break
+            case 'packed':
+              title = '📦 Order Packed'
+              message = `Your order #${order.order_number} is packed and ready`
+              break
+            case 'shipped':
+              title = '🚚 Order Shipped'
+              message = `Your order #${order.order_number} has been shipped`
+              priority = 'high'
+              break
+            case 'ready_for_pickup':
+              title = '✅ Ready for Pickup'
+              message = `Your order #${order.order_number} is ready for pickup at ${farmerName}'s farm`
+              priority = 'high'
+              break
+            case 'delivered':
+            case 'completed':
+              title = '✅ Order Delivered'
+              message = `Your order #${order.order_number} has been delivered`
+              priority = 'high'
+              break
+            case 'cancelled':
+              title = '❌ Order Cancelled'
+              message = `Order #${order.order_number} has been cancelled`
+              priority = 'high'
+              break
+            default:
+              continue // Skip pending status
+          }
+
+          if (title) {
+            notifications.push({
+              id: notifId,
+              type: 'transaction',
+              title,
+              message,
+              read: this.isRead(notifId),
+              priority,
+              referenceId: order.order_number,
+              referenceType: 'order',
+              createdAt: updatedAt,
+              metadata: {
+                orderNumber: order.order_number,
+                orderStatus: order.status,
+                amount: order.total_amount,
+                farmerName,
+                animalTitle: listing?.title
+              }
+            })
+          }
+        }
+      }
+
+      // Get orders where user is the farmer (seller)
+      const { data: farmerOrders, error: farmerError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items!inner (
+            *,
+            livestock_listings!inner (
+              id,
+              title,
+              user_id
+            )
+          ),
+          profiles:user_id (
+            first_name,
+            last_name,
+            username
+          )
+        `)
+        .eq('order_items.livestock_listings.user_id', userId)
+        .order('updated_at', { ascending: false })
+
+      if (!farmerError && farmerOrders) {
+        for (const order of farmerOrders) {
+          const updatedAt = new Date(order.updated_at)
+          
+          if (updatedAt < new Date(state.lastChecked.transactions)) {
+            continue
+          }
+
+          const buyerProfile = order.profiles
+          const buyerName = buyerProfile?.first_name && buyerProfile?.last_name
+            ? `${buyerProfile.first_name} ${buyerProfile.last_name}`
+            : buyerProfile?.username || 'Buyer'
+
+          const firstItem = order.order_items?.[0]
+          const listing = firstItem?.livestock_listings
+
+          const notifId = this.generateId('transaction-farmer', order.order_number)
+
+          // Create notification for farmers
+          let title = ''
+          let message = ''
+          let priority: 'low' | 'medium' | 'high' = 'medium'
+
+          switch (order.status) {
+            case 'pending':
+              title = '🔔 New Order Received'
+              message = `${buyerName} placed an order #${order.order_number} - ₱${order.total_amount.toLocaleString()}`
+              priority = 'high'
+              break
+            case 'cancelled':
+              title = '❌ Order Cancelled'
+              message = `${buyerName} cancelled order #${order.order_number}`
+              priority = 'high'
+              break
+            case 'completed':
+              title = '✅ Order Completed'
+              message = `Order #${order.order_number} has been completed - ₱${order.total_amount.toLocaleString()}`
+              priority = 'medium'
+              break
+            default:
+              continue // Skip other statuses for farmers
+          }
+
+          if (title) {
+            notifications.push({
+              id: notifId,
+              type: 'transaction',
+              title,
+              message,
+              read: this.isRead(notifId),
+              priority,
+              referenceId: order.order_number,
+              referenceType: 'order',
+              createdAt: updatedAt,
+              metadata: {
+                orderNumber: order.order_number,
+                orderStatus: order.status,
+                amount: order.total_amount,
+                buyerName,
+                animalTitle: listing?.title
+              }
+            })
+          }
+        }
+      }
+
+      return notifications
+    } catch (error) {
+      console.error('Error getting transaction notifications:', error)
+      return []
+    }
+  }
+
+  /**
    * Get all notifications for current user
    */
   static async getNotifications(): Promise<{ success: boolean; data?: Notification[]; error?: string }> {
@@ -245,17 +458,19 @@ export class NotificationsService {
       console.log('📋 Generating notifications from existing data...')
 
       // Fetch from all sources in parallel
-      const [messageNotifs, forumNotifs, listingNotifs] = await Promise.all([
+      const [messageNotifs, forumNotifs, listingNotifs, transactionNotifs] = await Promise.all([
         this.getMessageNotifications(user.id),
         this.getForumNotifications(user.id),
-        this.getListingNotifications(user.id)
+        this.getListingNotifications(user.id),
+        this.getTransactionNotifications(user.id)
       ])
 
       // Combine and sort by date (newest first)
       const allNotifications = [
         ...messageNotifs,
         ...forumNotifs,
-        ...listingNotifs
+        ...listingNotifs,
+        ...transactionNotifs
       ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
       console.log(`✅ Generated ${allNotifications.length} notifications`)
@@ -368,7 +583,8 @@ export class NotificationsService {
         lastChecked: {
           messages: now,
           forum: now,
-          listings: now
+          listings: now,
+          transactions: now
         }
       }
 
@@ -391,7 +607,8 @@ export class NotificationsService {
     state.lastChecked = {
       messages: now,
       forum: now,
-      listings: now
+      listings: now,
+      transactions: now
     }
 
     this.saveState(state)
@@ -410,7 +627,7 @@ export class NotificationsService {
     const messagesChannel = MessagesService.subscribeToConversations(
       userId,
       async (conversationId, message) => {
-        if (message.senderId === userId) return // Skip own messages
+        if (message.senderId === userId) return
 
         const result = await MessagesService.getConversation(conversationId, userId)
         if (result.success && result.data) {
@@ -430,7 +647,7 @@ export class NotificationsService {
           })
         }
       },
-      () => {} // onConversationUpdate - not needed
+      () => {}
     )
 
     // Subscribe to forum answers
@@ -446,7 +663,6 @@ export class NotificationsService {
         async (payload) => {
           const answer = payload.new as any
 
-          // Check if this is an answer to user's question
           const { data: question } = await supabase
             .from('forum_questions')
             .select('id, title, user_id')
@@ -472,7 +688,7 @@ export class NotificationsService {
       )
       .subscribe()
 
-    // Subscribe to livestock listing changes (for farmers)
+    // Subscribe to livestock listing changes
     const listingsChannel = supabase
       .channel('listings-notifications')
       .on(
@@ -505,9 +721,180 @@ export class NotificationsService {
       )
       .subscribe()
 
+    // ✅ NEW: Subscribe to order/transaction updates
+    const ordersChannel = supabase
+      .channel('orders-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        async (payload) => {
+          const order = payload.new as any
+          const isUpdate = payload.eventType === 'UPDATE'
+          const isInsert = payload.eventType === 'INSERT'
+
+          if (!isUpdate && !isInsert) return
+
+          // Fetch order details with relations
+          const { data: fullOrder } = await supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items (
+                *,
+                livestock_listings (
+                  id,
+                  title,
+                  user_id,
+                  profiles:user_id (
+                    first_name,
+                    last_name,
+                    username
+                  )
+                )
+              ),
+              profiles:user_id (
+                first_name,
+                last_name,
+                username
+              )
+            `)
+            .eq('order_number', order.order_number)
+            .single()
+
+          if (!fullOrder) return
+
+          const firstItem = fullOrder.order_items?.[0]
+          const listing = firstItem?.livestock_listings
+          const farmerId = listing?.user_id
+
+          // Notification for BUYER (order status updates)
+          if (fullOrder.user_id === userId && isUpdate) {
+            const farmerProfile = listing?.profiles
+            const farmerName = farmerProfile?.first_name && farmerProfile?.last_name
+              ? `${farmerProfile.first_name} ${farmerProfile.last_name}`
+              : farmerProfile?.username || 'Farmer'
+
+            let title = ''
+            let message = ''
+            let priority: 'low' | 'medium' | 'high' = 'medium'
+
+            switch (order.status) {
+              case 'confirmed':
+                title = '✅ Order Confirmed'
+                message = `${farmerName} confirmed your order #${order.order_number}`
+                priority = 'high'
+                break
+              case 'processing':
+                title = '📦 Order Processing'
+                message = `Your order #${order.order_number} is being prepared`
+                break
+              case 'shipped':
+                title = '🚚 Order Shipped'
+                message = `Your order #${order.order_number} has been shipped`
+                priority = 'high'
+                break
+              case 'ready_for_pickup':
+                title = '✅ Ready for Pickup'
+                message = `Your order #${order.order_number} is ready for pickup`
+                priority = 'high'
+                break
+              case 'delivered':
+              case 'completed':
+                title = '✅ Order Delivered'
+                message = `Your order #${order.order_number} has been delivered`
+                priority = 'high'
+                break
+              case 'cancelled':
+                title = '❌ Order Cancelled'
+                message = `Order #${order.order_number} has been cancelled`
+                priority = 'high'
+                break
+            }
+
+            if (title) {
+              const notifId = this.generateId('transaction-buyer', `${order.order_number}-${order.status}`)
+              
+              onNewNotification({
+                id: notifId,
+                type: 'transaction',
+                title,
+                message,
+                read: false,
+                priority,
+                referenceId: order.order_number,
+                referenceType: 'order',
+                createdAt: new Date(order.updated_at),
+                metadata: {
+                  orderNumber: order.order_number,
+                  orderStatus: order.status,
+                  amount: order.total_amount,
+                  farmerName,
+                  animalTitle: listing?.title
+                }
+              })
+            }
+          }
+
+          // Notification for FARMER (new orders and cancellations)
+          if (farmerId === userId) {
+            const buyerProfile = fullOrder.profiles
+            const buyerName = buyerProfile?.first_name && buyerProfile?.last_name
+              ? `${buyerProfile.first_name} ${buyerProfile.last_name}`
+              : buyerProfile?.username || 'Buyer'
+
+            let title = ''
+            let message = ''
+            let priority: 'low' | 'medium' | 'high' = 'medium'
+
+            if (isInsert && order.status === 'pending') {
+              title = '🔔 New Order Received'
+              message = `${buyerName} placed an order #${order.order_number} - ₱${order.total_amount.toLocaleString()}`
+              priority = 'high'
+            } else if (isUpdate && order.status === 'cancelled') {
+              title = '❌ Order Cancelled'
+              message = `${buyerName} cancelled order #${order.order_number}`
+              priority = 'high'
+            } else if (isUpdate && order.status === 'completed') {
+              title = '✅ Order Completed'
+              message = `Order #${order.order_number} has been completed - ₱${order.total_amount.toLocaleString()}`
+              priority = 'medium'
+            }
+
+            if (title) {
+              const notifId = this.generateId('transaction-farmer', `${order.order_number}-${order.status}`)
+              
+              onNewNotification({
+                id: notifId,
+                type: 'transaction',
+                title,
+                message,
+                read: false,
+                priority,
+                referenceId: order.order_number,
+                referenceType: 'order',
+                createdAt: new Date(order.updated_at),
+                metadata: {
+                  orderNumber: order.order_number,
+                  orderStatus: order.status,
+                  amount: order.total_amount,
+                  buyerName,
+                  animalTitle: listing?.title
+                }
+              })
+            }
+          }
+        }
+      )
+      .subscribe()
+
     this.activeSubscriptions.set('messages', messagesChannel)
     this.activeSubscriptions.set('forum', forumChannel)
     this.activeSubscriptions.set('listings', listingsChannel)
+    this.activeSubscriptions.set('orders', ordersChannel)
 
     return {
       unsubscribe: () => {
@@ -515,6 +902,7 @@ export class NotificationsService {
         supabase.removeChannel(messagesChannel)
         supabase.removeChannel(forumChannel)
         supabase.removeChannel(listingsChannel)
+        supabase.removeChannel(ordersChannel)
         this.activeSubscriptions.clear()
       }
     }
@@ -542,6 +930,7 @@ export class NotificationsService {
       priority?: Notification['priority']
       referenceId?: string
       referenceType?: string
+      metadata?: Notification['metadata']
     } = {}
   ): Notification {
     const notifId = this.generateId('system', Date.now().toString())
@@ -555,7 +944,8 @@ export class NotificationsService {
       priority: options.priority || 'medium',
       referenceId: options.referenceId,
       referenceType: options.referenceType,
-      createdAt: new Date()
+      createdAt: new Date(),
+      metadata: options.metadata
     }
   }
 }

@@ -1,4 +1,4 @@
-// services/transactionService.ts - COMPLETE VERSION WITH AUTOMATIC QUANTITY DEDUCTION
+// services/transactionService.ts - FIXED VERSION WITH CORRECT ID TYPES
 import { supabase } from '../supabase'
 import type { 
   FarmerTransaction, 
@@ -205,6 +205,7 @@ class TransactionService {
     }
   }
 
+  // ✅ FIXED: Now returns string ID instead of number
   private async profileToFarmer(profile: ProfileDB): Promise<Farmer> {
     const displayName = profile.first_name && profile.last_name
       ? `${profile.first_name} ${profile.last_name}`
@@ -214,7 +215,7 @@ class TransactionService {
     const farmName = farmInfo?.farm_name || profile.farm_name || `${displayName}'s Farm`
 
     return {
-      id: parseInt(profile.id) || 0,
+      id: profile.id, // ✅ Keep as string UUID
       name: displayName,
       farmName: farmName,
       contact: profile.phone_number || '+63 XXX XXX XXXX',
@@ -224,6 +225,7 @@ class TransactionService {
     }
   }
 
+  // ✅ FIXED: Now returns string ID instead of number
   private async profileToBuyer(profile: ProfileDB): Promise<Buyer> {
     const displayName = profile.first_name && profile.last_name
       ? `${profile.first_name} ${profile.last_name}`
@@ -236,7 +238,7 @@ class TransactionService {
     }
 
     return {
-      id: parseInt(profile.id) || 0,
+      id: profile.id, // ✅ Keep as string UUID
       name: displayName,
       contact: profile.phone_number || '+63 XXX XXX XXXX',
       email: profile.email || '',

@@ -1,6 +1,7 @@
-// types/transactionTypes.ts - COMPLETE TYPE DEFINITIONS
+// types/transactionTypes.ts - FIXED TYPE DEFINITIONS WITH PROPER UNION TYPE HANDLING
+
 export interface Farmer {
-  id: number
+  id: string // UUID from Supabase auth
   name: string
   farmName?: string
   contact: string
@@ -10,8 +11,8 @@ export interface Farmer {
 }
 
 export interface Animal {
-  id: number
-  uuid: string
+  id: number // Numeric ID for internal use
+  uuid: string // Primary listing UUID - this is the main identifier
   title: string
   type: string
   breed: string
@@ -46,7 +47,7 @@ export interface Animal {
 }
 
 export interface Buyer {
-  id: number
+  id: string // UUID from Supabase auth
   name: string
   contact: string
   email?: string
@@ -73,7 +74,7 @@ export interface PickupSchedule {
 
 // Shipping tracking information
 export interface ShippingUpdate {
-  status: 'confirmed' | 'processing' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered'
+  status: 'confirmed' | 'processing' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'ready_for_pickup'
   message: string
   location?: string
   timestamp: string
@@ -102,6 +103,8 @@ export interface FarmerTransaction {
   currentShippingStatus?: string
   estimatedDeliveryDate?: string
   actualDeliveryDate?: string
+  // Conversation integration
+  conversationId?: string
 }
 
 export interface BuyerTransaction {
@@ -129,6 +132,8 @@ export interface BuyerTransaction {
   currentShippingStatus?: string
   estimatedDeliveryDate?: string
   actualDeliveryDate?: string
+  // Conversation integration
+  conversationId?: string
 }
 
 export type Transaction = FarmerTransaction | BuyerTransaction
@@ -217,4 +222,111 @@ export interface TopTransaction {
   amount: number
   date: string
   status: string
+}
+
+// ==================== CHAT/MESSAGE INTEGRATION ====================
+
+/**
+ * ✅ FIXED: Use intersection type instead of extending union type
+ * Helper type to check if transaction has an associated conversation
+ */
+export type TransactionWithChat = Transaction & {
+  conversationId: string
+  hasUnreadMessages?: boolean
+  lastMessageAt?: string
+}
+
+/**
+ * Alternative: Separate interfaces for each transaction type with chat
+ */
+export interface FarmerTransactionWithChat extends FarmerTransaction {
+  conversationId: string
+  hasUnreadMessages?: boolean
+  lastMessageAt?: string
+}
+
+export interface BuyerTransactionWithChat extends BuyerTransaction {
+  conversationId: string
+  hasUnreadMessages?: boolean
+  lastMessageAt?: string
+}
+
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Get the listing UUID from an Animal object
+ * This is the primary identifier for listings
+ */
+export function getListingId(animal: Animal): string {
+  return animal.uuid
+}
+
+/**
+ * Type guard to check if a transaction is a FarmerTransaction
+ */
+export function isFarmerTransaction(transaction: Transaction): transaction is FarmerTransaction {
+  return 'buyer' in transaction
+}
+
+/**
+ * Type guard to check if a transaction is a BuyerTransaction
+ */
+export function isBuyerTransaction(transaction: Transaction): transaction is BuyerTransaction {
+  return 'farmer' in transaction
+}
+
+/**
+ * ✅ NEW: Type guard to check if a transaction has chat info
+ */
+export function isTransactionWithChat(transaction: Transaction): transaction is TransactionWithChat {
+  return 'conversationId' in transaction && transaction.conversationId !== undefined
+}
+
+/**
+ * ✅ NEW: Type guard for FarmerTransactionWithChat
+ */
+export function isFarmerTransactionWithChat(transaction: Transaction): transaction is FarmerTransactionWithChat {
+  return isFarmerTransaction(transaction) && isTransactionWithChat(transaction)
+}
+
+/**
+ * ✅ NEW: Type guard for BuyerTransactionWithChat
+ */
+export function isBuyerTransactionWithChat(transaction: Transaction): transaction is BuyerTransactionWithChat {
+  return isBuyerTransaction(transaction) && isTransactionWithChat(transaction)
+}
+
+/**
+ * Get the other party's information from a transaction
+ */
+export function getOtherParty(transaction: Transaction): { id: string; name: string; avatar: string; farmName?: string } {
+  if (isFarmerTransaction(transaction)) {
+    return {
+      id: transaction.buyer.id,
+      name: transaction.buyer.name,
+      avatar: transaction.buyer.avatar || 'https://via.placeholder.com/40',
+      farmName: transaction.buyer.farm || undefined
+    }
+  } else {
+    return {
+      id: transaction.farmer.id,
+      name: transaction.farmer.name,
+      avatar: transaction.farmer.avatar,
+      farmName: transaction.farmer.farmName
+    }
+  }
+}
+
+/**
+ * ✅ NEW: Helper to safely get conversationId from a transaction
+ */
+export function getConversationId(transaction: Transaction): string | undefined {
+  return transaction.conversationId
+}
+
+/**
+ * ✅ NEW: Helper to check if transaction has an active conversation
+ */
+export function hasActiveConversation(transaction: Transaction): boolean {
+  return isTransactionWithChat(transaction)
 }

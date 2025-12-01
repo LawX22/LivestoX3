@@ -1,4 +1,4 @@
-<!-- Notifications.vue - UPDATED WITH REAL SERVICE INTEGRATION -->
+<!-- Notifications.vue - WITH TRANSACTION NOTIFICATIONS SUPPORT -->
 <template>
   <!-- Background Gradient with Floating Elements -->
   <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 p-4 relative overflow-hidden">
@@ -280,6 +280,7 @@ const filters = computed(() => [
   { key: 'all', label: 'All', count: notifications.value.length },
   { key: 'unread', label: 'Unread', count: unreadCount.value },
   { key: 'message', label: 'Messages', count: notifications.value.filter(n => n.type === 'message').length },
+  { key: 'transaction', label: 'Orders', count: notifications.value.filter(n => n.type === 'transaction').length },
   { key: 'forum', label: 'Forum', count: notifications.value.filter(n => n.type === 'forum').length },
   { key: 'listing', label: 'Listings', count: notifications.value.filter(n => n.type === 'listing').length },
   { key: 'system', label: 'System', count: notifications.value.filter(n => n.type === 'system').length }
@@ -327,6 +328,9 @@ const handleNotificationClick = (notification: Notification) => {
       router.push(`/forum/question/${notification.referenceId}`)
     } else if (notification.referenceType === 'livestock_listing') {
       router.push(`/livestock/${notification.referenceId}`)
+    } else if (notification.referenceType === 'order') {
+      // Navigate to transactions page - you can filter by order number if needed
+      router.push('/transactions')
     }
   }
 }
@@ -367,6 +371,13 @@ const getNotificationIcon = (type: string) => {
       viewBox: '0 0 24 24',
       stroke: 'currentColor'
     }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' })]),
+
+    transaction: () => h('svg', {
+      xmlns: 'http://www.w3.org/2000/svg',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor'
+    }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' })]),
 
     forum: () => h('svg', {
       xmlns: 'http://www.w3.org/2000/svg',
@@ -430,6 +441,11 @@ const getNotificationStyle = (type: string) => {
       text: 'text-purple-600',
       badge: 'bg-purple-100 text-purple-600'
     },
+    transaction: {
+      bg: 'bg-gradient-to-r from-amber-400 to-orange-500',
+      text: 'text-amber-600',
+      badge: 'bg-amber-100 text-amber-600'
+    },
     forum: {
       bg: 'bg-gradient-to-r from-indigo-400 to-blue-500',
       text: 'text-indigo-600',
@@ -467,6 +483,7 @@ const getNotificationStyle = (type: string) => {
 const getTypeLabel = (type: string) => {
   const labels = {
     message: 'Message',
+    transaction: 'Order',
     forum: 'Forum',
     listing: 'Listing',
     system: 'System',
@@ -490,6 +507,7 @@ const getEmptyStateMessage = () => {
   switch (activeFilter.value) {
     case 'unread': return 'All caught up! You have no unread notifications.'
     case 'message': return 'No message notifications at the moment.'
+    case 'transaction': return 'No order notifications at the moment.'
     case 'forum': return 'No forum notifications at the moment.'
     case 'listing': return 'No listing notifications at the moment.'
     case 'system': return 'No system notifications at the moment.'
