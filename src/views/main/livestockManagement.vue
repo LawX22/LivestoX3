@@ -225,7 +225,7 @@
               <!-- Create Listing Button -->
               <button
                 @click="createListing"
-                class="px-4 py-2 bg-white/20 cursor-pointer hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm border border-white/20 hover:scale-105 shadow-lg"
+                class="px-4 py-2 bg-gradient-to-r cursor-pointer from-amber-500/90 to-orange-600/90 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:scale-105"
                 title="Create new livestock listing"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@
               </button>
               
               <!-- Create Auction Button -->
-              <button
+              <!-- <button
                 @click="createAuction"
                 class="px-4 py-2 bg-gradient-to-r cursor-pointer from-amber-500/90 to-orange-600/90 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:scale-105"
                 title="Create new auction"
@@ -246,7 +246,7 @@
                 </svg>
                 <span class="hidden sm:inline">Create Auction</span>
                 <span class="sm:hidden">Auction</span>
-              </button>
+              </button> -->
             </div>
 
             <!-- View Toggle -->
@@ -436,7 +436,7 @@
                 </button>
 
                 <!-- Auction Tab -->
-                <button 
+                <!-- <button 
                   @click="activeTab = 'auction'"
                   :class="`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
                     activeTab === 'auction' 
@@ -451,7 +451,7 @@
                   <span :class="`px-1.5 py-0.5 rounded-full text-xs font-bold ${
                     activeTab === 'auction' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
                   }`">{{ auctionListings.length }}</span>
-                </button>
+                </button> -->
               </div>
 
               <!-- Right side - Status + Sort -->

@@ -1,4 +1,4 @@
-<!-- Marketplace.vue - WITH AUTO-REFRESH ON VISIBILITY -->
+<!-- Marketplace.vue - WITH SILENT AUTO-REFRESH (NO LOADING FLICKER) -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -44,8 +44,8 @@
 
         <!-- Right side - Dynamic Content Area -->
         <div class="flex-1 flex justify-end min-w-0">
-          <!-- Loading State -->
-          <div v-if="isLoadingUser" class="bg-gray-100/80 px-4 py-2 rounded-lg flex items-center gap-3 border border-gray-200 shadow-md cursor-default animate-pulse">
+          <!-- Loading State (ONLY on initial load) -->
+          <div v-if="isInitialLoad" class="bg-gray-100/80 px-4 py-2 rounded-lg flex items-center gap-3 border border-gray-200 shadow-md cursor-default animate-pulse">
             <div class="w-4 h-4 bg-gray-300 rounded-full shrink-0"></div>
             <div class="h-4 bg-gray-300 rounded w-32"></div>
             <div class="h-6 bg-gray-300 rounded w-20"></div>
@@ -153,7 +153,7 @@
                 </svg>
               </div>
               <h3 class="text-sm font-bold text-gray-800 cursor-default">
-                {{ isLoadingData ? 'Loading...' : `${currentFilteredAnimals.length} ${currentFilteredAnimals.length === 1 ? 'Listing' : 'Listings'} Found` }}
+                {{ isInitialLoad ? 'Loading...' : `${currentFilteredAnimals.length} ${currentFilteredAnimals.length === 1 ? 'Listing' : 'Listings'} Found` }}
               </h3>
             </div>
 
@@ -173,24 +173,7 @@
                 <span class="hidden sm:inline">Buy Now</span>
                 <span :class="`px-1.5 py-0.5 rounded-full text-xs font-bold ${
                   activeTab === 'normal' ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'
-                }`">{{ isLoadingData ? '...' : normalListings.length }}</span>
-              </button>
-
-              <button 
-                @click="activeTab = 'auction'"
-                :class="`cursor-pointer px-4 py-2 text-sm font-semibold rounded-md transition-all duration-300 flex items-center gap-2 border ${
-                  activeTab === 'auction' 
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md border-amber-500' 
-                    : 'text-gray-600 hover:text-gray-800 border-gray-200'
-                }`"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="hidden sm:inline">Auctions</span>
-                <span :class="`px-1.5 py-0.5 rounded-full text-xs font-bold ${
-                  activeTab === 'auction' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                }`">{{ isLoadingData ? '...' : auctionListings.length }}</span>
+                }`">{{ isInitialLoad ? '...' : normalListings.length }}</span>
               </button>
             </div>
 
@@ -225,9 +208,9 @@
         <!-- Scrollable Cards Area -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-4">
-            <!-- Loading Skeleton Cards -->
+            <!-- Loading Skeleton Cards (ONLY on initial load) -->
             <div 
-              v-if="isLoadingData" 
+              v-if="isInitialLoad" 
               :class="`grid gap-4 ${isFarmerView ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4'}`"
             >
               <div
@@ -277,7 +260,7 @@
             </div>
 
             <!-- Enhanced Empty State -->
-            <div v-else-if="!isLoadingData && currentFilteredAnimals.length === 0" class="flex flex-col items-center justify-center py-12">
+            <div v-else-if="!isInitialLoad && currentFilteredAnimals.length === 0" class="flex flex-col items-center justify-center py-12">
               <div class="bg-white/95 backdrop-blur-sm p-6 rounded-xl border border-white/60 max-w-md text-center shadow-xl cursor-default">
                 <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-inner">
                   <svg v-if="activeTab === 'auction'" class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,7 +388,6 @@ const navigateToSignIn = () => {
   router.push('/login')
 }
 
-
 // ===== AUTHENTICATION STATE =====
 const isAuthenticated = ref<boolean>(false);
 const currentUserId = ref<string | null>(null);
@@ -426,8 +408,8 @@ let lastVisibilityTime = Date.now();
 const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // 30 seconds
 
 // ===== LOADING STATES =====
-const isLoadingUser = ref<boolean>(true);
-const isLoadingData = ref<boolean>(true);
+// 🆕 Changed: Only show loading on INITIAL load, not on refreshes
+const isInitialLoad = ref<boolean>(true);
 
 // ===== COMPUTED =====
 const isFarmerView = computed<boolean>(() => {
@@ -521,21 +503,21 @@ const auctionListings = computed<Animal[]>(() =>
 );
 
 const uniqueTypes = computed<string[]>(() => {
-  if (isLoadingData.value) return [];
+  if (isInitialLoad.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const types = new Set(currentAnimals.map(animal => animal.type));
   return Array.from(types).sort();
 });
 
 const uniqueBreeds = computed<string[]>(() => {
-  if (isLoadingData.value) return [];
+  if (isInitialLoad.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const breeds = new Set(currentAnimals.map(animal => animal.breed));
   return Array.from(breeds).sort();
 });
 
 const uniqueLocations = computed<string[]>(() => {
-  if (isLoadingData.value) return [];
+  if (isInitialLoad.value) return [];
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   const locations = new Set(currentAnimals.map(animal => animal.location));
   return Array.from(locations).sort();
@@ -581,7 +563,7 @@ const getBidActivityCategory = (animal: Animal): string => {
 };
 
 const currentFilteredAnimals = computed<Animal[]>(() => {
-  if (isLoadingData.value) return [];
+  if (isInitialLoad.value) return [];
   
   const currentAnimals = activeTab.value === 'auction' ? auctionListings.value : normalListings.value;
   
@@ -765,13 +747,11 @@ const setupUpgradeRequestSubscription = (userId: string): void => {
   try {
     console.log('🔔 Setting up realtime subscription for upgrade requests');
     
-    // Clean up existing subscription
     if (upgradeRequestsChannel) {
       supabase.removeChannel(upgradeRequestsChannel);
       upgradeRequestsChannel = null;
     }
 
-    // Create new subscription
     upgradeRequestsChannel = supabase
       .channel(`upgrade_requests_${userId}`)
       .on(
@@ -796,7 +776,7 @@ const setupUpgradeRequestSubscription = (userId: string): void => {
             if (newRecord.status === 'approved') {
               console.log('🎉 Upgrade request approved! Refreshing user data...');
               hasPendingUpgrade.value = false;
-              await fetchCurrentUser(true);
+              await fetchCurrentUser(true)
               showToastNotification('Congratulations! Your upgrade to Farmer has been approved!');
             } else if (newRecord.status === 'rejected') {
               console.log('❌ Upgrade request rejected');
@@ -826,13 +806,11 @@ const setupListingsSubscription = (): void => {
   try {
     console.log('🔔 Setting up realtime subscription for livestock listings');
     
-    // Clean up existing subscription
     if (listingsChannel) {
       supabase.removeChannel(listingsChannel);
       listingsChannel = null;
     }
 
-    // Create new subscription for all listings
     listingsChannel = supabase
       .channel('livestock_listings_changes')
       .on(
@@ -845,8 +823,8 @@ const setupListingsSubscription = (): void => {
         async (payload) => {
           console.log('🔔 Listing change detected:', payload.eventType);
           
-          // Refresh listings on any change
-          await fetchListings(true);
+          // 🆕 Silent refresh on realtime changes
+          await fetchListings(true)
         }
       )
       .subscribe((status) => {
@@ -862,11 +840,9 @@ const setupListingsSubscription = (): void => {
 // ===== 🆕 HANDLE VISIBILITY CHANGE =====
 const handleVisibilityChange = async (): Promise<void> => {
   if (document.hidden) {
-    // Tab hidden - record the time
     lastVisibilityTime = Date.now();
     console.log('👋 Marketplace: Tab hidden at', new Date().toLocaleTimeString());
   } else {
-    // Tab visible again - check if we should refresh
     const timeAway = Date.now() - lastVisibilityTime;
     const secondsAway = Math.round(timeAway / 1000);
     
@@ -875,16 +851,13 @@ const handleVisibilityChange = async (): Promise<void> => {
     if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
       console.log('🔄 Marketplace: Auto-refreshing data after being away...');
       
-      // Show a subtle toast notification
-      showToastNotification('Refreshing latest data...');
-      
-      // Refresh both user data and listings
+      // 🆕 SILENT refresh - no loading indicators
       await Promise.all([
         fetchCurrentUser(true),
         fetchListings(true)
       ]);
       
-      console.log('✅ Marketplace: Auto-refresh complete');
+      console.log('✅ Marketplace: Silent auto-refresh complete');
     } else {
       console.log('⏭️ Marketplace: Not refreshing (away for only', secondsAway, 'seconds)');
     }
@@ -907,9 +880,12 @@ const cleanupSubscriptions = (): void => {
 };
 
 // ===== FETCH FUNCTIONS =====
-const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
+// 🆕 Changed: Added silent parameter to prevent loading indicators
+const fetchCurrentUser = async (silent = false): Promise<void> => {
   try {
-    console.log('🔍 ===== FETCHING CURRENT USER =====');
+    if (!silent) {
+      console.log('🔍 ===== FETCHING CURRENT USER =====');
+    }
     
     const { data: { user }, error } = await supabase.auth.getUser();
     
@@ -917,19 +893,22 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
       console.error('❌ Error fetching user:', error);
       isAuthenticated.value = false;
       userRole.value = 'buyer';
-      isLoadingUser.value = false;
       return;
     }
 
     if (user) {
-      console.log('✅ User authenticated:', user.id);
+      if (!silent) {
+        console.log('✅ User authenticated:', user.id);
+      }
       isAuthenticated.value = true;
       currentUserId.value = user.id;
 
       const userDetails = await marketplaceService.getUserDetails(user.id);
       
       if (userDetails) {
-        console.log('✅ User details fetched:', userDetails);
+        if (!silent) {
+          console.log('✅ User details fetched:', userDetails);
+        }
         
         currentUserDetails.value = userDetails;
         userName.value = userDetails.fullName;
@@ -937,23 +916,25 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
         userRole.value = userDetails.role as UserRole;
         profileCompleted.value = !!(userDetails.firstName && userDetails.lastName);
         
-        console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
-        console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
+        if (!silent) {
+          console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
+          console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
+        }
         
-        // Check for pending upgrade request (only for buyers)
         if (userDetails.role === 'buyer') {
           await checkPendingUpgradeRequest(user.id);
           setupUpgradeRequestSubscription(user.id);
         } else {
           hasPendingUpgrade.value = false;
-          // Cleanup subscription for farmers
           if (upgradeRequestsChannel) {
             supabase.removeChannel(upgradeRequestsChannel);
             upgradeRequestsChannel = null;
           }
         }
       } else {
-        console.log('⚠️ No user details found, using defaults');
+        if (!silent) {
+          console.log('⚠️ No user details found, using defaults');
+        }
         userName.value = user.email?.split('@')[0] || 'User';
         userEmail.value = user.email || '';
         userRole.value = 'buyer';
@@ -961,7 +942,9 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
         hasPendingUpgrade.value = false;
       }
     } else {
-      console.log('❌ No authenticated user');
+      if (!silent) {
+        console.log('❌ No authenticated user');
+      }
       isAuthenticated.value = false;
       userRole.value = 'buyer';
       hasPendingUpgrade.value = false;
@@ -971,32 +954,36 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
     isAuthenticated.value = false;
     userRole.value = 'buyer';
     hasPendingUpgrade.value = false;
-  } finally {
-    isLoadingUser.value = false;
   }
 };
 
-const fetchListings = async (forceRefresh = false): Promise<void> => {
+// 🆕 Changed: Added silent parameter to prevent loading indicators
+const fetchListings = async (silent = false): Promise<void> => {
   try {
-    console.log('📦 Fetching livestock listings from Supabase...');
-    isLoadingData.value = true;
+    if (!silent) {
+      console.log('📦 Fetching livestock listings from Supabase...');
+    }
     
     const result = await marketplaceService.getAllListings();
     
     if (result.success && result.data) {
       animals.value = result.data;
-      console.log(`✅ Successfully loaded ${result.data.length} listings`);
+      if (!silent) {
+        console.log(`✅ Successfully loaded ${result.data.length} listings`);
+      }
     } else {
       console.error('❌ Failed to fetch listings:', result.error);
-      showToastNotification('Failed to load listings. Please try again.');
+      if (!silent) {
+        showToastNotification('Failed to load listings. Please try again.');
+      }
       animals.value = [];
     }
   } catch (error) {
     console.error('💥 Error fetching listings:', error);
-    showToastNotification('An error occurred while loading listings.');
+    if (!silent) {
+      showToastNotification('An error occurred while loading listings.');
+    }
     animals.value = [];
-  } finally {
-    isLoadingData.value = false;
   }
 };
 
@@ -1128,7 +1115,7 @@ const handlePlaceBid = async (bidData: BidData): Promise<void> => {
       
       showToastNotification(`Bid of ₱${bidData.amount.toLocaleString()} placed successfully!`);
       
-      // Realtime will auto-refresh, but force refresh for immediate feedback
+      // 🆕 Silent refresh
       await fetchListings(true);
     }
   } catch (error) {
@@ -1179,11 +1166,14 @@ onMounted(async () => {
   // 🆕 Add visibility change listener
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  // Load user and listings in parallel
+  // 🆕 Load user and listings in parallel (ONLY show loading on initial mount)
   await Promise.all([
-    fetchCurrentUser(),
-    fetchListings()
+    fetchCurrentUser(false), // Not silent on initial load
+    fetchListings(false)      // Not silent on initial load
   ]);
+
+  // 🆕 Mark initial load as complete
+  isInitialLoad.value = false;
 
   // Setup realtime subscription for listings
   setupListingsSubscription();
@@ -1193,7 +1183,7 @@ onMounted(async () => {
     console.log('🔄 ===== AUTH STATE CHANGE =====', event);
     
     if (event === 'SIGNED_IN' && session) {
-      isLoadingUser.value = true;
+      // 🆕 Silent refresh on auth change
       await fetchCurrentUser(true);
       await fetchListings(true);
     } else if (event === 'SIGNED_OUT') {
@@ -1206,9 +1196,9 @@ onMounted(async () => {
       userName.value = 'Guest User';
       profileCompleted.value = false;
       hasPendingUpgrade.value = false;
-      isLoadingUser.value = false;
     } else if (event === 'USER_UPDATED') {
       console.log('🔄 User updated, refreshing user data...');
+      // 🆕 Silent refresh
       await fetchCurrentUser(true);
     }
   });
@@ -1218,6 +1208,7 @@ onMounted(async () => {
     if (newPath === '/marketplace' && oldPath === '/upgradeForm') {
       console.log('🔄 Returning from upgrade form, refreshing user data...');
       if (currentUserId.value) {
+        // 🆕 Silent refresh
         await fetchCurrentUser(true);
       }
     }

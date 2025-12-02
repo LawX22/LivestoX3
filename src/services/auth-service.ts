@@ -38,7 +38,48 @@ class AuthService {
       
       console.log('📝 Signup data being sent:', additionalInfo)
 
-      // Sign up the user with metadata
+      // First, check if there's an existing unverified account with this email
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id, is_verified, created_at')
+        .eq('email', lowerCaseEmail)
+        .maybeSingle()
+
+      if (existingUser) {
+        if (existingUser.is_verified) {
+          // Account exists and is verified
+          return {
+            data: null,
+            error: {
+              message: 'This email is already registered and verified. Please sign in.',
+              status: 400
+            }
+          }
+        } else {
+          // Check if the unverified account is older than 10 minutes
+          const createdAt = new Date(existingUser.created_at).getTime()
+          const now = Date.now()
+          const tenMinutes = 10 * 60 * 1000
+
+          if (now - createdAt > tenMinutes) {
+            // Old unverified account - delete it
+            console.log('🗑️ Deleting expired unverified account...')
+            await this.deleteUnverifiedUser(existingUser.id)
+          } else {
+            // Recent unverified account - user needs to wait or verify
+            return {
+              data: null,
+              error: {
+                message: 'A verification email was recently sent to this address. Please check your email or wait before requesting a new code.',
+                status: 400
+              }
+            }
+          }
+        }
+      }
+
+      // Sign up the user with metadata - this creates an UNVERIFIED account
+      // The account will remain unverified until OTP is confirmed
       const { data, error } = await supabase.auth.signUp({
         email: lowerCaseEmail,
         password,
@@ -60,7 +101,9 @@ class AuthService {
         return { data, error }
       }
 
-      console.log('✅ User created with metadata:', data.user.user_metadata)
+      console.log('✅ Unverified user created with ID:', data.user.id)
+      console.log('📧 OTP sent to:', lowerCaseEmail)
+      console.log('⚠️ User metadata:', data.user.user_metadata)
 
       // Wait for trigger to execute
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -205,6 +248,21 @@ class AuthService {
         }
       }
 
+      // Update profile to mark as verified
+      if (data?.user?.id) {
+        console.log('📝 Updating profile to mark as verified...')
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_verified: true })
+          .eq('id', data.user.id)
+        
+        if (updateError) {
+          console.error('❌ Error updating profile verification status:', updateError)
+        } else {
+          console.log('✅ Profile marked as verified')
+        }
+      }
+
       return { data, error: null }
     } catch (err: any) {
       console.error('❌ Unexpected error during OTP verification:', err)
@@ -215,6 +273,50 @@ class AuthService {
           status: 500,
         }
       }
+    }
+  }
+
+  /**
+   * Delete an unverified user account
+   */
+  async deleteUnverifiedUser(userId: string) {
+    try {
+      console.log('🗑️ Attempting to delete unverified user:', userId)
+      
+      // First, delete the profile record
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+        .eq('is_verified', false) // Only delete if not verified
+      
+      if (profileError) {
+        console.error('❌ Error deleting profile:', profileError)
+        return { error: profileError }
+      }
+      
+      console.log('✅ Profile deleted successfully')
+      
+      // Note: The auth user in Supabase Auth cannot be deleted from client-side code
+      // It requires service role access. The auth user will be automatically cleaned up
+      // by Supabase after being unconfirmed for a certain period (usually 24 hours)
+      
+      // For immediate cleanup, you would need to create a Supabase Edge Function:
+      /*
+        import { createClient } from '@supabase/supabase-js'
+        
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL'),
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        )
+        
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+      */
+      
+      return { error: null }
+    } catch (err: any) {
+      console.error('❌ Unexpected error deleting unverified user:', err)
+      return { error: err }
     }
   }
 

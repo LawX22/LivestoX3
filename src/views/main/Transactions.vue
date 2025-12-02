@@ -1,4 +1,4 @@
-<!-- Transactions.vue - WITH SALES PERFORMANCE SIDEBAR & MODAL -->
+<!-- Transactions.vue - WITH SILENT REFRESH (NO LOADING FLICKER) -->
 <template>
   <div class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
     <!-- Background Elements -->
@@ -81,8 +81,8 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoadingTransactions" class="flex-1 flex items-center justify-center">
+    <!-- Loading State (ONLY on initial load) -->
+    <div v-if="isInitialLoad" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <div class="inline-block w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-lg font-semibold text-gray-700">Loading transactions...</p>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import NavBar from '@/components/NavBar.vue'
@@ -300,7 +300,14 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
 const selectedStatusTab = ref<string>('all')
-const isLoadingTransactions = ref(false)
+
+// 🆕 Single initial load flag
+const isInitialLoad = ref(true)
+
+// 🆕 Visibility tracking
+let lastVisibilityTime = Date.now()
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000
+
 const showPerformanceModal = ref(false)
 
 const filters = ref<TransactionFilters>({
@@ -497,7 +504,8 @@ const updateStatus = async (id: string, status: 'Accepted' | 'Rejected'): Promis
     const result = await transactionService.updateOrderStatus(id, dbStatus)
     
     if (result.success) {
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
@@ -513,7 +521,8 @@ const cancelOrder = async (id: string): Promise<void> => {
     const result = await transactionService.cancelOrder(id)
     
     if (result.success) {
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
@@ -529,7 +538,8 @@ const confirmDelivery = async (id: string): Promise<void> => {
     const result = await transactionService.confirmDelivery(id)
     
     if (result.success) {
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
@@ -540,38 +550,27 @@ const confirmDelivery = async (id: string): Promise<void> => {
   }
 }
 
-// DELIVERY METHODS
 const markAsShipped = async (id: string): Promise<void> => {
-  console.log('🚀 markAsShipped called with ID:', id)
-  
   if (currentView.value === 'farmer') {
-    console.log('✅ Farmer view confirmed, calling service...')
     const result = await transactionService.markAsShipped(id)
     
-    console.log('📦 Service result:', result)
-    
     if (result.success) {
-      console.log('✅ Success! Reloading transactions...')
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       showToastNotification('Order marked as shipped! Buyer will be notified.', 'success')
     } else {
-      console.error('❌ Error:', result.error)
       showToastNotification(result.error || 'Failed to mark order as shipped', 'error')
     }
-  } else {
-    console.warn('⚠️ Not in farmer view')
   }
 }
 
-// PICKUP METHODS - FIXED
 const markReadyForPickup = async (id: string): Promise<void> => {
-  console.log('📦 markReadyForPickup called with ID:', id)
-  
   if (currentView.value === 'farmer') {
     const result = await transactionService.markReadyForPickup(id)
     
     if (result.success) {
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       showToastNotification('Order marked as ready for pickup! Buyer will be notified.', 'success')
     } else {
       showToastNotification(result.error || 'Failed to mark order as ready for pickup', 'error')
@@ -580,13 +579,12 @@ const markReadyForPickup = async (id: string): Promise<void> => {
 }
 
 const confirmPickup = async (id: string): Promise<void> => {
-  console.log('✅ confirmPickup called with ID:', id)
-  
   if (currentView.value === 'buyer') {
     const result = await transactionService.confirmPickup(id)
     
     if (result.success) {
-      await loadTransactionData()
+      // 🆕 Silent refresh
+      await loadTransactionData(true)
       if (selectedTransaction.value?.id === id) {
         selectedTransaction.value = null
       }
@@ -694,11 +692,13 @@ const downloadReceipt = (form: ReceiptForm): void => {
   showToastNotification('Receipt download started...', 'success')
 }
 
-const loadTransactionData = async () => {
-  isLoadingTransactions.value = true
+// 🆕 Load transaction data with silent option
+const loadTransactionData = async (silent = false) => {
+  if (!silent) {
+    isInitialLoad.value = true
+  }
   
   try {
-    // ALWAYS load buyer transactions for ALL users (farmers and buyers)
     console.log('🛒 Loading buyer transactions...')
     const buyerResult = await transactionService.getBuyerTransactions()
     if (buyerResult.success && buyerResult.data) {
@@ -708,7 +708,6 @@ const loadTransactionData = async () => {
       console.error('❌ Failed to load buyer transactions:', buyerResult.error)
     }
 
-    // Only load farmer transactions if user is a farmer
     if (userIsFarmer.value) {
       console.log('🚜 Loading farmer transactions...')
       const farmerResult = await transactionService.getFarmerTransactions()
@@ -721,9 +720,13 @@ const loadTransactionData = async () => {
     }
   } catch (error) {
     console.error('💥 Error loading transactions:', error)
-    showToastNotification('Failed to load transactions', 'error')
+    if (!silent) {
+      showToastNotification('Failed to load transactions', 'error')
+    }
   } finally {
-    isLoadingTransactions.value = false
+    if (!silent) {
+      isInitialLoad.value = false
+    }
   }
 }
 
@@ -769,9 +772,36 @@ const loadUserProfile = async () => {
   }
 }
 
+// 🆕 Handle visibility change
+const handleVisibilityChange = async (): Promise<void> => {
+  if (document.hidden) {
+    lastVisibilityTime = Date.now()
+    console.log('👋 Transactions: Tab hidden at', new Date().toLocaleTimeString())
+  } else {
+    const timeAway = Date.now() - lastVisibilityTime
+    const secondsAway = Math.round(timeAway / 1000)
+    
+    console.log('👀 Transactions: Tab visible again. Time away:', secondsAway, 'seconds')
+
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
+      console.log('🔄 Transactions: Auto-refreshing data after being away...')
+      
+      // Silent refresh
+      await loadTransactionData(true)
+      
+      console.log('✅ Transactions: Silent auto-refresh complete')
+    } else {
+      console.log('⏭️ Transactions: Not refreshing (away for only', secondsAway, 'seconds)')
+    }
+  }
+}
+
 // ==================== LIFECYCLE ====================
 
 onMounted(async () => {
+  // 🆕 Add visibility listener
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  
   await loadUserProfile()
   
   if (!currentUser.value.isAuthenticated) {
@@ -780,7 +810,14 @@ onMounted(async () => {
   }
   
   setInitialView()
-  await loadTransactionData()
+  
+  // 🆕 Initial load (NOT silent)
+  await loadTransactionData(false)
+})
+
+onBeforeUnmount(() => {
+  // 🆕 Remove visibility listener
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 watch(showToast, (newVal) => {

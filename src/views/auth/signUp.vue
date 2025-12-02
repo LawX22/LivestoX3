@@ -549,6 +549,7 @@
                     </svg>
                     <span class="text-sm font-bold text-red-700">Code has expired</span>
                   </div>
+                  <p class="text-xs text-red-600 mt-1">Your account has been removed. Please start registration again.</p>
                 </div>
 
                 <p class="text-xs text-gray-500">
@@ -597,7 +598,7 @@
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {{ isResending ? 'Resending...' : canResend ? 'Resend Code' : `Resend in ${formatTime(timeRemaining)}` }}
+                    {{ isResending ? 'Resending...' : canResend ? 'Resend Code' : `Resend available in ${formatTime(resendCooldown)}` }}
                   </button>
                 </div>
 
@@ -615,16 +616,16 @@
                 </div>
 
                 <div class="flex justify-between gap-3">
-                  <button @click="goToPrevStep" type="button"
+                  <button @click="cancelRegistration" type="button"
                     class="px-4 py-2 text-xs border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-300 font-semibold flex items-center cursor-pointer">
                     <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Back
+                    Cancel
                   </button>
-                  <button type="submit" :disabled="isLoading" :class="{
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg cursor-pointer': !isLoading,
-                    'bg-gray-400 cursor-not-allowed': isLoading
+                  <button type="submit" :disabled="isLoading || timeRemaining === 0" :class="{
+                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg cursor-pointer': !isLoading && timeRemaining > 0,
+                    'bg-gray-400 cursor-not-allowed': isLoading || timeRemaining === 0
                   }"
                     class="text-white py-2 px-6 text-xs rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500/50 flex items-center">
                     <span v-if="isLoading" class="mr-2">
@@ -640,7 +641,7 @@
                     <svg v-else class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    {{ isLoading ? 'Creating Account...' : 'Create My Account' }}
+                    {{ isLoading ? 'Verifying...' : 'Verify & Create Account' }}
                   </button>
                 </div>
               </form>
@@ -663,7 +664,7 @@
 
 <script setup lang="ts">
 import { auth } from '@/services/auth-service'
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -696,12 +697,15 @@ const removeToast = (id: string) => {
   }
 }
 
-// Timer Management
-const timeRemaining = ref(300) // 5 minutes in seconds (300 seconds)
+// Timer Management - 10 minutes for code expiration, 30 seconds for resend cooldown
+const timeRemaining = ref(600) // 10 minutes (600 seconds)
+const resendCooldown = ref(0) // 30 seconds cooldown after resending
 const timerInterval = ref<number | null>(null)
+const resendInterval = ref<number | null>(null)
 const isResending = ref(false)
+const pendingUserId = ref<string | null>(null)
 
-const canResend = computed(() => timeRemaining.value === 0)
+const canResend = computed(() => resendCooldown.value === 0)
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60)
@@ -715,7 +719,7 @@ const startTimer = () => {
     clearInterval(timerInterval.value)
   }
 
-  timeRemaining.value = 300 // Reset to 5 minutes
+  timeRemaining.value = 600 // Reset to 10 minutes
 
   timerInterval.value = window.setInterval(() => {
     if (timeRemaining.value > 0) {
@@ -725,8 +729,59 @@ const startTimer = () => {
         clearInterval(timerInterval.value)
         timerInterval.value = null
       }
+      
+      // When timer expires, delete the unverified account
+      handleExpiredCode()
     }
   }, 1000)
+}
+
+const startResendCooldown = () => {
+  // Clear any existing resend timer
+  if (resendInterval.value) {
+    clearInterval(resendInterval.value)
+  }
+
+  resendCooldown.value = 30 // 30 seconds cooldown
+
+  resendInterval.value = window.setInterval(() => {
+    if (resendCooldown.value > 0) {
+      resendCooldown.value--
+    } else {
+      if (resendInterval.value) {
+        clearInterval(resendInterval.value)
+        resendInterval.value = null
+      }
+    }
+  }, 1000)
+}
+
+const handleExpiredCode = async () => {
+  if (!pendingUserId.value) return
+  
+  try {
+    console.log('⏰ Verification code expired, cleaning up unverified account...')
+    
+    // Delete the unverified user account
+    const { error } = await auth.deleteUnverifiedUser(pendingUserId.value)
+    
+    if (error) {
+      console.error('❌ Error deleting unverified account:', error)
+    } else {
+      console.log('✅ Unverified account deleted successfully')
+      
+      addToast({
+        type: 'warning',
+        title: 'Verification Expired',
+        content: 'Your verification code has expired and your account has been removed. Please start the registration process again.'
+      })
+      
+      // Reset to step 1
+      resetForm()
+    }
+  } catch (error) {
+    console.error('❌ Error handling expired code:', error)
+  }
 }
 
 const resendCode = async () => {
@@ -751,8 +806,11 @@ const resendCode = async () => {
       // Clear the verification code inputs
       verificationCode.value = ['', '', '', '', '', '']
       
-      // Restart the timer
+      // Restart the expiration timer
       startTimer()
+      
+      // Start the resend cooldown
+      startResendCooldown()
 
       addToast({
         type: 'success',
@@ -774,11 +832,115 @@ const resendCode = async () => {
   }
 }
 
-// Clean up timer on component unmount
-onUnmounted(() => {
+const cancelRegistration = async () => {
+  // Stop all timers
   if (timerInterval.value) {
     clearInterval(timerInterval.value)
+    timerInterval.value = null
   }
+  if (resendInterval.value) {
+    clearInterval(resendInterval.value)
+    resendInterval.value = null
+  }
+  
+  // Delete the unverified account if it exists
+  if (pendingUserId.value) {
+    try {
+      console.log('🗑️ Canceling registration, deleting unverified account...')
+      
+      const { error } = await auth.deleteUnverifiedUser(pendingUserId.value)
+      
+      if (error) {
+        console.error('❌ Error deleting unverified account:', error)
+      } else {
+        console.log('✅ Unverified account deleted successfully')
+      }
+    } catch (error) {
+      console.error('❌ Error during cancellation:', error)
+    }
+  }
+  
+  // Reset form
+  resetForm()
+  
+  addToast({
+    type: 'info',
+    title: 'Registration Cancelled',
+    content: 'Your registration has been cancelled. You can start again whenever you\'re ready.'
+  })
+}
+
+// Reset form to initial state
+const resetForm = () => {
+  currentStep.value = 1
+  pendingUserId.value = null
+  verificationCode.value = ['', '', '', '', '', '']
+  verificationError.value = ''
+  phoneError.value = ''
+  emailError.value = ''
+  isCodeSent.value = false
+  showPassword.value = false
+  showConfirmPassword.value = false
+  isLoading.value = false
+  isSendingCode.value = false
+  timeRemaining.value = 600
+  resendCooldown.value = 0
+  
+  // Reset form data
+  form.value = {
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    phoneNumber: '',
+    gender: '',
+    password: '',
+    confirmPassword: '',
+    verificationCode: ''
+  }
+  
+  console.log('🔄 Form reset to initial state')
+}
+
+// Cleanup function
+const cleanup = () => {
+  console.log('🧹 Cleaning up component...')
+  
+  // Stop all timers
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+  if (resendInterval.value) {
+    clearInterval(resendInterval.value)
+    resendInterval.value = null
+  }
+  
+  // If there's a pending unverified user and we're on step 3, clean it up
+  if (pendingUserId.value && currentStep.value === 3) {
+    console.log('🗑️ Component unmounting with pending user, initiating cleanup...')
+    auth.deleteUnverifiedUser(pendingUserId.value)
+      .then(() => {
+        console.log('✅ Cleanup completed on unmount')
+      })
+      .catch((error) => {
+        console.error('❌ Error during unmount cleanup:', error)
+      })
+  }
+}
+
+// Component lifecycle hooks
+onMounted(() => {
+  console.log('🔧 Component mounted, resetting form state')
+  resetForm()
+})
+
+onBeforeUnmount(() => {
+  cleanup()
+})
+
+onUnmounted(() => {
+  cleanup()
 })
 
 // Form State
@@ -929,8 +1091,8 @@ const showEmailHelpToast = () => {
     list: [
       'Check your spam/junk folder',
       'Make sure the email address is correct',
-      'Wait a few minutes for the email to arrive',
-      'Use the "Resend Code" button if the code expired',
+      'Wait a few moments for the email to arrive',
+      'Use the "Resend Code" button to request a new code',
       'Contact support if the issue persists'
     ]
   })
@@ -984,11 +1146,18 @@ const goToPrevStep = () => {
     currentStep.value--
     verificationError.value = ''
     
-    // Stop timer if going back from step 3
-    if (currentStep.value === 2 && timerInterval.value) {
-      clearInterval(timerInterval.value)
-      timerInterval.value = null
-      timeRemaining.value = 300
+    // Stop timers if going back from step 3
+    if (currentStep.value === 2) {
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value)
+        timerInterval.value = null
+      }
+      if (resendInterval.value) {
+        clearInterval(resendInterval.value)
+        resendInterval.value = null
+      }
+      timeRemaining.value = 600
+      resendCooldown.value = 0
     }
   }
 }
@@ -1035,7 +1204,7 @@ const sendVerificationCode = async () => {
       role: 'Buyer'
     })
 
-    const { error } = await auth.signUp(form.value.email, form.value.password, {
+    const { data, error } = await auth.signUp(form.value.email, form.value.password, {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       username: form.value.username,
@@ -1047,13 +1216,19 @@ const sendVerificationCode = async () => {
     if (error) {
       console.error('❌ Error signing up:', error)
       
-      // Handle specific error for existing email
+      // Handle specific error for existing email or recent registration
       if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
         emailError.value = 'This email is already registered'
         addToast({
           type: 'error',
           title: 'Email Already Registered',
-          content: 'This email address is already associated with an account. Please sign in or use a different email.'
+          content: error.message || 'This email address is already associated with an account. Please sign in or use a different email.'
+        })
+      } else if (error.message?.includes('recently sent')) {
+        addToast({
+          type: 'warning',
+          title: 'Verification Email Recently Sent',
+          content: error.message
         })
       } else {
         addToast({
@@ -1065,18 +1240,27 @@ const sendVerificationCode = async () => {
       return
     }
 
+    // Store the user ID for potential cleanup
+    if (data?.user?.id) {
+      pendingUserId.value = data.user.id
+      console.log('📝 Stored pending user ID:', pendingUserId.value)
+    }
+
     // Show success toast
     addToast({
       type: 'success',
       title: 'Verification Code Sent!',
-      content: `A 6-digit verification code has been sent to ${form.value.email}. The code will expire in 5 minutes.`
+      content: `A 6-digit verification code has been sent to ${form.value.email}. The code will expire in 10 minutes.`
     })
 
     console.log('✅ Verification code sent to:', form.value.email)
     isCodeSent.value = true
     
-    // Start the countdown timer
+    // Start the countdown timer (10 minutes)
     startTimer()
+    
+    // Start the resend cooldown (30 seconds)
+    startResendCooldown()
     
     goToNextStep()
   } catch (error) {
@@ -1092,7 +1276,14 @@ const sendVerificationCode = async () => {
 }
 
 const handleSignUp = async () => {
-  if (isLoading.value) {
+  if (isLoading.value || timeRemaining.value === 0) {
+    if (timeRemaining.value === 0) {
+      addToast({
+        type: 'error',
+        title: 'Code Expired',
+        content: 'Your verification code has expired. Your account has been removed. Please start registration again.'
+      })
+    }
     return
   }
 
@@ -1121,9 +1312,11 @@ const handleSignUp = async () => {
       return
     }
 
+    console.log('🔐 Verifying OTP...')
     const { error } = await auth.verifyEmailOtp(form.value.email, form.value.verificationCode)
 
     if (error) {
+      console.error('❌ OTP verification failed:', error)
       verificationError.value = error.message || 'Verification failed. Please try again.'
       
       // If code expired, suggest resending
@@ -1143,20 +1336,34 @@ const handleSignUp = async () => {
       return
     }
 
-    // Clear the timer on successful verification
+    // Clear all timers on successful verification
     if (timerInterval.value) {
       clearInterval(timerInterval.value)
       timerInterval.value = null
     }
+    if (resendInterval.value) {
+      clearInterval(resendInterval.value)
+      resendInterval.value = null
+    }
+
+    // Clear the pending user ID since verification was successful
+    pendingUserId.value = null
+
+    console.log('✅ OTP verified successfully!')
 
     // Show success toast
     addToast({
       type: 'success',
       title: 'Account Created Successfully!',
-      content: 'Your account has been created and verified. You can now sign in with your credentials.'
+      content: 'Your account has been created and verified. Redirecting to login...'
     })
 
-    router.push('/login')
+    // Wait a moment before redirecting
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    console.log('🔀 Redirecting to login page...')
+    await router.push('/login')
+    
   } catch (error: any) {
     console.error('❌ Sign up error:', error)
 
@@ -1168,6 +1375,12 @@ const handleSignUp = async () => {
     } else {
       verificationError.value = 'Failed to create account. Please try again later.'
     }
+    
+    addToast({
+      type: 'error',
+      title: 'Error',
+      content: verificationError.value
+    })
   } finally {
     isLoading.value = false
   }

@@ -3,6 +3,7 @@ import { supabase } from '@/supabase'
 
 // 🚀 Storage key for caching navbar user data
 const NAVBAR_CACHE_KEY = 'livestox_navbar_cache'
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes instead of 7 days
 
 // Types
 export interface NavBarUser {
@@ -59,11 +60,14 @@ export class NavBarService {
       const cached = localStorage.getItem(NAVBAR_CACHE_KEY)
       if (cached) {
         const parsed = JSON.parse(cached) as NavBarCache
-        // Cache valid for 7 days (longer cache for better performance)
-        const isValid = Date.now() - parsed.timestamp < 7 * 24 * 60 * 60 * 1000
+        // Cache valid for 5 minutes (much shorter for profile updates)
+        const isValid = Date.now() - parsed.timestamp < CACHE_DURATION
         if (isValid && parsed.user) {
           console.log('🔄 Loaded cached navbar data:', parsed.user.displayName)
           return parsed.user
+        } else {
+          console.log('⏰ Cache expired, clearing...')
+          this.clearNavBarCache()
         }
       }
     } catch (e) {
@@ -105,10 +109,17 @@ export class NavBarService {
    * Removed unnecessary auth check for faster execution
    * @throws {NavBarServiceError} When user is not found
    */
-  static async getNavBarUserData(userId: string): Promise<NavBarUser | null> {
+  static async getNavBarUserData(userId: string, forceRefresh: boolean = false): Promise<NavBarUser | null> {
     try {
       console.log('🔍 ===== FETCHING NAVBAR USER DATA =====')
       console.log('   User ID:', userId)
+      console.log('   Force Refresh:', forceRefresh)
+
+      // 🆕 If force refresh, clear cache first
+      if (forceRefresh) {
+        console.log('🔄 Force refresh requested, clearing cache...')
+        this.clearNavBarCache()
+      }
 
       // 🚀 OPTIMIZATION: Removed auth.getUser() call - trust the auth store
       // This saves ~100-200ms per request
@@ -199,11 +210,11 @@ export class NavBarService {
    * 🚀 OPTIMIZED: Get all navbar data in one call
    * @throws {NavBarServiceError} When user data cannot be loaded
    */
-  static async getAllNavBarData(userId: string): Promise<{
+  static async getAllNavBarData(userId: string, forceRefresh: boolean = false): Promise<{
     user: NavBarUser | null
   }> {
     try {
-      const user = await this.getNavBarUserData(userId)
+      const user = await this.getNavBarUserData(userId, forceRefresh)
 
       return {
         user
@@ -214,11 +225,37 @@ export class NavBarService {
   }
 
   /**
+   * 🆕 Force refresh navbar data (clears cache and fetches fresh data)
+   * Call this after profile updates
+   * @throws {NavBarServiceError} When user data cannot be refreshed
+   */
+  static async forceRefreshNavBarData(userId: string): Promise<NavBarUser | null> {
+    console.log('🔄 Force refreshing navbar data...')
+    return await this.getNavBarUserData(userId, true)
+  }
+
+  /**
    * Refresh navbar user data (call after profile updates)
    * @throws {NavBarServiceError} When user data cannot be refreshed
    */
   static async refreshNavBarData(userId: string): Promise<NavBarUser | null> {
-    return await this.getNavBarUserData(userId)
+    return await this.getNavBarUserData(userId, false)
+  }
+
+  /**
+   * Check if cache is still valid
+   */
+  static isCacheValid(): boolean {
+    try {
+      const cached = localStorage.getItem(NAVBAR_CACHE_KEY)
+      if (cached) {
+        const parsed = JSON.parse(cached) as NavBarCache
+        return Date.now() - parsed.timestamp < CACHE_DURATION
+      }
+    } catch (e) {
+      console.warn('Failed to check cache validity:', e)
+    }
+    return false
   }
 
   /**
@@ -294,6 +331,10 @@ export class NavBarService {
       }
 
       console.log('✅ Auth synced with profiles:', correctRole)
+      
+      // 🆕 Clear cache after sync
+      this.clearNavBarCache()
+      
       return true
     } catch (error) {
       console.error('💥 Exception syncing:', error)

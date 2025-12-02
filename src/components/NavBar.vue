@@ -730,7 +730,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { NavBarService } from '@/services/navbarService';
 import { MessagesService } from '@/services/messagesService';
 import { cartCheckoutService } from '@/services/cartCheckoutService';
-import { NotificationsService, type Notification } from '@/services/notificationsService'; // 🔔 Import notifications
+import { NotificationsService, type Notification } from '@/services/notificationsService';
 import type { NavBarUser } from '@/services/navbarService';
 import type { Conversation } from '@/types/messages';
 

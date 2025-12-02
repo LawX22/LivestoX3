@@ -1,4 +1,4 @@
-<!-- Forum.vue - FIXED ROLE-BASED HEADER DISPLAY -->
+<!-- Forum.vue - WITH SILENT REFRESH (NO LOADING FLICKER) -->
 <template>
   <div
     class="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 flex flex-col relative overflow-hidden">
@@ -38,8 +38,8 @@
 
         <!-- Right side - Dynamic Content Area -->
         <div class="flex-1 flex justify-end min-w-0">
-          <!-- Loading State -->
-          <div v-if="isLoadingUser" class="bg-gray-100/80 px-4 py-2 rounded-lg flex items-center gap-3 border border-gray-200 shadow-md cursor-default animate-pulse">
+          <!-- Loading State (ONLY on initial load) -->
+          <div v-if="isInitialLoad" class="bg-gray-100/80 px-4 py-2 rounded-lg flex items-center gap-3 border border-gray-200 shadow-md cursor-default animate-pulse">
             <div class="w-4 h-4 bg-gray-300 rounded-full shrink-0"></div>
             <div class="h-4 bg-gray-300 rounded w-32"></div>
             <div class="h-6 bg-gray-300 rounded w-20"></div>
@@ -153,7 +153,7 @@
               </div>
               <div>
                 <h3 class="text-sm font-bold text-gray-800 cursor-default">
-                  {{ isLoadingQuestions ? 'Loading...' : `${filteredQuestions.length} ${filteredQuestions.length === 1 ? 'Question' : 'Questions'} Found` }}
+                  {{ isInitialLoad ? 'Loading...' : `${filteredQuestions.length} ${filteredQuestions.length === 1 ? 'Question' : 'Questions'} Found` }}
                 </h3>
               </div>
             </div>
@@ -173,8 +173,8 @@
           </div>
         </div>
 
-        <!-- Loading State with Skeleton -->
-        <div v-if="isLoadingQuestions" class="flex-1 overflow-y-auto">
+        <!-- Loading State with Skeleton (ONLY on initial load) -->
+        <div v-if="isInitialLoad" class="flex-1 overflow-y-auto">
           <div class="p-3">
             <div class="space-y-4">
               <!-- Skeleton Cards -->
@@ -390,7 +390,9 @@ const userRole = ref<UserRole>('buyer');
 const userName = ref<string>('Guest User');
 const userEmail = ref<string>('');
 const currentUserDetails = ref<UserDetails | null>(null);
-const isLoadingUser = ref<boolean>(true);
+
+// ===== 🆕 LOADING STATE - Single initial load flag =====
+const isInitialLoad = ref<boolean>(true);
 
 // ===== STATE =====
 const showModal = ref(false);
@@ -400,11 +402,14 @@ const showCommentsModal = ref(false);
 const selectedQuestion = ref<ForumQuestion | null>(null);
 const isSidebarExpanded = ref(true);
 const sortBy = ref('newest');
-const isLoadingQuestions = ref(false);
 
 // ===== REALTIME SUBSCRIPTIONS =====
 let questionsChannel: RealtimeChannel | null = null;
 let answersChannel: RealtimeChannel | null = null;
+
+// ===== 🆕 VISIBILITY TRACKING =====
+let lastVisibilityTime = Date.now();
+const VISIBILITY_REFRESH_THRESHOLD = 30 * 1000; // 30 seconds
 
 // Toast state
 const toast = reactive({
@@ -508,10 +513,12 @@ const debounce = (fn: Function, delay: number) => {
   };
 };
 
-// ===== FETCH CURRENT USER =====
-const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
+// ===== 🆕 FETCH CURRENT USER WITH SILENT OPTION =====
+const fetchCurrentUser = async (silent = false): Promise<void> => {
   try {
-    console.log('🔍 ===== FETCHING CURRENT USER (FORUM) =====');
+    if (!silent) {
+      console.log('🔍 ===== FETCHING CURRENT USER (FORUM) =====');
+    }
     
     const { data: { user }, error } = await supabase.auth.getUser();
     
@@ -519,35 +526,44 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
       console.error('❌ Error fetching user:', error);
       isAuthenticated.value = false;
       userRole.value = 'buyer';
-      isLoadingUser.value = false;
       return;
     }
 
     if (user) {
-      console.log('✅ User authenticated:', user.id);
+      if (!silent) {
+        console.log('✅ User authenticated:', user.id);
+      }
       isAuthenticated.value = true;
       currentUserId.value = user.id;
 
       const userDetails = await marketplaceService.getUserDetails(user.id);
       
       if (userDetails) {
-        console.log('✅ User details fetched:', userDetails);
+        if (!silent) {
+          console.log('✅ User details fetched:', userDetails);
+        }
         
         currentUserDetails.value = userDetails;
         userName.value = userDetails.fullName;
         userEmail.value = userDetails.email;
         userRole.value = userDetails.role as UserRole;
         
-        console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
-        console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
+        if (!silent) {
+          console.log('   🎯 Final userRole set to:', `"${userRole.value}"`);
+          console.log('   🎯 isFarmerView will be:', userRole.value === 'farmer');
+        }
       } else {
-        console.log('⚠️ No user details found, using defaults');
+        if (!silent) {
+          console.log('⚠️ No user details found, using defaults');
+        }
         userName.value = user.email?.split('@')[0] || 'User';
         userEmail.value = user.email || '';
         userRole.value = 'buyer';
       }
     } else {
-      console.log('❌ No authenticated user');
+      if (!silent) {
+        console.log('❌ No authenticated user');
+      }
       isAuthenticated.value = false;
       userRole.value = 'buyer';
     }
@@ -555,8 +571,6 @@ const fetchCurrentUser = async (forceRefresh = false): Promise<void> => {
     console.error('💥 Exception fetching current user:', error);
     isAuthenticated.value = false;
     userRole.value = 'buyer';
-  } finally {
-    isLoadingUser.value = false;
   }
 };
 
@@ -565,7 +579,6 @@ const setupForumSubscriptions = (): void => {
   try {
     console.log('🔔 Setting up realtime subscriptions for forum');
     
-    // Clean up existing subscriptions
     if (questionsChannel) {
       supabase.removeChannel(questionsChannel);
       questionsChannel = null;
@@ -576,7 +589,6 @@ const setupForumSubscriptions = (): void => {
       answersChannel = null;
     }
 
-    // Subscribe to forum_questions changes
     questionsChannel = supabase
       .channel('forum_questions_changes')
       .on(
@@ -588,6 +600,7 @@ const setupForumSubscriptions = (): void => {
         },
         async (payload) => {
           console.log('🔔 Forum question change detected:', payload.eventType);
+          // 🆕 Silent refresh
           await loadForumQuestions(true);
         }
       )
@@ -595,7 +608,6 @@ const setupForumSubscriptions = (): void => {
         console.log('🔔 Questions subscription status:', status);
       });
 
-    // Subscribe to forum_answers changes
     answersChannel = supabase
       .channel('forum_answers_changes')
       .on(
@@ -607,6 +619,7 @@ const setupForumSubscriptions = (): void => {
         },
         async (payload) => {
           console.log('🔔 Forum answer change detected:', payload.eventType);
+          // 🆕 Silent refresh
           await loadForumQuestions(true);
         }
       )
@@ -635,31 +648,60 @@ const cleanupForumSubscriptions = (): void => {
   }
 };
 
-// ===== METHODS =====
-const loadForumQuestions = async (forceRefresh = false) => {
-  try {
-    isLoadingQuestions.value = true;
-    console.log('🔄 Loading forum questions from Supabase...');
+// ===== 🆕 HANDLE VISIBILITY CHANGE =====
+const handleVisibilityChange = async (): Promise<void> => {
+  if (document.hidden) {
+    lastVisibilityTime = Date.now();
+    console.log('👋 Forum: Tab hidden at', new Date().toLocaleTimeString());
+  } else {
+    const timeAway = Date.now() - lastVisibilityTime;
+    const secondsAway = Math.round(timeAway / 1000);
     
-    // Add minimum loading time for better UX
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
-    
-    // Pass userId if authenticated to get user's vote status
-    const questionsPromise = forumService.getQuestions(authStore.userId || undefined);
-    
-    // Wait for both promises
-    const [questions] = await Promise.all([questionsPromise, minLoadingTime]);
-    
-    forumQuestions.value = questions;
-    console.log(`✅ Loaded ${questions.length} questions successfully`);
-  } catch (error) {
-    console.error('❌ Error loading forum questions:', error);
-    showToastNotification('Failed to load forum questions. Please try again.', 'error');
-  } finally {
-    isLoadingQuestions.value = false;
+    console.log('👀 Forum: Tab visible again. Time away:', secondsAway, 'seconds');
+
+    if (timeAway > VISIBILITY_REFRESH_THRESHOLD) {
+      console.log('🔄 Forum: Auto-refreshing data after being away...');
+      
+      // 🆕 Silent refresh
+      await Promise.all([
+        fetchCurrentUser(true),
+        loadForumQuestions(true)
+      ]);
+      
+      console.log('✅ Forum: Silent auto-refresh complete');
+    } else {
+      console.log('⏭️ Forum: Not refreshing (away for only', secondsAway, 'seconds)');
+    }
   }
 };
 
+// ===== 🆕 LOAD FORUM QUESTIONS WITH SILENT OPTION =====
+const loadForumQuestions = async (silent = false) => {
+  try {
+    if (!silent) {
+      console.log('🔄 Loading forum questions from Supabase...');
+      
+      // Add minimum loading time for better UX (only for initial load)
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
+      const questionsPromise = forumService.getQuestions(authStore.userId || undefined);
+      const [questions] = await Promise.all([questionsPromise, minLoadingTime]);
+      
+      forumQuestions.value = questions;
+      console.log(`✅ Loaded ${questions.length} questions successfully`);
+    } else {
+      // Silent refresh - no minimum loading time
+      const questions = await forumService.getQuestions(authStore.userId || undefined);
+      forumQuestions.value = questions;
+    }
+  } catch (error) {
+    console.error('❌ Error loading forum questions:', error);
+    if (!silent) {
+      showToastNotification('Failed to load forum questions. Please try again.', 'error');
+    }
+  }
+};
+
+// ===== METHODS =====
 const navigateToLogin = () => {
   router.push('/login');
 };
@@ -695,27 +737,21 @@ const showToastNotification = (message: string, type: 'success' | 'error' = 'suc
 const openCommentsModal = (question: ForumQuestion) => {
   console.log('📖 Opening comments modal for question:', question.id);
   
-  // Open modal immediately with current question data
   selectedQuestion.value = question;
   showCommentsModal.value = true;
   
-  // Load fresh data in the background (async, non-blocking)
   loadQuestionDataInBackground(question.id);
 };
 
 const loadQuestionDataInBackground = async (questionId: number) => {
   try {
-    // Increment view count
     await forumService.incrementViews(questionId);
     
-    // Reload the specific question to get updated data
     const updatedQuestion = await forumService.getQuestionById(questionId, authStore.userId || undefined);
     
     if (updatedQuestion) {
-      // Update selected question with fresh data
       selectedQuestion.value = updatedQuestion;
       
-      // Update the question in the list
       const index = forumQuestions.value.findIndex(q => q.id === questionId);
       if (index !== -1) {
         forumQuestions.value[index] = updatedQuestion;
@@ -723,7 +759,6 @@ const loadQuestionDataInBackground = async (questionId: number) => {
     }
   } catch (error) {
     console.error('❌ Error loading question data:', error);
-    // Don't show error toast since modal is already open with cached data
   }
 };
 
@@ -738,10 +773,9 @@ const handlePostQuestion = async (questionData: ForumQuestion) => {
     showModal.value = false;
     showToastNotification('Your question has been posted successfully!');
     
-    // Realtime will auto-refresh, but force refresh for immediate feedback
+    // 🆕 Silent refresh
     await loadForumQuestions(true);
     
-    // Scroll to top to show the new question
     scrollToTop();
   } catch (error) {
     console.error('❌ Error after posting question:', error);
@@ -754,7 +788,7 @@ const handleQuestionUpdated = async (updatedQuestion: ForumQuestion) => {
     console.log('✅ Question updated, reloading questions...');
     showToastNotification('Question updated successfully!');
     
-    // Realtime will auto-refresh
+    // 🆕 Silent refresh
     await loadForumQuestions(true);
   } catch (error) {
     console.error('❌ Error after updating question:', error);
@@ -766,7 +800,6 @@ const handleQuestionDeleted = async (questionId: number) => {
   try {
     console.log('✅ Question deleted, reloading questions...');
     
-    // Remove from local state immediately for instant feedback
     const index = forumQuestions.value.findIndex(q => q.id === questionId);
     if (index !== -1) {
       forumQuestions.value.splice(index, 1);
@@ -774,7 +807,7 @@ const handleQuestionDeleted = async (questionId: number) => {
     
     showToastNotification('Question deleted successfully!');
     
-    // Realtime will auto-refresh
+    // 🆕 Silent refresh
     await loadForumQuestions(true);
   } catch (error) {
     console.error('❌ Error after deleting question:', error);
@@ -793,7 +826,6 @@ const handleAnswerSubmitted = async () => {
       if (updatedQuestion) {
         selectedQuestion.value = updatedQuestion;
         
-        // Update in the list
         const index = forumQuestions.value.findIndex(q => q.id === updatedQuestion.id);
         if (index !== -1) {
           forumQuestions.value[index] = updatedQuestion;
@@ -809,27 +841,30 @@ const handleAnswerSubmitted = async () => {
 onMounted(async () => {
   console.log('🚀 ===== FORUM COMPONENT MOUNTED =====');
   
-  // Ensure auth is initialized
+  // 🆕 Add visibility change listener
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
   if (!authStore.initialized) {
     console.log('🔐 Initializing auth store...');
     await authStore.initialize();
   }
   
-  // Load user and forum questions in parallel
+  // 🆕 Load user and forum questions in parallel (NOT silent on initial mount)
   await Promise.all([
-    fetchCurrentUser(),
-    loadForumQuestions()
+    fetchCurrentUser(false),
+    loadForumQuestions(false)
   ]);
   
-  // Setup realtime subscriptions
+  // 🆕 Mark initial load as complete
+  isInitialLoad.value = false;
+  
   setupForumSubscriptions();
   
-  // Set up auth listener
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('🔄 ===== AUTH STATE CHANGE (FORUM) =====', event);
     
     if (event === 'SIGNED_IN' && session) {
-      isLoadingUser.value = true;
+      // 🆕 Silent refresh
       await fetchCurrentUser(true);
       await loadForumQuestions(true);
     } else if (event === 'SIGNED_OUT') {
@@ -838,9 +873,9 @@ onMounted(async () => {
       currentUserDetails.value = null;
       userRole.value = 'buyer';
       userName.value = 'Guest User';
-      isLoadingUser.value = false;
     } else if (event === 'USER_UPDATED') {
       console.log('🔄 User updated, refreshing user data...');
+      // 🆕 Silent refresh
       await fetchCurrentUser(true);
     }
   });
@@ -848,13 +883,14 @@ onMounted(async () => {
   console.log('✅ Forum component ready');
 });
 
-// Cleanup on unmount
 onBeforeUnmount(() => {
+  // 🆕 Remove visibility listener
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  
   cleanupForumSubscriptions();
   console.log('🧹 Cleaned up Forum subscriptions');
 });
 
-// Watchers
 watch(userRole, (newRole, oldRole) => {
   console.log(`🔄 userRole changed from "${oldRole}" to "${newRole}"`);
   console.log(`   isFarmerView is now: ${isFarmerView.value}`);
